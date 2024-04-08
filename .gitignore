@@ -1,0 +1,13 @@
+.env
+
+# Foundry
+cache/
+out/
+broadcast/
+
+# JS
+node_modules/
+package-lock.json
+
+# Coverage
+lcov.info
