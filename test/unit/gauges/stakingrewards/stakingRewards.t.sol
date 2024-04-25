@@ -13,7 +13,6 @@ contract StakingRewardsTest is BaseFixture {
         pool = Pool(poolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
         stakingRewards = StakingRewards(
             stakingRewardsFactory.createStakingRewards({
-                _forwarder: address(0),
                 _pool: address(pool),
                 _feesVotingReward: address(0),
                 _rewardToken: address(rewardToken),

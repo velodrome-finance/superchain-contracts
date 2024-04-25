@@ -7,14 +7,13 @@ import {IStakingRewards} from "../../interfaces/gauges/stakingrewards/IStakingRe
 import {IPool} from "../../interfaces/IPool.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
 
 /// @title Velodrome xChain Staking Rewards Contract
 /// @author velodrome.finance
 /// @notice Gauge contract for distribution of emissions by address
-contract StakingRewards is IStakingRewards, ERC2771Context, ReentrancyGuard {
+contract StakingRewards is IStakingRewards, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /// @inheritdoc IStakingRewards
@@ -54,14 +53,7 @@ contract StakingRewards is IStakingRewards, ERC2771Context, ReentrancyGuard {
     /// @inheritdoc IStakingRewards
     uint256 public fees1;
 
-    constructor(
-        address _forwarder,
-        address _stakingToken,
-        address _feesVotingReward,
-        address _rewardToken,
-        address _voter,
-        bool _isPool
-    ) ERC2771Context(_forwarder) {
+    constructor(address _stakingToken, address _feesVotingReward, address _rewardToken, address _voter, bool _isPool) {
         stakingToken = _stakingToken;
         feesVotingReward = _feesVotingReward;
         rewardToken = _rewardToken;
@@ -92,7 +84,7 @@ contract StakingRewards is IStakingRewards, ERC2771Context, ReentrancyGuard {
                 fees1 = _fees1;
             }
 
-            emit ClaimFees(_msgSender(), claimed0, claimed1);
+            emit ClaimFees(msg.sender, claimed0, claimed1);
         }
     }
 
@@ -112,7 +104,7 @@ contract StakingRewards is IStakingRewards, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IStakingRewards
     function getReward(address _account) external nonReentrant {
-        address sender = _msgSender();
+        address sender = msg.sender;
         if (sender != _account) revert NotAuthorized();
 
         _updateRewards(_account);
@@ -133,7 +125,7 @@ contract StakingRewards is IStakingRewards, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IStakingRewards
     function deposit(uint256 _amount) external {
-        _depositFor(_amount, _msgSender());
+        _depositFor(_amount, msg.sender);
     }
 
     /// @inheritdoc IStakingRewards
@@ -144,7 +136,7 @@ contract StakingRewards is IStakingRewards, ERC2771Context, ReentrancyGuard {
     function _depositFor(uint256 _amount, address _recipient) internal nonReentrant {
         if (_amount == 0) revert ZeroAmount();
 
-        address sender = _msgSender();
+        address sender = msg.sender;
         _updateRewards(_recipient);
 
         IERC20(stakingToken).safeTransferFrom(sender, address(this), _amount);
@@ -156,7 +148,7 @@ contract StakingRewards is IStakingRewards, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IStakingRewards
     function withdraw(uint256 _amount) external nonReentrant {
-        address sender = _msgSender();
+        address sender = msg.sender;
 
         _updateRewards(sender);
 
@@ -183,7 +175,7 @@ contract StakingRewards is IStakingRewards, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IStakingRewards
     function notifyRewardAmount(uint256 _amount) external nonReentrant {
-        address sender = _msgSender();
+        address sender = msg.sender;
         if (_amount == 0) revert ZeroAmount();
         _claimFees();
         _notifyRewardAmount(sender, _amount);

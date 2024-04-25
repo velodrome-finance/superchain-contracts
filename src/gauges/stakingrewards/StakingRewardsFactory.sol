@@ -5,14 +5,10 @@ import {IStakingRewardsFactory} from "../../interfaces/gauges/stakingrewards/ISt
 import {StakingRewards} from "../../gauges/stakingrewards/StakingRewards.sol";
 
 contract StakingRewardsFactory is IStakingRewardsFactory {
-    function createStakingRewards(
-        address _forwarder,
-        address _pool,
-        address _feesVotingReward,
-        address _rewardToken,
-        bool isPool
-    ) external returns (address stakingRewards) {
-        stakingRewards =
-            address(new StakingRewards(_forwarder, _pool, _feesVotingReward, _rewardToken, msg.sender, isPool));
+    function createStakingRewards(address _pool, address _feesVotingReward, address _rewardToken, bool isPool)
+        external
+        returns (address stakingRewards)
+    {
+        stakingRewards = address(new StakingRewards(_pool, _feesVotingReward, _rewardToken, msg.sender, isPool));
     }
 }
