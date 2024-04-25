@@ -51,7 +51,7 @@ abstract contract BaseFixture is Test, Constants {
         poolImplementation = new Pool();
         poolFactory = new PoolFactory({_implementation: address(poolImplementation)});
 
-        stakingRewardsFactory = new StakingRewardsFactory();
+        stakingRewardsFactory = new StakingRewardsFactory({_notifyAdmin: users.owner});
 
         // set state
         poolFactory.setPoolAdmin({_poolAdmin: users.owner});
@@ -64,6 +64,8 @@ abstract contract BaseFixture is Test, Constants {
         deal(address(token1), users.bob, TOKEN_1 * 1e9);
 
         labelContracts();
+
+        skipToNextEpoch(0);
     }
 
     function labelContracts() public virtual {

@@ -53,7 +53,7 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
     /// @inheritdoc IStakingRewards
     uint256 public fees1;
 
-    constructor(address _stakingToken, address _feesVotingReward, address _rewardToken, address _voter, bool _isPool) {
+    constructor(address _stakingToken, address _feesVotingReward, address _rewardToken, bool _isPool) {
         stakingToken = _stakingToken;
         feesVotingReward = _feesVotingReward;
         rewardToken = _rewardToken;

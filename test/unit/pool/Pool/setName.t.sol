@@ -12,7 +12,7 @@ contract SetNameTest is BaseFixture {
         pool = Pool(poolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
     }
 
-    function test_InitialState() public {
+    function test_InitialState() public view {
         assertEq(pool.name(), "StableV2 AMM - TTA/TTB");
     }
 

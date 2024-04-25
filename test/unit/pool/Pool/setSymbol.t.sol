@@ -12,7 +12,7 @@ contract SetSymbolTest is BaseFixture {
         pool = Pool(poolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
     }
 
-    function test_InitialState() public {
+    function test_InitialState() public view {
         assertEq(pool.symbol(), "sAMMV2-TTA/TTB");
     }
 
