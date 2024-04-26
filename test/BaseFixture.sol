@@ -6,11 +6,13 @@ import "forge-std/console2.sol";
 import {VmSafe} from "forge-std/Vm.sol";
 import {IPool, Pool} from "src/pools/Pool.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
+import {IRouter, Router} from "src/Router.sol";
 import {IStakingRewards, StakingRewards} from "src/gauges/stakingrewards/StakingRewards.sol";
 import {IStakingRewardsFactory, StakingRewardsFactory} from "src/gauges/stakingrewards/StakingRewardsFactory.sol";
 import {IGauge} from "src/interfaces/gauges/IGauge.sol";
 import {Users} from "./utils/Users.sol";
 import {Constants} from "./utils/Constants.sol";
+import {MockWETH} from "./mocks/MockWETH.sol";
 import {TestERC20} from "./mocks/TestERC20.sol";
 import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -23,11 +25,13 @@ abstract contract BaseFixture is Test, Constants {
     PoolFactory public poolFactory;
     Pool public poolImplementation;
     StakingRewardsFactory public stakingRewardsFactory;
+    Router public router;
 
     /// tokens
     TestERC20 public rewardToken;
     TestERC20 public token0;
     TestERC20 public token1;
+    MockWETH public weth;
 
     Users internal users;
 
@@ -46,12 +50,15 @@ abstract contract BaseFixture is Test, Constants {
 
         TestERC20 tokenA = new TestERC20("Test Token A", "TTA", 18);
         TestERC20 tokenB = new TestERC20("Test Token B", "TTB", 6); // mimic USDC
+        MockWETH weth = new MockWETH();
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
 
         poolImplementation = new Pool();
         poolFactory = new PoolFactory({_implementation: address(poolImplementation)});
 
         stakingRewardsFactory = new StakingRewardsFactory({_notifyAdmin: users.owner});
+
+        router = new Router({_factory: address(poolFactory), _weth: address(weth)});
 
         // set state
         poolFactory.setPoolAdmin({_poolAdmin: users.owner});
