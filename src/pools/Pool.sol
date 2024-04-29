@@ -481,6 +481,11 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         }
     }
 
+    /// @inheritdoc IPool
+    function getK() external nonReentrant returns (uint256) {
+        return _k(reserve0, reserve1);
+    }
+
     /// @dev OZ inheritance overrides
     /// @dev These are needed as _name and _symbol are set privately before
     /// @dev logic is executed within the constructor to set _name and _symbol.
