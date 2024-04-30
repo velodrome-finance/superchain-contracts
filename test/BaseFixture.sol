@@ -36,13 +36,7 @@ abstract contract BaseFixture is Test, Constants {
     Users internal users;
 
     function setUp() public virtual {
-        users = Users({
-            owner: createUser("Owner"),
-            feeManager: createUser("FeeManager"),
-            alice: createUser("Alice"),
-            bob: createUser("Bob"),
-            charlie: createUser("Charlie")
-        });
+        createUsers();
 
         // run deployments as address(this)
         // at end of deployment, address(this) should have no ownership
@@ -50,7 +44,7 @@ abstract contract BaseFixture is Test, Constants {
 
         TestERC20 tokenA = new TestERC20("Test Token A", "TTA", 18);
         TestERC20 tokenB = new TestERC20("Test Token B", "TTB", 6); // mimic USDC
-        MockWETH weth = new MockWETH();
+        weth = new MockWETH();
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
 
         poolImplementation = new Pool();
@@ -78,6 +72,16 @@ abstract contract BaseFixture is Test, Constants {
     function labelContracts() public virtual {
         vm.label(address(poolImplementation), "Pool Implementation");
         vm.label(address(poolFactory), "Pool Factory");
+    }
+
+    function createUsers() internal {
+        users = Users({
+            owner: createUser("Owner"),
+            feeManager: createUser("FeeManager"),
+            alice: createUser("Alice"),
+            bob: createUser("Bob"),
+            charlie: createUser("Charlie")
+        });
     }
 
     function createUser(string memory name) internal returns (address payable user) {

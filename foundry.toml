@@ -4,4 +4,12 @@ out = "out"
 libs = ["lib"]
 solc_version = '0.8.25'
 
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+fs_permissions = [{ access = "read-write", path = "./"}]
+
+[rpc_endpoints]
+mode = "${MODE_RPC_URL}"
+optimism = "${OPTIMISM_RPC_URL}"
+
+[etherscan]
+mode = { key = "${MODE_ETHERSCAN_API_KEY}", url = "${MODE_ETHERSCAN_VERIFIER_URL}" }
+optimism = { key = "${OPTIMISM_ETHERSCAN_API_KEY}", url = "${OPTIMISM_ETHERSCAN_VERIFIER_URL}"}

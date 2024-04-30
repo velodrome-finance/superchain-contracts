@@ -37,3 +37,5 @@ jobs:
         run: |
           forge test -vvv
         id: test
+        env: 
+          PRIVATE_KEY_DEPLOY: ${{ secrets.PRIVATE_KEY_DEPLOY }}
