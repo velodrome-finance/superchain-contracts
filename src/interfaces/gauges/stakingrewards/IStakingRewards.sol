@@ -22,11 +22,8 @@ interface IStakingRewards {
     /// @notice Address of the token (VELO v2) rewarded to stakers
     function rewardToken() external view returns (address);
 
-    /// @notice Address of the FeesVotingReward contract linked to the gauge
-    function feesVotingReward() external view returns (address);
-
-    /// @notice Returns if gauge is linked to a legitimate Velodrome pool
-    function isPool() external view returns (bool);
+    /// @notice Address of the Converter contract linked to the gauge
+    function feeConverter() external view returns (address);
 
     /// @notice Timestamp end of current rewards period
     function periodFinish() external view returns (uint256);
@@ -54,12 +51,6 @@ interface IStakingRewards {
 
     /// @notice View to see the rewardRate given the timestamp of the start of the epoch
     function rewardRateByEpoch(uint256) external view returns (uint256);
-
-    /// @notice Cached amount of fees generated from the Pool linked to the Gauge of token0
-    function fees0() external view returns (uint256);
-
-    /// @notice Cached amount of fees generated from the Pool linked to the Gauge of token1
-    function fees1() external view returns (uint256);
 
     /// @notice Get the current reward rate per unit of stakingToken deposited
     function rewardPerToken() external view returns (uint256 _rewardPerToken);

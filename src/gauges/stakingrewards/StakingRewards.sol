@@ -2,13 +2,16 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {IReward} from "../../interfaces/IReward.sol";
-import {IStakingRewards} from "../../interfaces/gauges/stakingrewards/IStakingRewards.sol";
-import {IPool} from "../../interfaces/IPool.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
+import {IStakingRewardsFactory} from "../../interfaces/gauges/stakingrewards/IStakingRewardsFactory.sol";
+import {IStakingRewards} from "../../interfaces/gauges/stakingrewards/IStakingRewards.sol";
 import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
+import {IPool} from "../../interfaces/IPool.sol";
+import {Converter} from "./Converter.sol";
 
 /// @title Velodrome xChain Staking Rewards Contract
 /// @author velodrome.finance
@@ -21,10 +24,7 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
     /// @inheritdoc IStakingRewards
     address public immutable rewardToken;
     /// @inheritdoc IStakingRewards
-    address public immutable feesVotingReward;
-
-    /// @inheritdoc IStakingRewards
-    bool public immutable isPool;
+    address public immutable feeConverter;
 
     uint256 internal constant DURATION = 7 days; // rewards are released over 7 days
     uint256 internal constant PRECISION = 10 ** 18;
@@ -48,44 +48,23 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
     /// @inheritdoc IStakingRewards
     mapping(uint256 => uint256) public rewardRateByEpoch;
 
-    /// @inheritdoc IStakingRewards
-    uint256 public fees0;
-    /// @inheritdoc IStakingRewards
-    uint256 public fees1;
-
-    constructor(address _stakingToken, address _feesVotingReward, address _rewardToken, bool _isPool) {
+    constructor(address _stakingToken, address _rewardToken) {
         stakingToken = _stakingToken;
-        feesVotingReward = _feesVotingReward;
         rewardToken = _rewardToken;
-        isPool = _isPool;
+        feeConverter = address(new Converter({_stakingRewardsFactory: msg.sender, _targetToken: _rewardToken}));
     }
 
     function _claimFees() internal returns (uint256 claimed0, uint256 claimed1) {
-        if (!isPool) {
-            return (0, 0);
-        }
         (claimed0, claimed1) = IPool(stakingToken).claimFees();
-        if (claimed0 > 0 || claimed1 > 0) {
-            uint256 _fees0 = fees0 + claimed0;
-            uint256 _fees1 = fees1 + claimed1;
-            (address _token0, address _token1) = IPool(stakingToken).tokens();
-            if (_fees0 > DURATION) {
-                fees0 = 0;
-                IERC20(_token0).safeIncreaseAllowance(feesVotingReward, _fees0);
-                IReward(feesVotingReward).notifyRewardAmount(_token0, _fees0);
-            } else {
-                fees0 = _fees0;
-            }
-            if (_fees1 > DURATION) {
-                fees1 = 0;
-                IERC20(_token1).safeIncreaseAllowance(feesVotingReward, _fees1);
-                IReward(feesVotingReward).notifyRewardAmount(_token1, _fees1);
-            } else {
-                fees1 = _fees1;
-            }
 
-            emit ClaimFees(msg.sender, claimed0, claimed1);
+        (address _token0, address _token1) = IPool(stakingToken).tokens();
+        if (claimed0 > 0) {
+            IERC20(_token0).safeTransfer(feeConverter, claimed0);
         }
+        if (claimed1 > 0) {
+            IERC20(_token1).safeTransfer(feeConverter, claimed1);
+        }
+        emit ClaimFees(msg.sender, claimed0, claimed1);
     }
 
     /// @inheritdoc IStakingRewards

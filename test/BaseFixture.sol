@@ -7,6 +7,7 @@ import {VmSafe} from "forge-std/Vm.sol";
 import {IPool, Pool} from "src/pools/Pool.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {IRouter, Router} from "src/Router.sol";
+import {IConverter, Converter} from "src/gauges/stakingrewards/Converter.sol";
 import {IStakingRewards, StakingRewards} from "src/gauges/stakingrewards/StakingRewards.sol";
 import {IStakingRewardsFactory, StakingRewardsFactory} from "src/gauges/stakingrewards/StakingRewardsFactory.sol";
 import {IGauge} from "src/interfaces/gauges/IGauge.sol";
@@ -14,9 +15,11 @@ import {Users} from "./utils/Users.sol";
 import {Constants} from "./utils/Constants.sol";
 import {MockWETH} from "./mocks/MockWETH.sol";
 import {TestERC20} from "./mocks/TestERC20.sol";
+import {IMockRouter, MockRouter} from "./mocks/MockRouter.sol";
 import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 abstract contract BaseFixture is Test, Constants {
@@ -25,6 +28,7 @@ abstract contract BaseFixture is Test, Constants {
     PoolFactory public poolFactory;
     Pool public poolImplementation;
     StakingRewardsFactory public stakingRewardsFactory;
+    MockRouter public mockRouter;
     Router public router;
 
     /// tokens
@@ -50,9 +54,15 @@ abstract contract BaseFixture is Test, Constants {
         poolImplementation = new Pool();
         poolFactory = new PoolFactory({_implementation: address(poolImplementation)});
 
-        stakingRewardsFactory = new StakingRewardsFactory({_notifyAdmin: users.owner});
-
+        mockRouter = new MockRouter({
+            _forwarder: address(0),
+            _factoryRegistry: address(0),
+            _factory: address(poolFactory),
+            _voter: address(0),
+            _weth: address(weth)
+        });
         router = new Router({_factory: address(poolFactory), _weth: address(weth)});
+        stakingRewardsFactory = new StakingRewardsFactory({_notifyAdmin: users.owner, _keepers: new address[](0)});
 
         // set state
         poolFactory.setPoolAdmin({_poolAdmin: users.owner});

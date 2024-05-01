@@ -2,9 +2,13 @@
 pragma solidity ^0.8.0;
 
 interface IStakingRewardsFactory {
+    error AlreadyApproved();
     error NotNotifyAdmin();
+    error NotApproved();
     error ZeroAddress();
 
+    event ApproveKeeper(address indexed keeper);
+    event UnapproveKeeper(address indexed keeper);
     event SetNotifyAdmin(address indexed _notifyAdmin);
 
     /// @notice Notify admin address
@@ -16,11 +20,31 @@ interface IStakingRewardsFactory {
 
     /// @notice Create new staking rewards contract
     /// @param _pool Pool address
-    /// @param _feesVotingReward Fees voting reward address
     /// @param _rewardToken Reward token address
-    /// @param isPool Is pool
     /// @return stakingRewards New staking rewards contract address
-    function createStakingRewards(address _pool, address _feesVotingReward, address _rewardToken, bool isPool)
-        external
-        returns (address);
+    function createStakingRewards(address _pool, address _rewardToken) external returns (address);
+
+    /// @notice Approves the given address as a Keeper
+    ///         Cannot approve address(0).
+    ///         Cannot approve an address that is already approved.
+    /// @dev    Only callable by Owner
+    /// @param _keeper address to be approved
+    function approveKeeper(address _keeper) external;
+
+    /// @notice Revokes the Keeper permission from the given address
+    ///         Cannot unapprove an address that is not approved.
+    /// @dev    Only callable by Owner
+    /// @param _keeper address to be approved
+    function unapproveKeeper(address _keeper) external;
+
+    /// @notice Get all Keeper addresses approved by the Factory
+    function keepers() external view returns (address[] memory);
+
+    /// @notice Check if an address is approved as a Keeper within the Factory.
+    /// @param _keeper address to check in registry.
+    /// @return True if address is approved, else false
+    function isKeeper(address _keeper) external view returns (bool);
+
+    /// @notice Get the length of the stored Keepers array
+    function keepersLength() external view returns (uint256);
 }

@@ -12,24 +12,17 @@ contract StakingRewardsTest is BaseFixture {
 
         pool = Pool(poolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
         stakingRewards = StakingRewards(
-            stakingRewardsFactory.createStakingRewards({
-                _pool: address(pool),
-                _feesVotingReward: address(0),
-                _rewardToken: address(rewardToken),
-                isPool: true
-            })
+            stakingRewardsFactory.createStakingRewards({_pool: address(pool), _rewardToken: address(rewardToken)})
         );
 
         skipToNextEpoch(0);
 
         addLiquidityToPool(users.alice, address(token0), address(token1), true, TOKEN_1, USDC_1);
-        vm.startPrank(users.alice);
-    }
 
-    function labelContracts() public override {
-        super.labelContracts();
         vm.label(address(pool), "Pool");
         vm.label(address(stakingRewards), "Staking Rewards");
+
+        vm.startPrank(users.alice);
     }
 
     function testCannotDepositWithRecipientZeroAmount() public {
