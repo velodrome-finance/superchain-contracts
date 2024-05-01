@@ -52,7 +52,12 @@ abstract contract BaseFixture is Test, Constants {
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
 
         poolImplementation = new Pool();
-        poolFactory = new PoolFactory({_implementation: address(poolImplementation)});
+        poolFactory = new PoolFactory({
+            _implementation: address(poolImplementation),
+            _poolAdmin: address(users.owner),
+            _pauser: address(users.owner),
+            _feeManager: address(users.feeManager)
+        });
 
         mockRouter = new MockRouter({
             _forwarder: address(0),
@@ -63,11 +68,6 @@ abstract contract BaseFixture is Test, Constants {
         });
         router = new Router({_factory: address(poolFactory), _weth: address(weth)});
         stakingRewardsFactory = new StakingRewardsFactory({_notifyAdmin: users.owner, _keepers: new address[](0)});
-
-        // set state
-        poolFactory.setPoolAdmin({_poolAdmin: users.owner});
-        poolFactory.setPauser({_pauser: users.owner});
-        poolFactory.setFeeManager({_feeManager: users.feeManager});
 
         deal(address(token0), users.alice, TOKEN_1 * 1e9);
         deal(address(token1), users.alice, TOKEN_1 * 1e9);

@@ -34,14 +34,19 @@ contract PoolFactory is IPoolFactory {
     /// @inheritdoc IPoolFactory
     mapping(address => uint256) public customFee; // override for custom fees
 
-    constructor(address _implementation) {
+    constructor(address _implementation, address _poolAdmin, address _pauser, address _feeManager) {
         implementation = _implementation;
-        poolAdmin = msg.sender;
-        pauser = msg.sender;
-        feeManager = msg.sender;
+        poolAdmin = _poolAdmin;
+        pauser = _pauser;
+        feeManager = _feeManager;
         isPaused = false;
         stableFee = 5; // 0.05%
         volatileFee = 30; // 0.3%
+        emit SetPoolAdmin(_poolAdmin);
+        emit SetPauser(_pauser);
+        emit SetFeeManager(_feeManager);
+        emit SetDefaultFee(true, 5);
+        emit SetDefaultFee(false, 30);
     }
 
     /// @inheritdoc IPoolFactory
@@ -115,6 +120,7 @@ contract PoolFactory is IPoolFactory {
         } else {
             volatileFee = _fee;
         }
+        emit SetDefaultFee(_stable, _fee);
     }
 
     /// @inheritdoc IPoolFactory

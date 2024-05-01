@@ -33,13 +33,15 @@ abstract contract DeployBase is Script {
     function run() external {
         vm.startBroadcast(deployerAddress);
         poolImplementation = address(new Pool());
-        poolFactory = new PoolFactory({_implementation: poolImplementation});
+        poolFactory = new PoolFactory({
+            _implementation: poolImplementation,
+            _poolAdmin: _params.poolAdmin,
+            _pauser: _params.pauser,
+            _feeManager: _params.feeManager
+        });
 
         router = address(new Router({_factory: address(poolFactory), _weth: _params.weth}));
 
-        poolFactory.setPoolAdmin(_params.poolAdmin);
-        poolFactory.setPauser(_params.pauser);
-        poolFactory.setFeeManager(_params.feeManager);
         logParams();
         vm.stopBroadcast();
     }

@@ -8,6 +8,7 @@ interface IPoolFactory {
     event SetPoolAdmin(address indexed poolAdmin);
     event PoolCreated(address indexed token0, address indexed token1, bool indexed stable, address pool, uint256);
     event SetCustomFee(address indexed pool, uint256 fee);
+    event SetDefaultFee(bool indexed stable, uint256 fee);
 
     error FeeInvalid();
     error FeeTooHigh();

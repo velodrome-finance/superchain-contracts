@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../../../BaseFixture.sol";
+import "./PoolFactory.t.sol";
 
-contract SetPoolAdminTest is BaseFixture {
+contract SetPoolAdminTest is PoolFactoryTest {
     function setUp() public override {
         super.setUp();
 
         vm.startPrank(users.owner);
-    }
-
-    function test_InitialState() public view {
-        assertEq(poolFactory.poolAdmin(), users.owner);
     }
 
     function test_SetPoolAdmin() public {
