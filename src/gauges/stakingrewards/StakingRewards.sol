@@ -10,7 +10,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {IStakingRewardsFactory} from "../../interfaces/gauges/stakingrewards/IStakingRewardsFactory.sol";
 import {IStakingRewards} from "../../interfaces/gauges/stakingrewards/IStakingRewards.sol";
 import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
-import {IPool} from "../../interfaces/IPool.sol";
+import {IPool} from "../../interfaces/pools/IPool.sol";
 import {Converter} from "./Converter.sol";
 
 /// @title Velodrome xChain Staking Rewards Contract

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import {IPoolFactory} from "../interfaces/IPoolFactory.sol";
-import {IPool} from "../interfaces/IPool.sol";
+import {IPoolFactory} from "../interfaces/pools/IPoolFactory.sol";
+import {IPool} from "../interfaces/pools/IPool.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract PoolFactory is IPoolFactory {

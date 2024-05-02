@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IWETH} from "src/interfaces/IWETH.sol";
+import {IWETH} from "src/interfaces/external/IWETH.sol";
 
 interface IMockRouter {
     struct Route {

@@ -2,9 +2,9 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {IPool} from "../interfaces/IPool.sol";
-import {IPoolCallee} from "../interfaces/IPoolCallee.sol";
-import {IPoolFactory} from "../interfaces/IPoolFactory.sol";
+import {IPool} from "../interfaces/pools/IPool.sol";
+import {IPoolCallee} from "../interfaces/pools/IPoolCallee.sol";
+import {IPoolFactory} from "../interfaces/pools/IPoolFactory.sol";
 import {PoolFees} from "./PoolFees.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";

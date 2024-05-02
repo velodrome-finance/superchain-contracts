@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IWETH} from "./IWETH.sol";
+import {IWETH} from "./external/IWETH.sol";
 
 interface IRouter {
     struct Route {

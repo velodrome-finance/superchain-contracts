@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import {IWETH} from "src/interfaces/IWETH.sol";
+import {IWETH} from "src/interfaces/external/IWETH.sol";
 
 /// @dev Modified lightly from live deployed WETH contract as WETH9 is not a standard ERC20
 contract MockWETH is IWETH {
