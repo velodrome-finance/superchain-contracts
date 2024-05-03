@@ -11,6 +11,14 @@ interface IStakingRewardsFactory {
     event UnapproveKeeper(address indexed keeper);
     event SetNotifyAdmin(address indexed _notifyAdmin);
 
+    /// @notice Address of the fee sharing contract.
+    /// @return Fee sharing contract address
+    function sfs() external view returns (address);
+
+    /// @notice Token Id that sequencer fees are sent to.
+    /// @return Token Id
+    function tokenId() external view returns (uint256);
+
     /// @notice Notify admin address
     function notifyAdmin() external view returns (address);
 

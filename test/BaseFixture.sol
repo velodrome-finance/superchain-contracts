@@ -17,6 +17,7 @@ import {MockWETH} from "./mocks/MockWETH.sol";
 import {TestERC20} from "./mocks/TestERC20.sol";
 import {IMockRouter, MockRouter} from "./mocks/MockRouter.sol";
 import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
+import {FeeSharing} from "test/mocks/mode/FeeSharing.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -28,7 +29,6 @@ abstract contract BaseFixture is Test, Constants {
     PoolFactory public poolFactory;
     Pool public poolImplementation;
     StakingRewardsFactory public stakingRewardsFactory;
-    MockRouter public mockRouter;
     Router public router;
 
     /// tokens
@@ -36,6 +36,10 @@ abstract contract BaseFixture is Test, Constants {
     TestERC20 public token0;
     TestERC20 public token1;
     MockWETH public weth;
+
+    /// mocks
+    MockRouter public mockRouter;
+    FeeSharing public fs;
 
     Users internal users;
 
@@ -50,6 +54,10 @@ abstract contract BaseFixture is Test, Constants {
         TestERC20 tokenB = new TestERC20("Test Token B", "TTB", 6); // mimic USDC
         weth = new MockWETH();
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+
+        // mode mock -- remove when stakingrewards is removed
+        fs = new FeeSharing();
+        vm.etch(0x8680CEaBcb9b56913c519c069Add6Bc3494B7020, address(fs).code);
 
         poolImplementation = new Pool();
         poolFactory = new PoolFactory({
@@ -67,7 +75,12 @@ abstract contract BaseFixture is Test, Constants {
             _weth: address(weth)
         });
         router = new Router({_factory: address(poolFactory), _weth: address(weth)});
-        stakingRewardsFactory = new StakingRewardsFactory({_notifyAdmin: users.owner, _keepers: new address[](0)});
+        stakingRewardsFactory = new StakingRewardsFactory({
+            _notifyAdmin: users.owner,
+            _sfs: 0x8680CEaBcb9b56913c519c069Add6Bc3494B7020,
+            _recipient: users.owner,
+            _keepers: new address[](0)
+        });
 
         deal(address(token0), users.alice, TOKEN_1 * 1e9);
         deal(address(token1), users.alice, TOKEN_1 * 1e9);

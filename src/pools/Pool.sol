@@ -74,7 +74,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     constructor() ERC20("", "") ERC20Permit("") {}
 
     /// @inheritdoc IPool
-    function initialize(address _token0, address _token1, bool _stable) external {
+    function initialize(address _token0, address _token1, bool _stable) public virtual {
         if (factory != address(0)) revert FactoryAlreadySet();
         factory = msg.sender;
         (token0, token1, stable) = (_token0, _token1, _stable);

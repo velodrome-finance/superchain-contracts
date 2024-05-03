@@ -7,6 +7,7 @@ import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol"
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
+import {IFeeSharing} from "../../interfaces/IFeeSharing.sol";
 import {IStakingRewardsFactory} from "../../interfaces/gauges/stakingrewards/IStakingRewardsFactory.sol";
 import {IStakingRewards} from "../../interfaces/gauges/stakingrewards/IStakingRewards.sol";
 import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
@@ -48,10 +49,18 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
     /// @inheritdoc IStakingRewards
     mapping(uint256 => uint256) public rewardRateByEpoch;
 
-    constructor(address _stakingToken, address _rewardToken) {
+    constructor(address _stakingToken, address _rewardToken, address _sfs, uint256 _tokenId) {
         stakingToken = _stakingToken;
         rewardToken = _rewardToken;
-        feeConverter = address(new Converter({_stakingRewardsFactory: msg.sender, _targetToken: _rewardToken}));
+        IFeeSharing(_sfs).assign(_tokenId);
+        feeConverter = address(
+            new Converter({
+                _stakingRewardsFactory: msg.sender,
+                _targetToken: _rewardToken,
+                _sfs: _sfs,
+                _tokenId: _tokenId
+            })
+        );
     }
 
     function _claimFees() internal returns (uint256 claimed0, uint256 claimed1) {

@@ -32,6 +32,13 @@ abstract contract DeployBase is Script {
 
     function run() external {
         vm.startBroadcast(deployerAddress);
+        deploy();
+        logParams();
+        vm.stopBroadcast();
+    }
+
+    /// @dev Override if deploying extensions
+    function deploy() internal virtual {
         poolImplementation = address(new Pool());
         poolFactory = new PoolFactory({
             _implementation: poolImplementation,
@@ -41,9 +48,6 @@ abstract contract DeployBase is Script {
         });
 
         router = address(new Router({_factory: address(poolFactory), _weth: _params.weth}));
-
-        logParams();
-        vm.stopBroadcast();
     }
 
     function logParams() internal view {

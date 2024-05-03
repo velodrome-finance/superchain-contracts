@@ -3,12 +3,16 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "../../../BaseFixture.sol";
 import {DeployMode} from "script/deployParameters/DeployMode.s.sol";
+import {ModePool} from "src/pools/extensions/ModePool.sol";
+import {ModePoolFactory} from "src/pools/extensions/ModePoolFactory.sol";
+import {ModeRouter} from "src/extensions/ModeRouter.sol";
 
 contract RunTest is BaseFixture {
     using stdStorage for StdStorage;
 
     DeployMode public deploy;
     DeployMode.DeploymentParameters public params;
+    DeployMode.ModeDeploymentParameters public modeParams;
 
     function setUp() public override {
         deploy = new DeployMode();
@@ -17,15 +21,20 @@ contract RunTest is BaseFixture {
 
         createUsers();
         stdstore.target(address(deploy)).sig("deployerAddress()").checked_write(users.owner);
+
+        fs = new FeeSharing();
+        vm.etch(0x8680CEaBcb9b56913c519c069Add6Bc3494B7020, address(fs).code);
     }
 
     function testRun() public {
         deploy.run();
 
-        poolImplementation = Pool(deploy.poolImplementation());
-        poolFactory = PoolFactory(deploy.poolFactory());
-        router = Router(payable(deploy.router()));
+        ModePool poolImplementation = ModePool(address(deploy.poolImplementation()));
+        ModePoolFactory poolFactory = ModePoolFactory(address(deploy.poolFactory()));
+        StakingRewardsFactory stakingRewardsFactory = deploy.stakingRewardsFactory();
+        ModeRouter router = ModeRouter(payable(address(deploy.router())));
         params = deploy.params();
+        modeParams = deploy.modeParams();
 
         assertNotEq(address(poolImplementation), address(0));
         assertNotEq(address(poolFactory), address(0));
@@ -35,8 +44,15 @@ contract RunTest is BaseFixture {
         assertEq(poolFactory.poolAdmin(), params.poolAdmin);
         assertEq(poolFactory.pauser(), params.pauser);
         assertEq(poolFactory.feeManager(), params.feeManager);
+        assertEq(poolFactory.sfs(), modeParams.sfs);
+        assertEq(poolFactory.tokenId(), 0);
+
+        // assertEq(stakingRewardsFactory.notifyAdmin(), modeParams.notifyAdmin);
+        // assertEq(stakingRewardsFactory.sfs(), modeParams.sfs);
+        // assertEq(stakingRewardsFactory.tokenId(), 1);
 
         assertEq(router.factory(), address(poolFactory));
         assertEq(address(router.weth()), params.weth);
+        assertEq(router.tokenId(), 1);
     }
 }

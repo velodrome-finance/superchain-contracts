@@ -27,10 +27,10 @@ contract PoolFactory is IPoolFactory {
     /// @inheritdoc IPoolFactory
     address public poolAdmin;
 
-    mapping(address => mapping(address => mapping(bool => address))) private _getPool;
+    mapping(address => mapping(address => mapping(bool => address))) internal _getPool;
     address[] internal _allPools;
     /// @dev simplified check if its a pool, given that `stable` flag might not be available in peripherals
-    mapping(address => bool) private _isPool;
+    mapping(address => bool) internal _isPool;
     /// @inheritdoc IPoolFactory
     mapping(address => uint256) public customFee; // override for custom fees
 

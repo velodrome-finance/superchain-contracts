@@ -3,6 +3,8 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
+import {IFeeSharing} from "../../interfaces/IFeeSharing.sol";
 import {IStakingRewardsFactory} from "../../interfaces/gauges/stakingrewards/IStakingRewardsFactory.sol";
 import {StakingRewards} from "../../gauges/stakingrewards/StakingRewards.sol";
 
@@ -10,16 +12,25 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /// @inheritdoc IStakingRewardsFactory
+    address public immutable sfs;
+    /// @inheritdoc IStakingRewardsFactory
+    uint256 public immutable tokenId;
+
+    /// @inheritdoc IStakingRewardsFactory
     address public notifyAdmin;
 
     /// @dev Array of approved Keeper addresses
     EnumerableSet.AddressSet internal _keeperRegistry;
 
-    constructor(address _notifyAdmin, address[] memory _keepers) Ownable(msg.sender) {
+    constructor(address _notifyAdmin, address _sfs, address _recipient, address[] memory _keepers)
+        Ownable(msg.sender)
+    {
         for (uint256 i = 0; i < _keepers.length; i++) {
             _approveKeeper(_keepers[i]);
         }
         notifyAdmin = _notifyAdmin;
+        sfs = _sfs;
+        tokenId = IFeeSharing(_sfs).register(_recipient);
         emit SetNotifyAdmin({_notifyAdmin: _notifyAdmin});
     }
 
@@ -33,7 +44,9 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
 
     /// @inheritdoc IStakingRewardsFactory
     function createStakingRewards(address _pool, address _rewardToken) external returns (address stakingRewards) {
-        stakingRewards = address(new StakingRewards(_pool, _rewardToken));
+        stakingRewards = address(
+            new StakingRewards({_stakingToken: _pool, _rewardToken: _rewardToken, _sfs: sfs, _tokenId: tokenId})
+        );
     }
 
     /// @inheritdoc IStakingRewardsFactory
