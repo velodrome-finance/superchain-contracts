@@ -10,6 +10,7 @@ import {IRouter, Router} from "src/Router.sol";
 import {IConverter, Converter} from "src/gauges/stakingrewards/Converter.sol";
 import {IStakingRewards, StakingRewards} from "src/gauges/stakingrewards/StakingRewards.sol";
 import {IStakingRewardsFactory, StakingRewardsFactory} from "src/gauges/stakingrewards/StakingRewardsFactory.sol";
+import {ITokenRegistry, TokenRegistry} from "src/gauges/tokenregistry/TokenRegistry.sol";
 import {IGauge} from "src/interfaces/gauges/IGauge.sol";
 import {Users} from "./utils/Users.sol";
 import {Constants} from "./utils/Constants.sol";
@@ -29,6 +30,7 @@ abstract contract BaseFixture is Test, Constants {
     PoolFactory public poolFactory;
     Pool public poolImplementation;
     StakingRewardsFactory public stakingRewardsFactory;
+    TokenRegistry public tokenRegistry;
     Router public router;
 
     /// tokens
@@ -81,6 +83,10 @@ abstract contract BaseFixture is Test, Constants {
             _recipient: users.owner,
             _keepers: new address[](0)
         });
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(token0);
+        tokens[1] = address(token1);
+        tokenRegistry = new TokenRegistry({_admin: users.owner, _whitelistedTokens: tokens});
 
         deal(address(token0), users.alice, TOKEN_1 * 1e9);
         deal(address(token1), users.alice, TOKEN_1 * 1e9);

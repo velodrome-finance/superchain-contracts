@@ -1,0 +1,9 @@
+SetAdminTest
+├── When the caller is not Admin
+│   └── It should revert with NotAdmin
+└── When the caller is Admin
+    ├── When the given admin is the Zero Address
+    │   └── It should revert with ZeroAddress
+    └── When the given admin is not the Zero Address
+        ├── It should set the new Admin
+        └── It should emit {SetAdmin} event
