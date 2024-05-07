@@ -36,15 +36,45 @@ contract DeployMode is DeployBase {
     }
 
     function deploy() internal override {
-        poolImplementation = address(new ModePool());
-        poolFactory = new ModePoolFactory({
-            _implementation: poolImplementation,
-            _poolAdmin: _params.poolAdmin,
-            _pauser: _params.pauser,
-            _feeManager: _params.feeManager,
-            _sfs: _modeParams.sfs,
-            _recipient: _modeParams.recipient
-        });
+        poolImplementation = ModePool(
+            cx.deployCreate3({
+                salt: calculateSalt(POOL_ENTROPY),
+                initCode: abi.encodePacked(type(ModePool).creationCode)
+            })
+        );
+        poolFactory = ModePoolFactory(
+            cx.deployCreate3({
+                salt: calculateSalt(POOL_FACTORY_ENTROPY),
+                initCode: abi.encodePacked(
+                    type(ModePoolFactory).creationCode,
+                    abi.encode(
+                        address(poolImplementation), // pool implementation
+                        _params.poolAdmin, // pool admin
+                        _params.pauser, // pauser
+                        _params.feeManager, // fee manager
+                        _modeParams.sfs, // sequencer fee sharing contract
+                        _modeParams.recipient // sfs nft recipient
+                    )
+                )
+            })
+        );
+
+        router = ModeRouter(
+            payable(
+                cx.deployCreate3({
+                    salt: calculateSalt(ROUTER_ENTROPY),
+                    initCode: abi.encodePacked(
+                        type(ModeRouter).creationCode,
+                        abi.encode(
+                            address(poolFactory), // pool factory
+                            _params.weth, // weth contract
+                            _modeParams.sfs, // sequencer fee sharing contract
+                            _modeParams.recipient // sfs nft recipient
+                        )
+                    )
+                })
+            )
+        );
 
         // stakingRewardsFactory = new StakingRewardsFactory({
         //     _notifyAdmin: _modeParams.notifyAdmin,
@@ -52,15 +82,6 @@ contract DeployMode is DeployBase {
         //     _recipient: _modeParams.recipient,
         //     _keepers: new address[](0)
         // });
-
-        router = address(
-            new ModeRouter({
-                _factory: address(poolFactory),
-                _weth: _params.weth,
-                _sfs: _modeParams.sfs,
-                _recipient: _modeParams.recipient
-            })
-        );
     }
 
     function modeParams() public view returns (ModeDeploymentParameters memory) {

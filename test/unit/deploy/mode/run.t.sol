@@ -7,7 +7,7 @@ import {ModePool} from "src/pools/extensions/ModePool.sol";
 import {ModePoolFactory} from "src/pools/extensions/ModePoolFactory.sol";
 import {ModeRouter} from "src/extensions/ModeRouter.sol";
 
-contract RunTest is BaseFixture {
+contract ModeRunTest is BaseFixture {
     using stdStorage for StdStorage;
 
     DeployMode public deploy;
@@ -18,9 +18,10 @@ contract RunTest is BaseFixture {
         deploy = new DeployMode();
         // this runs automatically when you run the script, but must be called manually in the test
         deploy.setUp();
+        deployCreateX();
 
         createUsers();
-        stdstore.target(address(deploy)).sig("deployerAddress()").checked_write(users.owner);
+        stdstore.target(address(deploy)).sig("deployer()").checked_write(users.owner);
 
         fs = new FeeSharing();
         vm.etch(0x8680CEaBcb9b56913c519c069Add6Bc3494B7020, address(fs).code);

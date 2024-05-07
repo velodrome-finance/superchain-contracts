@@ -4,7 +4,7 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../../../BaseFixture.sol";
 import {DeployOptimism} from "script/deployParameters/DeployOptimism.s.sol";
 
-contract RunTest is BaseFixture {
+contract OptimismRunTest is BaseFixture {
     using stdStorage for StdStorage;
 
     DeployOptimism public deploy;
@@ -14,17 +14,18 @@ contract RunTest is BaseFixture {
         deploy = new DeployOptimism();
         // this runs automatically when you run the script, but must be called manually in the test
         deploy.setUp();
+        deployCreateX();
 
         createUsers();
-        stdstore.target(address(deploy)).sig("deployerAddress()").checked_write(users.owner);
+        stdstore.target(address(deploy)).sig("deployer()").checked_write(users.owner);
     }
 
     function testRun() public {
         deploy.run();
 
-        poolImplementation = Pool(deploy.poolImplementation());
-        poolFactory = PoolFactory(deploy.poolFactory());
-        router = Router(payable(deploy.router()));
+        poolImplementation = deploy.poolImplementation();
+        poolFactory = deploy.poolFactory();
+        router = deploy.router();
         params = deploy.params();
 
         assertNotEq(address(poolImplementation), address(0));

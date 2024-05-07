@@ -9,4 +9,8 @@ abstract contract Constants {
     uint256 public constant POOL_1 = 1e9;
 
     uint256 public constant WEEK = VelodromeTimeLibrary.WEEK;
+
+    bytes11 public constant POOL_ENTROPY = 0x0000000000000000000001;
+    bytes11 public constant POOL_FACTORY_ENTROPY = 0x0000000000000000000002;
+    bytes11 public constant ROUTER_ENTROPY = 0x0000000000000000000003;
 }

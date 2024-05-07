@@ -16,6 +16,7 @@ import {Users} from "./utils/Users.sol";
 import {Constants} from "./utils/Constants.sol";
 import {MockWETH} from "./mocks/MockWETH.sol";
 import {TestERC20} from "./mocks/TestERC20.sol";
+import {CreateX} from "./mocks/CreateX.sol";
 import {IMockRouter, MockRouter} from "./mocks/MockRouter.sol";
 import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
 import {FeeSharing} from "test/mocks/mode/FeeSharing.sol";
@@ -42,6 +43,7 @@ abstract contract BaseFixture is Test, Constants {
     /// mocks
     MockRouter public mockRouter;
     FeeSharing public fs;
+    CreateX public cx = CreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
 
     Users internal users;
 
@@ -57,17 +59,44 @@ abstract contract BaseFixture is Test, Constants {
         weth = new MockWETH();
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
 
+        deployCreateX();
+
         // mode mock -- remove when stakingrewards is removed
         fs = new FeeSharing();
         vm.etch(0x8680CEaBcb9b56913c519c069Add6Bc3494B7020, address(fs).code);
 
-        poolImplementation = new Pool();
-        poolFactory = new PoolFactory({
-            _implementation: address(poolImplementation),
-            _poolAdmin: address(users.owner),
-            _pauser: address(users.owner),
-            _feeManager: address(users.feeManager)
-        });
+        poolImplementation = Pool(
+            cx.deployCreate3({salt: calculateSalt(POOL_ENTROPY), initCode: abi.encodePacked(type(Pool).creationCode)})
+        );
+        poolFactory = PoolFactory(
+            cx.deployCreate3({
+                salt: calculateSalt(POOL_FACTORY_ENTROPY),
+                initCode: abi.encodePacked(
+                    type(PoolFactory).creationCode,
+                    abi.encode(
+                        address(poolImplementation), // pool implementation
+                        users.owner, // pool admin
+                        users.owner, // pauser
+                        users.feeManager // fee manager
+                    )
+                )
+            })
+        );
+
+        router = Router(
+            payable(
+                cx.deployCreate3({
+                    salt: calculateSalt(ROUTER_ENTROPY),
+                    initCode: abi.encodePacked(
+                        type(Router).creationCode,
+                        abi.encode(
+                            address(poolFactory), // pool factory
+                            address(weth) // weth contract
+                        )
+                    )
+                })
+            )
+        );
 
         mockRouter = new MockRouter({
             _forwarder: address(0),
@@ -76,7 +105,6 @@ abstract contract BaseFixture is Test, Constants {
             _voter: address(0),
             _weth: address(weth)
         });
-        router = new Router({_factory: address(poolFactory), _weth: address(weth)});
         stakingRewardsFactory = new StakingRewardsFactory({
             _notifyAdmin: users.owner,
             _sfs: 0x8680CEaBcb9b56913c519c069Add6Bc3494B7020,
@@ -101,6 +129,16 @@ abstract contract BaseFixture is Test, Constants {
     function labelContracts() public virtual {
         vm.label(address(poolImplementation), "Pool Implementation");
         vm.label(address(poolFactory), "Pool Factory");
+        vm.label(address(cx), "CreateX");
+    }
+
+    function deployCreateX() internal {
+        // identical to CreateX, with versions changed
+        deployCodeTo("test/mocks/CreateX.sol", address(cx));
+    }
+
+    function calculateSalt(bytes11 entropy) internal view returns (bytes32 salt) {
+        salt = bytes32(abi.encodePacked(bytes20(address(this)), bytes1(0x00), bytes11(entropy)));
     }
 
     function createUsers() internal {

@@ -5,6 +5,7 @@ import "forge-std/StdJson.sol";
 import "forge-std/Script.sol";
 import "forge-std/console2.sol";
 
+import {ICreateX} from "createX/ICreateX.sol";
 import {Pool} from "src/pools/Pool.sol";
 import {PoolFactory} from "src/pools/PoolFactory.sol";
 import {Router} from "src/Router.sol";
@@ -21,39 +22,93 @@ abstract contract DeployBase is Script {
     DeploymentParameters internal _params;
 
     // deployed
-    address public poolImplementation;
+    Pool public poolImplementation;
     PoolFactory public poolFactory;
-    address public router;
+    Router public router;
 
-    uint256 public deployPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOY");
-    address public deployerAddress = vm.rememberKey(deployPrivateKey);
+    ICreateX public cx = ICreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
+
+    address public deployer = 0x4994DacdB9C57A811aFfbF878D92E00EF2E5C4C2;
+
+    /// @dev Entropy used for deterministic deployments across chains
+    bytes11 public constant POOL_ENTROPY = 0x0000000000000000000001;
+    bytes11 public constant POOL_FACTORY_ENTROPY = 0x0000000000000000000002;
+    bytes11 public constant ROUTER_ENTROPY = 0x0000000000000000000003;
 
     function setUp() public virtual;
 
     function run() external {
-        vm.startBroadcast(deployerAddress);
+        vm.startBroadcast(deployer);
+        verifyCreate3();
+
         deploy();
         logParams();
+
         vm.stopBroadcast();
     }
 
     /// @dev Override if deploying extensions
     function deploy() internal virtual {
-        poolImplementation = address(new Pool());
-        poolFactory = new PoolFactory({
-            _implementation: poolImplementation,
-            _poolAdmin: _params.poolAdmin,
-            _pauser: _params.pauser,
-            _feeManager: _params.feeManager
-        });
+        poolImplementation = Pool(
+            cx.deployCreate3({salt: calculateSalt(POOL_ENTROPY), initCode: abi.encodePacked(type(Pool).creationCode)})
+        );
+        poolFactory = PoolFactory(
+            cx.deployCreate3({
+                salt: calculateSalt(POOL_FACTORY_ENTROPY),
+                initCode: abi.encodePacked(
+                    type(PoolFactory).creationCode,
+                    abi.encode(
+                        address(poolImplementation), // pool implementation
+                        _params.poolAdmin, // pool admin
+                        _params.pauser, // pauser
+                        _params.feeManager // fee manager
+                    )
+                )
+            })
+        );
 
-        router = address(new Router({_factory: address(poolFactory), _weth: _params.weth}));
+        router = Router(
+            payable(
+                cx.deployCreate3({
+                    salt: calculateSalt(ROUTER_ENTROPY),
+                    initCode: abi.encodePacked(
+                        type(Router).creationCode,
+                        abi.encode(
+                            address(poolFactory), // pool factory
+                            _params.weth // weth contract
+                        )
+                    )
+                })
+            )
+        );
+    }
+
+    function verifyCreate3() internal view {
+        /// if not run locally
+        if (block.chainid != 31337) {
+            uint256 size;
+            address contractAddress = address(cx);
+            assembly {
+                size := extcodesize(contractAddress)
+            }
+
+            bytes memory bytecode = new bytes(size);
+            assembly {
+                extcodecopy(contractAddress, add(bytecode, 32), 0, size)
+            }
+
+            assert(keccak256(bytecode) == bytes32(0xbd8a7ea8cfca7b4e5f5041d7d4b17bc317c5ce42cfbc42066a00cf26b43eb53f));
+        }
+    }
+
+    function calculateSalt(bytes11 entropy) internal view returns (bytes32 salt) {
+        salt = bytes32(abi.encodePacked(bytes20(deployer), bytes1(0x00), bytes11(entropy)));
     }
 
     function logParams() internal view {
-        console2.log("poolImplementation: ", poolImplementation);
+        console2.log("poolImplementation: ", address(poolImplementation));
         console2.log("poolFactory: ", address(poolFactory));
-        console2.log("router: ", router);
+        console2.log("router: ", address(router));
     }
 
     function logOutput() internal {
@@ -63,9 +118,9 @@ abstract contract DeployBase is Script {
             path,
             string(
                 abi.encodePacked(
-                    stdJson.serialize("", "poolImplementation", poolImplementation),
+                    stdJson.serialize("", "poolImplementation", address(poolImplementation)),
                     stdJson.serialize("", "poolFactory", address(poolFactory)),
-                    stdJson.serialize("", "router", router)
+                    stdJson.serialize("", "router", address(router))
                 )
             )
         );
