@@ -314,7 +314,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         _mint(to, liquidity);
 
         _update(_balance0, _balance1, _reserve0, _reserve1);
-        emit Mint(msg.sender, _amount0, _amount1);
+        emit Mint(msg.sender, to, _amount0, _amount1);
     }
 
     /// @inheritdoc IPool
