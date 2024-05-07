@@ -9,6 +9,7 @@ import {ICreateX} from "createX/ICreateX.sol";
 import {Pool} from "src/pools/Pool.sol";
 import {PoolFactory} from "src/pools/PoolFactory.sol";
 import {Router} from "src/Router.sol";
+import {TokenRegistry} from "src/gauges/tokenregistry/TokenRegistry.sol";
 
 abstract contract DeployBase is Script {
     struct DeploymentParameters {
@@ -16,6 +17,8 @@ abstract contract DeployBase is Script {
         address poolAdmin;
         address pauser;
         address feeManager;
+        address whitelistAdmin;
+        address[] whitelistedTokens;
         string outputFilename;
     }
 
@@ -25,6 +28,7 @@ abstract contract DeployBase is Script {
     Pool public poolImplementation;
     PoolFactory public poolFactory;
     Router public router;
+    TokenRegistry public tokenRegistry;
 
     ICreateX public cx = ICreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
 
@@ -81,6 +85,9 @@ abstract contract DeployBase is Script {
                 })
             )
         );
+
+        tokenRegistry =
+            new TokenRegistry({_admin: _params.whitelistAdmin, _whitelistedTokens: _params.whitelistedTokens});
     }
 
     function verifyCreate3() internal view {

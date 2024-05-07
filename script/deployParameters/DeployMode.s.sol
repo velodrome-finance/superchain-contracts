@@ -7,6 +7,7 @@ import {ModePoolFactory} from "src/pools/extensions/ModePoolFactory.sol";
 import {ModeRouter} from "src/extensions/ModeRouter.sol";
 import {StakingRewardsFactory} from "src/gauges/stakingrewards/StakingRewardsFactory.sol";
 import {StakingRewards} from "src/gauges/stakingrewards/StakingRewards.sol";
+import {TokenRegistry} from "src/gauges/tokenregistry/TokenRegistry.sol";
 
 contract DeployMode is DeployBase {
     struct ModeDeploymentParameters {
@@ -16,16 +17,21 @@ contract DeployMode is DeployBase {
     }
 
     ModeDeploymentParameters internal _modeParams;
+    address[] public whitelistedTokens = new address[](1);
 
     StakingRewardsFactory public stakingRewardsFactory;
     StakingRewards public stakingRewards;
 
     function setUp() public override {
+        whitelistedTokens.push(0x4200000000000000000000000000000000000006);
+
         _params = DeployBase.DeploymentParameters({
             weth: 0x4200000000000000000000000000000000000006,
             poolAdmin: 0x0000000000000000000000000000000000000001,
             pauser: 0x0000000000000000000000000000000000000001,
             feeManager: 0x0000000000000000000000000000000000000001,
+            whitelistAdmin: 0x0000000000000000000000000000000000000001,
+            whitelistedTokens: whitelistedTokens,
             outputFilename: "Mode.json"
         });
         _modeParams = ModeDeploymentParameters({
@@ -82,6 +88,9 @@ contract DeployMode is DeployBase {
         //     _recipient: _modeParams.recipient,
         //     _keepers: new address[](0)
         // });
+
+        tokenRegistry =
+            new TokenRegistry({_admin: _params.whitelistAdmin, _whitelistedTokens: _params.whitelistedTokens});
     }
 
     function modeParams() public view returns (ModeDeploymentParameters memory) {

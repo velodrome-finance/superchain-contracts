@@ -34,12 +34,14 @@ contract ModeRunTest is BaseFixture {
         ModePoolFactory poolFactory = ModePoolFactory(address(deploy.poolFactory()));
         StakingRewardsFactory stakingRewardsFactory = deploy.stakingRewardsFactory();
         ModeRouter router = ModeRouter(payable(address(deploy.router())));
+        tokenRegistry = deploy.tokenRegistry();
         params = deploy.params();
         modeParams = deploy.modeParams();
 
         assertNotEq(address(poolImplementation), address(0));
         assertNotEq(address(poolFactory), address(0));
         assertNotEq(address(router), address(0));
+        assertNotEq(address(tokenRegistry), address(0));
 
         assertEq(poolFactory.implementation(), address(poolImplementation));
         assertEq(poolFactory.poolAdmin(), params.poolAdmin);
@@ -55,5 +57,8 @@ contract ModeRunTest is BaseFixture {
         assertEq(router.factory(), address(poolFactory));
         assertEq(address(router.weth()), params.weth);
         assertEq(router.tokenId(), 1);
+
+        assertEq(tokenRegistry.admin(), params.whitelistAdmin);
+        assertTrue(tokenRegistry.isWhitelistedToken(params.whitelistedTokens[0]));
     }
 }

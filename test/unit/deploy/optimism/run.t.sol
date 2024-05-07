@@ -26,11 +26,13 @@ contract OptimismRunTest is BaseFixture {
         poolImplementation = deploy.poolImplementation();
         poolFactory = deploy.poolFactory();
         router = deploy.router();
+        tokenRegistry = deploy.tokenRegistry();
         params = deploy.params();
 
         assertNotEq(address(poolImplementation), address(0));
         assertNotEq(address(poolFactory), address(0));
         assertNotEq(address(router), address(0));
+        assertNotEq(address(tokenRegistry), address(0));
 
         assertEq(poolFactory.implementation(), address(poolImplementation));
         assertEq(poolFactory.poolAdmin(), params.poolAdmin);
@@ -39,5 +41,8 @@ contract OptimismRunTest is BaseFixture {
 
         assertEq(router.factory(), address(poolFactory));
         assertEq(address(router.weth()), params.weth);
+
+        assertEq(tokenRegistry.admin(), params.whitelistAdmin);
+        assertTrue(tokenRegistry.isWhitelistedToken(params.whitelistedTokens[0]));
     }
 }
