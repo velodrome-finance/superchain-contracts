@@ -103,7 +103,7 @@ contract Router is IRouter {
     }
 
     /// @inheritdoc IRouter
-    function getAmountsOut(uint256 amountIn, Route[] memory routes) external view returns (uint256[] memory amounts) {
+    function getAmountsOut(uint256 amountIn, Route[] memory routes) public view returns (uint256[] memory amounts) {
         if (routes.length < 1) revert InvalidPath();
         amounts = new uint256[](routes.length + 1);
         amounts[0] = amountIn;
@@ -278,6 +278,73 @@ contract Router is IRouter {
         _safeTransfer(token, to, amountToken);
         weth.withdraw(amountETH);
         _safeTransferETH(to, amountETH);
+    }
+
+    // **** SWAP ****
+    /// @dev requires the initial amount to have already been sent to the first pool
+    function _swap(uint256[] memory amounts, Route[] memory routes, address _to) internal virtual {
+        uint256 _length = routes.length;
+        for (uint256 i = 0; i < _length; i++) {
+            (address token0,) = sortTokens(routes[i].from, routes[i].to);
+            uint256 amountOut = amounts[i + 1];
+            (uint256 amount0Out, uint256 amount1Out) =
+                routes[i].from == token0 ? (uint256(0), amountOut) : (amountOut, uint256(0));
+            address to =
+                i < routes.length - 1 ? poolFor(routes[i + 1].from, routes[i + 1].to, routes[i + 1].stable) : _to;
+            IPool(poolFor(routes[i].from, routes[i].to, routes[i].stable)).swap(
+                amount0Out, amount1Out, to, new bytes(0)
+            );
+        }
+    }
+
+    /// @inheritdoc IRouter
+    function swapExactTokensForTokens(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        Route[] calldata routes,
+        address to,
+        uint256 deadline
+    ) external ensure(deadline) returns (uint256[] memory amounts) {
+        amounts = getAmountsOut(amountIn, routes);
+        if (amounts[amounts.length - 1] < amountOutMin) revert InsufficientOutputAmount();
+        _safeTransferFrom(
+            routes[0].from, msg.sender, poolFor(routes[0].from, routes[0].to, routes[0].stable), amounts[0]
+        );
+        _swap(amounts, routes, to);
+    }
+
+    /// @inheritdoc IRouter
+    function swapExactETHForTokens(uint256 amountOutMin, Route[] calldata routes, address to, uint256 deadline)
+        external
+        payable
+        ensure(deadline)
+        returns (uint256[] memory amounts)
+    {
+        if (routes[0].from != address(weth)) revert InvalidPath();
+        amounts = getAmountsOut(msg.value, routes);
+        if (amounts[amounts.length - 1] < amountOutMin) revert InsufficientOutputAmount();
+        weth.deposit{value: amounts[0]}();
+        assert(weth.transfer(poolFor(routes[0].from, routes[0].to, routes[0].stable), amounts[0]));
+        _swap(amounts, routes, to);
+    }
+
+    /// @inheritdoc IRouter
+    function swapExactTokensForETH(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        Route[] calldata routes,
+        address to,
+        uint256 deadline
+    ) external ensure(deadline) returns (uint256[] memory amounts) {
+        if (routes[routes.length - 1].to != address(weth)) revert InvalidPath();
+        amounts = getAmountsOut(amountIn, routes);
+        if (amounts[amounts.length - 1] < amountOutMin) revert InsufficientOutputAmount();
+        _safeTransferFrom(
+            routes[0].from, msg.sender, poolFor(routes[0].from, routes[0].to, routes[0].stable), amounts[0]
+        );
+        _swap(amounts, routes, address(this));
+        weth.withdraw(amounts[amounts.length - 1]);
+        _safeTransferETH(to, amounts[amounts.length - 1]);
     }
 
     // **** REMOVE LIQUIDITY (supporting fee-on-transfer tokens) ****

@@ -18,6 +18,7 @@ interface IRouter {
     error InsufficientAmountADesired();
     error InsufficientAmountBDesired();
     error InsufficientLiquidity();
+    error InsufficientOutputAmount();
     error InvalidPath();
     error OnlyWETH();
     error SameAddresses();
@@ -199,4 +200,45 @@ interface IRouter {
         address to,
         uint256 deadline
     ) external returns (uint256 amountETH);
+
+    /// @notice Swap one token for another
+    /// @param amountIn     Amount of token in
+    /// @param amountOutMin Minimum amount of desired token received
+    /// @param routes       Array of trade routes used in the swap
+    /// @param to           Recipient of the tokens received
+    /// @param deadline     Deadline to receive tokens
+    /// @return amounts     Array of amounts returned per route
+    function swapExactTokensForTokens(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        Route[] calldata routes,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
+
+    /// @notice Swap ETH for a token
+    /// @param amountOutMin Minimum amount of desired token received
+    /// @param routes       Array of trade routes used in the swap
+    /// @param to           Recipient of the tokens received
+    /// @param deadline     Deadline to receive tokens
+    /// @return amounts     Array of amounts returned per route
+    function swapExactETHForTokens(uint256 amountOutMin, Route[] calldata routes, address to, uint256 deadline)
+        external
+        payable
+        returns (uint256[] memory amounts);
+
+    /// @notice Swap a token for WETH (returned as ETH)
+    /// @param amountIn     Amount of token in
+    /// @param amountOutMin Minimum amount of desired ETH
+    /// @param routes       Array of trade routes used in the swap
+    /// @param to           Recipient of the tokens received
+    /// @param deadline     Deadline to receive tokens
+    /// @return amounts     Array of amounts returned per route
+    function swapExactTokensForETH(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        Route[] calldata routes,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
 }
