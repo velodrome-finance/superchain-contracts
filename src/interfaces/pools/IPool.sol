@@ -13,7 +13,6 @@ interface IPool {
     error IsPaused();
     error InvalidTo();
     error K();
-    error NotEmergencyCouncil();
 
     event Fees(address indexed sender, uint256 amount0, uint256 amount1);
     event Mint(address indexed sender, address indexed to, uint256 amount0, uint256 amount1);
