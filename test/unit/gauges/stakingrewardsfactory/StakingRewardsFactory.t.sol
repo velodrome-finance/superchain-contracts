@@ -8,5 +8,6 @@ contract StakingRewardsFactoryTest is BaseFixture {
         assertEq(stakingRewardsFactory.keepersLength(), 0);
         assertEq(stakingRewardsFactory.owner(), address(this));
         assertEq(stakingRewardsFactory.notifyAdmin(), address(users.owner));
+        assertEq(stakingRewardsFactory.tokenRegistry(), address(tokenRegistry));
     }
 }

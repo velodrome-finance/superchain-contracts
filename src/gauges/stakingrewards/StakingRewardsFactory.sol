@@ -5,8 +5,10 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {IFeeSharing} from "../../interfaces/IFeeSharing.sol";
+import {ITokenRegistry} from "../../interfaces/gauges/tokenregistry/ITokenRegistry.sol";
 import {IStakingRewardsFactory} from "../../interfaces/gauges/stakingrewards/IStakingRewardsFactory.sol";
 import {StakingRewards} from "../../gauges/stakingrewards/StakingRewards.sol";
+import {IPool} from "../../interfaces/pools/IPool.sol";
 
 contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -17,18 +19,32 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
     uint256 public immutable tokenId;
 
     /// @inheritdoc IStakingRewardsFactory
+    address public immutable tokenRegistry;
+
+    /// @inheritdoc IStakingRewardsFactory
     address public notifyAdmin;
+
+    /// @inheritdoc IStakingRewardsFactory
+    mapping(address => address) public gauges;
+
+    /// @inheritdoc IStakingRewardsFactory
+    mapping(address => address) public poolForGauge;
 
     /// @dev Array of approved Keeper addresses
     EnumerableSet.AddressSet internal _keeperRegistry;
 
-    constructor(address _notifyAdmin, address _sfs, address _recipient, address[] memory _keepers)
-        Ownable(msg.sender)
-    {
+    constructor(
+        address _notifyAdmin,
+        address _tokenRegistry,
+        address _sfs,
+        address _recipient,
+        address[] memory _keepers
+    ) Ownable(msg.sender) {
         for (uint256 i = 0; i < _keepers.length; i++) {
             _approveKeeper(_keepers[i]);
         }
         notifyAdmin = _notifyAdmin;
+        tokenRegistry = _tokenRegistry;
         sfs = _sfs;
         tokenId = IFeeSharing(_sfs).register(_recipient);
         emit SetNotifyAdmin({_notifyAdmin: _notifyAdmin});
@@ -44,9 +60,25 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
 
     /// @inheritdoc IStakingRewardsFactory
     function createStakingRewards(address _pool, address _rewardToken) external returns (address stakingRewards) {
+        if (gauges[_pool] != address(0)) revert GaugeExists();
+        if (_rewardToken == address(0) || _pool == address(0)) revert ZeroAddress();
+        (address token0, address token1) = IPool(_pool).tokens();
+        ITokenRegistry _tokenRegistry = ITokenRegistry(tokenRegistry);
+        if (!_tokenRegistry.isWhitelistedToken(token0) || !_tokenRegistry.isWhitelistedToken(token1)) {
+            revert NotWhitelistedToken();
+        }
+
         stakingRewards = address(
             new StakingRewards({_stakingToken: _pool, _rewardToken: _rewardToken, _sfs: sfs, _tokenId: tokenId})
         );
+        gauges[_pool] = stakingRewards;
+        poolForGauge[stakingRewards] = _pool;
+        emit StakingRewardsCreated({
+            pool: _pool,
+            rewardToken: _rewardToken,
+            stakingRewards: stakingRewards,
+            creator: msg.sender
+        });
     }
 
     /// @inheritdoc IStakingRewardsFactory

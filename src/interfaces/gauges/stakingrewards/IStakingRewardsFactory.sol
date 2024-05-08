@@ -2,14 +2,19 @@
 pragma solidity ^0.8.0;
 
 interface IStakingRewardsFactory {
+    error NotWhitelistedToken();
     error AlreadyApproved();
     error NotNotifyAdmin();
+    error GaugeExists();
     error NotApproved();
     error ZeroAddress();
 
     event ApproveKeeper(address indexed keeper);
     event UnapproveKeeper(address indexed keeper);
     event SetNotifyAdmin(address indexed _notifyAdmin);
+    event StakingRewardsCreated(
+        address indexed pool, address indexed rewardToken, address indexed stakingRewards, address creator
+    );
 
     /// @notice Address of the fee sharing contract.
     /// @return Fee sharing contract address
@@ -22,7 +27,17 @@ interface IStakingRewardsFactory {
     /// @notice Notify admin address
     function notifyAdmin() external view returns (address);
 
+    /// @notice Token Registry address
+    function tokenRegistry() external view returns (address);
+
+    /// @notice Pool => Gauge
+    function gauges(address _pool) external view returns (address);
+
+    /// @notice Gauge => Pool
+    function poolForGauge(address _gauge) external view returns (address);
+
     /// @notice Set new notify admin
+    /// @dev    Only callable by current notify admin
     /// @param _notifyAdmin New notify admin address
     function setNotifyAdmin(address _notifyAdmin) external;
 

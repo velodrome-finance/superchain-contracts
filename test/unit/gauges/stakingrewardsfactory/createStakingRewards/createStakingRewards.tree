@@ -1,0 +1,14 @@
+CreateStakingRewardsTest
+├── When gauge exists for given pool
+│   └── It should revert with GaugeExists
+└── When gauge does not exist for given pool
+    ├── When reward token is zero address
+    │   └── It should revert with ZeroAddress
+    └── When reward token is not zero address
+        ├── When one of the tokens is not whitelisted in registry
+        │   └── It should revert with NotWhitelisted
+        └── When both tokens are whitelisted in registry
+            ├── It should deploy new StakingRewards contract
+            ├── It should store new staking rewards contract in gauges mapping
+            ├── It should store pool for new staking rewards contract in poolForGauge mapping
+            └── It should emit a {StakingRewardsCreated} event

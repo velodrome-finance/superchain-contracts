@@ -105,16 +105,20 @@ abstract contract BaseFixture is Test, Constants {
             _voter: address(0),
             _weth: address(weth)
         });
-        stakingRewardsFactory = new StakingRewardsFactory({
-            _notifyAdmin: users.owner,
-            _sfs: 0x8680CEaBcb9b56913c519c069Add6Bc3494B7020,
-            _recipient: users.owner,
-            _keepers: new address[](0)
-        });
+        router = new Router({_factory: address(poolFactory), _weth: address(weth)});
+
         address[] memory tokens = new address[](2);
         tokens[0] = address(token0);
         tokens[1] = address(token1);
         tokenRegistry = new TokenRegistry({_admin: users.owner, _whitelistedTokens: tokens});
+
+        stakingRewardsFactory = new StakingRewardsFactory({
+            _notifyAdmin: users.owner,
+            _tokenRegistry: address(tokenRegistry),
+            _sfs: 0x8680CEaBcb9b56913c519c069Add6Bc3494B7020,
+            _recipient: users.owner,
+            _keepers: new address[](0)
+        });
 
         deal(address(token0), users.alice, TOKEN_1 * 1e9);
         deal(address(token1), users.alice, TOKEN_1 * 1e9);
