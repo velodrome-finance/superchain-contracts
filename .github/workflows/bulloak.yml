@@ -1,0 +1,32 @@
+name: bulloak
+
+on:
+  push:
+    branches: 
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    strategy:
+      fail-fast: true
+
+    name: Testing Tree Structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+
+      - name: Install Bulloak
+        run: cargo install bulloak@0.7.1
+        id: install-bulloak
+
+      - name: Run Bulloak checks
+        run: bulloak check $(find test -type f -name "*.tree")
+        id: check
