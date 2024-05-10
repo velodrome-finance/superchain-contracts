@@ -34,7 +34,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 */
 
-/// @title Velodrome V2 Router
+/// @title Velodrome Superchain Router
 /// @author velodrome.finance
 /// @notice Supports adding and removing liquidity from v2 pools
 contract Router is IRouter {

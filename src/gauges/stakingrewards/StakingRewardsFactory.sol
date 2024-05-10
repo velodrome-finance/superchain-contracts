@@ -15,6 +15,7 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
 
     /// @inheritdoc IStakingRewardsFactory
     address public immutable sfs;
+
     /// @inheritdoc IStakingRewardsFactory
     uint256 public immutable tokenId;
 
@@ -23,6 +24,9 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
 
     /// @inheritdoc IStakingRewardsFactory
     address public notifyAdmin;
+
+    /// @inheritdoc IStakingRewardsFactory
+    address public immutable router;
 
     /// @inheritdoc IStakingRewardsFactory
     mapping(address => address) public gauges;
@@ -36,6 +40,7 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
     constructor(
         address _notifyAdmin,
         address _tokenRegistry,
+        address _router,
         address _sfs,
         address _recipient,
         address[] memory _keepers
@@ -45,6 +50,7 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
         }
         notifyAdmin = _notifyAdmin;
         tokenRegistry = _tokenRegistry;
+        router = _router;
         sfs = _sfs;
         tokenId = IFeeSharing(_sfs).register(_recipient);
         emit SetNotifyAdmin({_notifyAdmin: _notifyAdmin});

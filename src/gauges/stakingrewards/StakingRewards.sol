@@ -56,6 +56,7 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
         feeConverter = address(
             new Converter({
                 _stakingRewardsFactory: msg.sender,
+                _poolFactory: IPool(_stakingToken).factory(),
                 _targetToken: _rewardToken,
                 _sfs: _sfs,
                 _tokenId: _tokenId

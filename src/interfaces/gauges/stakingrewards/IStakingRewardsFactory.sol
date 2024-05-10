@@ -24,6 +24,9 @@ interface IStakingRewardsFactory {
     /// @return Token Id
     function tokenId() external view returns (uint256);
 
+    /// @notice Address of the Router being used in Converters
+    function router() external view returns (address);
+
     /// @notice Notify admin address
     function notifyAdmin() external view returns (address);
 

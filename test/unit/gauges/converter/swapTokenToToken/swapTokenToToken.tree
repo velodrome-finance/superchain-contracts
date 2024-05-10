@@ -1,0 +1,36 @@
+SwapTokenToTokenTest
+├── When caller is not Keeper
+│   └── It should revert with NotKeeper
+└── When caller is Keeper
+    ├── When slippage exceeds MAX_SLIPPAGE
+    │   └── It should revert with SlippageTooHigh
+    └── When slippage does not exceed MAX_SLIPPAGE
+        ├── When token to swap is the zero address
+        │   └── It should revert with ZeroAddress
+        └── When token to swap is not the zero address
+            ├── When token to swap is target token
+            │   └── It should revert with InvalidPath
+            └── When token to swap is not target token
+                ├── When no routes are given
+                │   └── It should revert with InvalidPath
+                └── When routes are given
+                    ├── When input token of first route is not token to swap
+                    │   └── It should revert with InvalidPath
+                    └── When input token of first route is token to swap
+                        ├── When output token of last route is not target token
+                        │   └── It should revert with InvalidPath
+                        └── When output token of last route is target token
+                            ├── Given balance in token to swap is zero
+                            │   └── It should revert with AmountInZero
+                            └── Given balance in token to swap is not zero
+                                ├── Given no pool for one of the routes provided
+                                │   └── It should revert with NoRouteFound
+                                └── Given a pool for all routes provided
+                                    ├── Given no quote for one of the routes provided
+                                    │   └── It should revert with NoRouteFound
+                                    └── Given a quote for all routes provided
+                                        ├── It should execute swap via Router
+                                        ├── It should swap all existing balance in input token to target token
+                                        ├── It should use all existing allowance in Swap
+                                        ├── It should update the value of amountEarned
+                                        └── It should emit a {SwapTokenToToken} event

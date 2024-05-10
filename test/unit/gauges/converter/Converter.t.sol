@@ -35,5 +35,8 @@ contract ConverterTest is BaseFixture {
         assertTrue(stakingRewardsFactory.isKeeper(users.bob));
         assertEq(feeConverter.gauge(), address(stakingRewards));
         assertEq(feeConverter.targetToken(), stakingRewards.rewardToken());
+        assertEq(address(feeConverter.poolFactory()), address(poolFactory));
+        assertEq(address(feeConverter.router()), stakingRewardsFactory.router());
+        assertEq(poolFactory.getPool(address(token0), address(token1), true), address(pool));
     }
 }

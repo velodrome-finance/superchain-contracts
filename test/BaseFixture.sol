@@ -17,7 +17,6 @@ import {Constants} from "./utils/Constants.sol";
 import {MockWETH} from "./mocks/MockWETH.sol";
 import {TestERC20} from "./mocks/TestERC20.sol";
 import {CreateX} from "./mocks/CreateX.sol";
-import {IMockRouter, MockRouter} from "./mocks/MockRouter.sol";
 import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
 import {FeeSharing} from "test/mocks/mode/FeeSharing.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -41,7 +40,6 @@ abstract contract BaseFixture is Test, Constants {
     MockWETH public weth;
 
     /// mocks
-    MockRouter public mockRouter;
     FeeSharing public fs;
     CreateX public cx = CreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
 
@@ -58,6 +56,10 @@ abstract contract BaseFixture is Test, Constants {
         TestERC20 tokenB = new TestERC20("Test Token B", "TTB", 6); // mimic USDC
         weth = new MockWETH();
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+
+        // mode mock -- remove when stakingrewards is removed
+        fs = new FeeSharing();
+        vm.etch(0x8680CEaBcb9b56913c519c069Add6Bc3494B7020, address(fs).code);
 
         deployCreateX();
 
@@ -98,15 +100,6 @@ abstract contract BaseFixture is Test, Constants {
             )
         );
 
-        mockRouter = new MockRouter({
-            _forwarder: address(0),
-            _factoryRegistry: address(0),
-            _factory: address(poolFactory),
-            _voter: address(0),
-            _weth: address(weth)
-        });
-        router = new Router({_factory: address(poolFactory), _weth: address(weth)});
-
         address[] memory tokens = new address[](2);
         tokens[0] = address(token0);
         tokens[1] = address(token1);
@@ -115,6 +108,7 @@ abstract contract BaseFixture is Test, Constants {
         stakingRewardsFactory = new StakingRewardsFactory({
             _notifyAdmin: users.owner,
             _tokenRegistry: address(tokenRegistry),
+            _router: address(router),
             _sfs: 0x8680CEaBcb9b56913c519c069Add6Bc3494B7020,
             _recipient: users.owner,
             _keepers: new address[](0)
@@ -133,6 +127,7 @@ abstract contract BaseFixture is Test, Constants {
     function labelContracts() public virtual {
         vm.label(address(poolImplementation), "Pool Implementation");
         vm.label(address(poolFactory), "Pool Factory");
+        vm.label(address(router), "Router");
         vm.label(address(cx), "CreateX");
     }
 
