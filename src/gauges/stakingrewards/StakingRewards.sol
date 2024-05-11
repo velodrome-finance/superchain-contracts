@@ -93,8 +93,7 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
 
     /// @inheritdoc IStakingRewards
     function getReward(address _account) external nonReentrant {
-        address sender = msg.sender;
-        if (sender != _account) revert NotAuthorized();
+        if (msg.sender != _account) revert NotAuthorized();
 
         _updateRewards(_account);
 
@@ -125,27 +124,24 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
     function _depositFor(uint256 _amount, address _recipient) internal nonReentrant {
         if (_amount == 0) revert ZeroAmount();
 
-        address sender = msg.sender;
         _updateRewards(_recipient);
 
-        IERC20(stakingToken).safeTransferFrom(sender, address(this), _amount);
+        IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _amount);
         totalSupply += _amount;
         balanceOf[_recipient] += _amount;
 
-        emit Deposit(sender, _recipient, _amount);
+        emit Deposit(msg.sender, _recipient, _amount);
     }
 
     /// @inheritdoc IStakingRewards
     function withdraw(uint256 _amount) external nonReentrant {
-        address sender = msg.sender;
-
-        _updateRewards(sender);
+        _updateRewards(msg.sender);
 
         totalSupply -= _amount;
-        balanceOf[sender] -= _amount;
-        IERC20(stakingToken).safeTransfer(sender, _amount);
+        balanceOf[msg.sender] -= _amount;
+        IERC20(stakingToken).safeTransfer(msg.sender, _amount);
 
-        emit Withdraw(sender, _amount);
+        emit Withdraw(msg.sender, _amount);
     }
 
     function _updateRewards(address _account) internal {
@@ -164,27 +160,25 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
 
     /// @inheritdoc IStakingRewards
     function notifyRewardAmount(uint256 _amount) external nonReentrant {
-        address sender = msg.sender;
         if (_amount == 0) revert ZeroAmount();
         _claimFees();
-        _notifyRewardAmount(sender, _amount);
+        _notifyRewardAmount(_amount);
     }
 
-    function _notifyRewardAmount(address sender, uint256 _amount) internal {
+    function _notifyRewardAmount(uint256 _amount) internal {
         rewardPerTokenStored = rewardPerToken();
-        uint256 timestamp = block.timestamp;
-        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(timestamp) - timestamp;
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
 
-        if (timestamp >= periodFinish) {
-            IERC20(rewardToken).safeTransferFrom(sender, address(this), _amount);
+        if (block.timestamp >= periodFinish) {
+            IERC20(rewardToken).safeTransferFrom(msg.sender, address(this), _amount);
             rewardRate = _amount / timeUntilNext;
         } else {
-            uint256 _remaining = periodFinish - timestamp;
+            uint256 _remaining = periodFinish - block.timestamp;
             uint256 _leftover = _remaining * rewardRate;
-            IERC20(rewardToken).safeTransferFrom(sender, address(this), _amount);
+            IERC20(rewardToken).safeTransferFrom(msg.sender, address(this), _amount);
             rewardRate = (_amount + _leftover) / timeUntilNext;
         }
-        rewardRateByEpoch[VelodromeTimeLibrary.epochStart(timestamp)] = rewardRate;
+        rewardRateByEpoch[VelodromeTimeLibrary.epochStart(block.timestamp)] = rewardRate;
         if (rewardRate == 0) revert ZeroRewardRate();
 
         // Ensure the provided reward amount is not more than the balance in the contract.
@@ -194,8 +188,8 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
         if (rewardRate > balance / timeUntilNext) revert RewardRateTooHigh();
 
-        lastUpdateTime = timestamp;
-        periodFinish = timestamp + timeUntilNext;
-        emit NotifyReward(sender, _amount);
+        lastUpdateTime = block.timestamp;
+        periodFinish = block.timestamp + timeUntilNext;
+        emit NotifyReward(msg.sender, _amount);
     }
 }
