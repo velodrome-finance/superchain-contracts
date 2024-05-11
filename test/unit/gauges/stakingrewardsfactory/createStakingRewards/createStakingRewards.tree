@@ -11,4 +11,5 @@ CreateStakingRewardsTest
             ├── It should deploy new StakingRewards contract
             ├── It should store new staking rewards contract in gauges mapping
             ├── It should store pool for new staking rewards contract in poolForGauge mapping
+            ├── It should set isAlive to true for new staking rewards contract
             └── It should emit a {StakingRewardsCreated} event

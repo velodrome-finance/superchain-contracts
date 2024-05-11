@@ -106,7 +106,7 @@ abstract contract BaseFixture is Test, Constants {
         tokenRegistry = new TokenRegistry({_admin: users.owner, _whitelistedTokens: tokens});
 
         stakingRewardsFactory = new StakingRewardsFactory({
-            _notifyAdmin: users.owner,
+            _admin: users.owner,
             _tokenRegistry: address(tokenRegistry),
             _router: address(router),
             _sfs: 0x8680CEaBcb9b56913c519c069Add6Bc3494B7020,

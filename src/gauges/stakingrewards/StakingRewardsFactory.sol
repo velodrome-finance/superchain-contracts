@@ -23,7 +23,7 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
     address public immutable tokenRegistry;
 
     /// @inheritdoc IStakingRewardsFactory
-    address public notifyAdmin;
+    address public admin;
 
     /// @inheritdoc IStakingRewardsFactory
     address public immutable router;
@@ -34,11 +34,14 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
     /// @inheritdoc IStakingRewardsFactory
     mapping(address => address) public poolForGauge;
 
+    /// @inheritdoc IStakingRewardsFactory
+    mapping(address => bool) public isAlive;
+
     /// @dev Array of approved Keeper addresses
     EnumerableSet.AddressSet internal _keeperRegistry;
 
     constructor(
-        address _notifyAdmin,
+        address _admin,
         address _tokenRegistry,
         address _router,
         address _sfs,
@@ -48,20 +51,20 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
         for (uint256 i = 0; i < _keepers.length; i++) {
             _approveKeeper(_keepers[i]);
         }
-        notifyAdmin = _notifyAdmin;
+        admin = _admin;
         tokenRegistry = _tokenRegistry;
         router = _router;
         sfs = _sfs;
         tokenId = IFeeSharing(_sfs).register(_recipient);
-        emit SetNotifyAdmin({_notifyAdmin: _notifyAdmin});
+        emit SetAdmin({_admin: _admin});
     }
 
     /// @inheritdoc IStakingRewardsFactory
-    function setNotifyAdmin(address _notifyAdmin) external {
-        if (msg.sender != notifyAdmin) revert NotNotifyAdmin();
-        if (_notifyAdmin == address(0)) revert ZeroAddress();
-        notifyAdmin = _notifyAdmin;
-        emit SetNotifyAdmin({_notifyAdmin: _notifyAdmin});
+    function setAdmin(address _admin) external {
+        if (msg.sender != admin) revert NotAdmin();
+        if (_admin == address(0)) revert ZeroAddress();
+        admin = _admin;
+        emit SetAdmin({_admin: _admin});
     }
 
     /// @inheritdoc IStakingRewardsFactory
@@ -79,12 +82,31 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
         );
         gauges[_pool] = stakingRewards;
         poolForGauge[stakingRewards] = _pool;
+        isAlive[stakingRewards] = true;
         emit StakingRewardsCreated({
             pool: _pool,
             rewardToken: _rewardToken,
             stakingRewards: stakingRewards,
             creator: msg.sender
         });
+    }
+
+    /// @inheritdoc IStakingRewardsFactory
+    function killStakingRewards(address _gauge) external {
+        if (msg.sender != admin) revert NotAdmin();
+        if (!isAlive[_gauge]) revert StakingRewardsAlreadyKilled();
+
+        isAlive[_gauge] = false;
+        emit StakingRewardsKilled({_gauge: _gauge});
+    }
+
+    /// @inheritdoc IStakingRewardsFactory
+    function reviveStakingRewards(address _gauge) external {
+        if (msg.sender != admin) revert NotAdmin();
+        if (isAlive[_gauge]) revert StakingRewardsStillAlive();
+
+        isAlive[_gauge] = true;
+        emit StakingRewardsRevived({_gauge: _gauge});
     }
 
     /// @inheritdoc IStakingRewardsFactory

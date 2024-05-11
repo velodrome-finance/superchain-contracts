@@ -74,6 +74,7 @@ contract CreateStakingRewardsTest is StakingRewardsFactoryTest {
         // It should deploy new StakingRewards contract
         // It should store new staking rewards contract in gauges mapping
         // It should store pool for new staking rewards contract in poolForGauge mapping
+        // It should set isAlive to true for new staking rewards contract
         // It should emit a {StakingRewardsCreated} event
         assertEq(stakingRewardsFactory.gauges(pool), address(0));
 
@@ -90,5 +91,6 @@ contract CreateStakingRewardsTest is StakingRewardsFactoryTest {
 
         assertEq(stakingRewardsFactory.gauges(pool), stakingRewards);
         assertEq(stakingRewardsFactory.poolForGauge(stakingRewards), pool);
+        assertEq(stakingRewardsFactory.isAlive(stakingRewards), true);
     }
 }

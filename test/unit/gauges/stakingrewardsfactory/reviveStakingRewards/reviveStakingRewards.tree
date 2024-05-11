@@ -1,0 +1,9 @@
+ReviveStakingRewardsTest
+├── When caller is not admin
+│   └── It should revert with NotAdmin
+└── When caller is admin
+    ├── When staking rewards not killed
+    │   └── It should revert with StakingRewardsStillAlive
+    └── When staking rewards killed
+        ├── It should set isAlive to true
+        └── It should emit {StakingRewardsRevived}
