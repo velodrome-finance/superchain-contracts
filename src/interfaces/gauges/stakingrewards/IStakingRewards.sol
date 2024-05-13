@@ -68,6 +68,11 @@ interface IStakingRewards {
     /// @notice Total amount of rewardToken to distribute for the current rewards period
     function left() external view returns (uint256 _left);
 
+    /// @notice Claims accrued Fees from Pool and distributes them to the Converter
+    /// @return _claimed0 Amount of Fees claimed in token0
+    /// @return _claimed1 Amount of Fees claimed in token1
+    function claimFees() external returns (uint256 _claimed0, uint256 _claimed1);
+
     /// @notice Retrieve rewards for an address.
     /// @dev Throws if not called by same address or voter.
     /// @param _account .

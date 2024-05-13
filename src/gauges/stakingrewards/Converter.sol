@@ -6,6 +6,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import {IStakingRewardsFactory} from "../../interfaces/gauges/stakingrewards/IStakingRewardsFactory.sol";
+import {IStakingRewards} from "../../interfaces/gauges/stakingrewards/IStakingRewards.sol";
 import {IConverter} from "../../interfaces/gauges/stakingrewards/IConverter.sol";
 import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
 import {IPoolFactory} from "../../interfaces/pools/IPoolFactory.sol";
@@ -135,5 +136,11 @@ contract Converter is IConverter, ReentrancyGuard {
 
         // At this point, _amountIn is actually amountOut as we finished the loop
         amountOutMin = (_amountIn * (10_000 - _slippage)) / 10_000;
+    }
+
+    /// @inheritdoc IConverter
+    function claimFees() external nonReentrant returns (uint256, uint256) {
+        if (!stakingRewardsFactory.isKeeper(msg.sender)) revert NotKeeper();
+        return IStakingRewards(gauge).claimFees();
     }
 }

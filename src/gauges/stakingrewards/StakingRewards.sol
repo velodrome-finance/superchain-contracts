@@ -69,6 +69,12 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
         );
     }
 
+    /// @inheritdoc IStakingRewards
+    function claimFees() external nonReentrant returns (uint256, uint256) {
+        if (msg.sender != feeConverter) revert NotAuthorized();
+        return _claimFees();
+    }
+
     function _claimFees() internal returns (uint256 claimed0, uint256 claimed1) {
         (claimed0, claimed1) = IPool(stakingToken).claimFees();
 
@@ -167,7 +173,6 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
     /// @inheritdoc IStakingRewards
     function notifyRewardAmount(uint256 _amount) external nonReentrant {
         if (_amount == 0) revert ZeroAmount();
-        _claimFees();
         _notifyRewardAmount(_amount);
     }
 

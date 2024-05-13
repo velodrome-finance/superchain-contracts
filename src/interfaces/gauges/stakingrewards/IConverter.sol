@@ -46,6 +46,11 @@ interface IConverter {
     /// @param _routes Routes to be used to execute swap
     function swapTokenToToken(address _token, uint256 _slippage, IRouter.Route[] memory _routes) external;
 
+    /// @notice Claims Fees accrued from StakingRewards contract
+    /// @return _claimed0 Amount of Fees claimed in token0
+    /// @return _claimed1 Amount of Fees claimed in token1
+    function claimFees() external returns (uint256 _claimed0, uint256 _claimed1);
+
     /// @notice Deposit any Converted tokens into the StakingRewards
     /// @return amount Amount compounded by Converter
     function compound() external returns (uint256 amount);
