@@ -5,6 +5,7 @@ import "../StakingRewardsFactory.t.sol";
 
 contract ApproveKeeperTest is StakingRewardsFactoryTest {
     function test_ApproveKeeper() public {
+        vm.startPrank(users.owner);
         assertFalse(stakingRewardsFactory.isKeeper(users.alice));
         assertFalse(stakingRewardsFactory.isKeeper(users.bob));
 
@@ -37,6 +38,7 @@ contract ApproveKeeperTest is StakingRewardsFactoryTest {
     }
 
     function test_RevertIf_ApproveKeeperIfZeroAddress() public {
+        vm.startPrank(users.owner);
         assertFalse(stakingRewardsFactory.isKeeper(users.alice));
         vm.expectRevert(IStakingRewardsFactory.ZeroAddress.selector);
         stakingRewardsFactory.approveKeeper(address(0));
@@ -45,6 +47,7 @@ contract ApproveKeeperTest is StakingRewardsFactoryTest {
     }
 
     function test_RevertIf_ApproveKeeperIfAlreadyApproved() public {
+        vm.startPrank(users.owner);
         assertFalse(stakingRewardsFactory.isKeeper(users.alice));
         vm.expectEmit(true, true, true, true, address(stakingRewardsFactory));
         emit IStakingRewardsFactory.ApproveKeeper(users.alice);

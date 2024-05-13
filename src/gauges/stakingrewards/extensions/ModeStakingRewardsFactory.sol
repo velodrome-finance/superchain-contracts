@@ -16,12 +16,13 @@ contract ModeStakingRewardsFactory is StakingRewardsFactory, IModeStakingRewards
 
     constructor(
         address _admin,
+        address _keeperAdmin,
         address _tokenRegistry,
         address _router,
         address _sfs,
         address _recipient,
         address[] memory _keepers
-    ) StakingRewardsFactory(_admin, _tokenRegistry, _router, _keepers) {
+    ) StakingRewardsFactory(_admin, _keeperAdmin, _tokenRegistry, _router, _keepers) {
         sfs = _sfs;
         tokenId = IFeeSharing(_sfs).register(_recipient);
     }

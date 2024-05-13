@@ -13,6 +13,7 @@ contract DeployMode is DeployBase {
     struct ModeDeploymentParameters {
         address sfs;
         address recipient;
+        address keeperAdmin;
         address admin;
     }
 
@@ -37,6 +38,7 @@ contract DeployMode is DeployBase {
         _modeParams = ModeDeploymentParameters({
             sfs: 0x8680CEaBcb9b56913c519c069Add6Bc3494B7020,
             recipient: 0x0000000000000000000000000000000000000001,
+            keeperAdmin: 0x0000000000000000000000000000000000000001,
             admin: 0x0000000000000000000000000000000000000001
         });
     }
@@ -92,6 +94,7 @@ contract DeployMode is DeployBase {
 
         stakingRewardsFactory = new ModeStakingRewardsFactory({
             _admin: _modeParams.admin,
+            _keeperAdmin: _modeParams.keeperAdmin,
             _tokenRegistry: address(tokenRegistry),
             _router: address(router),
             _sfs: _modeParams.sfs,

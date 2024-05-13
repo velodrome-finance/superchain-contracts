@@ -6,7 +6,7 @@ import "../../../BaseFixture.sol";
 contract StakingRewardsFactoryTest is BaseFixture {
     function test_InitialState() public view {
         assertEq(stakingRewardsFactory.keepersLength(), 0);
-        assertEq(stakingRewardsFactory.owner(), address(this));
+        assertEq(stakingRewardsFactory.owner(), address(users.owner));
         assertEq(stakingRewardsFactory.admin(), address(users.owner));
         assertEq(stakingRewardsFactory.tokenRegistry(), address(tokenRegistry));
     }

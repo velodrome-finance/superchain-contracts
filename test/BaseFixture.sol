@@ -103,6 +103,7 @@ abstract contract BaseFixture is Test, Constants {
 
         stakingRewardsFactory = new StakingRewardsFactory({
             _admin: users.owner,
+            _keeperAdmin: users.owner,
             _tokenRegistry: address(tokenRegistry),
             _router: address(router),
             _keepers: new address[](0)

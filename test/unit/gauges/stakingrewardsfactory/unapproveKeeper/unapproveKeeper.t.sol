@@ -5,6 +5,7 @@ import "../StakingRewardsFactory.t.sol";
 
 contract UnapproveKeeperTest is StakingRewardsFactoryTest {
     function test_UnapproveKeeper() public {
+        vm.startPrank(users.owner);
         stakingRewardsFactory.approveKeeper(users.alice);
         stakingRewardsFactory.approveKeeper(users.bob);
         assertTrue(stakingRewardsFactory.isKeeper(users.alice));
@@ -35,6 +36,7 @@ contract UnapproveKeeperTest is StakingRewardsFactoryTest {
     }
 
     function test_RevertIf_UnapproveKeeperIfNotApproved() public {
+        vm.startPrank(users.owner);
         assertEq(stakingRewardsFactory.keepersLength(), 0);
         assertFalse(stakingRewardsFactory.isKeeper(users.alice));
 

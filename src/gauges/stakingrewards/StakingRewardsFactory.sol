@@ -58,9 +58,13 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
     /// @dev Array of approved Keeper addresses
     EnumerableSet.AddressSet internal _keeperRegistry;
 
-    constructor(address _admin, address _tokenRegistry, address _router, address[] memory _keepers)
-        Ownable(msg.sender)
-    {
+    constructor(
+        address _admin,
+        address _keeperAdmin,
+        address _tokenRegistry,
+        address _router,
+        address[] memory _keepers
+    ) Ownable(_keeperAdmin) {
         for (uint256 i = 0; i < _keepers.length; i++) {
             _approveKeeper(_keepers[i]);
         }
