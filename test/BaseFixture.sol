@@ -57,10 +57,6 @@ abstract contract BaseFixture is Test, Constants {
         weth = new MockWETH();
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
 
-        // mode mock -- remove when stakingrewards is removed
-        fs = new FeeSharing();
-        vm.etch(0x8680CEaBcb9b56913c519c069Add6Bc3494B7020, address(fs).code);
-
         deployCreateX();
 
         // mode mock -- remove when stakingrewards is removed
@@ -109,8 +105,6 @@ abstract contract BaseFixture is Test, Constants {
             _admin: users.owner,
             _tokenRegistry: address(tokenRegistry),
             _router: address(router),
-            _sfs: 0x8680CEaBcb9b56913c519c069Add6Bc3494B7020,
-            _recipient: users.owner,
             _keepers: new address[](0)
         });
 

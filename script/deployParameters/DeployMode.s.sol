@@ -5,8 +5,8 @@ import {DeployBase} from "../01_DeployBase.s.sol";
 import {ModePool} from "src/pools/extensions/ModePool.sol";
 import {ModePoolFactory} from "src/pools/extensions/ModePoolFactory.sol";
 import {ModeRouter} from "src/extensions/ModeRouter.sol";
-import {StakingRewardsFactory} from "src/gauges/stakingrewards/StakingRewardsFactory.sol";
-import {StakingRewards} from "src/gauges/stakingrewards/StakingRewards.sol";
+import {ModeStakingRewardsFactory} from "src/gauges/stakingrewards/extensions/ModeStakingRewardsFactory.sol";
+import {ModeStakingRewards} from "src/gauges/stakingrewards/extensions/ModeStakingRewards.sol";
 import {TokenRegistry} from "src/gauges/tokenregistry/TokenRegistry.sol";
 
 contract DeployMode is DeployBase {
@@ -19,8 +19,8 @@ contract DeployMode is DeployBase {
     ModeDeploymentParameters internal _modeParams;
     address[] public whitelistedTokens = new address[](1);
 
-    StakingRewardsFactory public stakingRewardsFactory;
-    StakingRewards public stakingRewards;
+    ModeStakingRewardsFactory public stakingRewardsFactory;
+    ModeStakingRewards public stakingRewards;
 
     function setUp() public override {
         whitelistedTokens.push(0x4200000000000000000000000000000000000006);
@@ -82,15 +82,17 @@ contract DeployMode is DeployBase {
             )
         );
 
-        // stakingRewardsFactory = new StakingRewardsFactory({
-        //     _notifyAdmin: _modeParams.notifyAdmin,
-        //     _sfs: _modeParams.sfs,
-        //     _recipient: _modeParams.recipient,
-        //     _keepers: new address[](0)
-        // });
-
         tokenRegistry =
             new TokenRegistry({_admin: _params.whitelistAdmin, _whitelistedTokens: _params.whitelistedTokens});
+
+        stakingRewardsFactory = new ModeStakingRewardsFactory({
+            _admin: _modeParams.notifyAdmin,
+            _tokenRegistry: address(tokenRegistry),
+            _router: address(router),
+            _sfs: _modeParams.sfs,
+            _recipient: _modeParams.recipient,
+            _keepers: new address[](0)
+        });
     }
 
     function modeParams() public view returns (ModeDeploymentParameters memory) {

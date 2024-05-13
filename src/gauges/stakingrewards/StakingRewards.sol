@@ -7,7 +7,6 @@ import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol"
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import {IFeeSharing} from "../../interfaces/IFeeSharing.sol";
 import {IStakingRewardsFactory} from "../../interfaces/gauges/stakingrewards/IStakingRewardsFactory.sol";
 import {IStakingRewards} from "../../interfaces/gauges/stakingrewards/IStakingRewards.sol";
 import {IConverter} from "../../interfaces/gauges/stakingrewards/IConverter.sol";
@@ -52,18 +51,20 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
     /// @inheritdoc IStakingRewards
     mapping(uint256 => uint256) public rewardRateByEpoch;
 
-    constructor(address _stakingToken, address _rewardToken, address _sfs, uint256 _tokenId) {
+    constructor(address _stakingToken, address _rewardToken) {
         factory = msg.sender;
         stakingToken = _stakingToken;
         rewardToken = _rewardToken;
-        IFeeSharing(_sfs).assign(_tokenId);
-        feeConverter = address(
+        feeConverter = _deployFeeConverter({_stakingToken: _stakingToken, _targetToken: _rewardToken});
+    }
+
+    /// @dev Internal helper function to deploy Converter contracts
+    function _deployFeeConverter(address _stakingToken, address _targetToken) internal virtual returns (address) {
+        return address(
             new Converter({
                 _stakingRewardsFactory: msg.sender,
                 _poolFactory: IPool(_stakingToken).factory(),
-                _targetToken: _rewardToken,
-                _sfs: _sfs,
-                _tokenId: _tokenId
+                _targetToken: _targetToken
             })
         );
     }

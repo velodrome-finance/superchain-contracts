@@ -39,16 +39,9 @@ contract Converter is IConverter, ReentrancyGuard {
     /// @inheritdoc IConverter
     mapping(uint256 epochStart => uint256 amount) public amountEarned;
 
-    constructor(
-        address _stakingRewardsFactory,
-        address _poolFactory,
-        address _targetToken,
-        address _sfs,
-        uint256 _tokenId
-    ) {
+    constructor(address _stakingRewardsFactory, address _poolFactory, address _targetToken) {
         gauge = msg.sender;
         targetToken = _targetToken;
-        IFeeSharing(_sfs).assign(_tokenId);
         poolFactory = IPoolFactory(_poolFactory);
         stakingRewardsFactory = IStakingRewardsFactory(_stakingRewardsFactory);
         router = IRouter(IStakingRewardsFactory(_stakingRewardsFactory).router());

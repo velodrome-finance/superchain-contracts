@@ -25,6 +25,12 @@ contract StakingRewardsTest is BaseFixture {
         vm.startPrank(users.alice);
     }
 
+    function test_InitialState() public {
+        assertEq(stakingRewards.factory(), address(stakingRewardsFactory));
+        assertEq(stakingRewards.stakingToken(), address(pool));
+        assertEq(stakingRewards.rewardToken(), address(rewardToken));
+    }
+
     function testCannotDepositWithRecipientZeroAmount() public {
         vm.expectRevert(IGauge.ZeroAmount.selector);
         stakingRewards.deposit(0, users.alice);

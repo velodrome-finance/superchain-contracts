@@ -3,8 +3,10 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "../../../BaseFixture.sol";
 import {DeployMode} from "script/deployParameters/DeployMode.s.sol";
-import {ModePool} from "src/pools/extensions/ModePool.sol";
+import {ModeStakingRewardsFactory} from "src/gauges/stakingrewards/extensions/ModeStakingRewardsFactory.sol";
+import {ModeStakingRewards} from "src/gauges/stakingrewards/extensions/ModeStakingRewards.sol";
 import {ModePoolFactory} from "src/pools/extensions/ModePoolFactory.sol";
+import {ModePool} from "src/pools/extensions/ModePool.sol";
 import {ModeRouter} from "src/extensions/ModeRouter.sol";
 
 contract ModeRunTest is BaseFixture {
@@ -32,7 +34,7 @@ contract ModeRunTest is BaseFixture {
 
         ModePool poolImplementation = ModePool(address(deploy.poolImplementation()));
         ModePoolFactory poolFactory = ModePoolFactory(address(deploy.poolFactory()));
-        StakingRewardsFactory stakingRewardsFactory = deploy.stakingRewardsFactory();
+        ModeStakingRewardsFactory stakingRewardsFactory = deploy.stakingRewardsFactory();
         ModeRouter router = ModeRouter(payable(address(deploy.router())));
         tokenRegistry = deploy.tokenRegistry();
         params = deploy.params();
@@ -50,9 +52,9 @@ contract ModeRunTest is BaseFixture {
         assertEq(poolFactory.sfs(), modeParams.sfs);
         assertEq(poolFactory.tokenId(), 0);
 
-        // assertEq(stakingRewardsFactory.notifyAdmin(), modeParams.notifyAdmin);
-        // assertEq(stakingRewardsFactory.sfs(), modeParams.sfs);
-        // assertEq(stakingRewardsFactory.tokenId(), 1);
+        assertEq(stakingRewardsFactory.admin(), modeParams.notifyAdmin);
+        assertEq(stakingRewardsFactory.sfs(), modeParams.sfs);
+        assertEq(stakingRewardsFactory.tokenId(), 2);
 
         assertEq(router.factory(), address(poolFactory));
         assertEq(address(router.weth()), params.weth);
