@@ -396,12 +396,12 @@ contract StakingRewardsTest is BaseFixture {
         // reward added late in epoch
         uint256 reward = TOKEN_1;
         addRewardToGauge(address(stakingRewards), reward);
-        uint256 expectedRewardRate = reward / (WEEK / 2);
+        uint256 expectedRewardRate = reward / WEEK;
         assertApproxEqRel(stakingRewards.rewardRate(), expectedRewardRate, 1e6);
 
         skipToNextEpoch(0);
-        // half the epoch has passed, all rewards distributed
-        uint256 expectedReward = reward / 2;
+        // half the epoch has passed, half of the rewards distributed
+        uint256 expectedReward = (reward / 2) / 2;
         assertApproxEqRel(stakingRewards.earned(users.alice), expectedReward, 1e6);
         assertApproxEqRel(stakingRewards.earned(users.bob), expectedReward, 1e6);
         vm.startPrank(users.alice);
@@ -410,23 +410,27 @@ contract StakingRewardsTest is BaseFixture {
 
         skip(1 days);
         uint256 reward2 = TOKEN_1 * 2;
-        expectedRewardRate = reward2 / (6 days);
+        uint256 totalReward = (reward * 5 / 14 + reward2);
+        expectedRewardRate = totalReward / WEEK;
         addRewardToGauge(address(stakingRewards), reward2);
         assertApproxEqRel(stakingRewards.rewardRate(), expectedRewardRate, 1e6);
 
         skip(1 days);
-        assertApproxEqRel(stakingRewards.earned(users.alice), reward2 / 2 / 6, 1e6);
-        assertApproxEqRel(stakingRewards.earned(users.bob), reward / 2 + reward2 / 2 / 6, 1e6);
+        // expected reward = 1 day @ prior reward rate + 1 day @ new reward rate
+        expectedReward = (reward / 7 / 2) + (totalReward / 7) / 2;
+        assertApproxEqRel(stakingRewards.earned(users.alice), expectedReward, 1e6);
+        assertApproxEqRel(stakingRewards.earned(users.bob), reward / 4 + expectedReward, 1e6);
 
-        skipToNextEpoch(0);
-        assertApproxEqRel(stakingRewards.earned(users.alice), reward2 / 2, 1e6);
+        skipToNextEpoch(1 days); // go to end of next staking period
+        // all rewards disbursed
+        assertApproxEqRel(stakingRewards.earned(users.alice), (reward / 2 + reward2) / 2, 1e6);
         assertApproxEqRel(stakingRewards.earned(users.bob), (reward + reward2) / 2, 1e6);
 
         uint256 pre = rewardToken.balanceOf(users.alice);
         vm.startPrank(users.alice);
         stakingRewards.getReward(users.alice);
         uint256 post = rewardToken.balanceOf(users.alice);
-        assertApproxEqRel(post - pre, reward2 / 2, 1e6);
+        assertApproxEqRel(post - pre, (reward / 2 + reward2) / 2, 1e6);
 
         pre = rewardToken.balanceOf(users.bob);
         vm.startPrank(users.bob);
@@ -457,69 +461,22 @@ contract StakingRewardsTest is BaseFixture {
         assertApproxEqRel(stakingRewards.earned(users.alice), expectedReward, 1e6);
         assertApproxEqRel(stakingRewards.earned(users.bob), expectedReward, 1e6);
 
-        skip(1 days); // rewards distributed over 6 days intead of 7
+        skip(1 days);
         uint256 reward2 = TOKEN_1 * 2;
         addRewardToGauge(address(stakingRewards), reward2);
-        expectedRewardRate = reward2 / (6 days);
+        expectedRewardRate = reward2 / WEEK;
         assertApproxEqRel(stakingRewards.rewardRate(), expectedRewardRate, 1e6);
 
-        skip(1 days); // accrue 1/6 th of remaining rewards
-        expectedReward = reward / 2 + reward2 / 2 / 6;
+        skip(1 days); // accrue 1/7 th of remaining rewards
+        expectedReward = reward / 2 + reward2 / 2 / 7;
         assertApproxEqRel(stakingRewards.earned(users.alice), expectedReward, 1e6);
         assertApproxEqRel(stakingRewards.earned(users.bob), expectedReward, 1e6);
 
-        skipToNextEpoch(0); // accrue all of remaining rewards
+        skipToNextEpoch(1 days);
         expectedReward = (reward + reward2) / 2;
         assertApproxEqRel(stakingRewards.earned(users.alice), expectedReward, 1e6);
         assertApproxEqRel(stakingRewards.earned(users.bob), expectedReward, 1e6);
     }
-
-    // function testNotifyRewardAmountWithNonZeroAmount() public {
-    //     uint256 reward = TOKEN_1;
-    //     deal(address(rewardToken), address(voter), reward);
-    //     vm.startPrank(address(voter));
-    //     rewardToken.approve(address(stakingRewards), reward);
-    //     vm.expectCall(stakingRewards(stakingRewards).stakingToken(), abi.encodeCall(IPool.claimFees, ()), 1);
-    //     stakingRewards(stakingRewards).notifyRewardAmount(reward);
-    //     vm.stopPrank();
-
-    //     uint256 epochStart = VelodromeTimeLibrary.epochStart(block.timestamp);
-    //     assertApproxEqRel(stakingRewards.rewardRate(), reward / WEEK, 1e6);
-    //     assertApproxEqRel(stakingRewards.rewardRateByEpoch(epochStart), reward / WEEK, 1e6);
-    //     assertEq(rewardToken.balanceOf(address(stakingRewards)), TOKEN_1);
-    //     assertEq(stakingRewards.lastUpdateTime(), block.timestamp);
-    //     assertEq(stakingRewards.periodFinish(), VelodromeTimeLibrary.epochStart(block.timestamp) + WEEK);
-    // }
-
-    // function testNotifyRewardAmountWithNonZeroAmountOneDayAfterEpochFlip() public {
-    //     skipAndRoll(1 days);
-
-    //     uint256 reward = TOKEN_1;
-    //     deal(address(rewardToken), address(voter), reward);
-    //     vm.startPrank(address(voter));
-    //     rewardToken.approve(address(stakingRewards), reward);
-    //     vm.expectCall(stakingRewards(stakingRewards).stakingToken(), abi.encodeCall(IPool.claimFees, ()), 1);
-    //     stakingRewards(stakingRewards).notifyRewardAmount(reward);
-    //     vm.stopPrank();
-
-    //     uint256 epochStart = VelodromeTimeLibrary.epochStart(block.timestamp);
-    //     assertApproxEqRel(stakingRewards.rewardRate(), (reward / (6 days)), 1e6);
-    //     assertApproxEqRel(stakingRewards.rewardRateByEpoch(epochStart), reward / (6 days), 1e6);
-    //     assertEq(rewardToken.balanceOf(address(stakingRewards)), TOKEN_1);
-    //     assertEq(stakingRewards.lastUpdateTime(), block.timestamp);
-    //     assertEq(stakingRewards.periodFinish(), VelodromeTimeLibrary.epochStart(block.timestamp) + WEEK);
-    // }
-
-    // function testCannotNotifyRewardAmountWithZeroAmount() public {
-    //     vm.prank(address(voter));
-    //     vm.expectRevert(IGauge.ZeroAmount.selector);
-    //     stakingRewards.notifyRewardAmount(0);
-    // }
-
-    // function testCannotNotifyRewardAmountIfNotVoter() public {
-    //     vm.expectRevert(IGauge.NotVoter.selector);
-    //     stakingRewards.notifyRewardAmount(TOKEN_1);
-    // }
 
     function testCannotGetRewardIfNotOwner() public {
         // add deposits

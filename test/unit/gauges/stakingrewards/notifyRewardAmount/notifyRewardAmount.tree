@@ -1,0 +1,25 @@
+NotifyRewardAmountTest
+├── When amount is zero
+│   └── It should revert with ZeroAmount
+├── When amount is greater than zero and smaller than the time until the next timestamp
+│   └── It should revert with ZeroRewardRate
+└── When the amount is greater than the time until the next timestamp
+    ├── When the current timestamp is greater than or equal to periodFinish
+    │   ├── It should update rewardPerTokenStored
+    │   ├── It should transfer funds from the caller to the contract
+    │   ├── It should set a new reward rate
+    │   ├── It should cache the reward rate for this epoch
+    │   ├── It should update the last update timestamp
+    │   ├── It should update the period finish timestamp
+    │   └── It should emit a {NotifyReward} event
+    └── When the current timestamp is less than periodFinish
+        ├── When amount is less than leftover rewards
+        │   └── It should revert with InsufficientAmount
+        └── When amount is greater than or equal to leftover rewards
+            ├── It should update rewardPerTokenStored
+            ├── It should transfer funds from the caller to the contract
+            ├── It should update the reward rate
+            ├── It should cache the updated reward rate for this epoch
+            ├── It should update the last update timestamp
+            ├── It should update the period finish timestamp
+            └── It should emit a {NotifyReward} event

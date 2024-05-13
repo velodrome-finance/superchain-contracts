@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IStakingRewards {
+    error InsufficientAmount();
     error NotAlive();
     error NotAuthorized();
     error NotVoter();

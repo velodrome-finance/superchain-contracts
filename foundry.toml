@@ -6,6 +6,9 @@ solc_version = '0.8.25'
 
 fs_permissions = [{ access = "read-write", path = "./"}]
 
+[fuzz]
+runs = 1000
+
 [rpc_endpoints]
 mode = "${MODE_RPC_URL}"
 optimism = "${OPTIMISM_RPC_URL}"

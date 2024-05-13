@@ -29,7 +29,7 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
     /// @inheritdoc IStakingRewards
     address public immutable factory;
 
-    uint256 internal constant DURATION = 7 days; // rewards are released over 7 days
+    uint256 internal constant WEEK = VelodromeTimeLibrary.WEEK;
     uint256 internal constant PRECISION = 10 ** 18;
 
     /// @inheritdoc IStakingRewards
@@ -171,16 +171,16 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
 
     function _notifyRewardAmount(uint256 _amount) internal {
         rewardPerTokenStored = rewardPerToken();
-        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
 
         if (block.timestamp >= periodFinish) {
             IERC20(rewardToken).safeTransferFrom(msg.sender, address(this), _amount);
-            rewardRate = _amount / timeUntilNext;
+            rewardRate = _amount / WEEK;
         } else {
             uint256 _remaining = periodFinish - block.timestamp;
             uint256 _leftover = _remaining * rewardRate;
+            if (_amount < _leftover) revert InsufficientAmount();
             IERC20(rewardToken).safeTransferFrom(msg.sender, address(this), _amount);
-            rewardRate = (_amount + _leftover) / timeUntilNext;
+            rewardRate = (_amount + _leftover) / WEEK;
         }
         rewardRateByEpoch[VelodromeTimeLibrary.epochStart(block.timestamp)] = rewardRate;
         if (rewardRate == 0) revert ZeroRewardRate();
@@ -190,10 +190,10 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
-        if (rewardRate > balance / timeUntilNext) revert RewardRateTooHigh();
+        if (rewardRate > balance / WEEK) revert RewardRateTooHigh();
 
         lastUpdateTime = block.timestamp;
-        periodFinish = block.timestamp + timeUntilNext;
+        periodFinish = block.timestamp + WEEK;
         emit NotifyReward(msg.sender, _amount);
     }
 }
