@@ -10,6 +10,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {IFeeSharing} from "../../interfaces/IFeeSharing.sol";
 import {IStakingRewardsFactory} from "../../interfaces/gauges/stakingrewards/IStakingRewardsFactory.sol";
 import {IStakingRewards} from "../../interfaces/gauges/stakingrewards/IStakingRewards.sol";
+import {IConverter} from "../../interfaces/gauges/stakingrewards/IConverter.sol";
 import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
 import {IPool} from "../../interfaces/pools/IPool.sol";
 import {Converter} from "./Converter.sol";
@@ -174,12 +175,16 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
 
         if (block.timestamp >= periodFinish) {
             IERC20(rewardToken).safeTransferFrom(msg.sender, address(this), _amount);
+            /// @dev Include any converted Fees from the Converter
+            _amount += IConverter(feeConverter).compound();
             rewardRate = _amount / WEEK;
         } else {
             uint256 _remaining = periodFinish - block.timestamp;
             uint256 _leftover = _remaining * rewardRate;
             if (_amount < _leftover) revert InsufficientAmount();
             IERC20(rewardToken).safeTransferFrom(msg.sender, address(this), _amount);
+            /// @dev Include any converted Fees from the Converter
+            _amount += IConverter(feeConverter).compound();
             rewardRate = (_amount + _leftover) / WEEK;
         }
         rewardRateByEpoch[VelodromeTimeLibrary.epochStart(block.timestamp)] = rewardRate;

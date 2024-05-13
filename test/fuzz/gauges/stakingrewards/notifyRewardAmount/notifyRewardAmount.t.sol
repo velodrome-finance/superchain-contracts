@@ -29,9 +29,14 @@ contract NotifyRewardAmountFuzzTest is BaseFixture {
         _;
     }
 
-    function testFuzz_WhenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish(uint32 jump1)
+    modifier whenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish() {
+        _;
+    }
+
+    function testFuzz_GivenThereAreNoConvertedFeesInConverter(uint32 jump1)
         external
         whenTheAmountIsGreaterThanTheTimeUntilTheNextTimestamp
+        whenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish
     {
         jump1 = uint32(bound(jump1, 0, WEEK - 1));
         // It should update rewardPerTokenStored
@@ -68,9 +73,69 @@ contract NotifyRewardAmountFuzzTest is BaseFixture {
         assertLt(rewardToken.balanceOf(address(stakingRewards)), 1e6);
     }
 
-    function test_FuzzWhenAmountIsLessThanLeftoverRewards(uint32 jump1, uint32 jump2, uint256 amount)
+    function testFuzz_GivenThereAreConvertedFeesInConverter(uint32 jump1)
         external
         whenTheAmountIsGreaterThanTheTimeUntilTheNextTimestamp
+        whenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish
+    {
+        jump1 = uint32(bound(jump1, 0, WEEK - 1));
+        // It should update rewardPerTokenStored
+        // It should transfer funds from the caller to the contract
+        // It should transfer any converted fees from converter to the contract
+        // It should set a new reward rate
+        // It should cache the reward rate for this epoch
+        // It should update the last update timestamp
+        // It should update the period finish timestamp
+        // It should emit a {NotifyReward} event
+        uint256 amount = TOKEN_1;
+
+        vm.expectEmit(address(stakingRewards));
+        emit IStakingRewards.NotifyReward({from: users.alice, amount: amount});
+        stakingRewards.notifyRewardAmount({_amount: amount});
+
+        skipAndRoll(WEEK); // skip one week
+        skipAndRoll(jump1); // jump1 can be 0
+
+        uint256 converterAmount = TOKEN_1 * 2;
+        address feeConverter = stakingRewards.feeConverter();
+        deal(address(rewardToken), feeConverter, converterAmount);
+
+        uint256 amount2 = TOKEN_1 * 3;
+        vm.expectEmit(feeConverter);
+        emit IConverter.Compound({balanceCompounded: converterAmount});
+        vm.expectEmit(address(stakingRewards));
+        emit IStakingRewards.NotifyReward({from: users.alice, amount: amount2 + converterAmount});
+        stakingRewards.notifyRewardAmount({_amount: amount2});
+
+        uint256 rpts = WEEK * (amount / WEEK) * 1e18 / POOL_1;
+        assertEq(stakingRewards.rewardPerTokenStored(), rpts);
+        assertEq(rewardToken.balanceOf(feeConverter), 0);
+        assertEq(rewardToken.balanceOf(address(stakingRewards)), amount + amount2 + converterAmount);
+        assertEq(stakingRewards.rewardRate(), (amount2 + converterAmount) / WEEK);
+        assertEq(
+            stakingRewards.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)),
+            (amount2 + converterAmount) / WEEK
+        );
+        assertEq(stakingRewards.lastUpdateTime(), block.timestamp);
+        assertEq(stakingRewards.periodFinish(), block.timestamp + WEEK);
+
+        skipAndRoll(block.timestamp + WEEK + 1); // ensure all claimable
+        stakingRewards.getReward(users.alice);
+        assertLt(rewardToken.balanceOf(address(stakingRewards)), 1e6);
+    }
+
+    modifier whenAmountIsGreaterThanOrEqualToLeftoverRewards() {
+        _;
+    }
+
+    modifier whenTheCurrentTimestampIsLessThanPeriodFinish() {
+        _;
+    }
+
+    function testFuzz_WhenAmountIsLessThanLeftoverRewards(uint32 jump1, uint32 jump2, uint256 amount)
+        external
+        whenTheAmountIsGreaterThanTheTimeUntilTheNextTimestamp
+        whenTheCurrentTimestampIsLessThanPeriodFinish
     {
         jump1 = uint32(bound(jump1, 0, WEEK - 1));
         jump2 = uint32(bound(jump2, 0, WEEK - 1));
@@ -93,9 +158,11 @@ contract NotifyRewardAmountFuzzTest is BaseFixture {
         stakingRewards.notifyRewardAmount({_amount: amount2});
     }
 
-    function testFuzz_WhenAmountIsGreaterThanOrEqualToLeftoverRewards(uint32 jump1, uint32 jump2)
+    function testFuzz_GivenThereAreNoConvertedFundsInConverter(uint32 jump1, uint32 jump2)
         external
         whenTheAmountIsGreaterThanTheTimeUntilTheNextTimestamp
+        whenTheCurrentTimestampIsLessThanPeriodFinish
+        whenAmountIsGreaterThanOrEqualToLeftoverRewards
     {
         jump1 = uint32(bound(jump1, 0, WEEK - 1));
         jump2 = uint32(bound(jump2, 0, WEEK - 1));
@@ -106,7 +173,7 @@ contract NotifyRewardAmountFuzzTest is BaseFixture {
         // It should update the last update timestamp
         // It should update the period finish timestamp
         // It should emit a {NotifyReward} event
-        uint256 amount = TOKEN_1 * 1_000;
+        uint256 amount = TOKEN_1 * 1000;
         skipAndRoll(jump1); // jump1 can be 0
 
         vm.expectEmit(address(stakingRewards));
@@ -129,6 +196,62 @@ contract NotifyRewardAmountFuzzTest is BaseFixture {
         assertEq(rewardToken.balanceOf(address(stakingRewards)), amount + amount2);
         uint256 amountLeft = amount / WEEK * WEEK * (WEEK - jump2) / WEEK; // include rounding error
         uint256 rewardRate = (amountLeft + amount2) / WEEK;
+        assertEq(stakingRewards.rewardRate(), rewardRate);
+        assertEq(stakingRewards.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), rewardRate);
+        assertEq(stakingRewards.lastUpdateTime(), block.timestamp);
+        assertEq(stakingRewards.periodFinish(), block.timestamp + WEEK);
+
+        skipAndRoll(block.timestamp + WEEK + 1); // ensure all claimable
+        stakingRewards.getReward(users.alice);
+        assertLt(rewardToken.balanceOf(address(stakingRewards)), 1e6);
+    }
+
+    function testFuzz_GivenThereAreConvertedFundsInConverter(uint32 jump1, uint32 jump2)
+        external
+        whenTheAmountIsGreaterThanTheTimeUntilTheNextTimestamp
+        whenTheCurrentTimestampIsLessThanPeriodFinish
+        whenAmountIsGreaterThanOrEqualToLeftoverRewards
+    {
+        jump1 = uint32(bound(jump1, 0, WEEK - 1));
+        jump2 = uint32(bound(jump2, 0, WEEK - 1));
+        // It should update rewardPerTokenStored
+        // It should transfer funds from the caller to the contract
+        // It should transfer any converted fees from converter to the contract
+        // It should update the reward rate
+        // It should cache the updated reward rate for this epoch
+        // It should update the last update timestamp
+        // It should update the period finish timestamp
+        // It should emit a {NotifyReward} event
+        uint256 amount = TOKEN_1 * 1000;
+        skipAndRoll(jump1); // jump1 can be 0
+
+        vm.expectEmit(address(stakingRewards));
+        emit IStakingRewards.NotifyReward({from: users.alice, amount: amount});
+        stakingRewards.notifyRewardAmount({_amount: amount});
+
+        uint256 originalRewardRate = amount / WEEK;
+        assertEq(stakingRewards.rewardRate(), originalRewardRate);
+        uint256 lastUpdateTime = block.timestamp;
+        skipAndRoll(jump2);
+
+        uint256 converterAmount = TOKEN_1 * 500;
+        address feeConverter = stakingRewards.feeConverter();
+        deal(address(rewardToken), feeConverter, converterAmount);
+
+        // include rounding error in the calculation
+        uint256 amount2 = (amount / WEEK * WEEK) * (WEEK - jump2) / WEEK;
+        vm.expectEmit(feeConverter);
+        emit IConverter.Compound({balanceCompounded: converterAmount});
+        vm.expectEmit(address(stakingRewards));
+        emit IStakingRewards.NotifyReward({from: users.alice, amount: amount2 + converterAmount});
+        stakingRewards.notifyRewardAmount({_amount: amount2});
+
+        uint256 rpts = (block.timestamp - lastUpdateTime) * (amount / WEEK) * 1e18 / POOL_1;
+        assertEq(stakingRewards.rewardPerTokenStored(), rpts);
+        assertEq(rewardToken.balanceOf(feeConverter), 0);
+        assertEq(rewardToken.balanceOf(address(stakingRewards)), amount + amount2 + converterAmount);
+        uint256 amountLeft = amount / WEEK * WEEK * (WEEK - jump2) / WEEK; // include rounding error
+        uint256 rewardRate = (amountLeft + amount2 + converterAmount) / WEEK;
         assertEq(stakingRewards.rewardRate(), rewardRate);
         assertEq(stakingRewards.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), rewardRate);
         assertEq(stakingRewards.lastUpdateTime(), block.timestamp);

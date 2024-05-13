@@ -7,12 +7,14 @@ import {IStakingRewardsFactory} from "../../gauges/stakingrewards/IStakingReward
 
 interface IConverter {
     error SlippageTooHigh();
+    error NotAuthorized();
     error NoRouteFound();
     error AmountInZero();
     error ZeroAddress();
     error InvalidPath();
     error NotKeeper();
 
+    event Compound(uint256 balanceCompounded);
     event SwapTokenToToken(
         address indexed sender, address indexed token, uint256 amountIn, uint256 amountOut, IRouter.Route[] routes
     );
@@ -43,4 +45,8 @@ interface IConverter {
     /// @param _slippage Maximum amount of Slippage allowed in swap
     /// @param _routes Routes to be used to execute swap
     function swapTokenToToken(address _token, uint256 _slippage, IRouter.Route[] memory _routes) external;
+
+    /// @notice Deposit any Converted tokens into the StakingRewards
+    /// @return amount Amount compounded by Converter
+    function compound() external returns (uint256 amount);
 }

@@ -1,0 +1,10 @@
+CompoundTest
+├── When caller is not gauge
+│   └── It should revert with NotAuthorized
+└── When caller is gauge
+    ├── Given Converter has no balance in target token
+    │   ├── It should not transfer any tokens
+    │   └── It should not emit Event
+    └── Given Converter has balance in target token
+        ├── It should transfer all converted tokens to Gauge
+        └── It should emit a {Compound} event

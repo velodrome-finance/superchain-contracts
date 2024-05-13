@@ -106,6 +106,17 @@ contract Converter is IConverter, ReentrancyGuard {
         });
     }
 
+    /// @inheritdoc IConverter
+    function compound() external nonReentrant returns (uint256 amount) {
+        if (msg.sender != gauge) revert NotAuthorized();
+
+        amount = IERC20(targetToken).balanceOf(address(this));
+        if (amount > 0) {
+            IERC20(targetToken).safeTransfer({to: gauge, value: amount});
+            emit Compound({balanceCompounded: amount});
+        }
+    }
+
     /// @dev Fetches an optimal `amountOutMin` given the Swap information and desired slippage
     /// @param _routes Routes to be used to fetch quote
     /// @param _amountIn Input amount for swap
