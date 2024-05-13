@@ -25,6 +25,9 @@ interface IStakingRewards {
     /// @notice Address of the Converter contract linked to the gauge
     function feeConverter() external view returns (address);
 
+    /// @notice Address of the staking rewards factory that created this gauge
+    function factory() external view returns (address);
+
     /// @notice Timestamp end of current rewards period
     function periodFinish() external view returns (uint256);
 

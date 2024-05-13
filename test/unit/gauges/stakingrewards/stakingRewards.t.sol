@@ -69,12 +69,13 @@ contract StakingRewardsTest is BaseFixture {
         stakingRewards.deposit(0);
     }
 
-    // function testCannotDepositWithKilledGauge() public {
-    //     voter.killGauge(address(stakingRewards));
+    function testCannotDepositWithKilledGauge() public {
+        changePrank(users.owner);
+        stakingRewardsFactory.killStakingRewards(address(stakingRewards));
 
-    //     vm.expectRevert(IGauge.NotAlive.selector);
-    //     stakingRewards.deposit(POOL_1);
-    // }
+        vm.expectRevert(IStakingRewards.NotAlive.selector);
+        stakingRewards.deposit(POOL_1);
+    }
 
     function testDeposit() public {
         assertEq(stakingRewards.totalSupply(), 0);

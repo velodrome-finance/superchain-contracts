@@ -26,6 +26,8 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
     address public immutable rewardToken;
     /// @inheritdoc IStakingRewards
     address public immutable feeConverter;
+    /// @inheritdoc IStakingRewards
+    address public immutable factory;
 
     uint256 internal constant DURATION = 7 days; // rewards are released over 7 days
     uint256 internal constant PRECISION = 10 ** 18;
@@ -50,6 +52,7 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
     mapping(uint256 => uint256) public rewardRateByEpoch;
 
     constructor(address _stakingToken, address _rewardToken, address _sfs, uint256 _tokenId) {
+        factory = msg.sender;
         stakingToken = _stakingToken;
         rewardToken = _rewardToken;
         IFeeSharing(_sfs).assign(_tokenId);
@@ -123,6 +126,7 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
 
     function _depositFor(uint256 _amount, address _recipient) internal nonReentrant {
         if (_amount == 0) revert ZeroAmount();
+        if (!IStakingRewardsFactory(factory).isAlive(address(this))) revert NotAlive();
 
         _updateRewards(_recipient);
 
