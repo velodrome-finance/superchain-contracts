@@ -12,6 +12,8 @@ import {Router} from "src/Router.sol";
 import {TokenRegistry} from "src/gauges/tokenregistry/TokenRegistry.sol";
 
 abstract contract DeployBase is Script {
+    error InvalidAddress(address expected, address output);
+
     struct DeploymentParameters {
         address weth;
         address poolAdmin;
@@ -53,12 +55,16 @@ abstract contract DeployBase is Script {
 
     /// @dev Override if deploying extensions
     function deploy() internal virtual {
-        poolImplementation = Pool(
-            cx.deployCreate3({salt: calculateSalt(POOL_ENTROPY), initCode: abi.encodePacked(type(Pool).creationCode)})
-        );
+        bytes32 salt;
+
+        salt = calculateSalt(POOL_ENTROPY);
+        poolImplementation = Pool(cx.deployCreate3({salt: salt, initCode: abi.encodePacked(type(Pool).creationCode)}));
+        checkAddress({salt: salt, output: address(poolImplementation)});
+
+        salt = calculateSalt(POOL_FACTORY_ENTROPY);
         poolFactory = PoolFactory(
             cx.deployCreate3({
-                salt: calculateSalt(POOL_FACTORY_ENTROPY),
+                salt: salt,
                 initCode: abi.encodePacked(
                     type(PoolFactory).creationCode,
                     abi.encode(
@@ -70,11 +76,13 @@ abstract contract DeployBase is Script {
                 )
             })
         );
+        checkAddress({salt: salt, output: address(poolFactory)});
 
+        salt = calculateSalt(ROUTER_ENTROPY);
         router = Router(
             payable(
                 cx.deployCreate3({
-                    salt: calculateSalt(ROUTER_ENTROPY),
+                    salt: salt,
                     initCode: abi.encodePacked(
                         type(Router).creationCode,
                         abi.encode(
@@ -85,9 +93,19 @@ abstract contract DeployBase is Script {
                 })
             )
         );
+        checkAddress({salt: salt, output: address(router)});
 
         tokenRegistry =
             new TokenRegistry({_admin: _params.whitelistAdmin, _whitelistedTokens: _params.whitelistedTokens});
+    }
+
+    /// @dev Check if the computed address matches the address produced by the deployment
+    function checkAddress(bytes32 salt, address output) internal {
+        bytes32 guardedSalt = keccak256(abi.encodePacked(uint256(uint160(deployer)), salt));
+        address computedAddress = cx.computeCreate3Address({salt: guardedSalt, deployer: address(cx)});
+        if (computedAddress != output) {
+            revert InvalidAddress(computedAddress, output);
+        }
     }
 
     function verifyCreate3() internal view {

@@ -52,7 +52,7 @@ contract ModeRunTest is BaseFixture {
         assertEq(poolFactory.sfs(), modeParams.sfs);
         assertEq(poolFactory.tokenId(), 0);
 
-        assertEq(stakingRewardsFactory.admin(), modeParams.notifyAdmin);
+        assertEq(stakingRewardsFactory.admin(), modeParams.admin);
         assertEq(stakingRewardsFactory.sfs(), modeParams.sfs);
         assertEq(stakingRewardsFactory.tokenId(), 2);
 

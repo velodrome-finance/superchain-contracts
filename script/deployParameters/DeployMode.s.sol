@@ -13,7 +13,7 @@ contract DeployMode is DeployBase {
     struct ModeDeploymentParameters {
         address sfs;
         address recipient;
-        address notifyAdmin;
+        address admin;
     }
 
     ModeDeploymentParameters internal _modeParams;
@@ -37,20 +37,22 @@ contract DeployMode is DeployBase {
         _modeParams = ModeDeploymentParameters({
             sfs: 0x8680CEaBcb9b56913c519c069Add6Bc3494B7020,
             recipient: 0x0000000000000000000000000000000000000001,
-            notifyAdmin: 0x0000000000000000000000000000000000000001
+            admin: 0x0000000000000000000000000000000000000001
         });
     }
 
     function deploy() internal override {
-        poolImplementation = ModePool(
-            cx.deployCreate3({
-                salt: calculateSalt(POOL_ENTROPY),
-                initCode: abi.encodePacked(type(ModePool).creationCode)
-            })
-        );
+        bytes32 salt;
+
+        salt = calculateSalt(POOL_ENTROPY);
+        poolImplementation =
+            ModePool(cx.deployCreate3({salt: salt, initCode: abi.encodePacked(type(ModePool).creationCode)}));
+        checkAddress({salt: salt, output: address(poolImplementation)});
+
+        salt = calculateSalt(POOL_FACTORY_ENTROPY);
         poolFactory = ModePoolFactory(
             cx.deployCreate3({
-                salt: calculateSalt(POOL_FACTORY_ENTROPY),
+                salt: salt,
                 initCode: abi.encodePacked(
                     type(ModePoolFactory).creationCode,
                     abi.encode(
@@ -64,11 +66,13 @@ contract DeployMode is DeployBase {
                 )
             })
         );
+        checkAddress({salt: salt, output: address(poolFactory)});
 
+        salt = calculateSalt(ROUTER_ENTROPY);
         router = ModeRouter(
             payable(
                 cx.deployCreate3({
-                    salt: calculateSalt(ROUTER_ENTROPY),
+                    salt: salt,
                     initCode: abi.encodePacked(
                         type(ModeRouter).creationCode,
                         abi.encode(
@@ -81,12 +85,13 @@ contract DeployMode is DeployBase {
                 })
             )
         );
+        checkAddress({salt: salt, output: address(router)});
 
         tokenRegistry =
             new TokenRegistry({_admin: _params.whitelistAdmin, _whitelistedTokens: _params.whitelistedTokens});
 
         stakingRewardsFactory = new ModeStakingRewardsFactory({
-            _admin: _modeParams.notifyAdmin,
+            _admin: _modeParams.admin,
             _tokenRegistry: address(tokenRegistry),
             _router: address(router),
             _sfs: _modeParams.sfs,
