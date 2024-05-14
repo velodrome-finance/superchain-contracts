@@ -14,7 +14,7 @@ interface IStakingRewards {
     event Deposit(address indexed from, address indexed to, uint256 amount);
     event Withdraw(address indexed from, uint256 amount);
     event NotifyReward(address indexed from, uint256 amount);
-    event ClaimFees(address indexed from, uint256 claimed0, uint256 claimed1);
+    event ClaimFees(uint256 claimed0, uint256 claimed1);
     event ClaimRewards(address indexed from, uint256 amount);
 
     /// @notice Address of the pool LP token which is deposited (staked) for rewards

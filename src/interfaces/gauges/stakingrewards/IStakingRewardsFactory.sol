@@ -20,14 +20,14 @@ interface IStakingRewardsFactory {
     event StakingRewardsKilled(address indexed _gauge);
     event StakingRewardsRevived(address indexed _gauge);
 
+    /// @notice Token Registry address
+    function tokenRegistry() external view returns (address);
+
     /// @notice Address of the Router being used in Converters
     function router() external view returns (address);
 
     /// @notice Admin address
     function admin() external view returns (address);
-
-    /// @notice Token Registry address
-    function tokenRegistry() external view returns (address);
 
     /// @notice Pool => Gauge
     function gauges(address _pool) external view returns (address);

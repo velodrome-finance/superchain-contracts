@@ -81,7 +81,7 @@ contract ClaimFeesTest is ConverterTest {
         vm.startPrank(stakingRewardsFactory.keepers()[0]);
         // It should emit a {Claimed} event inside the StakingRewards contract
         vm.expectEmit(true, true, true, false, address(stakingRewards));
-        emit IStakingRewards.ClaimFees({from: address(feeConverter), claimed0: expectedSwapFee, claimed1: 0});
+        emit IStakingRewards.ClaimFees({claimed0: expectedSwapFee, claimed1: 0});
         feeConverter.claimFees();
         // It should receive all accumulated Pool fees
         assertApproxEqAbs(token0.balanceOf(address(feeConverter)), expectedSwapFee, 1e2);
@@ -121,7 +121,7 @@ contract ClaimFeesTest is ConverterTest {
         // It should emit a {Claimed} event inside the StakingRewards contract
         vm.startPrank(stakingRewardsFactory.keepers()[0]);
         vm.expectEmit(true, true, true, false, address(stakingRewards));
-        emit IStakingRewards.ClaimFees({from: address(feeConverter), claimed0: expectedSwapFee / 2, claimed1: 0});
+        emit IStakingRewards.ClaimFees({claimed0: expectedSwapFee / 2, claimed1: 0});
         feeConverter.claimFees();
         // It should receive an amount of Pool Fees proportional to the amount of Liquidity that is staked in StakingRewards
         assertApproxEqAbs(token0.balanceOf(address(feeConverter)), expectedSwapFee / 2, 1e2);

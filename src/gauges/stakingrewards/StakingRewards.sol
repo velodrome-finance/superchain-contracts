@@ -109,7 +109,7 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
         if (claimed1 > 0) {
             IERC20(_token1).safeTransfer(feeConverter, claimed1);
         }
-        emit ClaimFees(msg.sender, claimed0, claimed1);
+        emit ClaimFees(claimed0, claimed1);
     }
 
     /// @inheritdoc IStakingRewards

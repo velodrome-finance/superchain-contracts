@@ -41,10 +41,10 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
     address public immutable tokenRegistry;
 
     /// @inheritdoc IStakingRewardsFactory
-    address public admin;
+    address public immutable router;
 
     /// @inheritdoc IStakingRewardsFactory
-    address public immutable router;
+    address public admin;
 
     /// @inheritdoc IStakingRewardsFactory
     mapping(address => address) public gauges;
@@ -129,7 +129,7 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
     }
 
     /// @inheritdoc IStakingRewardsFactory
-    function approveKeeper(address _keeper) public virtual onlyOwner {
+    function approveKeeper(address _keeper) external onlyOwner {
         _approveKeeper(_keeper);
     }
 
@@ -143,7 +143,7 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
     }
 
     /// @inheritdoc IStakingRewardsFactory
-    function unapproveKeeper(address _keeper) external virtual onlyOwner {
+    function unapproveKeeper(address _keeper) external onlyOwner {
         if (!_keeperRegistry.contains(_keeper)) revert NotApproved();
 
         _keeperRegistry.remove(_keeper);

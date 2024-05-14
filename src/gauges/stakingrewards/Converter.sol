@@ -126,6 +126,12 @@ contract Converter is IConverter, ReentrancyGuard {
     }
 
     /// @inheritdoc IConverter
+    function claimFees() external nonReentrant returns (uint256, uint256) {
+        if (!stakingRewardsFactory.isKeeper(msg.sender)) revert NotKeeper();
+        return IStakingRewards(gauge).claimFees();
+    }
+
+    /// @inheritdoc IConverter
     function compound() external nonReentrant returns (uint256 amount) {
         if (msg.sender != gauge) revert NotAuthorized();
 
@@ -161,11 +167,5 @@ contract Converter is IConverter, ReentrancyGuard {
 
         // At this point, _amountIn is actually amountOut as we finished the loop
         amountOutMin = (_amountIn * (10_000 - _slippage)) / 10_000;
-    }
-
-    /// @inheritdoc IConverter
-    function claimFees() external nonReentrant returns (uint256, uint256) {
-        if (!stakingRewardsFactory.isKeeper(msg.sender)) revert NotKeeper();
-        return IStakingRewards(gauge).claimFees();
     }
 }
