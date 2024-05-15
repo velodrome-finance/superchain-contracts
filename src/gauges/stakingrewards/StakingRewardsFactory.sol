@@ -41,6 +41,9 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
     address public immutable tokenRegistry;
 
     /// @inheritdoc IStakingRewardsFactory
+    address public immutable rewardToken;
+
+    /// @inheritdoc IStakingRewardsFactory
     address public immutable router;
 
     /// @inheritdoc IStakingRewardsFactory
@@ -66,6 +69,7 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
         address _notifyAdmin,
         address _keeperAdmin,
         address _tokenRegistry,
+        address _rewardToken,
         address _router,
         address[] memory _keepers
     ) Ownable(_keeperAdmin) {
@@ -75,6 +79,7 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
         admin = _admin;
         notifyAdmin = _notifyAdmin;
         tokenRegistry = _tokenRegistry;
+        rewardToken = _rewardToken;
         router = _router;
         emit SetAdmin({_admin: _admin});
         emit SetNotifyAdmin({_notifyAdmin: _notifyAdmin});
@@ -97,31 +102,31 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
     }
 
     /// @inheritdoc IStakingRewardsFactory
-    function createStakingRewards(address _pool, address _rewardToken) external returns (address stakingRewards) {
+    function createStakingRewards(address _pool) external returns (address stakingRewards) {
         if (gauges[_pool] != address(0)) revert GaugeExists();
-        if (_rewardToken == address(0) || _pool == address(0)) revert ZeroAddress();
+        if (_pool == address(0)) revert ZeroAddress();
         (address token0, address token1) = IPool(_pool).tokens();
         ITokenRegistry _tokenRegistry = ITokenRegistry(tokenRegistry);
         if (!_tokenRegistry.isWhitelistedToken(token0) || !_tokenRegistry.isWhitelistedToken(token1)) {
             revert NotWhitelistedToken();
         }
 
-        stakingRewards = _deployStakingRewards({_stakingToken: _pool, _rewardToken: _rewardToken});
+        stakingRewards = _deployStakingRewards({_stakingToken: _pool});
 
         gauges[_pool] = stakingRewards;
         poolForGauge[stakingRewards] = _pool;
         isAlive[stakingRewards] = true;
         emit StakingRewardsCreated({
             pool: _pool,
-            rewardToken: _rewardToken,
+            rewardToken: rewardToken,
             stakingRewards: stakingRewards,
             creator: msg.sender
         });
     }
 
     /// @dev Internal function to deploy StakingRewards contracts
-    function _deployStakingRewards(address _stakingToken, address _rewardToken) internal virtual returns (address) {
-        return address(new StakingRewards({_stakingToken: _stakingToken, _rewardToken: _rewardToken}));
+    function _deployStakingRewards(address _stakingToken) internal virtual returns (address) {
+        return address(new StakingRewards({_stakingToken: _stakingToken, _rewardToken: rewardToken}));
     }
 
     /// @inheritdoc IStakingRewardsFactory

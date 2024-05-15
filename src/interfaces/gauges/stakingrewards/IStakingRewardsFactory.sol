@@ -25,6 +25,9 @@ interface IStakingRewardsFactory {
     /// @notice Token Registry address
     function tokenRegistry() external view returns (address);
 
+    /// @notice Reward Token address
+    function rewardToken() external view returns (address);
+
     /// @notice Address of the Router being used in Converters
     function router() external view returns (address);
 
@@ -54,9 +57,8 @@ interface IStakingRewardsFactory {
 
     /// @notice Create new staking rewards contract
     /// @param _pool Pool address
-    /// @param _rewardToken Reward token address
     /// @return stakingRewards New staking rewards contract address
-    function createStakingRewards(address _pool, address _rewardToken) external returns (address);
+    function createStakingRewards(address _pool) external returns (address);
 
     /// @notice Kill staking rewards contract
     /// @dev    Only callable by admin

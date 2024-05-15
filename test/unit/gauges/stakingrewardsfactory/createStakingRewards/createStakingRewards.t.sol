@@ -13,34 +13,19 @@ contract CreateStakingRewardsTest is StakingRewardsFactoryTest {
     }
 
     function test_WhenGaugeExistsForGivenPool() external {
-        address stakingRewards =
-            stakingRewardsFactory.createStakingRewards({_pool: pool, _rewardToken: address(rewardToken)});
+        address stakingRewards = stakingRewardsFactory.createStakingRewards({_pool: pool});
         assertEq(stakingRewardsFactory.gauges(pool), stakingRewards);
 
         // It should revert with GaugeExists
         vm.expectRevert(IStakingRewardsFactory.GaugeExists.selector);
-        stakingRewardsFactory.createStakingRewards({_pool: pool, _rewardToken: address(rewardToken)});
+        stakingRewardsFactory.createStakingRewards({_pool: pool});
     }
 
     modifier whenGaugeDoesNotExistForGivenPool() {
         _;
     }
 
-    function test_WhenRewardTokenIsZeroAddress() external whenGaugeDoesNotExistForGivenPool {
-        // It should revert with ZeroAddress
-        vm.expectRevert(IStakingRewardsFactory.ZeroAddress.selector);
-        stakingRewardsFactory.createStakingRewards({_pool: pool, _rewardToken: address(0)});
-    }
-
-    modifier whenRewardTokenIsNotZeroAddress() {
-        _;
-    }
-
-    function test_WhenOneOfTheTokensIsNotWhitelistedInRegistry()
-        external
-        whenGaugeDoesNotExistForGivenPool
-        whenRewardTokenIsNotZeroAddress
-    {
+    function test_WhenOneOfTheTokensIsNotWhitelistedInRegistry() external whenGaugeDoesNotExistForGivenPool {
         /// @dev Store initial state
         uint256 snapshot = vm.snapshot();
 
@@ -51,7 +36,7 @@ contract CreateStakingRewardsTest is StakingRewardsFactoryTest {
 
         // It should revert with NotWhitelisted
         vm.expectRevert(IStakingRewardsFactory.NotWhitelistedToken.selector);
-        stakingRewardsFactory.createStakingRewards({_pool: pool, _rewardToken: address(rewardToken)});
+        stakingRewardsFactory.createStakingRewards({_pool: pool});
 
         /// @dev Restore initial state
         vm.revertTo(snapshot);
@@ -63,14 +48,10 @@ contract CreateStakingRewardsTest is StakingRewardsFactoryTest {
 
         // It should revert with NotWhitelisted
         vm.expectRevert(IStakingRewardsFactory.NotWhitelistedToken.selector);
-        stakingRewardsFactory.createStakingRewards({_pool: pool, _rewardToken: address(rewardToken)});
+        stakingRewardsFactory.createStakingRewards({_pool: pool});
     }
 
-    function test_WhenBothTokensAreWhitelistedInRegistry()
-        external
-        whenGaugeDoesNotExistForGivenPool
-        whenRewardTokenIsNotZeroAddress
-    {
+    function test_WhenBothTokensAreWhitelistedInRegistry() external whenGaugeDoesNotExistForGivenPool {
         // It should deploy new StakingRewards contract
         // It should store new staking rewards contract in gauges mapping
         // It should store pool for new staking rewards contract in poolForGauge mapping
@@ -86,8 +67,7 @@ contract CreateStakingRewardsTest is StakingRewardsFactoryTest {
             creator: users.alice
         });
         vm.prank(users.alice);
-        address stakingRewards =
-            stakingRewardsFactory.createStakingRewards({_pool: pool, _rewardToken: address(rewardToken)});
+        address stakingRewards = stakingRewardsFactory.createStakingRewards({_pool: pool});
 
         assertEq(stakingRewardsFactory.gauges(pool), stakingRewards);
         assertEq(stakingRewardsFactory.poolForGauge(stakingRewards), pool);

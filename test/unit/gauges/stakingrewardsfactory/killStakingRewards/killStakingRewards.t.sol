@@ -11,7 +11,7 @@ contract KillStakingRewardsTest is StakingRewardsFactoryTest {
         super.setUp();
 
         pool = poolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true});
-        stakingRewards = stakingRewardsFactory.createStakingRewards({_pool: pool, _rewardToken: address(rewardToken)});
+        stakingRewards = stakingRewardsFactory.createStakingRewards({_pool: pool});
     }
 
     function test_WhenCallerIsNotAdmin() external {

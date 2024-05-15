@@ -11,9 +11,7 @@ contract NotifyRewardAmountTest is BaseFixture {
         super.setUp();
 
         pool = Pool(poolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
-        stakingRewards = StakingRewards(
-            stakingRewardsFactory.createStakingRewards({_pool: address(pool), _rewardToken: address(rewardToken)})
-        );
+        stakingRewards = StakingRewards(stakingRewardsFactory.createStakingRewards({_pool: address(pool)}));
 
         addLiquidityToPool(users.alice, address(token0), address(token1), true, TOKEN_1, USDC_1);
         vm.startPrank(users.alice);

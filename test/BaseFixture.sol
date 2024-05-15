@@ -106,6 +106,7 @@ abstract contract BaseFixture is Test, Constants {
             _notifyAdmin: users.owner,
             _keeperAdmin: users.owner,
             _tokenRegistry: address(tokenRegistry),
+            _rewardToken: address(rewardToken),
             _router: address(router),
             _keepers: new address[](0)
         });

@@ -19,19 +19,20 @@ contract ModeStakingRewardsFactory is StakingRewardsFactory, IModeStakingRewards
         address _notifyAdmin,
         address _keeperAdmin,
         address _tokenRegistry,
+        address _rewardToken,
         address _router,
         address _sfs,
         address _recipient,
         address[] memory _keepers
-    ) StakingRewardsFactory(_admin, _notifyAdmin, _keeperAdmin, _tokenRegistry, _router, _keepers) {
+    ) StakingRewardsFactory(_admin, _notifyAdmin, _keeperAdmin, _tokenRegistry, _rewardToken, _router, _keepers) {
         sfs = _sfs;
         tokenId = IFeeSharing(_sfs).register(_recipient);
     }
 
     /// @dev Internal helper function to deploy StakingRewards contracts
-    function _deployStakingRewards(address _pool, address _rewardToken) internal override returns (address) {
+    function _deployStakingRewards(address _pool) internal override returns (address) {
         return address(
-            new ModeStakingRewards({_stakingToken: _pool, _rewardToken: _rewardToken, _sfs: sfs, _tokenId: tokenId})
+            new ModeStakingRewards({_stakingToken: _pool, _rewardToken: rewardToken, _sfs: sfs, _tokenId: tokenId})
         );
     }
 }

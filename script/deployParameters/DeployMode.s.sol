@@ -16,6 +16,7 @@ contract DeployMode is DeployBase {
         address keeperAdmin;
         address notifyAdmin;
         address admin;
+        address rewardToken;
     }
 
     ModeDeploymentParameters internal _modeParams;
@@ -41,7 +42,8 @@ contract DeployMode is DeployBase {
             recipient: 0x0000000000000000000000000000000000000001,
             keeperAdmin: 0x0000000000000000000000000000000000000001,
             notifyAdmin: 0x0000000000000000000000000000000000000001,
-            admin: 0x0000000000000000000000000000000000000001
+            admin: 0x0000000000000000000000000000000000000001,
+            rewardToken: 0x0000000000000000000000000000000000000001
         });
     }
 
@@ -99,6 +101,7 @@ contract DeployMode is DeployBase {
             _notifyAdmin: _modeParams.notifyAdmin,
             _keeperAdmin: _modeParams.keeperAdmin,
             _tokenRegistry: address(tokenRegistry),
+            _rewardToken: _modeParams.rewardToken,
             _router: address(router),
             _sfs: _modeParams.sfs,
             _recipient: _modeParams.recipient,
