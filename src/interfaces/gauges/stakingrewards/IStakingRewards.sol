@@ -5,8 +5,8 @@ interface IStakingRewards {
     error InsufficientAmount();
     error NotAlive();
     error NotAuthorized();
-    error NotVoter();
-    error NotTeam();
+    error NotNotifyAdmin();
+    error PeriodFinish();
     error RewardRateTooHigh();
     error ZeroAmount();
     error ZeroRewardRate();
@@ -90,6 +90,10 @@ interface IStakingRewards {
     /// @notice Withdraw LP tokens for user
     /// @param _amount .
     function withdraw(uint256 _amount) external;
+
+    /// @dev Notifies gauge of gauge rewards. Assumes gauge reward tokens is 18 decimals.
+    ///      If not 18 decimals, rewardRate may have rounding issues.
+    function notifyRewardMatch(uint256 amount) external;
 
     /// @dev Notifies gauge of gauge rewards. Assumes gauge reward tokens is 18 decimals.
     ///      If not 18 decimals, rewardRate may have rounding issues.

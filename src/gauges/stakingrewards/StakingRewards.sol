@@ -195,6 +195,32 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
     }
 
     /// @inheritdoc IStakingRewards
+    function notifyRewardMatch(uint256 _amount) external nonReentrant {
+        if (msg.sender != IStakingRewardsFactory(factory).notifyAdmin()) revert NotNotifyAdmin();
+        if (_amount == 0) revert ZeroAmount();
+        if (block.timestamp >= periodFinish) revert PeriodFinish();
+        rewardPerTokenStored = rewardPerToken();
+
+        uint256 _remaining = periodFinish - block.timestamp;
+        uint256 _leftover = _remaining * rewardRate;
+        IERC20(rewardToken).safeTransferFrom(msg.sender, address(this), _amount);
+        rewardRate = (_amount + _leftover) / _remaining;
+
+        rewardRateByEpoch[VelodromeTimeLibrary.epochStart(block.timestamp)] = rewardRate;
+        if (rewardRate == 0) revert ZeroRewardRate();
+
+        // Ensure the provided reward amount is not more than the balance in the contract.
+        // This keeps the reward rate in the right range, preventing overflows due to
+        // very high values of rewardRate in the earned and rewardsPerToken functions;
+        // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
+        uint256 balance = IERC20(rewardToken).balanceOf(address(this));
+        if (rewardRate > balance / _remaining) revert RewardRateTooHigh();
+
+        lastUpdateTime = block.timestamp;
+        emit NotifyReward(msg.sender, _amount);
+    }
+
+    /// @inheritdoc IStakingRewards
     function notifyRewardAmount(uint256 _amount) external nonReentrant {
         if (_amount == 0) revert ZeroAmount();
         _notifyRewardAmount(_amount);

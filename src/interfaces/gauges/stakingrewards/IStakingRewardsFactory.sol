@@ -5,6 +5,7 @@ interface IStakingRewardsFactory {
     error NotWhitelistedToken();
     error AlreadyApproved();
     error NotAdmin();
+    error NotNotifyAdmin();
     error GaugeExists();
     error NotApproved();
     error ZeroAddress();
@@ -14,6 +15,7 @@ interface IStakingRewardsFactory {
     event ApproveKeeper(address indexed keeper);
     event UnapproveKeeper(address indexed keeper);
     event SetAdmin(address indexed _admin);
+    event SetNotifyAdmin(address indexed _notifyAdmin);
     event StakingRewardsCreated(
         address indexed pool, address indexed rewardToken, address indexed stakingRewards, address creator
     );
@@ -29,6 +31,9 @@ interface IStakingRewardsFactory {
     /// @notice Admin address
     function admin() external view returns (address);
 
+    /// @notice Notify admin address
+    function notifyAdmin() external view returns (address);
+
     /// @notice Pool => Gauge
     function gauges(address _pool) external view returns (address);
 
@@ -37,6 +42,10 @@ interface IStakingRewardsFactory {
 
     /// @dev Gauge => Liveness status
     function isAlive(address gauge) external view returns (bool);
+
+    /// @notice Set new notify admin
+    /// @param _notifyAdmin New notify admin address
+    function setNotifyAdmin(address _notifyAdmin) external;
 
     /// @notice Set new admin
     /// @dev    Only callable by current admin

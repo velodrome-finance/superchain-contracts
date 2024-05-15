@@ -47,6 +47,9 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
     address public admin;
 
     /// @inheritdoc IStakingRewardsFactory
+    address public notifyAdmin;
+
+    /// @inheritdoc IStakingRewardsFactory
     mapping(address => address) public gauges;
 
     /// @inheritdoc IStakingRewardsFactory
@@ -60,6 +63,7 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
 
     constructor(
         address _admin,
+        address _notifyAdmin,
         address _keeperAdmin,
         address _tokenRegistry,
         address _router,
@@ -69,9 +73,19 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
             _approveKeeper(_keepers[i]);
         }
         admin = _admin;
+        notifyAdmin = _notifyAdmin;
         tokenRegistry = _tokenRegistry;
         router = _router;
         emit SetAdmin({_admin: _admin});
+        emit SetNotifyAdmin({_notifyAdmin: _notifyAdmin});
+    }
+
+    /// @inheritdoc IStakingRewardsFactory
+    function setNotifyAdmin(address _notifyAdmin) external {
+        if (msg.sender != notifyAdmin) revert NotNotifyAdmin();
+        if (_notifyAdmin == address(0)) revert ZeroAddress();
+        notifyAdmin = _notifyAdmin;
+        emit SetNotifyAdmin({_notifyAdmin: _notifyAdmin});
     }
 
     /// @inheritdoc IStakingRewardsFactory
