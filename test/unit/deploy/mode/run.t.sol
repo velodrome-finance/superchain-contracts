@@ -34,7 +34,8 @@ contract ModeRunTest is BaseFixture {
 
         ModePool poolImplementation = ModePool(address(deploy.poolImplementation()));
         ModePoolFactory poolFactory = ModePoolFactory(address(deploy.poolFactory()));
-        ModeStakingRewardsFactory stakingRewardsFactory = deploy.stakingRewardsFactory();
+        ModeStakingRewardsFactory stakingRewardsFactory =
+            ModeStakingRewardsFactory(address(deploy.stakingRewardsFactory()));
         ModeRouter router = ModeRouter(payable(address(deploy.router())));
         tokenRegistry = deploy.tokenRegistry();
         params = deploy.params();
@@ -44,6 +45,7 @@ contract ModeRunTest is BaseFixture {
         assertNotEq(address(poolFactory), address(0));
         assertNotEq(address(router), address(0));
         assertNotEq(address(tokenRegistry), address(0));
+        assertNotEq(address(stakingRewardsFactory), address(0));
 
         assertEq(poolFactory.implementation(), address(poolImplementation));
         assertEq(poolFactory.poolAdmin(), params.poolAdmin);
@@ -52,7 +54,12 @@ contract ModeRunTest is BaseFixture {
         assertEq(poolFactory.sfs(), modeParams.sfs);
         assertEq(poolFactory.tokenId(), 0);
 
-        assertEq(stakingRewardsFactory.admin(), modeParams.admin);
+        assertEq(stakingRewardsFactory.admin(), params.admin);
+        assertEq(stakingRewardsFactory.owner(), params.keeperAdmin);
+        assertEq(stakingRewardsFactory.notifyAdmin(), params.notifyAdmin);
+        assertEq(stakingRewardsFactory.rewardToken(), params.rewardToken);
+        assertEq(stakingRewardsFactory.tokenRegistry(), address(tokenRegistry));
+        assertEq(stakingRewardsFactory.router(), address(router));
         assertEq(stakingRewardsFactory.sfs(), modeParams.sfs);
         assertEq(stakingRewardsFactory.tokenId(), 2);
 

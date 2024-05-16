@@ -27,17 +27,26 @@ contract OptimismRunTest is BaseFixture {
         poolFactory = deploy.poolFactory();
         router = deploy.router();
         tokenRegistry = deploy.tokenRegistry();
+        stakingRewardsFactory = deploy.stakingRewardsFactory();
         params = deploy.params();
 
         assertNotEq(address(poolImplementation), address(0));
         assertNotEq(address(poolFactory), address(0));
         assertNotEq(address(router), address(0));
         assertNotEq(address(tokenRegistry), address(0));
+        assertNotEq(address(stakingRewardsFactory), address(0));
 
         assertEq(poolFactory.implementation(), address(poolImplementation));
         assertEq(poolFactory.poolAdmin(), params.poolAdmin);
         assertEq(poolFactory.pauser(), params.pauser);
         assertEq(poolFactory.feeManager(), params.feeManager);
+
+        assertEq(stakingRewardsFactory.admin(), params.admin);
+        assertEq(stakingRewardsFactory.owner(), params.keeperAdmin);
+        assertEq(stakingRewardsFactory.notifyAdmin(), params.notifyAdmin);
+        assertEq(stakingRewardsFactory.rewardToken(), params.rewardToken);
+        assertEq(stakingRewardsFactory.tokenRegistry(), address(tokenRegistry));
+        assertEq(stakingRewardsFactory.router(), address(router));
 
         assertEq(router.factory(), address(poolFactory));
         assertEq(address(router.weth()), params.weth);

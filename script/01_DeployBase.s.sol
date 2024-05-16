@@ -10,6 +10,7 @@ import {Pool} from "src/pools/Pool.sol";
 import {PoolFactory} from "src/pools/PoolFactory.sol";
 import {Router} from "src/Router.sol";
 import {TokenRegistry} from "src/gauges/tokenregistry/TokenRegistry.sol";
+import {StakingRewardsFactory} from "src/gauges/stakingrewards/StakingRewardsFactory.sol";
 
 abstract contract DeployBase is Script {
     error InvalidAddress(address expected, address output);
@@ -20,6 +21,10 @@ abstract contract DeployBase is Script {
         address pauser;
         address feeManager;
         address whitelistAdmin;
+        address keeperAdmin;
+        address notifyAdmin;
+        address admin;
+        address rewardToken;
         address[] whitelistedTokens;
         string outputFilename;
     }
@@ -31,6 +36,7 @@ abstract contract DeployBase is Script {
     PoolFactory public poolFactory;
     Router public router;
     TokenRegistry public tokenRegistry;
+    StakingRewardsFactory public stakingRewardsFactory;
 
     ICreateX public cx = ICreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
 
@@ -97,6 +103,16 @@ abstract contract DeployBase is Script {
 
         tokenRegistry =
             new TokenRegistry({_admin: _params.whitelistAdmin, _whitelistedTokens: _params.whitelistedTokens});
+
+        stakingRewardsFactory = new StakingRewardsFactory({
+            _admin: _params.admin,
+            _notifyAdmin: _params.notifyAdmin,
+            _keeperAdmin: _params.keeperAdmin,
+            _tokenRegistry: address(tokenRegistry),
+            _rewardToken: _params.rewardToken,
+            _router: address(router),
+            _keepers: new address[](0)
+        });
     }
 
     /// @dev Check if the computed address matches the address produced by the deployment
@@ -134,6 +150,8 @@ abstract contract DeployBase is Script {
         console2.log("poolImplementation: ", address(poolImplementation));
         console2.log("poolFactory: ", address(poolFactory));
         console2.log("router: ", address(router));
+        console2.log("tokenRegistry: ", address(tokenRegistry));
+        console2.log("stakingRewardsFactory: ", address(stakingRewardsFactory));
     }
 
     function logOutput() internal {
@@ -145,7 +163,9 @@ abstract contract DeployBase is Script {
                 abi.encodePacked(
                     stdJson.serialize("", "poolImplementation", address(poolImplementation)),
                     stdJson.serialize("", "poolFactory", address(poolFactory)),
-                    stdJson.serialize("", "router", address(router))
+                    stdJson.serialize("", "router", address(router)),
+                    stdJson.serialize("", "tokenRegistry", address(tokenRegistry)),
+                    stdJson.serialize("", "stakingRewardsFactory", address(stakingRewardsFactory))
                 )
             )
         );

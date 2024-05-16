@@ -13,16 +13,11 @@ contract DeployMode is DeployBase {
     struct ModeDeploymentParameters {
         address sfs;
         address recipient;
-        address keeperAdmin;
-        address notifyAdmin;
-        address admin;
-        address rewardToken;
     }
 
     ModeDeploymentParameters internal _modeParams;
     address[] public whitelistedTokens = new address[](15);
 
-    ModeStakingRewardsFactory public stakingRewardsFactory;
     ModeStakingRewards public stakingRewards;
 
     function setUp() public override {
@@ -48,16 +43,16 @@ contract DeployMode is DeployBase {
             pauser: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
             feeManager: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
             whitelistAdmin: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
+            keeperAdmin: 0xb32Db5b848B837DC39EF20B4110dFAc7493e93ed,
+            notifyAdmin: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
+            admin: 0x5d496974832B8BC3c02F89E7Ac0b7579b4d1cC09,
+            rewardToken: 0xDfc7C877a950e49D2610114102175A06C2e3167a,
             whitelistedTokens: whitelistedTokens,
             outputFilename: "Mode.json"
         });
         _modeParams = ModeDeploymentParameters({
             sfs: 0x8680CEaBcb9b56913c519c069Add6Bc3494B7020,
-            recipient: 0xb8804281fc224a4E597A3f256b53C9Ed3C89B6c3,
-            keeperAdmin: 0xb32Db5b848B837DC39EF20B4110dFAc7493e93ed,
-            notifyAdmin: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
-            admin: 0x5d496974832B8BC3c02F89E7Ac0b7579b4d1cC09,
-            rewardToken: 0xDfc7C877a950e49D2610114102175A06C2e3167a
+            recipient: 0xb8804281fc224a4E597A3f256b53C9Ed3C89B6c3
         });
     }
 
@@ -111,11 +106,11 @@ contract DeployMode is DeployBase {
             new TokenRegistry({_admin: _params.whitelistAdmin, _whitelistedTokens: _params.whitelistedTokens});
 
         stakingRewardsFactory = new ModeStakingRewardsFactory({
-            _admin: _modeParams.admin,
-            _notifyAdmin: _modeParams.notifyAdmin,
-            _keeperAdmin: _modeParams.keeperAdmin,
+            _admin: _params.admin,
+            _notifyAdmin: _params.notifyAdmin,
+            _keeperAdmin: _params.keeperAdmin,
             _tokenRegistry: address(tokenRegistry),
-            _rewardToken: _modeParams.rewardToken,
+            _rewardToken: _params.rewardToken,
             _router: address(router),
             _sfs: _modeParams.sfs,
             _recipient: _modeParams.recipient,
