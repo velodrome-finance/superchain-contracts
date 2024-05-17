@@ -1,0 +1,12 @@
+DepositTest
+├── When the amount is Zero 
+│   └── It should revert with ZeroAmount 
+└── When the amount is not Zero
+    ├── It should set rewardPerTokenStored
+    ├── It should set lastUpdateTime
+    ├── It should set rewards[_account]
+    ├── It should set userRewardPerTokenPaid[_account]
+    ├── It should transfer the amount
+    ├── It should add amount to totalSupply
+    ├── It should add amount to balanceOf[caller]
+    └── It should emit {Deposit} event

@@ -1,37 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../../../BaseFixture.sol";
+import "./stakingRewardsBase.t.sol";
 
-contract StakingRewardsTest is BaseFixture {
-    Pool public pool;
-    StakingRewards public stakingRewards;
-
-    function setUp() public override {
-        super.setUp();
-
-        pool = Pool(poolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
-        stakingRewards = StakingRewards(stakingRewardsFactory.createStakingRewards({_pool: address(pool)}));
-
-        skipToNextEpoch(0);
-
-        addLiquidityToPool(users.alice, address(token0), address(token1), true, TOKEN_1, USDC_1);
-
-        vm.label(address(pool), "Pool");
-        vm.label(address(stakingRewards), "Staking Rewards");
-
-        vm.startPrank(users.alice);
-    }
-
+contract StakingRewardsTest is StakingRewardsBaseTest {
     function test_InitialState() public {
         assertEq(stakingRewards.factory(), address(stakingRewardsFactory));
         assertEq(stakingRewards.stakingToken(), address(pool));
         assertEq(stakingRewards.rewardToken(), address(rewardToken));
-    }
-
-    function testCannotDepositWithRecipientZeroAmount() public {
-        vm.expectRevert(IGauge.ZeroAmount.selector);
-        stakingRewards.deposit(0, users.alice);
     }
 
     function testDepositWithRecipient() public {
@@ -66,11 +42,6 @@ contract StakingRewardsTest is BaseFixture {
         assertEq(stakingRewards.earned(users.owner), 0);
         assertEq(stakingRewards.balanceOf(users.owner), POOL_1);
         assertEq(pre - post, POOL_1);
-    }
-
-    function testCannotDepositZeroAmount() public {
-        vm.expectRevert(IGauge.ZeroAmount.selector);
-        stakingRewards.deposit(0);
     }
 
     function testCannotDepositWithKilledGauge() public {

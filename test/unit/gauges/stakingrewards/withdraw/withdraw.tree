@@ -1,0 +1,12 @@
+WithdrawTest
+├── When the amount is greater than balance of sender
+│   └── It should revert with Math over/underflow 
+└── When the amount is equal or lower than balance of sender
+    ├── It should set rewardPerTokenStored
+    ├── It should set lastUpdateTime
+    ├── It should set rewards[user]
+    ├── It should set userRewardPerTokenPaid[user]
+    ├── It should transfer the amount
+    ├── It should subtract amount from totalSupply
+    ├── It should subtract amount from balanceOf[user]
+    └── It should emit {Withdraw} event

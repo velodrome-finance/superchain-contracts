@@ -1,0 +1,12 @@
+DepositWithRecipientTest
+├── When the amount is Zero 
+│   └── It should revert with ZeroAmount 
+└── When the amount is not Zero
+    ├── It should set rewardPerTokenStored of recipient
+    ├── It should set lastUpdateTime of recipient
+    ├── It should set rewards[_account] of recipient
+    ├── It should set userRewardPerTokenPaid[_account] of recipient
+    ├── It should transfer the amount of recipient
+    ├── It should add amount to totalSupply of recipient
+    ├── It should add amount to balanceOf[_account] of recipient
+    └── It should emit {Deposit} event
