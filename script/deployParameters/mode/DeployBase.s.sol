@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../01_DeployBase.s.sol";
+import "../../01_DeployBaseFixture.s.sol";
 import {ModePool} from "src/pools/extensions/ModePool.sol";
 import {ModePoolFactory} from "src/pools/extensions/ModePoolFactory.sol";
 import {ModeRouter} from "src/extensions/ModeRouter.sol";
-import {ModeStakingRewardsFactory} from "src/gauges/stakingrewards/extensions/ModeStakingRewardsFactory.sol";
-import {ModeStakingRewards} from "src/gauges/stakingrewards/extensions/ModeStakingRewards.sol";
-import {TokenRegistry} from "src/gauges/tokenregistry/TokenRegistry.sol";
 
-contract DeployMode is DeployBase {
+contract DeployBase is DeployBaseFixture {
     struct ModeDeploymentParameters {
         address sfs;
         address recipient;
@@ -17,8 +14,6 @@ contract DeployMode is DeployBase {
 
     ModeDeploymentParameters internal _modeParams;
     address[] public whitelistedTokens = new address[](15);
-
-    ModeStakingRewards public stakingRewards;
 
     function setUp() public override {
         whitelistedTokens.push(0x4200000000000000000000000000000000000006);
@@ -37,16 +32,12 @@ contract DeployMode is DeployBase {
         whitelistedTokens.push(0xE7798f023fC62146e8Aa1b36Da45fb70855a77Ea);
         whitelistedTokens.push(0x18470019bF0E94611f15852F7e93cf5D65BC34CA);
 
-        _params = DeployBase.DeploymentParameters({
+        _params = DeployBaseFixture.DeploymentParameters({
             weth: 0x4200000000000000000000000000000000000006,
             poolAdmin: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
             pauser: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
             feeManager: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
             whitelistAdmin: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
-            keeperAdmin: 0xb32Db5b848B837DC39EF20B4110dFAc7493e93ed,
-            notifyAdmin: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
-            admin: 0x5d496974832B8BC3c02F89E7Ac0b7579b4d1cC09,
-            rewardToken: 0xDfc7C877a950e49D2610114102175A06C2e3167a,
             whitelistedTokens: whitelistedTokens,
             outputFilename: "Mode.json"
         });
@@ -104,21 +95,6 @@ contract DeployMode is DeployBase {
 
         tokenRegistry =
             new TokenRegistry({_admin: _params.whitelistAdmin, _whitelistedTokens: _params.whitelistedTokens});
-
-        stakingRewardsFactory = new ModeStakingRewardsFactory({
-            _admin: _params.admin,
-            _notifyAdmin: _params.notifyAdmin,
-            _keeperAdmin: _params.keeperAdmin,
-            _tokenRegistry: address(tokenRegistry),
-            _rewardToken: _params.rewardToken,
-            _router: address(router),
-            _sfs: _modeParams.sfs,
-            _recipient: _modeParams.recipient,
-            _keepers: new address[](0)
-        });
-
-        console2.log("TokenRegistry deployed at: ", address(tokenRegistry));
-        console2.log("StakingRewardsFactory deployed at: ", address(stakingRewardsFactory));
     }
 
     function modeParams() public view returns (ModeDeploymentParameters memory) {
