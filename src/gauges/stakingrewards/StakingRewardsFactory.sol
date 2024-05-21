@@ -3,10 +3,11 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 import {ITokenRegistry} from "../../interfaces/gauges/tokenregistry/ITokenRegistry.sol";
 import {IStakingRewardsFactory} from "../../interfaces/gauges/stakingrewards/IStakingRewardsFactory.sol";
-import {StakingRewards} from "../../gauges/stakingrewards/StakingRewards.sol";
+import {IStakingRewards} from "../../interfaces/gauges/stakingrewards/IStakingRewards.sol";
 import {IPool} from "../../interfaces/pools/IPool.sol";
 
 /*
@@ -47,6 +48,9 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
     address public immutable router;
 
     /// @inheritdoc IStakingRewardsFactory
+    address public immutable stakingRewardsImplementation;
+
+    /// @inheritdoc IStakingRewardsFactory
     address public admin;
 
     /// @inheritdoc IStakingRewardsFactory
@@ -71,6 +75,7 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
         address _tokenRegistry,
         address _rewardToken,
         address _router,
+        address _stakingRewardsImplementation,
         address[] memory _keepers
     ) Ownable(_keeperAdmin) {
         for (uint256 i = 0; i < _keepers.length; i++) {
@@ -81,6 +86,7 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
         tokenRegistry = _tokenRegistry;
         rewardToken = _rewardToken;
         router = _router;
+        stakingRewardsImplementation = _stakingRewardsImplementation;
         emit SetAdmin({_admin: _admin});
         emit SetNotifyAdmin({_notifyAdmin: _notifyAdmin});
     }
@@ -111,7 +117,8 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
             revert NotWhitelistedToken();
         }
 
-        stakingRewards = _deployStakingRewards({_stakingToken: _pool});
+        stakingRewards = Clones.clone(stakingRewardsImplementation);
+        IStakingRewards(stakingRewards).initialize({_stakingToken: _pool, _rewardToken: rewardToken});
 
         gauges[_pool] = stakingRewards;
         poolForGauge[stakingRewards] = _pool;
@@ -122,11 +129,6 @@ contract StakingRewardsFactory is IStakingRewardsFactory, Ownable {
             stakingRewards: stakingRewards,
             creator: msg.sender
         });
-    }
-
-    /// @dev Internal function to deploy StakingRewards contracts
-    function _deployStakingRewards(address _stakingToken) internal virtual returns (address) {
-        return address(new StakingRewards({_stakingToken: _stakingToken, _rewardToken: rewardToken}));
     }
 
     /// @inheritdoc IStakingRewardsFactory

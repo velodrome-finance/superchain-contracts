@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IStakingRewards {
+    error FactoryAlreadySet();
     error InsufficientAmount();
     error NotAlive();
     error NotAuthorized();
@@ -67,6 +68,11 @@ interface IStakingRewards {
 
     /// @notice Total amount of rewardToken to distribute for the current rewards period
     function left() external view returns (uint256 _left);
+
+    /// @notice Initialize the StakingRewards contract with the staking and reward tokens
+    /// @param _stakingToken Address of the pool LP token which is deposited (staked) for rewards
+    /// @param _rewardToken Address of the reward token
+    function initialize(address _stakingToken, address _rewardToken) external;
 
     /// @notice Claims accrued Fees from Pool and distributes them to the Converter
     /// @return _claimed0 Amount of Fees claimed in token0

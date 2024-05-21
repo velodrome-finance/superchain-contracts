@@ -1,0 +1,8 @@
+InitializeTest
+├── When factory is already set
+│   └── It should revert with FactoryAlreadySet
+└── When factory is not set
+    ├── It should set the factory
+    ├── It should set the staking token
+    ├── It should set the reward token
+    └── It should set the fee converter

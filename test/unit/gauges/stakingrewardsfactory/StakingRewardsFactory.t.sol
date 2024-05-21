@@ -11,5 +11,6 @@ contract StakingRewardsFactoryTest is BaseFixture {
         assertEq(stakingRewardsFactory.admin(), address(users.owner));
         assertEq(stakingRewardsFactory.tokenRegistry(), address(tokenRegistry));
         assertEq(stakingRewardsFactory.rewardToken(), address(rewardToken));
+        assertEq(stakingRewardsFactory.stakingRewardsImplementation(), address(stakingRewardsImplementation));
     }
 }

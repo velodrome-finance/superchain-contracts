@@ -27,8 +27,9 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 abstract contract BaseFixture is Test, Constants {
     using SafeERC20 for TestERC20;
 
-    PoolFactory public poolFactory;
     Pool public poolImplementation;
+    PoolFactory public poolFactory;
+    StakingRewards public stakingRewardsImplementation;
     StakingRewardsFactory public stakingRewardsFactory;
     TokenRegistry public tokenRegistry;
     Router public router;
@@ -101,6 +102,8 @@ abstract contract BaseFixture is Test, Constants {
         tokens[1] = address(token1);
         tokenRegistry = new TokenRegistry({_admin: users.owner, _whitelistedTokens: tokens});
 
+        stakingRewardsImplementation = new StakingRewards();
+
         stakingRewardsFactory = new StakingRewardsFactory({
             _admin: users.owner,
             _notifyAdmin: users.owner,
@@ -108,6 +111,7 @@ abstract contract BaseFixture is Test, Constants {
             _tokenRegistry: address(tokenRegistry),
             _rewardToken: address(rewardToken),
             _router: address(router),
+            _stakingRewardsImplementation: address(stakingRewardsImplementation),
             _keepers: new address[](0)
         });
 

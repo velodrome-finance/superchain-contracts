@@ -5,13 +5,16 @@ import {StakingRewards} from "../StakingRewards.sol";
 import {IPool} from "../../../interfaces/pools/IPool.sol";
 import {ModeConverter} from "../extensions/ModeConverter.sol";
 import {IFeeSharing} from "../../../interfaces/IFeeSharing.sol";
+import {IModeStakingRewardsFactory} from
+    "../../../interfaces/gauges/stakingrewards/extensions/IModeStakingRewardsFactory.sol";
 
 /// @notice StakingRewards wrapper with fee sharing support
 contract ModeStakingRewards is StakingRewards {
-    constructor(address _stakingToken, address _rewardToken, address _sfs, uint256 _tokenId)
-        StakingRewards(_stakingToken, _rewardToken)
-    {
-        IFeeSharing(_sfs).assign(_tokenId);
+    function initialize(address _stakingToken, address _rewardToken) public virtual override {
+        super.initialize({_stakingToken: _stakingToken, _rewardToken: _rewardToken});
+        address sfs = IModeStakingRewardsFactory(msg.sender).sfs();
+        uint256 tokenId = IModeStakingRewardsFactory(msg.sender).tokenId();
+        IFeeSharing(sfs).assign(tokenId);
     }
 
     /// @dev Internal helper function to deploy Fee Converter contracts

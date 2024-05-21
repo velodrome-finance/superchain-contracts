@@ -3,6 +3,7 @@ pragma solidity ^0.8.15;
 
 import {DeployStakingFixture} from "../../02_DeployStakingFixture.s.sol";
 import {TokenRegistry} from "src/gauges/tokenregistry/TokenRegistry.sol";
+import {ModeStakingRewards} from "src/gauges/stakingrewards/extensions/ModeStakingRewards.sol";
 import {ModeStakingRewardsFactory} from "src/gauges/stakingrewards/extensions/ModeStakingRewardsFactory.sol";
 
 contract DeployStaking is DeployStakingFixture {
@@ -30,6 +31,7 @@ contract DeployStaking is DeployStakingFixture {
     }
 
     function deploy() internal override {
+        stakingRewardsImplementation = new ModeStakingRewards();
         stakingRewardsFactory = new ModeStakingRewardsFactory({
             _admin: _params.admin,
             _notifyAdmin: _params.notifyAdmin,
@@ -37,6 +39,7 @@ contract DeployStaking is DeployStakingFixture {
             _tokenRegistry: _params.tokenRegistry,
             _rewardToken: _params.rewardToken,
             _router: _params.router,
+            _stakingRewardsImplementation: address(stakingRewardsImplementation),
             _sfs: _modeParams.sfs,
             _recipient: _modeParams.recipient,
             _keepers: new address[](0)

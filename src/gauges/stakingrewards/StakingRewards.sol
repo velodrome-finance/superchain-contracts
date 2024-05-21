@@ -45,13 +45,13 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /// @inheritdoc IStakingRewards
-    address public immutable stakingToken;
+    address public stakingToken;
     /// @inheritdoc IStakingRewards
-    address public immutable rewardToken;
+    address public rewardToken;
     /// @inheritdoc IStakingRewards
-    address public immutable feeConverter;
+    address public feeConverter;
     /// @inheritdoc IStakingRewards
-    address public immutable factory;
+    address public factory;
 
     uint256 internal constant WEEK = VelodromeTimeLibrary.WEEK;
     uint256 internal constant PRECISION = 10 ** 18;
@@ -75,7 +75,8 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard {
     /// @inheritdoc IStakingRewards
     mapping(uint256 => uint256) public rewardRateByEpoch;
 
-    constructor(address _stakingToken, address _rewardToken) {
+    function initialize(address _stakingToken, address _rewardToken) public virtual {
+        if (factory != address(0)) revert FactoryAlreadySet();
         factory = msg.sender;
         stakingToken = _stakingToken;
         rewardToken = _rewardToken;

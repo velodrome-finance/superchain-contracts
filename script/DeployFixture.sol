@@ -10,6 +10,7 @@ import {Pool} from "src/pools/Pool.sol";
 import {PoolFactory} from "src/pools/PoolFactory.sol";
 import {Router} from "src/Router.sol";
 import {TokenRegistry} from "src/gauges/tokenregistry/TokenRegistry.sol";
+import {StakingRewards} from "src/gauges/stakingrewards/StakingRewards.sol";
 import {StakingRewardsFactory} from "src/gauges/stakingrewards/StakingRewardsFactory.sol";
 
 abstract contract DeployFixture is Script {

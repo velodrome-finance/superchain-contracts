@@ -3,6 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "../../../BaseFixture.sol";
 import {DeployStaking} from "script/deployParameters/mode/DeployStaking.s.sol";
+import {ModeStakingRewards} from "src/gauges/stakingrewards/extensions/ModeStakingRewards.sol";
 import {ModeStakingRewardsFactory} from "src/gauges/stakingrewards/extensions/ModeStakingRewardsFactory.sol";
 
 contract ModeDeployStakingTest is BaseFixture {
@@ -28,11 +29,13 @@ contract ModeDeployStakingTest is BaseFixture {
     function testRun() public {
         deploy.run();
 
+        ModeStakingRewards stakingRewards = ModeStakingRewards(address(deploy.stakingRewardsImplementation()));
         ModeStakingRewardsFactory stakingRewardsFactory =
             ModeStakingRewardsFactory(address(deploy.stakingRewardsFactory()));
         params = deploy.params();
         modeParams = deploy.modeParams();
 
+        assertNotEq(address(stakingRewards), address(0));
         assertNotEq(address(stakingRewardsFactory), address(0));
 
         assertEq(stakingRewardsFactory.admin(), params.admin);
@@ -41,6 +44,7 @@ contract ModeDeployStakingTest is BaseFixture {
         assertEq(stakingRewardsFactory.rewardToken(), params.rewardToken);
         assertEq(stakingRewardsFactory.tokenRegistry(), params.tokenRegistry);
         assertEq(stakingRewardsFactory.router(), params.router);
+        assertEq(stakingRewardsFactory.stakingRewardsImplementation(), address(stakingRewards));
         assertEq(stakingRewardsFactory.sfs(), modeParams.sfs);
         assertEq(stakingRewardsFactory.tokenId(), 0);
     }

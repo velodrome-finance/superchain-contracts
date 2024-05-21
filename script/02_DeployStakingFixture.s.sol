@@ -15,12 +15,15 @@ abstract contract DeployStakingFixture is DeployFixture {
     }
 
     // deployed
+    StakingRewards public stakingRewardsImplementation;
     StakingRewardsFactory public stakingRewardsFactory;
 
     DeploymentParameters internal _params;
 
     /// @dev Override if deploying extensions
     function deploy() internal virtual override {
+        stakingRewardsImplementation = new StakingRewards();
+
         stakingRewardsFactory = new StakingRewardsFactory({
             _admin: _params.admin,
             _notifyAdmin: _params.notifyAdmin,
@@ -28,6 +31,7 @@ abstract contract DeployStakingFixture is DeployFixture {
             _tokenRegistry: _params.tokenRegistry,
             _rewardToken: _params.rewardToken,
             _router: _params.router,
+            _stakingRewardsImplementation: address(stakingRewardsImplementation),
             _keepers: new address[](0)
         });
     }
@@ -37,6 +41,7 @@ abstract contract DeployStakingFixture is DeployFixture {
     }
 
     function logParams() internal view override {
+        console2.log("stakingRewardsImplementation: ", address(stakingRewardsImplementation));
         console2.log("stakingRewardsFactory: ", address(stakingRewardsFactory));
     }
 
@@ -46,7 +51,12 @@ abstract contract DeployStakingFixture is DeployFixture {
         /// @dev This might overwrite an existing output file
         vm.writeJson(
             path,
-            string(abi.encodePacked(stdJson.serialize("", "stakingRewardsFactory", address(stakingRewardsFactory))))
+            string(
+                abi.encodePacked(
+                    stdJson.serialize("", "stakingRewardsImplementation", address(stakingRewardsImplementation)),
+                    stdJson.serialize("", "stakingRewardsFactory", address(stakingRewardsFactory))
+                )
+            )
         );
     }
 }
