@@ -39,6 +39,8 @@ abstract contract BaseFixture is Test, Constants {
     TestERC20 public token0;
     TestERC20 public token1;
     MockWETH public weth;
+    uint256 TOKEN0_1;
+    uint256 TOKEN1_1;
 
     /// mocks
     FeeSharing public fs;
@@ -57,6 +59,8 @@ abstract contract BaseFixture is Test, Constants {
         TestERC20 tokenB = new TestERC20("Test Token B", "TTB", 6); // mimic USDC
         weth = new MockWETH();
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+        TOKEN0_1 = 10 ** (token0.decimals() - 1);
+        TOKEN1_1 = 10 ** (token1.decimals() - 1);
 
         deployCreateX();
 
