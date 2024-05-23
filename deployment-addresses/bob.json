@@ -1,0 +1,10 @@
+{
+    "poolImplementation":  "0x10499d88Bd32AF443Fc936F67DE32bE1c8Bb374C",
+    "poolFactory":  "0x31832f2a97Fd20664D76Cc421207669b55CE4BC0",
+    "router":  "0x3a63171DD9BebF4D07BC782FECC7eb0b890C2A45",
+    "tokenRegistry": "0x8d9c67488c154286B9D4ccaC6c4CBF30589107a7",
+    "universalRouter": "0xc3F14F34EA43943e6fd677A2BDceA65882e67783",
+    "mixedRouteQuoter": "0x0f3887909C548C41Eb8a6667a4B23FC6683EF8ba",
+    "stakingRewardsImplementation": "0x593D092BB28CCEfe33bFdD3d9457e77Bd3084271",
+    "stakingRewardsFactory": "0x8Eb6838B4e998DA08aab851F3d42076f21530389"
+}

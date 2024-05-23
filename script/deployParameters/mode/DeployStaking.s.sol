@@ -22,7 +22,7 @@ contract DeployStaking is DeployStakingFixture {
             admin: 0x5d496974832B8BC3c02F89E7Ac0b7579b4d1cC09,
             rewardToken: 0xDfc7C877a950e49D2610114102175A06C2e3167a,
             tokenRegistry: 0x8d9c67488c154286B9D4ccaC6c4CBF30589107a7,
-            outputFilename: "Mode.json"
+            outputFilename: "mode.json"
         });
         _modeParams = ModeDeploymentParameters({
             sfs: 0x8680CEaBcb9b56913c519c069Add6Bc3494B7020,

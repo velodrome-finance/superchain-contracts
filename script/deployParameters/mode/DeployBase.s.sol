@@ -39,7 +39,7 @@ contract DeployBase is DeployBaseFixture {
             feeManager: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
             whitelistAdmin: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
             whitelistedTokens: whitelistedTokens,
-            outputFilename: "Mode.json"
+            outputFilename: "mode.json"
         });
         _modeParams = ModeDeploymentParameters({
             sfs: 0x8680CEaBcb9b56913c519c069Add6Bc3494B7020,

@@ -12,7 +12,7 @@ contract DeployStaking is DeployStakingFixture {
             admin: 0x0000000000000000000000000000000000000001,
             tokenRegistry: 0x0000000000000000000000000000000000000001,
             rewardToken: 0x0000000000000000000000000000000000000001,
-            outputFilename: "Optimism.json"
+            outputFilename: "optimism.json"
         });
     }
 }
