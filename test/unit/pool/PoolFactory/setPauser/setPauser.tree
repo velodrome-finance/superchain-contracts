@@ -1,0 +1,9 @@
+SetPauserTest
+├── When caller is not Pauser 
+│   └── It should revert with NotPauser
+└── When caller is Pauser 
+    ├── When the pauser is address zero
+    │   └── It should revert with ZeroAddress
+    └── When the pauser is not address zero
+        ├── It should set the new pauser 
+        └── It should emit a {SetPauser} event

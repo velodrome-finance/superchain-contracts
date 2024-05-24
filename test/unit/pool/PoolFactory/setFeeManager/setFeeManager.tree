@@ -1,0 +1,9 @@
+SetFeeManagerTest
+├── When caller is not Fee Manager 
+│   └── It should revert with NotFeeManager
+└── When caller is Fee Manager 
+    ├── When the fee manager is address zero
+    │   └── It should revert with ZeroAddress
+    └── When the fee manager is not address zero
+        ├── It should set the new fee manager 
+        └── It should emit a {SetFeeManager} event

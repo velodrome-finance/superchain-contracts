@@ -1,0 +1,9 @@
+SetPoolAdminTest
+├── When caller is not PoolAdmin
+│   └── It should revert with NotPoolAdmin
+└── When caller is PoolAdmin 
+    ├── When the pool admin is address zero
+    │   └── It should revert with ZeroAddress
+    └── When the pool admin is not address zero
+        ├── It should set the new pool admin 
+        └── It should emit a {SetPoolAdmin} event
