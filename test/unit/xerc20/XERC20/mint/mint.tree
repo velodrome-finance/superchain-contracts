@@ -1,0 +1,7 @@
+MintTest
+├── When the requested amount is higher than the current minting limit of caller
+│   └── It should revert with IXERC20_NotHighEnoughLimits
+└── When the requested amount is less than or equal to the current minting limit of caller
+    ├── It mints the requested amount of tokens to the user
+    ├── It decreases the current minting limit for the caller
+    └── It should emit a {Transfer} event

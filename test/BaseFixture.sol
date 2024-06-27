@@ -24,6 +24,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
+import {IXERC20, XERC20} from "src/xerc20/XERC20.sol";
+
 abstract contract BaseFixture is Test, Constants {
     using SafeERC20 for TestERC20;
 
@@ -33,6 +35,10 @@ abstract contract BaseFixture is Test, Constants {
     StakingRewardsFactory public stakingRewardsFactory;
     TokenRegistry public tokenRegistry;
     Router public router;
+
+    /// superchain contracts
+    XERC20 public xVelo;
+    address public bridge = address(1); // placeholder
 
     /// tokens
     TestERC20 public rewardToken;
@@ -67,6 +73,8 @@ abstract contract BaseFixture is Test, Constants {
         // mode mock -- remove when stakingrewards is removed
         fs = new FeeSharing();
         vm.etch(0x8680CEaBcb9b56913c519c069Add6Bc3494B7020, address(fs).code);
+
+        xVelo = new XERC20({_name: "Superchain Velodrome", _symbol: "XVELO", _factory: address(this)});
 
         poolImplementation = Pool(
             cx.deployCreate3({salt: calculateSalt(POOL_ENTROPY), initCode: abi.encodePacked(type(Pool).creationCode)})

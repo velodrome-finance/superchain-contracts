@@ -8,6 +8,7 @@ abstract contract Constants {
     uint256 public constant USDC_1 = 1e6;
     uint256 public constant POOL_1 = 1e9;
 
+    uint256 public constant DAY = 1 days;
     uint256 public constant WEEK = VelodromeTimeLibrary.WEEK;
 
     bytes11 public constant POOL_ENTROPY = 0x0000000000000000000001;
