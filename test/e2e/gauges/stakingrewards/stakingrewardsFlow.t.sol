@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../../../unit/gauges/converter/Converter.t.sol";
+import "../../../unit/concrete/gauges/converter/Converter.t.sol";
 
 contract StakingRewardsFlowTest is ConverterTest {
     uint256 public constant MINIMUM_OBSERVATIONS = 3;

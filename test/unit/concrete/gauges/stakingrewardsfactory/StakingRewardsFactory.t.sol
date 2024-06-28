@@ -1,0 +1,16 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity >=0.8.19 <0.9.0;
+
+import "test/BaseFixture.sol";
+
+contract StakingRewardsFactoryTest is BaseFixture {
+    function test_InitialState() public view {
+        assertEq(stakingRewardsFactory.keepersLength(), 0);
+        assertEq(stakingRewardsFactory.owner(), address(users.owner));
+        assertEq(stakingRewardsFactory.notifyAdmin(), address(users.owner));
+        assertEq(stakingRewardsFactory.admin(), address(users.owner));
+        assertEq(stakingRewardsFactory.tokenRegistry(), address(tokenRegistry));
+        assertEq(stakingRewardsFactory.rewardToken(), address(rewardToken));
+        assertEq(stakingRewardsFactory.stakingRewardsImplementation(), address(stakingRewardsImplementation));
+    }
+}

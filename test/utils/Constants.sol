@@ -8,6 +8,9 @@ abstract contract Constants {
     uint256 public constant USDC_1 = 1e6;
     uint256 public constant POOL_1 = 1e9;
 
+    // maximum number of tokens, used in fuzzing
+    uint256 public constant MAX_TOKENS = 1e40;
+
     uint256 public constant DAY = 1 days;
     uint256 public constant WEEK = VelodromeTimeLibrary.WEEK;
 
