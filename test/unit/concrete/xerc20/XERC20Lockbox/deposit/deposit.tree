@@ -1,0 +1,5 @@
+DepositUnitConcreteTest
+└── Given any amount
+    ├── It should transfer the amount of ERC20 tokens from the caller to the lockbox
+    ├── It should mint the amount of XERC20 tokens to the caller
+    └── It should emit a {Deposit} event

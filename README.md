@@ -43,3 +43,8 @@ For blockscout verifications, append the following after `--verify`.
 e.g: 
 --verifier blockscout --verifier-url https://explorer.mode.network/api\?
 ```
+
+## xERC20
+
+The xERC20 implementation in this repository adheres to the standard but deviates slightly in the following way:
+- The lockbox has no support for native tokens. Other code related to this functionality has been removed.
