@@ -9,9 +9,6 @@ import {ICreateX} from "createX/ICreateX.sol";
 import {Pool} from "src/pools/Pool.sol";
 import {PoolFactory} from "src/pools/PoolFactory.sol";
 import {Router} from "src/Router.sol";
-import {TokenRegistry} from "src/gauges/tokenregistry/TokenRegistry.sol";
-import {StakingRewards} from "src/gauges/stakingrewards/StakingRewards.sol";
-import {StakingRewardsFactory} from "src/gauges/stakingrewards/StakingRewardsFactory.sol";
 
 abstract contract DeployFixture is Script {
     error InvalidAddress(address expected, address output);
@@ -39,7 +36,7 @@ abstract contract DeployFixture is Script {
     function logOutput() internal virtual;
 
     /// @dev Check if the computed address matches the address produced by the deployment
-    function checkAddress(bytes32 salt, address output) internal {
+    function checkAddress(bytes32 salt, address output) internal view {
         bytes32 guardedSalt = keccak256(abi.encodePacked(uint256(uint160(deployer)), salt));
         address computedAddress = cx.computeCreate3Address({salt: guardedSalt, deployer: address(cx)});
         if (computedAddress != output) {

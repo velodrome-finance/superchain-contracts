@@ -1,4 +1,4 @@
-BurnTest
+BurnUnitConcreteTest
 ├── When the requested amount is higher than the current burning limit of caller
 │   └── It should revert with IXERC20_NotHighEnoughLimits
 └── When the requested amount is less than or equal to the current burning limit of caller

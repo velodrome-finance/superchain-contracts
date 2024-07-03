@@ -1,4 +1,4 @@
-SetLimitsTest
+SetLimitsUnitConcreteTest
 ├── When caller is not Owner
 │   └── It should revert with OwnableUnauthorizedAccount
 └── When caller is Owner

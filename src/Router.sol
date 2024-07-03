@@ -2,12 +2,13 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+
 import {IPool} from "./interfaces/pools/IPool.sol";
 import {IPoolFactory} from "./interfaces/pools/IPoolFactory.sol";
 import {IRouter} from "./interfaces/IRouter.sol";
 import {IWETH} from "./interfaces/external/IWETH.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 /*
 

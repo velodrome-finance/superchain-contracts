@@ -18,7 +18,6 @@ abstract contract DeployBaseFixture is DeployFixture {
     Pool public poolImplementation;
     PoolFactory public poolFactory;
     Router public router;
-    TokenRegistry public tokenRegistry;
 
     DeploymentParameters internal _params;
 
@@ -68,9 +67,6 @@ abstract contract DeployBaseFixture is DeployFixture {
             )
         );
         checkAddress({salt: salt, output: address(router)});
-
-        tokenRegistry =
-            new TokenRegistry({_admin: _params.whitelistAdmin, _whitelistedTokens: _params.whitelistedTokens});
     }
 
     function params() external view returns (DeploymentParameters memory) {
@@ -81,7 +77,6 @@ abstract contract DeployBaseFixture is DeployFixture {
         console2.log("poolImplementation: ", address(poolImplementation));
         console2.log("poolFactory: ", address(poolFactory));
         console2.log("router: ", address(router));
-        console2.log("tokenRegistry: ", address(tokenRegistry));
     }
 
     function logOutput() internal override {
@@ -94,8 +89,7 @@ abstract contract DeployBaseFixture is DeployFixture {
                 abi.encodePacked(
                     stdJson.serialize("", "poolImplementation", address(poolImplementation)),
                     stdJson.serialize("", "poolFactory", address(poolFactory)),
-                    stdJson.serialize("", "router", address(router)),
-                    stdJson.serialize("", "tokenRegistry", address(tokenRegistry))
+                    stdJson.serialize("", "router", address(router))
                 )
             )
         );

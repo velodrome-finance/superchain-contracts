@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "../XERC20.t.sol";
 
-contract BurnTest is XERC20Test {
+contract BurnUnitConcreteTest is XERC20Test {
     function test_WhenTheRequestedAmountIsHigherThanTheCurrentBurningLimitOfCaller() external {
         // It should revert with IXERC20_NotHighEnoughLimits
         xVelo.setLimits({_bridge: bridge, _mintingLimit: TOKEN_1, _burningLimit: 0});

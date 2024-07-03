@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "../XERC20.t.sol";
 
-contract MintTest is XERC20Test {
+contract MintUnitConcreteTest is XERC20Test {
     function test_WhenTheRequestedAmountIsHigherThanTheCurrentMintingLimitOfCaller() external {
         // It should revert with IXERC20_NotHighEnoughLimits
         vm.prank(bridge);

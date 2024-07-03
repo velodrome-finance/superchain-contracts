@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "../XERC20.t.sol";
 
-contract SetLimitsTest is XERC20Test {
+contract SetLimitsUnitConcreteTest is XERC20Test {
     function test_WhenCallerIsNotOwner() external {
         // It should revert with OwnableUnauthorizedAccount
         vm.prank(users.charlie);

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "test/BaseFixture.sol";
 import {DeployBase} from "script/deployParameters/mode/DeployBase.s.sol";
-import {ModeStakingRewardsFactory} from "src/gauges/stakingrewards/extensions/ModeStakingRewardsFactory.sol";
-import {ModeStakingRewards} from "src/gauges/stakingrewards/extensions/ModeStakingRewards.sol";
 import {ModePoolFactory} from "src/pools/extensions/ModePoolFactory.sol";
 import {ModePool} from "src/pools/extensions/ModePool.sol";
 import {ModeRouter} from "src/extensions/ModeRouter.sol";
+
+import "test/BaseFixture.sol";
+import {FeeSharing} from "test/mocks/mode/FeeSharing.sol";
 
 contract ModeDeployBaseTest is BaseFixture {
     using stdStorage for StdStorage;
@@ -15,6 +15,8 @@ contract ModeDeployBaseTest is BaseFixture {
     DeployBase public deploy;
     DeployBase.DeploymentParameters public params;
     DeployBase.ModeDeploymentParameters public modeParams;
+
+    FeeSharing public fs;
 
     function setUp() public override {
         deploy = new DeployBase();
@@ -35,14 +37,12 @@ contract ModeDeployBaseTest is BaseFixture {
         ModePool poolImplementation = ModePool(address(deploy.poolImplementation()));
         ModePoolFactory poolFactory = ModePoolFactory(address(deploy.poolFactory()));
         ModeRouter router = ModeRouter(payable(address(deploy.router())));
-        tokenRegistry = deploy.tokenRegistry();
         params = deploy.params();
         modeParams = deploy.modeParams();
 
         assertNotEq(address(poolImplementation), address(0));
         assertNotEq(address(poolFactory), address(0));
         assertNotEq(address(router), address(0));
-        assertNotEq(address(tokenRegistry), address(0));
 
         assertEq(poolFactory.implementation(), address(poolImplementation));
         assertEq(poolFactory.poolAdmin(), params.poolAdmin);
@@ -54,8 +54,5 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(router.factory(), address(poolFactory));
         assertEq(address(router.weth()), params.weth);
         assertEq(router.tokenId(), 1);
-
-        assertEq(tokenRegistry.admin(), params.whitelistAdmin);
-        assertTrue(tokenRegistry.isWhitelistedToken(params.whitelistedTokens[0]));
     }
 }

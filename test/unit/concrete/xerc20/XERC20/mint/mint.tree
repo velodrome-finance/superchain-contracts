@@ -1,4 +1,4 @@
-MintTest
+MintUnitConcreteTest
 ├── When the requested amount is higher than the current minting limit of caller
 │   └── It should revert with IXERC20_NotHighEnoughLimits
 └── When the requested amount is less than or equal to the current minting limit of caller

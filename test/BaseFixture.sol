@@ -1,40 +1,33 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
+import {VmSafe} from "forge-std/Vm.sol";
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
-import {VmSafe} from "forge-std/Vm.sol";
-import {IPool, Pool} from "src/pools/Pool.sol";
-import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
-import {IRouter, Router} from "src/Router.sol";
-import {IConverter, Converter} from "src/gauges/stakingrewards/Converter.sol";
-import {IStakingRewards, StakingRewards} from "src/gauges/stakingrewards/StakingRewards.sol";
-import {IStakingRewardsFactory, StakingRewardsFactory} from "src/gauges/stakingrewards/StakingRewardsFactory.sol";
-import {ITokenRegistry, TokenRegistry} from "src/gauges/tokenregistry/TokenRegistry.sol";
-import {IGauge} from "src/interfaces/gauges/IGauge.sol";
-import {Users} from "./utils/Users.sol";
-import {Constants} from "./utils/Constants.sol";
-import {MockWETH} from "./mocks/MockWETH.sol";
-import {TestERC20} from "./mocks/TestERC20.sol";
-import {CreateX} from "./mocks/CreateX.sol";
-import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
-import {FeeSharing} from "test/mocks/mode/FeeSharing.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
+import {IPool, Pool} from "src/pools/Pool.sol";
+import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
+import {IRouter, Router} from "src/Router.sol";
 import {IXERC20, XERC20} from "src/xerc20/XERC20.sol";
 import {IXERC20Lockbox, XERC20Lockbox} from "src/xerc20/XERC20Lockbox.sol";
+import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
+import {IGauge} from "src/interfaces/gauges/IGauge.sol";
+
+import {Users} from "test/utils/Users.sol";
+import {Constants} from "test/utils/Constants.sol";
+import {MockWETH} from "test/mocks/MockWETH.sol";
+import {TestERC20} from "test/mocks/TestERC20.sol";
+import {CreateX} from "test/mocks/CreateX.sol";
 
 abstract contract BaseFixture is Test, Constants {
     using SafeERC20 for TestERC20;
 
     Pool public poolImplementation;
     PoolFactory public poolFactory;
-    StakingRewards public stakingRewardsImplementation;
-    StakingRewardsFactory public stakingRewardsFactory;
-    TokenRegistry public tokenRegistry;
     Router public router;
 
     /// superchain contracts
@@ -47,11 +40,8 @@ abstract contract BaseFixture is Test, Constants {
     TestERC20 public token0;
     TestERC20 public token1;
     MockWETH public weth;
-    uint256 TOKEN0_1;
-    uint256 TOKEN1_1;
 
     /// mocks
-    FeeSharing public fs;
     CreateX public cx = CreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
 
     Users internal users;
@@ -67,14 +57,8 @@ abstract contract BaseFixture is Test, Constants {
         TestERC20 tokenB = new TestERC20("Test Token B", "TTB", 6); // mimic USDC
         weth = new MockWETH();
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        TOKEN0_1 = 10 ** (token0.decimals() - 1);
-        TOKEN1_1 = 10 ** (token1.decimals() - 1);
 
         deployCreateX();
-
-        // mode mock -- remove when stakingrewards is removed
-        fs = new FeeSharing();
-        vm.etch(0x8680CEaBcb9b56913c519c069Add6Bc3494B7020, address(fs).code);
 
         xVelo = new XERC20({_name: "Superchain Velodrome", _symbol: "XVELO", _factory: address(this)});
         lockbox = new XERC20Lockbox({_xerc20: address(xVelo), _erc20: address(rewardToken)});
@@ -112,24 +96,6 @@ abstract contract BaseFixture is Test, Constants {
                 })
             )
         );
-
-        address[] memory tokens = new address[](2);
-        tokens[0] = address(token0);
-        tokens[1] = address(token1);
-        tokenRegistry = new TokenRegistry({_admin: users.owner, _whitelistedTokens: tokens});
-
-        stakingRewardsImplementation = new StakingRewards();
-
-        stakingRewardsFactory = new StakingRewardsFactory({
-            _admin: users.owner,
-            _notifyAdmin: users.owner,
-            _keeperAdmin: users.owner,
-            _tokenRegistry: address(tokenRegistry),
-            _rewardToken: address(rewardToken),
-            _router: address(router),
-            _stakingRewardsImplementation: address(stakingRewardsImplementation),
-            _keepers: new address[](0)
-        });
 
         deal(address(token0), users.alice, TOKEN_1 * 1e9);
         deal(address(token1), users.alice, TOKEN_1 * 1e9);

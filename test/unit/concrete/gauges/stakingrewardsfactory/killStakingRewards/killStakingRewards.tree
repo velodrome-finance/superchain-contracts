@@ -1,9 +1,0 @@
-KillStakingRewardsTest
-├── When caller is not admin
-│   └── It should revert with NotAdmin
-└── When caller is admin
-    ├── When staking rewards already killed
-    │   └── It should revert with StakingRewardsAlreadyKilled
-    └── When staking rewards not killed
-        ├── It should set isAlive to false
-        └── It should emit {StakingRewardsKilled}

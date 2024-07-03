@@ -92,9 +92,6 @@ contract DeployBase is DeployBaseFixture {
             )
         );
         checkAddress({salt: salt, output: address(router)});
-
-        tokenRegistry =
-            new TokenRegistry({_admin: _params.whitelistAdmin, _whitelistedTokens: _params.whitelistedTokens});
     }
 
     function modeParams() public view returns (ModeDeploymentParameters memory) {
