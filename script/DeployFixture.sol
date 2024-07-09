@@ -6,9 +6,6 @@ import "forge-std/Script.sol";
 import "forge-std/console2.sol";
 
 import {ICreateX} from "createX/ICreateX.sol";
-import {Pool} from "src/pools/Pool.sol";
-import {PoolFactory} from "src/pools/PoolFactory.sol";
-import {Router} from "src/Router.sol";
 
 abstract contract DeployFixture is Script {
     error InvalidAddress(address expected, address output);

@@ -1,0 +1,12 @@
+DeployXERC20WithLockboxUnitConcreteTest
+├── Given XERC20 already deployed
+│   └── It should revert with {FailedContractCreation}
+└── Given XERC20 not yet deployed
+    ├── Given chain id is not 10
+    │   └── It should revert with {InvalidChainId}
+    └── Given chain id is 10
+        ├── It should create a new XERC20 instance
+        ├── It should create a new XERC20Lockbox instance
+        ├── It should set the name and symbol of the new XERC20 instance
+        ├── It should set the owner of the new XERC20 instance to the factory
+        └── It should emit a {DeployXERC20WithLockbox} event

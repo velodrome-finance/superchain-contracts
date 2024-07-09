@@ -37,12 +37,14 @@ contract ModeDeployBaseTest is BaseFixture {
         ModePool poolImplementation = ModePool(address(deploy.poolImplementation()));
         ModePoolFactory poolFactory = ModePoolFactory(address(deploy.poolFactory()));
         ModeRouter router = ModeRouter(payable(address(deploy.router())));
+        xFactory = deploy.xerc20Factory();
         params = deploy.params();
         modeParams = deploy.modeParams();
 
         assertNotEq(address(poolImplementation), address(0));
         assertNotEq(address(poolFactory), address(0));
         assertNotEq(address(router), address(0));
+        assertNotEq(address(xFactory), address(0));
 
         assertEq(poolFactory.implementation(), address(poolImplementation));
         assertEq(poolFactory.poolAdmin(), params.poolAdmin);
@@ -54,5 +56,11 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(router.factory(), address(poolFactory));
         assertEq(address(router.weth()), params.weth);
         assertEq(router.tokenId(), 1);
+
+        assertEq(address(xFactory.createx()), address(cx));
+        assertEq(xFactory.name(), "Superchain Velodrome");
+        assertEq(xFactory.symbol(), "XVELO");
+        assertEq(xFactory.XERC20_ENTROPY(), XERC20_ENTROPY);
+        assertEq(xFactory.LOCKBOX_ENTROPY(), LOCKBOX_ENTROPY);
     }
 }

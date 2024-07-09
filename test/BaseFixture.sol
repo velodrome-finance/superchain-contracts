@@ -4,7 +4,7 @@ pragma solidity >=0.8.19 <0.9.0;
 import {VmSafe} from "forge-std/Vm.sol";
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Metadata, IERC20} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
@@ -14,6 +14,7 @@ import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {IRouter, Router} from "src/Router.sol";
 import {IXERC20, XERC20} from "src/xerc20/XERC20.sol";
 import {IXERC20Lockbox, XERC20Lockbox} from "src/xerc20/XERC20Lockbox.sol";
+import {IXERC20Factory, XERC20Factory} from "src/xerc20/XERC20Factory.sol";
 import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
 import {IGauge} from "src/interfaces/gauges/IGauge.sol";
 
@@ -33,6 +34,7 @@ abstract contract BaseFixture is Test, Constants {
     /// superchain contracts
     XERC20 public xVelo;
     XERC20Lockbox public lockbox;
+    XERC20Factory public xFactory;
     address public bridge = address(1); // placeholder
 
     /// tokens
@@ -63,6 +65,17 @@ abstract contract BaseFixture is Test, Constants {
         xVelo = new XERC20({_name: "Superchain Velodrome", _symbol: "XVELO", _factory: address(this)});
         lockbox = new XERC20Lockbox({_xerc20: address(xVelo), _erc20: address(rewardToken)});
         xVelo.setLockbox({_lockbox: address(lockbox)});
+        xFactory = XERC20Factory(
+            cx.deployCreate3({
+                salt: calculateSalt(XERC20_FACTORY_ENTROPY),
+                initCode: abi.encodePacked(
+                    type(XERC20Factory).creationCode,
+                    abi.encode(
+                        address(cx) // create x address
+                    )
+                )
+            })
+        );
 
         poolImplementation = Pool(
             cx.deployCreate3({salt: calculateSalt(POOL_ENTROPY), initCode: abi.encodePacked(type(Pool).creationCode)})
@@ -114,6 +127,7 @@ abstract contract BaseFixture is Test, Constants {
         vm.label(address(cx), "CreateX");
         vm.label(address(xVelo), "Superchain Velodrome");
         vm.label(address(lockbox), "Superchain Velodrome Lockbox");
+        vm.label(address(xFactory), "Superchain Velodrome Token Factory");
     }
 
     function deployCreateX() internal {
@@ -123,6 +137,10 @@ abstract contract BaseFixture is Test, Constants {
 
     function calculateSalt(bytes11 entropy) internal view returns (bytes32 salt) {
         salt = bytes32(abi.encodePacked(bytes20(address(this)), bytes1(0x00), bytes11(entropy)));
+    }
+
+    function calculateSalt(address deployer, bytes11 entropy) internal pure returns (bytes32 salt) {
+        salt = bytes32(abi.encodePacked(bytes20(deployer), bytes1(0x00), bytes11(entropy)));
     }
 
     function createUsers() internal {

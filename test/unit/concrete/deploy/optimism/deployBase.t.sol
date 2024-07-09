@@ -26,11 +26,13 @@ contract OptimismDeployBaseTest is BaseFixture {
         poolImplementation = deploy.poolImplementation();
         poolFactory = deploy.poolFactory();
         router = deploy.router();
+        xFactory = deploy.xerc20Factory();
         params = deploy.params();
 
         assertNotEq(address(poolImplementation), address(0));
         assertNotEq(address(poolFactory), address(0));
         assertNotEq(address(router), address(0));
+        assertNotEq(address(xFactory), address(0));
 
         assertEq(poolFactory.implementation(), address(poolImplementation));
         assertEq(poolFactory.poolAdmin(), params.poolAdmin);
@@ -39,5 +41,11 @@ contract OptimismDeployBaseTest is BaseFixture {
 
         assertEq(router.factory(), address(poolFactory));
         assertEq(address(router.weth()), params.weth);
+
+        assertEq(address(xFactory.createx()), address(cx));
+        assertEq(xFactory.name(), "Superchain Velodrome");
+        assertEq(xFactory.symbol(), "XVELO");
+        assertEq(xFactory.XERC20_ENTROPY(), XERC20_ENTROPY);
+        assertEq(xFactory.LOCKBOX_ENTROPY(), LOCKBOX_ENTROPY);
     }
 }

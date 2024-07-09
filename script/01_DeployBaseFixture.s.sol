@@ -3,6 +3,11 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "./DeployFixture.sol";
 
+import {Pool} from "src/pools/Pool.sol";
+import {PoolFactory} from "src/pools/PoolFactory.sol";
+import {Router} from "src/Router.sol";
+import {XERC20Factory} from "src/xerc20/XERC20Factory.sol";
+
 abstract contract DeployBaseFixture is DeployFixture {
     struct DeploymentParameters {
         address weth;
@@ -19,12 +24,16 @@ abstract contract DeployBaseFixture is DeployFixture {
     PoolFactory public poolFactory;
     Router public router;
 
+    XERC20Factory public xerc20Factory;
+
     DeploymentParameters internal _params;
 
     /// @dev Entropy used for deterministic deployments across chains
     bytes11 public constant POOL_ENTROPY = 0x0000000000000000000001;
     bytes11 public constant POOL_FACTORY_ENTROPY = 0x0000000000000000000002;
     bytes11 public constant ROUTER_ENTROPY = 0x0000000000000000000003;
+
+    bytes11 public constant XERC20_FACTORY_ENTROPY = 0x0000000000000000000011;
 
     /// @dev Override if deploying extensions
     function deploy() internal virtual override {
@@ -67,6 +76,20 @@ abstract contract DeployBaseFixture is DeployFixture {
             )
         );
         checkAddress({salt: salt, output: address(router)});
+
+        salt = calculateSalt(XERC20_FACTORY_ENTROPY);
+        xerc20Factory = XERC20Factory(
+            cx.deployCreate3({
+                salt: salt,
+                initCode: abi.encodePacked(
+                    type(XERC20Factory).creationCode,
+                    abi.encode(
+                        address(cx) // create x address
+                    )
+                )
+            })
+        );
+        checkAddress({salt: salt, output: address(xerc20Factory)});
     }
 
     function params() external view returns (DeploymentParameters memory) {

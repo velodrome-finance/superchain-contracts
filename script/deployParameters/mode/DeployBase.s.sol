@@ -5,6 +5,7 @@ import "../../01_DeployBaseFixture.s.sol";
 import {ModePool} from "src/pools/extensions/ModePool.sol";
 import {ModePoolFactory} from "src/pools/extensions/ModePoolFactory.sol";
 import {ModeRouter} from "src/extensions/ModeRouter.sol";
+import {XERC20Factory} from "src/xerc20/XERC20Factory.sol";
 
 contract DeployBase is DeployBaseFixture {
     struct ModeDeploymentParameters {
@@ -92,6 +93,20 @@ contract DeployBase is DeployBaseFixture {
             )
         );
         checkAddress({salt: salt, output: address(router)});
+
+        salt = calculateSalt(XERC20_FACTORY_ENTROPY);
+        xerc20Factory = XERC20Factory(
+            cx.deployCreate3({
+                salt: salt,
+                initCode: abi.encodePacked(
+                    type(XERC20Factory).creationCode,
+                    abi.encode(
+                        address(cx) // create x address
+                    )
+                )
+            })
+        );
+        checkAddress({salt: salt, output: address(xerc20Factory)});
     }
 
     function modeParams() public view returns (ModeDeploymentParameters memory) {
