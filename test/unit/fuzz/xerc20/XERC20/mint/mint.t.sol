@@ -4,6 +4,12 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../XERC20.t.sol";
 
 contract MintUnitFuzzTest is XERC20Test {
+    function setUp() public override {
+        super.setUp();
+
+        vm.startPrank(users.owner);
+    }
+
     function testFuzz_WhenTheRequestedAmountIsHigherThanTheCurrentMintingLimitOfCaller(
         uint256 _mintLimit,
         uint256 _mintAmount
@@ -16,7 +22,7 @@ contract MintUnitFuzzTest is XERC20Test {
 
         xVelo.setLimits({_bridge: bridge, _mintingLimit: _mintLimit, _burningLimit: 0});
 
-        vm.prank(bridge);
+        vm.startPrank(bridge);
         vm.expectRevert(IXERC20.IXERC20_NotHighEnoughLimits.selector);
         xVelo.mint(users.alice, _mintAmount);
     }

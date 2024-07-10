@@ -14,14 +14,9 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
     uint256 private constant _DURATION = 1 days;
 
     /**
-     * @notice The address of the factory which deployed this contract
-     */
-    address public immutable FACTORY;
-
-    /**
      * @notice The address of the lockbox contract
      */
-    address public lockbox;
+    address public immutable lockbox;
 
     /**
      * @notice Maps bridge address to bridge configurations
@@ -33,14 +28,15 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
      *
      * @param _name The name of the token
      * @param _symbol The symbol of the token
-     * @param _factory The factory which deployed this contract
+     * @param _owner The manager of the xerc20 token
+     * @param _lockbox The lockbox corresponding to the token
      */
-    constructor(string memory _name, string memory _symbol, address _factory)
+    constructor(string memory _name, string memory _symbol, address _owner, address _lockbox)
         ERC20(_name, _symbol)
         ERC20Permit(_name)
-        Ownable(_factory)
+        Ownable(_owner)
     {
-        FACTORY = _factory;
+        lockbox = _lockbox;
     }
 
     /**
@@ -65,18 +61,6 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
         }
 
         _burnWithCaller(msg.sender, _user, _amount);
-    }
-
-    /**
-     * @notice Sets the lockbox address
-     *
-     * @param _lockbox The address of the lockbox
-     */
-    function setLockbox(address _lockbox) public {
-        if (msg.sender != FACTORY) revert IXERC20_NotFactory();
-        lockbox = _lockbox;
-
-        emit LockboxSet(_lockbox);
     }
 
     /**

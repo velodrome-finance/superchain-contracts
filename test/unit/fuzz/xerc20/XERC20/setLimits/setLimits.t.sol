@@ -14,6 +14,7 @@ contract SetLimitsUnitFuzzTest is XERC20Test {
     }
 
     modifier whenCallerIsOwner() {
+        vm.startPrank(users.owner);
         _;
     }
 
@@ -91,8 +92,8 @@ contract SetLimitsUnitFuzzTest is XERC20Test {
         vm.startPrank(bridge);
         xVelo.mint(bridge, _usedLimit);
         xVelo.burn(bridge, _usedLimit);
-        vm.stopPrank();
 
+        vm.startPrank(users.owner);
         vm.expectEmit(address(xVelo));
         emit IXERC20.BridgeLimitsSet({_bridge: bridge, _mintingLimit: newMintingLimit, _burningLimit: newBurningLimit});
         xVelo.setLimits({_bridge: bridge, _mintingLimit: newMintingLimit, _burningLimit: newBurningLimit});
@@ -165,8 +166,8 @@ contract SetLimitsUnitFuzzTest is XERC20Test {
         vm.startPrank(bridge);
         xVelo.mint(bridge, _usedLimit);
         xVelo.burn(bridge, _usedLimit);
-        vm.stopPrank();
 
+        vm.startPrank(users.owner);
         uint256 currentMintingLimit = mintingLimit - _usedLimit;
         uint256 currentBurningLimit = burningLimit - _usedLimit;
         uint256 mintingDifference = mintingLimit - newMintingLimit;
@@ -237,8 +238,8 @@ contract SetLimitsUnitFuzzTest is XERC20Test {
         vm.startPrank(bridge);
         xVelo.mint(bridge, _usedLimit);
         xVelo.burn(bridge, _usedLimit);
-        vm.stopPrank();
 
+        vm.startPrank(users.owner);
         // minting limits prior to update
         uint256 currentMintingLimit = mintingLimit - _usedLimit;
         uint256 currentBurningLimit = burningLimit - _usedLimit;

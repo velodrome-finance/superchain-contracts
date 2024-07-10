@@ -12,6 +12,8 @@ import {XERC20Lockbox} from "./XERC20Lockbox.sol";
 contract XERC20Factory is IXERC20Factory {
     /// @inheritdoc IXERC20Factory
     ICreateX public immutable createx;
+    /// @inheritdoc IXERC20Factory
+    address public immutable owner;
 
     /// @inheritdoc IXERC20Factory
     string public constant name = "Superchain Velodrome";
@@ -23,8 +25,11 @@ contract XERC20Factory is IXERC20Factory {
     /// @inheritdoc IXERC20Factory
     bytes11 public constant LOCKBOX_ENTROPY = 0x0000000000000000000001;
 
-    constructor(address _createx) {
+    constructor(address _createx, address _owner) {
+        if (_createx == address(0)) revert ZeroAddress();
+        if (_owner == address(0)) revert ZeroAddress();
         createx = ICreateX(_createx);
+        owner = _owner;
     }
 
     /// @inheritdoc IXERC20Factory
@@ -38,7 +43,8 @@ contract XERC20Factory is IXERC20Factory {
                 abi.encode(
                     name, // name of xerc20
                     symbol, // symbol of xerc20
-                    address(this) // owner of xerc20
+                    owner, // owner of xerc20
+                    address(0) // no lockbox
                 )
             )
         });
@@ -73,11 +79,11 @@ contract XERC20Factory is IXERC20Factory {
                 abi.encode(
                     name, // name of xerc20
                     symbol, // symbol of xerc20
-                    address(this) // owner of xerc20
+                    owner, // owner of xerc20
+                    _lockbox // lockbox corresponding to xerc20
                 )
             )
         });
-        XERC20(_XERC20).setLockbox({_lockbox: _lockbox});
 
         assert(_XERC20 == expectedAddress);
 

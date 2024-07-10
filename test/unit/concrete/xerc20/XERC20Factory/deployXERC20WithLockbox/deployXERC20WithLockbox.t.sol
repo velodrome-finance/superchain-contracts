@@ -7,10 +7,9 @@ contract DeployXERC20WithLockboxUnitConcreteTest is XERC20FactoryTest {
     function setUp() public override {
         super.setUp();
 
-        // deployment on Optimism
-        vm.chainId(10);
+        // chain is already optimism
 
-        vm.startPrank(users.owner);
+        vm.startPrank(users.alice);
     }
 
     function test_GivenXERC20AlreadyDeployed() external {
@@ -60,11 +59,13 @@ contract DeployXERC20WithLockboxUnitConcreteTest is XERC20FactoryTest {
         (address xerc20, address lockbox) = xFactory.deployXERC20WithLockbox({_erc20: address(rewardToken)});
 
         assertEq(xerc20, expectedTokenAddress);
-        assertEq(lockbox, expectedLockboxAddress);
         assertEq(IERC20Metadata(xerc20).name(), "Superchain Velodrome");
         assertEq(IERC20Metadata(xerc20).symbol(), "XVELO");
+        assertEq(Ownable(xerc20).owner(), users.owner);
+        assertEq(XERC20(xerc20).lockbox(), address(lockbox));
+
+        assertEq(lockbox, expectedLockboxAddress);
         assertEq(address(XERC20Lockbox(lockbox).XERC20()), address(expectedTokenAddress));
         assertEq(address(XERC20Lockbox(lockbox).ERC20()), address(rewardToken));
-        assertEq(Ownable(xerc20).owner(), address(xFactory));
     }
 }

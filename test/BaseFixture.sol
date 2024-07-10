@@ -46,9 +46,15 @@ abstract contract BaseFixture is Test, Constants {
     /// mocks
     CreateX public cx = CreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
 
+    // used by xerc20 factory tests
+    uint256 internal snapshot;
+
     Users internal users;
 
     function setUp() public virtual {
+        // tests run as if chain id is 10 (optimism)
+        vm.chainId(10);
+
         createUsers();
 
         // run deployments as address(this)
@@ -62,20 +68,22 @@ abstract contract BaseFixture is Test, Constants {
 
         deployCreateX();
 
-        xVelo = new XERC20({_name: "Superchain Velodrome", _symbol: "XVELO", _factory: address(this)});
-        lockbox = new XERC20Lockbox({_xerc20: address(xVelo), _erc20: address(rewardToken)});
-        xVelo.setLockbox({_lockbox: address(lockbox)});
         xFactory = XERC20Factory(
             cx.deployCreate3({
                 salt: calculateSalt(XERC20_FACTORY_ENTROPY),
                 initCode: abi.encodePacked(
                     type(XERC20Factory).creationCode,
                     abi.encode(
-                        address(cx) // create x address
+                        address(cx), // create x address
+                        users.owner // xerc20 owner address
                     )
                 )
             })
         );
+        snapshot = vm.snapshot();
+        (address _xVelo, address _lockbox) = xFactory.deployXERC20WithLockbox({_erc20: address(rewardToken)});
+        xVelo = XERC20(_xVelo);
+        lockbox = XERC20Lockbox(_lockbox);
 
         poolImplementation = Pool(
             cx.deployCreate3({salt: calculateSalt(POOL_ENTROPY), initCode: abi.encodePacked(type(Pool).creationCode)})

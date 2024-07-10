@@ -3,13 +3,6 @@ pragma solidity >=0.8.4 <0.9.0;
 
 interface IXERC20 {
     /**
-     * @notice Emits when a lockbox is set
-     *
-     * @param _lockbox The address of the lockbox
-     */
-    event LockboxSet(address _lockbox);
-
-    /**
      * @notice Emits when a limit is set
      *
      * @param _mintingLimit The updated minting limit we are setting to the bridge
@@ -22,11 +15,6 @@ interface IXERC20 {
      * @notice Reverts when a user with too low of a limit tries to call mint/burn
      */
     error IXERC20_NotHighEnoughLimits();
-
-    /**
-     * @notice Reverts when caller is not the factory
-     */
-    error IXERC20_NotFactory();
 
     /**
      * @notice Reverts when limits are too high
@@ -58,13 +46,6 @@ interface IXERC20 {
         uint256 maxLimit;
         uint256 currentLimit;
     }
-
-    /**
-     * @notice Sets the lockbox address
-     *
-     * @param _lockbox The address of the lockbox
-     */
-    function setLockbox(address _lockbox) external;
 
     /**
      * @notice Updates the limits of any bridge

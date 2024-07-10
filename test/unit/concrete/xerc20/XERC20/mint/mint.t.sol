@@ -17,6 +17,7 @@ contract MintUnitConcreteTest is XERC20Test {
         // It should emit a {Transfer} event
         uint256 mintingLimit = 10_000 * TOKEN_1;
         uint256 burningLimit = 5_000 * TOKEN_1;
+        vm.startPrank(users.owner);
         xVelo.setLimits({_bridge: bridge, _mintingLimit: mintingLimit, _burningLimit: burningLimit});
 
         vm.startPrank(bridge);

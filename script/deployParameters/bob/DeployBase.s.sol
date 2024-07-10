@@ -15,6 +15,7 @@ contract DeployBase is DeployBaseFixture {
             pauser: 0x607EbA808EF2685fAc3da68aB96De961fa8F3312,
             feeManager: 0x607EbA808EF2685fAc3da68aB96De961fa8F3312,
             whitelistAdmin: 0x607EbA808EF2685fAc3da68aB96De961fa8F3312,
+            tokenAdmin: 0x0000000000000000000000000000000000000001,
             whitelistedTokens: whitelistedTokens,
             outputFilename: "bob.json"
         });

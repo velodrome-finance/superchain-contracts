@@ -39,6 +39,7 @@ contract DeployBase is DeployBaseFixture {
             pauser: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
             feeManager: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
             whitelistAdmin: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
+            tokenAdmin: 0x0000000000000000000000000000000000000001,
             whitelistedTokens: whitelistedTokens,
             outputFilename: "mode.json"
         });
@@ -101,7 +102,8 @@ contract DeployBase is DeployBaseFixture {
                 initCode: abi.encodePacked(
                     type(XERC20Factory).creationCode,
                     abi.encode(
-                        address(cx) // create x address
+                        address(cx), // create x address
+                        _params.tokenAdmin // xerc20 owner
                     )
                 )
             })

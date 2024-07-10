@@ -62,5 +62,6 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(xFactory.symbol(), "XVELO");
         assertEq(xFactory.XERC20_ENTROPY(), XERC20_ENTROPY);
         assertEq(xFactory.LOCKBOX_ENTROPY(), LOCKBOX_ENTROPY);
+        assertEq(xFactory.owner(), params.tokenAdmin);
     }
 }

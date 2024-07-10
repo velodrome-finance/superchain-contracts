@@ -7,7 +7,7 @@ abstract contract XERC20Test is BaseFixture {
     function test_InitialState() public view {
         assertEq(xVelo.name(), "Superchain Velodrome");
         assertEq(xVelo.symbol(), "XVELO");
-        assertEq(xVelo.FACTORY(), address(this));
-        assertEq(xVelo.owner(), address(this));
+        assertEq(xVelo.owner(), users.owner);
+        assertEq(xVelo.lockbox(), address(lockbox));
     }
 }

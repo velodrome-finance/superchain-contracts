@@ -4,6 +4,10 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../XERC20.t.sol";
 
 contract SetLimitsUnitConcreteTest is XERC20Test {
+    function setUp() public override {
+        super.setUp();
+    }
+
     function test_WhenCallerIsNotOwner() external {
         // It should revert with OwnableUnauthorizedAccount
         vm.prank(users.charlie);
@@ -12,6 +16,7 @@ contract SetLimitsUnitConcreteTest is XERC20Test {
     }
 
     modifier whenCallerIsOwner() {
+        vm.startPrank(users.owner);
         _;
     }
 
@@ -73,8 +78,8 @@ contract SetLimitsUnitConcreteTest is XERC20Test {
         vm.startPrank(bridge);
         xVelo.mint(bridge, usedLimit);
         xVelo.burn(bridge, usedLimit);
-        vm.stopPrank();
 
+        vm.startPrank(users.owner);
         // minting limits prior to update
         uint256 currentMintingLimit = mintingLimit - usedLimit; // 4_000 * TOKEN_1
         uint256 currentBurningLimit = burningLimit - usedLimit; // 1_000 * TOKEN_1
@@ -144,8 +149,8 @@ contract SetLimitsUnitConcreteTest is XERC20Test {
         vm.startPrank(bridge);
         xVelo.mint(bridge, usedLimit);
         xVelo.burn(bridge, usedLimit);
-        vm.stopPrank();
 
+        vm.startPrank(users.owner);
         // minting limits prior to update
         uint256 currentMintingLimit = mintingLimit - usedLimit; // 4_000 * TOKEN_1
         uint256 currentBurningLimit = burningLimit - usedLimit; // 1_000 * TOKEN_1
@@ -216,8 +221,8 @@ contract SetLimitsUnitConcreteTest is XERC20Test {
         vm.startPrank(bridge);
         xVelo.mint(bridge, usedLimit);
         xVelo.burn(bridge, usedLimit);
-        vm.stopPrank();
 
+        vm.startPrank(users.owner);
         uint256 newMintingLimit = 20_000 * TOKEN_1;
         uint256 newBurningLimit = 10_000 * TOKEN_1;
         // minting limits prior to update

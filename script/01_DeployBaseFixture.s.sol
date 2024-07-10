@@ -15,6 +15,7 @@ abstract contract DeployBaseFixture is DeployFixture {
         address pauser;
         address feeManager;
         address whitelistAdmin;
+        address tokenAdmin;
         address[] whitelistedTokens;
         string outputFilename;
     }
@@ -84,7 +85,8 @@ abstract contract DeployBaseFixture is DeployFixture {
                 initCode: abi.encodePacked(
                     type(XERC20Factory).creationCode,
                     abi.encode(
-                        address(cx) // create x address
+                        address(cx), // create x address
+                        _params.tokenAdmin // xerc20 owner
                     )
                 )
             })
@@ -100,6 +102,7 @@ abstract contract DeployBaseFixture is DeployFixture {
         console2.log("poolImplementation: ", address(poolImplementation));
         console2.log("poolFactory: ", address(poolFactory));
         console2.log("router: ", address(router));
+        console2.log("xerc20 factory: ", address(xerc20Factory));
     }
 
     function logOutput() internal override {

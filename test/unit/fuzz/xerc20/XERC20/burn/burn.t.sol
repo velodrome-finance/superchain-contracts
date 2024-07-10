@@ -4,6 +4,12 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../XERC20.t.sol";
 
 contract BurnUnitFuzzTest is XERC20Test {
+    function setUp() public override {
+        super.setUp();
+
+        vm.startPrank(users.owner);
+    }
+
     function testFuzz_WhenTheRequestedAmountIsHigherThanTheCurrentBurningLimitOfCaller(
         uint256 _mintLimit,
         uint256 _burnLimit
@@ -18,13 +24,13 @@ contract BurnUnitFuzzTest is XERC20Test {
 
         xVelo.setLimits({_bridge: bridge, _mintingLimit: _mintLimit, _burningLimit: _burnLimit});
 
-        vm.prank(bridge);
+        vm.startPrank(bridge);
         xVelo.mint(users.alice, _mintAmount);
 
-        vm.prank(users.alice);
+        vm.startPrank(users.alice);
         xVelo.approve(bridge, _burnAmount);
 
-        vm.prank(bridge);
+        vm.startPrank(bridge);
         vm.expectRevert(IXERC20.IXERC20_NotHighEnoughLimits.selector);
         xVelo.burn(bridge, _burnAmount);
     }
@@ -46,15 +52,15 @@ contract BurnUnitFuzzTest is XERC20Test {
         uint256 amountToMint = _amountToBurn;
         xVelo.setLimits({_bridge: bridge, _mintingLimit: mintingLimit, _burningLimit: _burnLimit});
 
-        vm.prank(bridge);
+        vm.startPrank(bridge);
         xVelo.mint(users.alice, amountToMint);
 
-        vm.prank(users.alice);
+        vm.startPrank(users.alice);
         xVelo.approve(bridge, _amountToBurn);
 
         vm.expectEmit(address(xVelo));
         emit IERC20.Transfer({from: users.alice, to: address(0), value: _amountToBurn});
-        vm.prank(bridge);
+        vm.startPrank(bridge);
         xVelo.burn(users.alice, _amountToBurn);
 
         (IXERC20.BridgeParameters memory bpm, IXERC20.BridgeParameters memory bpb) = xVelo.bridges(bridge);

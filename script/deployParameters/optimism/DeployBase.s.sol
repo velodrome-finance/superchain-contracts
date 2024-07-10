@@ -15,6 +15,7 @@ contract DeployBase is DeployBaseFixture {
             pauser: 0x0000000000000000000000000000000000000001,
             feeManager: 0x0000000000000000000000000000000000000001,
             whitelistAdmin: 0x0000000000000000000000000000000000000001,
+            tokenAdmin: 0x0000000000000000000000000000000000000001,
             whitelistedTokens: whitelistedTokens,
             outputFilename: "optimism.json"
         });
