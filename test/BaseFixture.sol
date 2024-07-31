@@ -17,6 +17,7 @@ import {IXERC20Lockbox, XERC20Lockbox} from "src/xerc20/XERC20Lockbox.sol";
 import {IXERC20Factory, XERC20Factory} from "src/xerc20/XERC20Factory.sol";
 import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
 import {IGauge} from "src/interfaces/gauges/IGauge.sol";
+import {CreateXLibrary} from "src/libraries/CreateXLibrary.sol";
 
 import {Users} from "test/utils/Users.sol";
 import {Constants} from "test/utils/Constants.sol";
@@ -68,9 +69,10 @@ abstract contract BaseFixture is Test, Constants {
 
         deployCreateX();
 
+        address deployer = users.deployer;
         xFactory = XERC20Factory(
             cx.deployCreate3({
-                salt: calculateSalt(XERC20_FACTORY_ENTROPY),
+                salt: CreateXLibrary.calculateSalt({_entropy: XERC20_FACTORY_ENTROPY, _deployer: deployer}),
                 initCode: abi.encodePacked(
                     type(XERC20Factory).creationCode,
                     abi.encode(
@@ -86,11 +88,14 @@ abstract contract BaseFixture is Test, Constants {
         lockbox = XERC20Lockbox(_lockbox);
 
         poolImplementation = Pool(
-            cx.deployCreate3({salt: calculateSalt(POOL_ENTROPY), initCode: abi.encodePacked(type(Pool).creationCode)})
+            cx.deployCreate3({
+                salt: CreateXLibrary.calculateSalt({_entropy: POOL_ENTROPY, _deployer: deployer}),
+                initCode: abi.encodePacked(type(Pool).creationCode)
+            })
         );
         poolFactory = PoolFactory(
             cx.deployCreate3({
-                salt: calculateSalt(POOL_FACTORY_ENTROPY),
+                salt: CreateXLibrary.calculateSalt({_entropy: POOL_FACTORY_ENTROPY, _deployer: deployer}),
                 initCode: abi.encodePacked(
                     type(PoolFactory).creationCode,
                     abi.encode(
@@ -106,7 +111,7 @@ abstract contract BaseFixture is Test, Constants {
         router = Router(
             payable(
                 cx.deployCreate3({
-                    salt: calculateSalt(ROUTER_ENTROPY),
+                    salt: CreateXLibrary.calculateSalt({_entropy: ROUTER_ENTROPY, _deployer: deployer}),
                     initCode: abi.encodePacked(
                         type(Router).creationCode,
                         abi.encode(
@@ -143,21 +148,14 @@ abstract contract BaseFixture is Test, Constants {
         deployCodeTo("test/mocks/CreateX.sol", address(cx));
     }
 
-    function calculateSalt(bytes11 entropy) internal view returns (bytes32 salt) {
-        salt = bytes32(abi.encodePacked(bytes20(address(this)), bytes1(0x00), bytes11(entropy)));
-    }
-
-    function calculateSalt(address deployer, bytes11 entropy) internal pure returns (bytes32 salt) {
-        salt = bytes32(abi.encodePacked(bytes20(deployer), bytes1(0x00), bytes11(entropy)));
-    }
-
     function createUsers() internal {
         users = Users({
             owner: createUser("Owner"),
             feeManager: createUser("FeeManager"),
             alice: createUser("Alice"),
             bob: createUser("Bob"),
-            charlie: createUser("Charlie")
+            charlie: createUser("Charlie"),
+            deployer: createUser("Deployer")
         });
     }
 

@@ -41,7 +41,7 @@ contract DeployXERC20WithLockboxUnitConcreteTest is XERC20FactoryTest {
         bytes32 lockboxSalt = keccak256(
             abi.encodePacked(
                 uint256(uint160(address(xFactory))),
-                calculateSalt({deployer: address(xFactory), entropy: LOCKBOX_ENTROPY})
+                CreateXLibrary.calculateSalt({_entropy: LOCKBOX_ENTROPY, _deployer: address(xFactory)})
             )
         );
         address expectedLockboxAddress = cx.computeCreate3Address({salt: lockboxSalt, deployer: address(cx)});
@@ -49,7 +49,7 @@ contract DeployXERC20WithLockboxUnitConcreteTest is XERC20FactoryTest {
         bytes32 guardedSalt = keccak256(
             abi.encodePacked(
                 uint256(uint160(address(xFactory))),
-                calculateSalt({deployer: address(xFactory), entropy: XERC20_ENTROPY})
+                CreateXLibrary.calculateSalt({_entropy: XERC20_ENTROPY, _deployer: address(xFactory)})
             )
         );
         address expectedTokenAddress = cx.computeCreate3Address({salt: guardedSalt, deployer: address(cx)});

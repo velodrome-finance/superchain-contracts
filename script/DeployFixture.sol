@@ -7,7 +7,11 @@ import "forge-std/console2.sol";
 
 import {ICreateX} from "createX/ICreateX.sol";
 
+import {CreateXLibrary} from "src/libraries/CreateXLibrary.sol";
+
 abstract contract DeployFixture is Script {
+    using CreateXLibrary for bytes11;
+
     error InvalidAddress(address expected, address output);
 
     ICreateX public cx = ICreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
@@ -33,11 +37,10 @@ abstract contract DeployFixture is Script {
     function logOutput() internal virtual;
 
     /// @dev Check if the computed address matches the address produced by the deployment
-    function checkAddress(bytes32 salt, address output) internal view {
-        bytes32 guardedSalt = keccak256(abi.encodePacked(uint256(uint160(deployer)), salt));
-        address computedAddress = cx.computeCreate3Address({salt: guardedSalt, deployer: address(cx)});
-        if (computedAddress != output) {
-            revert InvalidAddress(computedAddress, output);
+    function checkAddress(bytes11 _entropy, address _output) internal view {
+        address computedAddress = _entropy.computeCreate3Address({_deployer: deployer});
+        if (computedAddress != _output) {
+            revert InvalidAddress(computedAddress, _output);
         }
     }
 
@@ -57,9 +60,5 @@ abstract contract DeployFixture is Script {
 
             assert(keccak256(bytecode) == bytes32(0xbd8a7ea8cfca7b4e5f5041d7d4b17bc317c5ce42cfbc42066a00cf26b43eb53f));
         }
-    }
-
-    function calculateSalt(bytes11 entropy) internal view returns (bytes32 salt) {
-        salt = bytes32(abi.encodePacked(bytes20(deployer), bytes1(0x00), bytes11(entropy)));
     }
 }

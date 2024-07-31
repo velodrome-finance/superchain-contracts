@@ -6,10 +6,13 @@ import {ICreateX} from "createX/ICreateX.sol";
 import {XERC20} from "./XERC20.sol";
 import {IXERC20Factory} from "../interfaces/xerc20/IXERC20Factory.sol";
 import {XERC20Lockbox} from "./XERC20Lockbox.sol";
+import {CreateXLibrary} from "../libraries/CreateXLibrary.sol";
 
 /// @title XERC20Factory contract that deploys a canonical XERC20 on each chain
 /// @dev Depends on CreateX, assumes bytecode for CreateX has already been checked prior to deployment
 contract XERC20Factory is IXERC20Factory {
+    using CreateXLibrary for bytes11;
+
     /// @inheritdoc IXERC20Factory
     ICreateX public immutable createx;
     /// @inheritdoc IXERC20Factory
@@ -37,7 +40,7 @@ contract XERC20Factory is IXERC20Factory {
         if (block.chainid == 10) revert InvalidChainId();
 
         _XERC20 = createx.deployCreate3({
-            salt: calculateSalt(XERC20_ENTROPY),
+            salt: XERC20_ENTROPY.calculateSalt({_deployer: address(this)}),
             initCode: abi.encodePacked(
                 type(XERC20).creationCode,
                 abi.encode(
@@ -56,13 +59,10 @@ contract XERC20Factory is IXERC20Factory {
     function deployXERC20WithLockbox(address _erc20) external returns (address _XERC20, address _lockbox) {
         if (block.chainid != 10) revert InvalidChainId();
 
-        // precompute xerc20 address
-        bytes32 guardedSalt =
-            keccak256(abi.encodePacked(uint256(uint160(address(this))), calculateSalt(XERC20_ENTROPY)));
-        address expectedAddress = createx.computeCreate3Address({salt: guardedSalt, deployer: address(createx)});
+        address expectedAddress = XERC20_ENTROPY.computeCreate3Address({_deployer: address(this)});
 
         _lockbox = createx.deployCreate3({
-            salt: calculateSalt(LOCKBOX_ENTROPY),
+            salt: LOCKBOX_ENTROPY.calculateSalt({_deployer: address(this)}),
             initCode: abi.encodePacked(
                 type(XERC20Lockbox).creationCode,
                 abi.encode(
@@ -73,7 +73,7 @@ contract XERC20Factory is IXERC20Factory {
         });
 
         _XERC20 = createx.deployCreate3({
-            salt: calculateSalt(XERC20_ENTROPY),
+            salt: XERC20_ENTROPY.calculateSalt({_deployer: address(this)}),
             initCode: abi.encodePacked(
                 type(XERC20).creationCode,
                 abi.encode(
@@ -88,9 +88,5 @@ contract XERC20Factory is IXERC20Factory {
         assert(_XERC20 == expectedAddress);
 
         emit DeployXERC20WithLockbox({_xerc20: _XERC20, _lockbox: _lockbox});
-    }
-
-    function calculateSalt(bytes11 _entropy) internal view returns (bytes32 salt) {
-        salt = bytes32(abi.encodePacked(bytes20(address(this)), bytes1(0x00), _entropy));
     }
 }

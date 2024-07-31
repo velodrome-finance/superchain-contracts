@@ -2,9 +2,9 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 struct Users {
-    // CLFactory owner / general purpose admin
+    // owner / general purpose admin
     address payable owner;
-    // CLFactory fee manager
+    // fee manager
     address payable feeManager;
     // User, used to initiate calls
     address payable alice;
@@ -12,4 +12,6 @@ struct Users {
     address payable bob;
     // User, used as malicious user
     address payable charlie;
+    // User, used as deployer
+    address payable deployer;
 }

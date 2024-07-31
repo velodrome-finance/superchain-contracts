@@ -8,6 +8,8 @@ import {ModeRouter} from "src/extensions/ModeRouter.sol";
 import {XERC20Factory} from "src/xerc20/XERC20Factory.sol";
 
 contract DeployBase is DeployBaseFixture {
+    using CreateXLibrary for bytes11;
+
     struct ModeDeploymentParameters {
         address sfs;
         address recipient;
@@ -50,17 +52,19 @@ contract DeployBase is DeployBaseFixture {
     }
 
     function deploy() internal override {
-        bytes32 salt;
+        address _deployer = deployer;
 
-        salt = calculateSalt(POOL_ENTROPY);
-        poolImplementation =
-            ModePool(cx.deployCreate3({salt: salt, initCode: abi.encodePacked(type(ModePool).creationCode)}));
-        checkAddress({salt: salt, output: address(poolImplementation)});
+        poolImplementation = ModePool(
+            cx.deployCreate3({
+                salt: POOL_ENTROPY.calculateSalt({_deployer: _deployer}),
+                initCode: abi.encodePacked(type(ModePool).creationCode)
+            })
+        );
+        checkAddress({_entropy: POOL_ENTROPY, _output: address(poolImplementation)});
 
-        salt = calculateSalt(POOL_FACTORY_ENTROPY);
         poolFactory = ModePoolFactory(
             cx.deployCreate3({
-                salt: salt,
+                salt: POOL_FACTORY_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(ModePoolFactory).creationCode,
                     abi.encode(
@@ -74,13 +78,12 @@ contract DeployBase is DeployBaseFixture {
                 )
             })
         );
-        checkAddress({salt: salt, output: address(poolFactory)});
+        checkAddress({_entropy: POOL_FACTORY_ENTROPY, _output: address(poolFactory)});
 
-        salt = calculateSalt(ROUTER_ENTROPY);
         router = ModeRouter(
             payable(
                 cx.deployCreate3({
-                    salt: salt,
+                    salt: ROUTER_ENTROPY.calculateSalt({_deployer: _deployer}),
                     initCode: abi.encodePacked(
                         type(ModeRouter).creationCode,
                         abi.encode(
@@ -93,12 +96,11 @@ contract DeployBase is DeployBaseFixture {
                 })
             )
         );
-        checkAddress({salt: salt, output: address(router)});
+        checkAddress({_entropy: ROUTER_ENTROPY, _output: address(router)});
 
-        salt = calculateSalt(XERC20_FACTORY_ENTROPY);
         xerc20Factory = XERC20Factory(
             cx.deployCreate3({
-                salt: salt,
+                salt: XERC20_FACTORY_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(XERC20Factory).creationCode,
                     abi.encode(
@@ -108,7 +110,7 @@ contract DeployBase is DeployBaseFixture {
                 )
             })
         );
-        checkAddress({salt: salt, output: address(xerc20Factory)});
+        checkAddress({_entropy: XERC20_FACTORY_ENTROPY, _output: address(xerc20Factory)});
     }
 
     function modeParams() public view returns (ModeDeploymentParameters memory) {
