@@ -1,16 +1,16 @@
 // // SPDX-License-Identifier: BUSL-1.1
 // pragma solidity >=0.8.19 <0.9.0;
 
-// import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+// import {Math} from "@openzeppelin5/contracts/utils/math/Math.sol";
 // import {IReward} from "../interfaces/IReward.sol";
 // import {IGauge} from "../interfaces/IGauge.sol";
 // import {IPool} from "../interfaces/IPool.sol";
 // import {IVoter} from "../interfaces/IVoter.sol";
 // import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
-// import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-// import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-// import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-// import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+// import {IERC20} from "@openzeppelin5/contracts/token/ERC20/IERC20.sol";
+// import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
+// import {ERC2771Context} from "@openzeppelin5/contracts/metatx/ERC2771Context.sol";
+// import {ReentrancyGuard} from "@openzeppelin5/contracts/utils/ReentrancyGuard.sol";
 // import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
 
 // /// @title Velodrome V2 Gauge

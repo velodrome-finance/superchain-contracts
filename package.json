@@ -1,0 +1,23 @@
+{
+  "name": "@velodrome-finance/superchain-contracts",
+  "version": "1.0.0",
+  "description": "Core solidity contracts for Velodrome Superchain",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-foundry": "^1.1.2",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.19.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@hyperlane-xyz/core": "4.1.0"
+  }
+}

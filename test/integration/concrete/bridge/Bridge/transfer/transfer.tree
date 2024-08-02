@@ -1,0 +1,12 @@
+TransferIntegrationConcreteTest
+├── When the caller is not a live gauge listed by Voter
+│   └── It should revert with NotValidGauge
+└── When the caller is a live gauge listed by Voter
+    ├── When the requested amount is higher than the current burning limit of caller
+    │   └── It should revert with IXERC20_NotHighEnoughLimits
+    └── When the amount is less than or equal to the current burning limit of caller
+        ├── When the amount is larger than the balance of the caller
+        │   └── It should revert with ERC20InsufficientBalance
+        └── When the amount is less than or equal to the balance of the caller
+            ├── It burns the amount of tokens from the caller on the origin chain
+            └── It mints the amount of tokens to the caller on the destination chain

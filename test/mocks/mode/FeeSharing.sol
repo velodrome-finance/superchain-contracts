@@ -1,8 +1,8 @@
 pragma solidity >=0.8.19 <0.9.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin5/contracts/access/Ownable.sol";
+import "@openzeppelin5/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin5/contracts/utils/Address.sol";
 import "./Counters.sol";
 
 /// @notice Implementation of CIP-001 https://github.com/Canto-Improvement-Proposals/CIPs/blob/main/CIP-001.md

@@ -1,5 +1,22 @@
 # Superchain Contracts
 
+## Installation
+
+This repository depends on:
+
+node v20 (recommend managing node versions using nvm)
+foundry
+yarn
+
+To install & run:
+
+```
+yarn install
+forge b
+
+forge t -vv
+```
+
 ## Deployment
 
 Populate `foundry.toml` with the environment variables required for RPC and contract verification.
