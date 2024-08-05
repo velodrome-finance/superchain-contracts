@@ -16,7 +16,7 @@ import {IXERC20, XERC20} from "src/xerc20/XERC20.sol";
 import {IXERC20Lockbox, XERC20Lockbox} from "src/xerc20/XERC20Lockbox.sol";
 import {IXERC20Factory, XERC20Factory} from "src/xerc20/XERC20Factory.sol";
 import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
-import {IGauge} from "src/interfaces/gauges/IGauge.sol";
+import {ILeafGauge} from "src/interfaces/gauges/ILeafGauge.sol";
 import {CreateXLibrary} from "src/libraries/CreateXLibrary.sol";
 
 import {Users} from "test/utils/Users.sol";
@@ -184,7 +184,7 @@ abstract contract BaseFixture is Test, Constants {
     function addRewardToGauge(address _gauge, uint256 _amount) internal prank(users.owner) {
         deal(address(rewardToken), users.owner, _amount);
         rewardToken.safeIncreaseAllowance(_gauge, _amount);
-        IGauge(_gauge).notifyRewardAmount(_amount);
+        ILeafGauge(_gauge).notifyRewardAmount(_amount);
     }
 
     /// @dev Helper function to deposit liquidity into pool

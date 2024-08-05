@@ -54,9 +54,11 @@ contract MultichainMockMailbox is Mailbox, Test {
 
         MultichainMockMailbox _destinationMailbox = remoteMailboxes[destinationDomain];
         require(address(_destinationMailbox) != address(0), "Missing remote mailbox");
+        uint256 activeFork = vm.activeFork();
         // Add inbound message on the destination chain
         vm.selectFork({forkId: forkId[destinationDomain]});
         _destinationMailbox.addInboundMessage(message);
+        vm.selectFork({forkId: activeFork});
 
         return id;
     }

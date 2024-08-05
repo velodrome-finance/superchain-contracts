@@ -5,12 +5,16 @@ import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 import {IERC20} from "@openzeppelin5/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IXERC20} from "../interfaces/xerc20/IXERC20.sol";
 import {IBridge} from "../interfaces/bridge/IBridge.sol";
+import {ILeafGauge} from "../interfaces/gauges/ILeafGauge.sol";
 
 /// @notice Bridge contract for use only by Velodrome contracts
 contract Bridge is IBridge {
+    using SafeERC20 for IERC20;
+
     /// @inheritdoc IBridge
     address public immutable xerc20;
     /// @inheritdoc IBridge
@@ -47,7 +51,10 @@ contract Bridge is IBridge {
         if (msg.sender != mailbox) revert NotMailbox();
         (address recipient, uint256 amount) = abi.decode(_message, (address, uint256));
 
-        IXERC20(xerc20).mint({_user: recipient, _amount: amount});
+        IXERC20(xerc20).mint({_user: address(this), _amount: amount});
+
+        IERC20(xerc20).safeIncreaseAllowance({spender: recipient, value: amount});
+        ILeafGauge(recipient).notifyRewardAmount({amount: amount});
 
         emit ReceivedMessage({_origin: _origin, _sender: _sender, _value: msg.value, _message: string(_message)});
     }

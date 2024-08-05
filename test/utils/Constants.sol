@@ -18,6 +18,8 @@ abstract contract Constants {
     bytes11 public constant POOL_FACTORY_ENTROPY = 0x0000000000000000000002;
     bytes11 public constant ROUTER_ENTROPY = 0x0000000000000000000003;
 
+    bytes11 public constant GAUGE_FACTORY_ENTROPY = 0x0000000000000000000005;
+
     bytes11 public constant XERC20_FACTORY_ENTROPY = 0x0000000000000000000011;
     bytes11 public constant BRIDGE_ENTROPY = 0x0000000000000000000012;
 

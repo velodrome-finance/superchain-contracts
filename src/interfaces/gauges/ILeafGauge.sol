@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IGauge {
+interface ILeafGauge {
     error NotAlive();
     error NotAuthorized();
     error NotVoter();
@@ -10,11 +10,11 @@ interface IGauge {
     error ZeroAmount();
     error ZeroRewardRate();
 
-    event Deposit(address indexed from, address indexed to, uint256 amount);
-    event Withdraw(address indexed from, uint256 amount);
-    event NotifyReward(address indexed from, uint256 amount);
-    event ClaimFees(address indexed from, uint256 claimed0, uint256 claimed1);
-    event ClaimRewards(address indexed from, uint256 amount);
+    event Deposit(address indexed _sender, address indexed _to, uint256 _amount);
+    event Withdraw(address indexed _sender, uint256 _amount);
+    event NotifyReward(address indexed _sender, uint256 _amount);
+    event ClaimFees(address indexed _sender, uint256 _claimed0, uint256 _claimed1);
+    event ClaimRewards(address indexed _sender, uint256 _amount);
 
     /// @notice Address of the pool LP token which is deposited (staked) for rewards
     function stakingToken() external view returns (address);
@@ -27,6 +27,9 @@ interface IGauge {
 
     /// @notice Address of Velodrome v2 Voter
     function voter() external view returns (address);
+
+    /// @notice Address of Velodrome v2 Bridge
+    function bridge() external view returns (address);
 
     /// @notice Address of Velodrome v2 Team
     function team() external view returns (address);

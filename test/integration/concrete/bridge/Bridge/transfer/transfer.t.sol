@@ -4,13 +4,32 @@ pragma solidity >=0.8.19 <0.9.0;
 import "test/BaseForkFixture.sol";
 
 contract TransferIntegrationConcreteTest is BaseForkFixture {
-    uint256 public mintingLimit;
-    uint256 public burningLimit;
+    address public rootPool;
+    RootGauge public rootGauge;
+    address public leafPool;
+    LeafGauge public leafGauge;
 
     function setUp() public override {
         super.setUp();
-        mintingLimit = TOKEN_1 * 1000;
-        burningLimit = TOKEN_1 * 1000;
+
+        vm.selectFork({forkId: originId});
+        rootPool = originRootPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: false});
+        rootGauge =
+            RootGauge(mockVoter.createGauge({_poolFactory: address(originRootPoolFactory), _pool: address(rootPool)}));
+
+        vm.selectFork({forkId: destinationId});
+        leafPool = destinationPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: false});
+        leafGauge = LeafGauge(
+            destinationLeafGaugeFactory.createGauge({
+                _token0: address(token0),
+                _token1: address(token1),
+                _stable: false,
+                _feesVotingReward: address(11),
+                isPool: true
+            })
+        );
+
+        vm.selectFork({forkId: originId});
     }
 
     function test_WhenTheCallerIsNotALiveGaugeListedByVoter() external {
@@ -29,9 +48,9 @@ contract TransferIntegrationConcreteTest is BaseForkFixture {
     {
         // It should revert with IXERC20_NotHighEnoughLimits
         uint256 amount = 1;
-        deal({token: address(originXVelo), to: users.alice, give: amount});
+        deal({token: address(originXVelo), to: address(rootGauge), give: amount});
 
-        vm.startPrank(users.alice);
+        vm.startPrank(address(rootGauge));
         originXVelo.approve({spender: address(originBridge), value: amount});
 
         vm.expectRevert(IXERC20.IXERC20_NotHighEnoughLimits.selector);
@@ -39,8 +58,8 @@ contract TransferIntegrationConcreteTest is BaseForkFixture {
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller() {
-        vm.startPrank(users.owner);
-        originXVelo.setLimits({_bridge: address(originBridge), _mintingLimit: 0, _burningLimit: burningLimit});
+        uint256 amount = TOKEN_1 * 1_000;
+        setLimits({_originMintingLimit: amount, _destinationMintingLimit: amount});
         _;
     }
 
@@ -51,13 +70,15 @@ contract TransferIntegrationConcreteTest is BaseForkFixture {
     {
         // It should revert with ERC20InsufficientBalance
         uint256 amount = TOKEN_1 * 1000;
-        deal({token: address(originXVelo), to: users.alice, give: amount - 1});
+        deal({token: address(originXVelo), to: address(rootGauge), give: amount - 1});
 
-        vm.startPrank(users.alice);
+        vm.startPrank(address(rootGauge));
         originXVelo.approve({spender: address(originBridge), value: amount});
 
         vm.expectRevert(
-            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, users.alice, amount - 1, amount)
+            abi.encodeWithSelector(
+                IERC20Errors.ERC20InsufficientBalance.selector, address(rootGauge), amount - 1, amount
+            )
         );
         originBridge.transfer({_amount: amount, _domain: destination});
     }
@@ -69,15 +90,10 @@ contract TransferIntegrationConcreteTest is BaseForkFixture {
     {
         // It burns the amount of tokens from the caller on the origin chain
         // It mints the amount of tokens to the caller on the destination chain
-        vm.selectFork({forkId: destinationId});
-        vm.startPrank(users.owner);
-        destinationXVelo.setLimits({_bridge: address(destinationBridge), _mintingLimit: mintingLimit, _burningLimit: 0});
-        vm.selectFork({forkId: originId});
-
         uint256 amount = TOKEN_1 * 1000;
-        deal({token: address(originXVelo), to: users.alice, give: amount});
+        deal({token: address(originXVelo), to: address(rootGauge), give: amount});
 
-        vm.startPrank(users.alice);
+        vm.startPrank(address(rootGauge));
         originXVelo.approve({spender: address(originBridge), value: amount});
 
         vm.expectEmit(address(originBridge));
@@ -85,21 +101,21 @@ contract TransferIntegrationConcreteTest is BaseForkFixture {
             _destination: destination,
             _recipient: TypeCasts.addressToBytes32(address(originBridge)),
             _value: 0,
-            _message: string(abi.encode(users.alice, amount))
+            _message: string(abi.encode(address(leafGauge), amount))
         });
         originBridge.transfer({_amount: amount, _domain: destination});
 
-        assertEq(originXVelo.balanceOf(users.alice), 0);
-        vm.selectFork({forkId: destinationId});
+        assertEq(originXVelo.balanceOf(address(rootGauge)), 0);
 
+        vm.selectFork({forkId: destinationId});
         vm.expectEmit(address(destinationBridge));
         emit IBridge.ReceivedMessage({
             _origin: origin,
             _sender: TypeCasts.addressToBytes32(address(destinationBridge)),
             _value: 0,
-            _message: string(abi.encode(users.alice, amount))
+            _message: string(abi.encode(address(leafGauge), amount))
         });
         destinationMailbox.processNextInboundMessage();
-        assertEq(destinationXVelo.balanceOf(users.alice), amount);
+        assertEq(destinationXVelo.balanceOf(address(leafGauge)), amount);
     }
 }
