@@ -1,0 +1,11 @@
+BurningCurrentLimitOfUnitConcreteTest
+├── When current limit of bridge is equal to its max limit
+│   └── It should return the max limit
+└── When current limit of bridge is different from its max limit
+    ├── When block timestamp is greater than or equal to end of last update duration
+    │   └── It should return the max limit
+    └── When block timestamp is smaller than end of last update duration
+        ├── When calculated limit is greater than max limit
+        │   └── It should return the max limit
+        └── When calculated limit is smaller than or equal to max limit
+            └── It should return the linearly vested calculated limit
