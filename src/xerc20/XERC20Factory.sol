@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4 <0.9.0;
 
 import {ICreateX} from "createX/ICreateX.sol";
@@ -8,7 +8,33 @@ import {IXERC20Factory} from "../interfaces/xerc20/IXERC20Factory.sol";
 import {XERC20Lockbox} from "./XERC20Lockbox.sol";
 import {CreateXLibrary} from "../libraries/CreateXLibrary.sol";
 
-/// @title XERC20Factory contract that deploys a canonical XERC20 on each chain
+/*
+
+██╗   ██╗███████╗██╗      ██████╗ ██████╗ ██████╗  ██████╗ ███╗   ███╗███████╗
+██║   ██║██╔════╝██║     ██╔═══██╗██╔══██╗██╔══██╗██╔═══██╗████╗ ████║██╔════╝
+██║   ██║█████╗  ██║     ██║   ██║██║  ██║██████╔╝██║   ██║██╔████╔██║█████╗
+╚██╗ ██╔╝██╔══╝  ██║     ██║   ██║██║  ██║██╔══██╗██║   ██║██║╚██╔╝██║██╔══╝
+ ╚████╔╝ ███████╗███████╗╚██████╔╝██████╔╝██║  ██║╚██████╔╝██║ ╚═╝ ██║███████╗
+  ╚═══╝  ╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
+
+███████╗██╗   ██╗██████╗ ███████╗██████╗  ██████╗██╗  ██╗ █████╗ ██╗███╗   ██╗
+██╔════╝██║   ██║██╔══██╗██╔════╝██╔══██╗██╔════╝██║  ██║██╔══██╗██║████╗  ██║
+███████╗██║   ██║██████╔╝█████╗  ██████╔╝██║     ███████║███████║██║██╔██╗ ██║
+╚════██║██║   ██║██╔═══╝ ██╔══╝  ██╔══██╗██║     ██╔══██║██╔══██║██║██║╚██╗██║
+███████║╚██████╔╝██║     ███████╗██║  ██║╚██████╗██║  ██║██║  ██║██║██║ ╚████║
+╚══════╝ ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝
+
+██╗  ██╗███████╗██████╗  ██████╗██████╗  ██████╗ ███████╗ █████╗  ██████╗████████╗ ██████╗ ██████╗ ██╗   ██╗
+╚██╗██╔╝██╔════╝██╔══██╗██╔════╝╚════██╗██╔═████╗██╔════╝██╔══██╗██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗╚██╗ ██╔╝
+ ╚███╔╝ █████╗  ██████╔╝██║      █████╔╝██║██╔██║█████╗  ███████║██║        ██║   ██║   ██║██████╔╝ ╚████╔╝
+ ██╔██╗ ██╔══╝  ██╔══██╗██║     ██╔═══╝ ████╔╝██║██╔══╝  ██╔══██║██║        ██║   ██║   ██║██╔══██╗  ╚██╔╝
+██╔╝ ██╗███████╗██║  ██║╚██████╗███████╗╚██████╔╝██║     ██║  ██║╚██████╗   ██║   ╚██████╔╝██║  ██║   ██║
+╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝ ╚═════╝╚══════╝ ╚═════╝ ╚═╝     ╚═╝  ╚═╝ ╚═════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝   ╚═╝
+
+*/
+
+/// @title XERC20Factory
+/// @notice Deploys a canonical XERC20 on each chain
 /// @dev Depends on CreateX, assumes bytecode for CreateX has already been checked prior to deployment
 contract XERC20Factory is IXERC20Factory {
     using CreateXLibrary for bytes11;
@@ -29,6 +55,9 @@ contract XERC20Factory is IXERC20Factory {
     /// @inheritdoc IXERC20Factory
     bytes11 public constant LOCKBOX_ENTROPY = 0x0000000000000000000001;
 
+    /// @notice Constructs the initial config of the XERC20Factory
+    /// @param _createx The address of the CreateX factory instance
+    /// @param _owner The address of the initial owner for XERC20 deployments
     constructor(address _createx, address _owner) {
         if (_createx == address(0)) revert ZeroAddress();
         if (_owner == address(0)) revert ZeroAddress();
