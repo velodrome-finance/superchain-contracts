@@ -46,7 +46,7 @@ contract RootGauge is IRootGauge {
         IXERC20Lockbox(lockbox).deposit({_amount: _amount});
 
         IERC20(xerc20).safeIncreaseAllowance({spender: bridge, value: _amount});
-        IBridge(bridge).transfer({_amount: _amount, _domain: uint32(chainid)});
+        IBridge(bridge).sendToken({_amount: _amount, _chainid: uint32(chainid)});
 
         emit NotifyReward({_sender: msg.sender, _amount: _amount});
     }

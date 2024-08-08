@@ -4,6 +4,7 @@ pragma solidity >=0.8.19 <0.9.0;
 import "forge-std/console2.sol";
 import {Test} from "forge-std/Test.sol";
 import {IERC20Errors} from "@openzeppelin5/contracts/interfaces/draft-IERC6093.sol";
+import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 import {TestIsm} from "@hyperlane/core/contracts/test/TestIsm.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 
@@ -21,6 +22,7 @@ import {ILeafGauge, LeafGauge} from "src/gauges/LeafGauge.sol";
 import {ILeafGaugeFactory, LeafGaugeFactory} from "src/gauges/LeafGaugeFactory.sol";
 import {IPool, Pool} from "src/pools/Pool.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
+import {IHLTokenBridge, HLTokenBridge} from "src/bridge/hyperlane/HLTokenBridge.sol";
 
 import {CreateX} from "test/mocks/CreateX.sol";
 import {TestERC20} from "test/mocks/TestERC20.sol";
@@ -32,104 +34,129 @@ import {Constants} from "test/utils/Constants.sol";
 import {Users} from "test/utils/Users.sol";
 
 abstract contract BaseForkFixture is Test, Constants {
-    // anything prefixed with origin is deployed on the origin chain
-    // anything prefixed with destination is deployed on the destination chain
-    // all helper functions return control to the origin fork at end of execution
-    // assume all tests start from the origin fork
+    // anything prefixed with root is deployed on the root chain
+    // anything prefixed with leaf is deployed on the leaf chain
+    // in the context of velodrome superchain, the root chain will always be optimism (chainid=10)
+    // leaf chains will be any chain that velodrome expands to
 
-    // origin contracts
-    uint32 public origin = 10;
-    uint256 public originId;
+    // all helper functions return control to the root fork at end of execution
+    // assume all tests start from the root fork
+    // contracts in {root/leaf} superchain contracts run identical code (with different constructor / initialization args)
+    // contracts in {root/leaf}-only contracts run different code (but all code on each leaf chain will run the same code w/ different args)
+    // contracts in {root}-only mocks are mock contracts and not part of the superchain deployment
 
-    XERC20Factory public originXFactory;
-    XERC20 public originXVelo;
-    Bridge public originBridge;
-    MultichainMockMailbox public originMailbox;
-    TestIsm public originIsm;
+    // root variables
+    uint32 public root = 10; // root chain id
+    uint256 public rootId; // root fork id (used by foundry)
+    uint256 public rootStartTime; // root fork start time (set to start of epoch for simplicity)
 
-    // origin-only contracts
+    // root superchain contracts
+    XERC20Factory public rootXFactory;
+    XERC20 public rootXVelo;
+    Bridge public rootBridge;
+    HLTokenBridge public rootModule;
+
+    // root-only contracts
+    XERC20Lockbox public rootLockbox;
+    RootPool public rootPool;
+    RootPoolFactory public rootPoolFactory;
+    RootGaugeFactory public rootGaugeFactory;
+    RootGauge public rootGauge;
+
+    // root-only mocks
+    TestERC20 public rootRewardToken;
     MockVoter public mockVoter;
     MockFactoryRegistry public mockFactoryRegistry;
+    MultichainMockMailbox public rootMailbox;
+    TestIsm public rootIsm;
 
-    XERC20Lockbox public originLockbox;
-    TestERC20 public originRewardToken;
-    RootPool public originRootPool;
-    RootPoolFactory public originRootPoolFactory;
-    RootGaugeFactory public originRootGaugeFactory;
+    // leaf variables
+    uint32 public leaf = 34443; // leaf chain id
+    uint256 public leafId; // leaf fork id (used by foundry)
+    uint256 public leafStartTime; // leaf fork start time (set to start of epoch for simplicity)
 
-    // destination contracts
-    uint32 public destination = 34443;
-    uint256 public destinationId;
-    XERC20Factory public destinationXFactory;
-    XERC20 public destinationXVelo;
-    Bridge public destinationBridge;
-    MultichainMockMailbox public destinationMailbox;
-    TestIsm public destinationIsm;
+    // leaf superchain contracts
+    XERC20Factory public leafXFactory;
+    XERC20 public leafXVelo;
+    Bridge public leafBridge;
+    HLTokenBridge public leafModule;
 
-    // destination-only contracts
-    PoolFactory public destinationPoolFactory;
-    Pool public destinationPool;
-    LeafGaugeFactory public destinationLeafGaugeFactory;
-    LeafGauge public destinationLeafGauge;
+    // leaf-only contracts
+    PoolFactory public leafPoolFactory;
+    Pool public leafPool;
+    LeafGaugeFactory public leafGaugeFactory;
+    LeafGauge public leafGauge;
 
-    // common
+    // leaf-only mocks
     TestERC20 public token0;
     TestERC20 public token1;
+    MultichainMockMailbox public leafMailbox;
+    TestIsm public leafIsm;
+
+    // common contracts
     MockWETH public weth;
     CreateX public cx = CreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
 
-    // used by tests
-    /// @dev We reset origin and destination fork start time to the start of the epoch and record it here
-    uint256 public originStartTime;
-    uint256 public destinationStartTime;
-
+    // common variables
     Users internal users;
 
     function setUp() public virtual {
         createUsers();
 
-        vm.startPrank(users.deployer);
         setUpPreCommon();
-        setUpOriginChain();
-        setUpDestinationChain();
+        setUpRootChain();
+        setUpLeafChain();
         setUpPostCommon();
-        vm.stopPrank();
 
-        vm.selectFork({forkId: originId});
+        vm.selectFork({forkId: rootId});
     }
 
     function setUpPreCommon() public virtual {
-        originId = vm.createSelectFork({urlOrAlias: "optimism", blockNumber: 123316800});
+        vm.startPrank(users.owner);
+        rootId = vm.createSelectFork({urlOrAlias: "optimism", blockNumber: 123316800});
         deployCreateX();
-        /// @dev Tokens do not need to exist on mainnet, only on the superchain
+        weth = new MockWETH();
+        rootStartTime = VelodromeTimeLibrary.epochStart(block.timestamp);
+        vm.warp({newTimestamp: rootStartTime});
+
+        leafId = vm.createSelectFork({urlOrAlias: "mode", blockNumber: 11032400});
+        deployCreateX();
+        weth = new MockWETH();
+
         TestERC20 tokenA = new TestERC20("Test Token A", "TTA", 18);
         TestERC20 tokenB = new TestERC20("Test Token B", "TTB", 6); // mimic USDC
-        weth = new MockWETH();
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        originStartTime = VelodromeTimeLibrary.epochStart(block.timestamp);
-        vm.warp({newTimestamp: originStartTime});
 
-        destinationId = vm.createSelectFork({urlOrAlias: "mode", blockNumber: 11032400});
-        deployCreateX();
-        tokenA = new TestERC20("Test Token A", "TTA", 18);
-        tokenB = new TestERC20("Test Token B", "TTB", 6); // mimic USDC
-        weth = new MockWETH();
-        destinationStartTime = VelodromeTimeLibrary.epochStart(block.timestamp);
-        vm.warp({newTimestamp: destinationStartTime});
+        leafStartTime = VelodromeTimeLibrary.epochStart(block.timestamp);
+        vm.warp({newTimestamp: leafStartTime});
+        vm.stopPrank();
     }
 
-    function setUpOriginChain() public virtual {
-        vm.selectFork({forkId: originId});
+    function setUpRootChain() public virtual {
+        vm.selectFork({forkId: rootId});
 
+        // deploy root mocks
+        vm.startPrank(users.owner);
+        rootMailbox = new MultichainMockMailbox(root);
+        rootIsm = new TestIsm();
+        rootRewardToken = new TestERC20("Reward Token", "RWRD", 18);
         mockFactoryRegistry = new MockFactoryRegistry();
-        originRootPool = new RootPool();
-        originRootPoolFactory = new RootPoolFactory({_implementation: address(originRootPool), _chainId: destination});
+        mockVoter =
+            new MockVoter({_rewardToken: address(rootRewardToken), _factoryRegistry: address(mockFactoryRegistry)});
 
-        originMailbox = new MultichainMockMailbox(origin);
+        vm.label({account: address(rootMailbox), newLabel: "Root Mailbox"});
+        vm.label({account: address(rootIsm), newLabel: "Root ISM"});
+        vm.label({account: address(rootRewardToken), newLabel: "Root Reward Token"});
+        vm.label({account: address(mockFactoryRegistry), newLabel: "Root Factory Registry"});
+        vm.label({account: address(mockVoter), newLabel: "Root Mock Voter"});
+        vm.stopPrank();
 
-        originRewardToken = new TestERC20("Reward Token", "RWRD", 18);
+        // deploy root contracts
+        vm.startPrank(users.deployer);
+        rootPool = new RootPool();
+        rootPoolFactory = new RootPoolFactory({_implementation: address(rootPool), _chainId: leaf});
 
-        originXFactory = XERC20Factory(
+        rootXFactory = XERC20Factory(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: XERC20_FACTORY_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
@@ -142,80 +169,95 @@ abstract contract BaseForkFixture is Test, Constants {
             })
         );
 
-        (address _xVelo, address _lockbox) =
-            originXFactory.deployXERC20WithLockbox({_erc20: address(originRewardToken)});
-        originXVelo = XERC20(_xVelo);
-        originLockbox = XERC20Lockbox(_lockbox);
-        originIsm = new TestIsm();
+        (address _xVelo, address _lockbox) = rootXFactory.deployXERC20WithLockbox({_erc20: address(rootRewardToken)});
+        rootXVelo = XERC20(_xVelo);
+        rootLockbox = XERC20Lockbox(_lockbox);
 
-        originBridge = Bridge(
+        rootModule = HLTokenBridge(
+            CreateXLibrary.computeCreate3Address({_entropy: HL_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer})
+        );
+        rootBridge = Bridge(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: BRIDGE_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
                     type(Bridge).creationCode,
                     abi.encode(
-                        address(originXVelo), // xerc20 address
-                        address(originMailbox), // mailbox address
-                        originIsm // test ism
+                        users.owner, // bridge owner
+                        address(rootXVelo), // xerc20 address
+                        address(rootModule) // module
                     )
                 )
             })
         );
+        rootModule = HLTokenBridge(
+            cx.deployCreate3({
+                salt: CreateXLibrary.calculateSalt({_entropy: HL_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer}),
+                initCode: abi.encodePacked(
+                    type(HLTokenBridge).creationCode,
+                    abi.encode(address(rootBridge), address(rootMailbox), address(rootIsm))
+                )
+            })
+        );
 
-        mockVoter =
-            new MockVoter({_rewardToken: address(originRewardToken), _factoryRegistry: address(mockFactoryRegistry)});
-        originRootGaugeFactory = RootGaugeFactory(
+        rootGaugeFactory = RootGaugeFactory(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: GAUGE_FACTORY_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
                     type(RootGaugeFactory).creationCode,
                     abi.encode(
                         address(mockVoter), // voter address
-                        address(originXVelo), // xerc20 address
-                        address(originLockbox), // lockbox address
-                        address(originBridge) // bridge address
+                        address(rootXVelo), // xerc20 address
+                        address(rootLockbox), // lockbox address
+                        address(rootBridge) // bridge address
                     )
                 )
             })
         );
 
         mockFactoryRegistry.approve({
-            poolFactory: address(originRootPoolFactory),
+            poolFactory: address(rootPoolFactory),
             votingRewardsFactory: address(11),
-            gaugeFactory: address(originRootGaugeFactory)
+            gaugeFactory: address(rootGaugeFactory)
         });
+        vm.stopPrank();
 
-        vm.label({account: address(mockVoter), newLabel: "Origin Mock Voter"});
-        vm.label({account: address(mockFactoryRegistry), newLabel: "Origin Factory Registry"});
-        vm.label({account: address(originRootPool), newLabel: "Origin Root Pool"});
-        vm.label({account: address(originRootPoolFactory), newLabel: "Origin Root Pool Factory"});
-        vm.label({account: address(originRootGaugeFactory), newLabel: "Origin Root Gauge Factory"});
-        vm.label({account: address(originMailbox), newLabel: "Origin Mailbox"});
-        vm.label({account: address(originRewardToken), newLabel: "Origin Reward Token"});
-        vm.label({account: address(originXFactory), newLabel: "Origin X Factory"});
-        vm.label({account: address(originXVelo), newLabel: "Origin XVELO"});
-        vm.label({account: address(originLockbox), newLabel: "Origin Lockbox"});
-        vm.label({account: address(originIsm), newLabel: "Origin ISM"});
-        vm.label({account: address(originBridge), newLabel: "Origin Bridge"});
+        vm.label({account: address(rootPool), newLabel: "Root Pool"});
+        vm.label({account: address(rootPoolFactory), newLabel: "Root Pool Factory"});
+        vm.label({account: address(rootGaugeFactory), newLabel: "Root Gauge Factory"});
+        vm.label({account: address(rootXFactory), newLabel: "Root X Factory"});
+        vm.label({account: address(rootXVelo), newLabel: "Root XVELO"});
+        vm.label({account: address(rootLockbox), newLabel: "Root Lockbox"});
+        vm.label({account: address(rootBridge), newLabel: "Root Bridge"});
     }
 
-    function setUpDestinationChain() public virtual {
-        vm.selectFork({forkId: destinationId});
-        destinationMailbox = new MultichainMockMailbox(destination);
+    function setUpLeafChain() public virtual {
+        vm.selectFork({forkId: leafId});
 
-        destinationPool = Pool(
+        // deploy leaf mocks
+        // use deployer here to ensure addresses are different from the root mocks
+        // this helps with labeling
+        vm.startPrank(users.deployer);
+        leafMailbox = new MultichainMockMailbox(leaf);
+        leafIsm = new TestIsm();
+
+        vm.label({account: address(leafMailbox), newLabel: "Leaf Mailbox"});
+        vm.label({account: address(leafIsm), newLabel: "Leaf ISM"});
+        vm.stopPrank();
+
+        vm.startPrank(users.deployer);
+        leafPool = Pool(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: POOL_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(type(Pool).creationCode)
             })
         );
-        destinationPoolFactory = PoolFactory(
+        leafPoolFactory = PoolFactory(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: POOL_FACTORY_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
                     type(PoolFactory).creationCode,
                     abi.encode(
-                        address(destinationPool), // pool implementation
+                        address(leafPool), // pool implementation
                         users.owner, // pool admin
                         users.owner, // pauser
                         users.feeManager // fee manager
@@ -224,7 +266,7 @@ abstract contract BaseForkFixture is Test, Constants {
             })
         );
 
-        destinationXFactory = XERC20Factory(
+        leafXFactory = XERC20Factory(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: XERC20_FACTORY_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
@@ -237,53 +279,81 @@ abstract contract BaseForkFixture is Test, Constants {
             })
         );
 
-        destinationXVelo = XERC20(destinationXFactory.deployXERC20());
-        destinationIsm = new TestIsm();
+        leafXVelo = XERC20(leafXFactory.deployXERC20());
 
-        destinationBridge = Bridge(
+        leafModule = HLTokenBridge(
+            CreateXLibrary.computeCreate3Address({_entropy: HL_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer})
+        );
+        leafBridge = Bridge(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: BRIDGE_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
                     type(Bridge).creationCode,
                     abi.encode(
-                        address(destinationXVelo), // xerc20 address
-                        address(destinationMailbox), // mailbox address
-                        destinationIsm // test ism
+                        users.owner, // bridge owner
+                        address(leafXVelo), // xerc20 address
+                        address(leafModule) // module
                     )
                 )
             })
         );
+        leafModule = HLTokenBridge(
+            cx.deployCreate3({
+                salt: CreateXLibrary.calculateSalt({_entropy: HL_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer}),
+                initCode: abi.encodePacked(
+                    type(HLTokenBridge).creationCode,
+                    abi.encode(address(leafBridge), address(leafMailbox), address(leafIsm))
+                )
+            })
+        );
 
-        destinationLeafGaugeFactory = LeafGaugeFactory(
+        leafGaugeFactory = LeafGaugeFactory(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: GAUGE_FACTORY_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
                     type(LeafGaugeFactory).creationCode,
                     abi.encode(
                         address(mockVoter), // voter address
-                        address(destinationPoolFactory), // pool factory address
-                        address(destinationXVelo), // xerc20 address
-                        address(destinationBridge) // bridge address
+                        address(leafPoolFactory), // pool factory address
+                        address(leafXVelo), // xerc20 address
+                        address(leafBridge) // bridge address
                     )
                 )
             })
         );
+        vm.stopPrank();
 
-        vm.label({account: address(destinationMailbox), newLabel: "Destination Mailbox"});
-        vm.label({account: address(destinationPool), newLabel: "Destination Pool"});
-        vm.label({account: address(destinationPoolFactory), newLabel: "Destination Pool Factory"});
-        vm.label({account: address(destinationXFactory), newLabel: "Destination X Factory"});
-        vm.label({account: address(destinationXVelo), newLabel: "Destination XVELO"});
-        vm.label({account: address(destinationBridge), newLabel: "Destination Bridge"});
-        vm.label({account: address(destinationIsm), newLabel: "Destination ISM"});
-        vm.label({account: address(destinationLeafGaugeFactory), newLabel: "Destination Leaf Gauge Factory"});
+        vm.label({account: address(leafPool), newLabel: "Leaf Pool"});
+        vm.label({account: address(leafPoolFactory), newLabel: "Leaf Pool Factory"});
+        vm.label({account: address(leafXFactory), newLabel: "Leaf X Factory"});
+        vm.label({account: address(leafXVelo), newLabel: "Leaf XVELO"});
+        vm.label({account: address(leafBridge), newLabel: "Leaf Bridge"});
+        vm.label({account: address(leafGaugeFactory), newLabel: "Leaf Gauge Factory"});
     }
 
     // Any set up required to link the contracts across the two chains
     function setUpPostCommon() public virtual {
-        vm.selectFork({forkId: originId});
-        originMailbox.addRemoteMailbox(destination, destinationMailbox);
-        originMailbox.setDomainForkId({_domain: destination, _forkId: destinationId});
+        vm.selectFork({forkId: rootId});
+        rootMailbox.addRemoteMailbox(leaf, leafMailbox);
+        rootMailbox.setDomainForkId({_domain: leaf, _forkId: leafId});
+
+        // set up root pool & gauge
+        rootPool =
+            RootPool(rootPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: false}));
+        rootGauge = RootGauge(mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(rootPool)}));
+
+        // set up leaf pool & gauge
+        vm.selectFork({forkId: leafId});
+        leafPool = Pool(leafPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: false}));
+        leafGauge = LeafGauge(
+            leafGaugeFactory.createGauge({
+                _token0: address(token0),
+                _token1: address(token1),
+                _stable: false,
+                _feesVotingReward: address(11),
+                isPool: true
+            })
+        );
     }
 
     function createUsers() internal {
@@ -307,34 +377,36 @@ abstract contract BaseForkFixture is Test, Constants {
         deployCodeTo("test/mocks/CreateX.sol", address(cx));
     }
 
-    /// @dev Helper function that sets origin minting limit & destination burning limit
-    /// @dev and destination minting limit & origin burning limit
-    function setLimits(uint256 _originMintingLimit, uint256 _destinationMintingLimit) internal {
+    /// @dev Helper function that sets root minting limit & leaf burning limit
+    /// @dev and leaf minting limit & root burning limit
+    function setLimits(uint256 _rootMintingLimit, uint256 _leafMintingLimit) internal {
+        vm.stopPrank();
+        uint256 activeFork = vm.activeFork();
         vm.startPrank(users.owner);
-        vm.selectFork({forkId: originId});
-        originXVelo.setLimits({
-            _bridge: address(originBridge),
-            _mintingLimit: _originMintingLimit,
-            _burningLimit: _destinationMintingLimit
+        vm.selectFork({forkId: rootId});
+        rootXVelo.setLimits({
+            _bridge: address(rootBridge),
+            _mintingLimit: _rootMintingLimit,
+            _burningLimit: _leafMintingLimit
         });
-        vm.selectFork({forkId: destinationId});
-        destinationXVelo.setLimits({
-            _bridge: address(destinationBridge),
-            _mintingLimit: _destinationMintingLimit,
-            _burningLimit: _originMintingLimit
+        vm.selectFork({forkId: leafId});
+        leafXVelo.setLimits({
+            _bridge: address(leafBridge),
+            _mintingLimit: _leafMintingLimit,
+            _burningLimit: _rootMintingLimit
         });
-        vm.selectFork({forkId: originId});
+        vm.selectFork({forkId: activeFork});
         vm.stopPrank();
     }
 
     /// @dev Move time forward on all chains
     function skipTime(uint256 _time) internal {
-        vm.selectFork({forkId: originId});
+        vm.selectFork({forkId: rootId});
         vm.warp({newTimestamp: block.timestamp + _time});
         vm.roll({newHeight: block.number + _time / 2});
-        vm.selectFork({forkId: destinationId});
+        vm.selectFork({forkId: leafId});
         vm.warp({newTimestamp: block.timestamp + _time});
         vm.roll({newHeight: block.number + _time / 2});
-        vm.selectFork({forkId: originId});
+        vm.selectFork({forkId: rootId});
     }
 }

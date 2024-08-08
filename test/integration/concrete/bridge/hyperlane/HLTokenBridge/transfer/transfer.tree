@@ -1,0 +1,7 @@
+TransferIntegrationConcreteTest
+├── When the caller is not the bridge
+│   └── It should revert with NotBridge
+└── When the caller is the bridge
+    ├── It dispatches a message to the destination mailbox
+    ├── It emits a {SentMessage} event
+    └── It mints the amount of tokens to the caller on the destination chain

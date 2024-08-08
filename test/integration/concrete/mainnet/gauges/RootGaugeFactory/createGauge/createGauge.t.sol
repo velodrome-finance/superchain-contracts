@@ -4,32 +4,32 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../RootGaugeFactory.t.sol";
 
 contract CreateGaugeIntegrationConcreteTest is RootGaugeFactoryTest {
-    address public rootPool;
-
     function setUp() public override {
         super.setUp();
 
-        rootPool = originRootPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: false});
+        // we use stable = true to avoid collision with existing pool
+        rootPool =
+            RootPool(rootPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
     }
 
     function test_WhenTheCallerIsNotVoter() external {
         // It reverts with NotVoter
         vm.prank(users.charlie);
         vm.expectRevert(IRootGaugeFactory.NotVoter.selector);
-        originRootGaugeFactory.createGauge(address(0), rootPool, address(0), address(originRewardToken), true);
+        rootGaugeFactory.createGauge(address(0), address(rootPool), address(0), address(rootRewardToken), true);
     }
 
     function test_WhenTheCallerIsVoter() external {
         // It creates a new gauge
         vm.prank(address(mockVoter));
         RootGauge rootGauge = RootGauge(
-            originRootGaugeFactory.createGauge(address(0), rootPool, address(0), address(originRewardToken), true)
+            rootGaugeFactory.createGauge(address(0), address(rootPool), address(0), address(rootRewardToken), true)
         );
 
-        assertEq(rootGauge.rewardToken(), address(originRewardToken));
-        assertEq(rootGauge.xerc20(), address(originXVelo));
-        assertEq(rootGauge.lockbox(), address(originLockbox));
-        assertEq(rootGauge.bridge(), address(originBridge));
-        assertEq(rootGauge.chainid(), destination);
+        assertEq(rootGauge.rewardToken(), address(rootRewardToken));
+        assertEq(rootGauge.xerc20(), address(rootXVelo));
+        assertEq(rootGauge.lockbox(), address(rootLockbox));
+        assertEq(rootGauge.bridge(), address(rootBridge));
+        assertEq(rootGauge.chainid(), leaf);
     }
 }

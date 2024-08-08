@@ -5,9 +5,9 @@ import "test/BaseForkFixture.sol";
 
 contract RootGaugeFactoryTest is BaseForkFixture {
     function test_InitialState() public view {
-        assertEq(originRootGaugeFactory.voter(), address(mockVoter));
-        assertEq(originRootGaugeFactory.xerc20(), address(originXVelo));
-        assertEq(originRootGaugeFactory.lockbox(), address(originLockbox));
-        assertEq(originRootGaugeFactory.bridge(), address(originBridge));
+        assertEq(rootGaugeFactory.voter(), address(mockVoter));
+        assertEq(rootGaugeFactory.xerc20(), address(rootXVelo));
+        assertEq(rootGaugeFactory.lockbox(), address(rootLockbox));
+        assertEq(rootGaugeFactory.bridge(), address(rootBridge));
     }
 }

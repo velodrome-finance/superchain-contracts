@@ -1,0 +1,5 @@
+NotifyIntegrationConcreteTest
+├── When the caller is not the module
+│   └── It reverts with NotModule
+└── When the caller is the module
+    └── It calls notify reward amount on the recipient

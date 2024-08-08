@@ -1,35 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IMessageRecipient} from "@hyperlane/core/contracts/interfaces/IMessageRecipient.sol";
-import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
+interface IBridge {
+    error NotModule();
+    error ZeroAddress();
 
-interface IBridge is IMessageRecipient {
-    error NotMailbox();
-    error NotValidGauge();
-
-    event SentMessage(uint32 indexed _destination, bytes32 indexed _recipient, uint256 _value, string _message);
-    event ReceivedMessage(uint32 indexed _origin, bytes32 indexed _sender, uint256 _value, string _message);
+    event SetModule(address indexed _sender, address indexed _module);
 
     /// @notice Returns the address of the xERC20 token that is bridged by this contract
     function xerc20() external view returns (address);
 
-    /// @notice Returns the address of the mailbox contract that is used to bridge by this contract
-    function mailbox() external view returns (address);
+    /// @notice Returns the address of the module contract that is allowed to mint xERC20 tokens
+    function module() external view returns (address);
 
-    /// @notice Returns the address of the security module contract used by the bridge
-    function securityModule() external view returns (IInterchainSecurityModule);
+    /// @notice Sets the address of the module contract that is allowed to mint xERC20 tokens
+    /// @dev Module handles x-chain transfers
+    /// @param _module The address of the new module contract
+    function setModule(address _module) external;
 
-    /// @notice Callback function used by the mailbox contract to handle incoming messages
-    /// @param _origin The domain from which the message originates
-    /// @param _sender The address of the sender of the message
-    /// @param _message The message payload
-    function handle(uint32 _origin, bytes32 _sender, bytes calldata _message) external payable override;
+    /// @notice Mints xERC20 tokens to a user
+    /// @param _user The address of the user to mint tokens to
+    /// @param _amount The amount of xERC20 tokens to mint
+    function mint(address _user, uint256 _amount) external;
 
-    /// @notice Transfers an amount of the bridged token to the destination domain
-    /// @dev Requires approval for amount in order to bridge
-    /// @dev Tokens are sent to the same address as msg.sender
-    /// @param _amount The amount of the xERC20 token to transfer
-    /// @param _domain The domain to which the tokens should be sent
-    function transfer(uint256 _amount, uint32 _domain) external payable;
+    /// @notice Notifies a recipient gauge contract of a reward amount
+    /// @param _recipient The address of the recipient gauge contract
+    /// @param _amount The amount of reward tokens to notify
+    function notify(address _recipient, uint256 _amount) external;
+
+    /// @notice Burns xERC20 tokens from the sender and triggers a x-chain transfer via the module contract
+    /// @param _amount The amount of xERC20 tokens to send
+    /// @param _chainid The chain id of the destination chain
+    function sendToken(uint256 _amount, uint256 _chainid) external payable;
 }
