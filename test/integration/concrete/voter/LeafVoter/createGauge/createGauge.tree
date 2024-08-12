@@ -1,0 +1,14 @@
+CreateGaugeIntegrationConcreteTest
+├── When caller is not bridge
+│   └── It should revert with NotAuthorized
+└── When caller is bridge
+    ├── It should create new gauge
+    ├── It should set gaugeToFees for new gauge
+    ├── It should set gaugeToBribes for new gauge
+    ├── It should set gauges for given pool to new gauge
+    ├── It should set poolForGauge for new gauge to given pool
+    ├── It should set isGauge for new gauge to true
+    ├── It should set isAlive for new gauge to true
+    ├── It should add given pool to pools
+    ├── It should whitelist both tokens of pool
+    └── It should emit {GaugeCreated} event

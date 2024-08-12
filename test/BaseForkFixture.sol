@@ -2,7 +2,7 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import "forge-std/console2.sol";
-import {Test} from "forge-std/Test.sol";
+import {Test, stdStorage, StdStorage} from "forge-std/Test.sol";
 import {IERC20Errors} from "@openzeppelin5/contracts/interfaces/draft-IERC6093.sol";
 import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 import {TestIsm} from "@hyperlane/core/contracts/test/TestIsm.sol";
@@ -18,6 +18,7 @@ import {IRootPool, RootPool} from "src/mainnet/pools/RootPool.sol";
 import {IRootPoolFactory, RootPoolFactory} from "src/mainnet/pools/RootPoolFactory.sol";
 import {IRootGauge, RootGauge} from "src/mainnet/gauges/RootGauge.sol";
 import {IRootGaugeFactory, RootGaugeFactory} from "src/mainnet/gauges/RootGaugeFactory.sol";
+import {ILeafVoter, LeafVoter} from "src/voter/LeafVoter.sol";
 import {ILeafGauge, LeafGauge} from "src/gauges/LeafGauge.sol";
 import {ILeafGaugeFactory, LeafGaugeFactory} from "src/gauges/LeafGaugeFactory.sol";
 import {IPool, Pool} from "src/pools/Pool.sol";
@@ -29,6 +30,7 @@ import {TestERC20} from "test/mocks/TestERC20.sol";
 import {MultichainMockMailbox} from "test/mocks/MultichainMockMailbox.sol";
 import {MockVoter} from "test/mocks/MockVoter.sol";
 import {MockFactoryRegistry} from "test/mocks/MockFactoryRegistry.sol";
+import {MockVotingRewardsFactory} from "test/mocks/MockVotingRewardsFactory.sol";
 import {MockWETH} from "test/mocks/MockWETH.sol";
 import {Constants} from "test/utils/Constants.sol";
 import {Users} from "test/utils/Users.sol";
@@ -86,11 +88,14 @@ abstract contract BaseForkFixture is Test, Constants {
     Pool public leafPool;
     LeafGaugeFactory public leafGaugeFactory;
     LeafGauge public leafGauge;
+    LeafVoter public leafVoter;
 
     // leaf-only mocks
     TestERC20 public token0;
     TestERC20 public token1;
     MultichainMockMailbox public leafMailbox;
+    MockFactoryRegistry public leafMockFactoryRegistry;
+    MockVotingRewardsFactory public leafMockRewardsFactory;
     TestIsm public leafIsm;
 
     // common contracts
@@ -239,9 +244,15 @@ abstract contract BaseForkFixture is Test, Constants {
         vm.startPrank(users.deployer);
         leafMailbox = new MultichainMockMailbox(leaf);
         leafIsm = new TestIsm();
+        leafMockFactoryRegistry = new MockFactoryRegistry();
+        leafMockRewardsFactory = new MockVotingRewardsFactory();
+        leafVoter = new LeafVoter({_factoryRegistry: address(leafMockFactoryRegistry), _emergencyCouncil: users.owner});
 
         vm.label({account: address(leafMailbox), newLabel: "Leaf Mailbox"});
         vm.label({account: address(leafIsm), newLabel: "Leaf ISM"});
+        vm.label({account: address(leafMockFactoryRegistry), newLabel: "Leaf Factory Registry"});
+        vm.label({account: address(leafMockRewardsFactory), newLabel: "Leaf Mock Rewards Factory"});
+        vm.label({account: address(leafVoter), newLabel: "Leaf Voter"});
         vm.stopPrank();
 
         vm.startPrank(users.deployer);
@@ -321,6 +332,12 @@ abstract contract BaseForkFixture is Test, Constants {
                 )
             })
         );
+
+        leafMockFactoryRegistry.approve({
+            poolFactory: address(leafPoolFactory),
+            votingRewardsFactory: address(leafMockRewardsFactory),
+            gaugeFactory: address(leafGaugeFactory)
+        });
         vm.stopPrank();
 
         vm.label({account: address(leafPool), newLabel: "Leaf Pool"});
@@ -345,15 +362,7 @@ abstract contract BaseForkFixture is Test, Constants {
         // set up leaf pool & gauge
         vm.selectFork({forkId: leafId});
         leafPool = Pool(leafPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: false}));
-        leafGauge = LeafGauge(
-            leafGaugeFactory.createGauge({
-                _token0: address(token0),
-                _token1: address(token1),
-                _stable: false,
-                _feesVotingReward: address(11),
-                isPool: true
-            })
-        );
+        leafGauge = LeafGauge(leafVoter.createGauge({_poolFactory: address(leafPoolFactory), _pool: address(leafPool)}));
     }
 
     function createUsers() internal {

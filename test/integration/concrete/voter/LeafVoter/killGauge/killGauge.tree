@@ -1,0 +1,19 @@
+KillGaugeIntegrationConcreteTest
+├── When caller is not emergency council
+│   └── It should revert with NotEmergencyCouncil
+└── When caller is emergency council
+    ├── When address is not a live gauge
+    │   └── It should revert with GaugeAlreadyKilled
+    └── When address is a live gauge
+        ├── When whitelist count of gauge tokens is equal to 1
+        │   ├── It should set isAlive for gauge to false
+        │   ├── It should remove gauge tokens from set of whitelisted tokens
+        │   ├── It should set whitelistTokenCount of gauge tokens to 0
+        │   ├── It should emit a {WhitelistToken} event
+        │   └── It should emit a {GaugeKilled} event
+        └── When whitelist count of gauge tokens is greater than 1
+            ├── It should set isAlive for gauge to false
+            ├── It should keep gauge tokens in set of whitelisted tokens
+            ├── It should decrement the whitelistTokenCount count of gauge tokens by 1
+            ├── It should emit a {WhitelistToken} event
+            └── It should emit a {GaugeKilled} event

@@ -1,0 +1,9 @@
+SetEmergencyCouncilIntegrationConcreteTest
+├── When caller is not emergency council
+│   └── It should revert with NotEmergencyCouncil
+└── When caller is emergency council
+    ├── When new council is zero address
+    │   └── It should revert with ZeroAddress
+    └── When new council is not zero address
+        ├── It should set new emergency council
+        └── It should emit a {SetEmergencyCouncil} event

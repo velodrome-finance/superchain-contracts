@@ -1,0 +1,22 @@
+ReviveGaugeIntegrationConcreteTest
+├── When caller is not emergency council
+│   └── It should revert with NotEmergencyCouncil
+└── When caller is emergency council
+    ├── When address given is not a gauge
+    │   └── It should revert with NotAGauge
+    └── When address given is a gauge
+        ├── When gauge is alive
+        │   └── It should revert with GaugeAlreadyRevived
+        └── When gauge is not alive
+            ├── When whitelist count of gauge tokens is equal to 0
+            │   ├── It should set isAlive for gauge to true
+            │   ├── It should add gauge tokens to set of whitelisted tokens
+            │   ├── It should set whitelistTokenCount of gauge tokens to 1
+            │   ├── It should emit a {WhitelistToken} event
+            │   └── It should emit a {GaugeRevived} event
+            └── When whitelist count of gauge tokens is greater than 0
+                ├── It should set isAlive for gauge to true
+                ├── It should keep gauge tokens in set of whitelisted tokens
+                ├── It should increment the whitelistTokenCount of gauge tokens by 1
+                ├── It should emit a {WhitelistToken} event
+                └── It should emit a {GaugeRevived} event
