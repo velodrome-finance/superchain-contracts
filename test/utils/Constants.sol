@@ -22,8 +22,12 @@ abstract contract Constants {
 
     bytes11 public constant XERC20_FACTORY_ENTROPY = 0x0000000000000000000011;
     bytes11 public constant BRIDGE_ENTROPY = 0x0000000000000000000012;
+    bytes11 public constant MESSAGE_BRIDGE_ENTROPY = 0x0000000000000000000013;
 
     bytes11 public constant HL_TOKEN_BRIDGE_ENTROPY = 0x0000000000000000000022;
+    bytes11 public constant HL_MESSAGE_BRIDGE_ENTROPY = 0x0000000000000000000023;
+
+    // 40 - 50 is reserved for use by slipstream contracts
 
     // used by factory
     bytes11 public constant XERC20_ENTROPY = 0x0000000000000000000000;

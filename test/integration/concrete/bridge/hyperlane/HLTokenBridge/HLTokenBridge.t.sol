@@ -4,7 +4,7 @@ pragma solidity >=0.8.19 <0.9.0;
 import "test/BaseForkFixture.sol";
 
 abstract contract HLTokenBridgeTest is BaseForkFixture {
-    function test_InitialState() internal {
+    function test_InitialState() public {
         vm.selectFork({forkId: rootId});
         assertEq(rootModule.bridge(), address(rootBridge));
         assertEq(rootModule.mailbox(), address(rootMailbox));

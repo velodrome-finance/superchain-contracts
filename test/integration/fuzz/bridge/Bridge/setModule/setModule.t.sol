@@ -4,7 +4,7 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../Bridge.t.sol";
 
 contract SetModuleIntegrationFuzzTest is BridgeTest {
-    function test_WhenCallerIsNotOwner(address _caller) external {
+    function testFuzz_WhenCallerIsNotOwner(address _caller) external {
         // It reverts with {OwnableUnauthorizedAccount}
         vm.assume(_caller != users.owner);
 

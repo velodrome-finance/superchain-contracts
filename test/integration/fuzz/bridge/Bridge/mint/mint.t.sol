@@ -4,7 +4,7 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../Bridge.t.sol";
 
 contract MintIntegrationFuzzTest is BridgeTest {
-    function test_WhenTheCallerIsNotTheModule(address _caller) external {
+    function testFuzz_WhenTheCallerIsNotTheModule(address _caller) external {
         // It reverts with NotModule
         vm.assume(_caller != address(rootModule));
         vm.prank(_caller);
@@ -16,7 +16,7 @@ contract MintIntegrationFuzzTest is BridgeTest {
         _;
     }
 
-    function test_WhenTheRequestedAmountIsHigherThanTheCurrentMintingLimit(uint256 _mintingLimit, uint256 _amount)
+    function testFuzz_WhenTheRequestedAmountIsHigherThanTheCurrentMintingLimit(uint256 _mintingLimit, uint256 _amount)
         external
         whenTheCallerIsTheModule
     {
@@ -32,7 +32,7 @@ contract MintIntegrationFuzzTest is BridgeTest {
         rootBridge.mint({_user: address(rootBridge), _amount: _amount});
     }
 
-    function test_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentMintingLimit(
+    function testFuzz_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentMintingLimit(
         uint256 _mintingLimit,
         uint256 _amount
     ) external whenTheCallerIsTheModule {

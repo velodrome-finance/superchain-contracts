@@ -7,7 +7,7 @@ contract SendTokenIntegrationFuzzTest is BridgeTest {
     uint256 public burningLimit;
     uint256 public amount;
 
-    function test_WhenCallerIsNotAGaugeRegisteredInVoter() external {
+    function testFuzz_WhenCallerIsNotAGaugeRegisteredInVoter() external {
         // It reverts with NotValidGauge
     }
 
@@ -15,7 +15,7 @@ contract SendTokenIntegrationFuzzTest is BridgeTest {
         _;
     }
 
-    function test_WhenTheRequestedAmountIsHigherThanTheCurrentBurningLimitOfCaller(
+    function testFuzz_WhenTheRequestedAmountIsHigherThanTheCurrentBurningLimitOfCaller(
         uint256 _burningLimit,
         uint256 _amount
     ) external whenCallerIsAGaugeRegisteredInVoter {
@@ -40,7 +40,7 @@ contract SendTokenIntegrationFuzzTest is BridgeTest {
         _;
     }
 
-    function test_WhenTheAmountIsLargerThanTheBalanceOfTheCaller(
+    function testFuzz_WhenTheAmountIsLargerThanTheBalanceOfTheCaller(
         uint256 _burningLimit,
         uint256 _amount,
         uint256 _balance
@@ -62,7 +62,7 @@ contract SendTokenIntegrationFuzzTest is BridgeTest {
         rootBridge.sendToken({_amount: amount, _chainid: leaf});
     }
 
-    function test_WhenTheAmountIsLessThanOrEqualToTheBalanceOfTheCaller(
+    function testFuzz_WhenTheAmountIsLessThanOrEqualToTheBalanceOfTheCaller(
         uint256 _burningLimit,
         uint256 _amount,
         uint256 _balance

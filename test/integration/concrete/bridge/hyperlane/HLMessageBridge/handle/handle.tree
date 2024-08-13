@@ -1,0 +1,6 @@
+HandleIntegrationConcreteTest
+├── When caller is not mailbox
+│   └── It reverts with NotMailbox
+└── When caller is mailbox
+    ├── It calls receivedMessage on the recipient contract of the same address with the payload
+    └── It emits the {ReceivedMessage} event

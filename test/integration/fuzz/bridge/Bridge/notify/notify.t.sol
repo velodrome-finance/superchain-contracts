@@ -10,7 +10,7 @@ contract NotifyIntegrationFuzzTest is BridgeTest {
         vm.selectFork({forkId: leafId});
     }
 
-    function test_WhenTheCallerIsNotTheModule(address _caller) external {
+    function testFuzz_WhenTheCallerIsNotTheModule(address _caller) external {
         // It reverts with NotModule
         vm.assume(_caller != address(leafModule));
 
@@ -19,7 +19,7 @@ contract NotifyIntegrationFuzzTest is BridgeTest {
         leafBridge.notify({_recipient: _caller, _amount: 1});
     }
 
-    function test_WhenTheCallerIsTheModule(uint256 _mintingLimit, uint256 _amount) external {
+    function testFuzz_WhenTheCallerIsTheModule(uint256 _mintingLimit, uint256 _amount) external {
         // It calls notify reward amount on the recipient
         // minimum limit is 1 week as notify needs to be at least WEEK
         _mintingLimit = bound(_mintingLimit, WEEK, type(uint256).max / 2);
