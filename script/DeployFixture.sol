@@ -9,7 +9,9 @@ import {ICreateX} from "createX/ICreateX.sol";
 
 import {CreateXLibrary} from "src/libraries/CreateXLibrary.sol";
 
-abstract contract DeployFixture is Script {
+import {Constants} from "script/constants/Constants.sol";
+
+abstract contract DeployFixture is Script, Constants {
     using CreateXLibrary for bytes11;
 
     error InvalidAddress(address expected, address output);

@@ -34,11 +34,11 @@ import {MockVoter} from "test/mocks/MockVoter.sol";
 import {MockFactoryRegistry} from "test/mocks/MockFactoryRegistry.sol";
 import {MockVotingRewardsFactory} from "test/mocks/MockVotingRewardsFactory.sol";
 import {MockWETH} from "test/mocks/MockWETH.sol";
+import {TestConstants} from "test/utils/TestConstants.sol";
 import {MockMessageReceiver} from "test/mocks/MockMessageReceiver.sol";
-import {Constants} from "test/utils/Constants.sol";
 import {Users} from "test/utils/Users.sol";
 
-abstract contract BaseForkFixture is Test, Constants {
+abstract contract BaseForkFixture is Test, TestConstants {
     // anything prefixed with root is deployed on the root chain
     // anything prefixed with leaf is deployed on the leaf chain
     // in the context of velodrome superchain, the root chain will always be optimism (chainid=10)

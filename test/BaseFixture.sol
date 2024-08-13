@@ -20,12 +20,12 @@ import {ILeafGauge} from "src/interfaces/gauges/ILeafGauge.sol";
 import {CreateXLibrary} from "src/libraries/CreateXLibrary.sol";
 
 import {Users} from "test/utils/Users.sol";
-import {Constants} from "test/utils/Constants.sol";
+import {TestConstants} from "test/utils/TestConstants.sol";
 import {MockWETH} from "test/mocks/MockWETH.sol";
 import {TestERC20} from "test/mocks/TestERC20.sol";
 import {CreateX} from "test/mocks/CreateX.sol";
 
-abstract contract BaseFixture is Test, Constants {
+abstract contract BaseFixture is Test, TestConstants {
     using SafeERC20 for TestERC20;
 
     Pool public poolImplementation;
