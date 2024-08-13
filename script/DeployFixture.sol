@@ -28,6 +28,7 @@ abstract contract DeployFixture is Script, Constants {
 
         deploy();
         logParams();
+        logOutput();
 
         vm.stopBroadcast();
     }

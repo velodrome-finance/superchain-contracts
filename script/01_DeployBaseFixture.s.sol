@@ -103,17 +103,11 @@ abstract contract DeployBaseFixture is DeployFixture {
 
     function logOutput() internal override {
         string memory root = vm.projectRoot();
-        string memory path = string(abi.encodePacked(root, "/deployment-addresses", _params.outputFilename));
+        string memory path = string(abi.encodePacked(root, "/deployment-addresses/", _params.outputFilename));
         /// @dev This might overwrite an existing output file
-        vm.writeJson(
-            path,
-            string(
-                abi.encodePacked(
-                    stdJson.serialize("", "poolImplementation", address(poolImplementation)),
-                    stdJson.serialize("", "poolFactory", address(poolFactory)),
-                    stdJson.serialize("", "router", address(router))
-                )
-            )
-        );
+        vm.writeJson(vm.serializeAddress("", "poolImplementation", address(poolImplementation)), path);
+        vm.writeJson(vm.serializeAddress("", "poolFactory", address(poolFactory)), path);
+        vm.writeJson(vm.serializeAddress("", "router", address(router)), path);
+        vm.writeJson(vm.serializeAddress("", "xerc20Factory", address(xerc20Factory)), path);
     }
 }
