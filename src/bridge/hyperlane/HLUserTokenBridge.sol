@@ -9,8 +9,8 @@ import {IBridge} from "../../interfaces/bridge/IBridge.sol";
 import {IHLTokenBridge, ITokenBridge} from "../../interfaces/bridge/hyperlane/IHLTokenBridge.sol";
 
 /// @title Hyperlane Token Bridge
-/// @notice Hyperlane module used to bridge emissions between chains
-contract HLTokenBridge is IHLTokenBridge {
+/// @notice Token Bridge module for general use
+contract HLUserTokenBridge is IHLTokenBridge {
     /// @inheritdoc IHLTokenBridge
     address public immutable bridge;
     /// @inheritdoc IHLTokenBridge
@@ -49,9 +49,7 @@ contract HLTokenBridge is IHLTokenBridge {
         if (msg.sender != mailbox) revert NotMailbox();
         (address recipient, uint256 amount) = abi.decode(_message, (address, uint256));
 
-        IBridge(bridge).mint({_user: address(bridge), _amount: amount});
-
-        IBridge(bridge).notify({_recipient: recipient, _amount: amount});
+        IBridge(bridge).mint({_user: recipient, _amount: amount});
 
         emit ReceivedMessage({_origin: _origin, _sender: _sender, _value: msg.value, _message: string(_message)});
     }

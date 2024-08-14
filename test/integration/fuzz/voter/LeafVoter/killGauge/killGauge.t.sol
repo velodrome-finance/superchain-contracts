@@ -6,11 +6,11 @@ import "../LeafVoter.t.sol";
 contract KillGaugeIntegrationFuzzTest is LeafVoterTest {
     using stdStorage for StdStorage;
 
-    function testFuzz_WhenCallerIsNotEmergencyCouncil(address caller) external {
-        vm.assume(caller != leafVoter.emergencyCouncil());
+    function testFuzz_WhenCallerIsNotEmergencyCouncil(address _caller) external {
+        vm.assume(_caller != leafVoter.emergencyCouncil());
         // It should revert with NotEmergencyCouncil
         vm.expectRevert(ILeafVoter.NotEmergencyCouncil.selector);
-        vm.prank(caller);
+        vm.prank(_caller);
         leafVoter.killGauge(address(leafGauge));
     }
 
@@ -19,29 +19,29 @@ contract KillGaugeIntegrationFuzzTest is LeafVoterTest {
         _;
     }
 
-    function testFuzz_WhenAddressIsNotALiveGauge(address gauge) external whenCallerIsEmergencyCouncil {
-        vm.assume(gauge != address(leafGauge));
+    function testFuzz_WhenAddressIsNotALiveGauge(address _gauge) external whenCallerIsEmergencyCouncil {
+        vm.assume(_gauge != address(leafGauge));
         // It should revert with GaugeAlreadyKilled
         vm.expectRevert(ILeafVoter.GaugeAlreadyKilled.selector);
-        leafVoter.killGauge(gauge);
+        leafVoter.killGauge(_gauge);
     }
 
     modifier whenAddressIsALiveGauge() {
         _;
     }
 
-    function testFuzz_WhenWhitelistCountOfGaugeTokensIsGreaterThan1(uint256 whitelistCount0, uint256 whitelistCount1)
+    function testFuzz_WhenWhitelistCountOfGaugeTokensIsGreaterThan1(uint256 _whitelistCount0, uint256 _whitelistCount1)
         external
         whenCallerIsEmergencyCouncil
         whenAddressIsALiveGauge
     {
-        whitelistCount0 = bound(whitelistCount0, 2, type(uint256).max);
-        whitelistCount1 = bound(whitelistCount1, 2, type(uint256).max);
+        _whitelistCount0 = bound(_whitelistCount0, 2, type(uint256).max);
+        _whitelistCount1 = bound(_whitelistCount1, 2, type(uint256).max);
         stdstore.target(address(leafVoter)).sig("whitelistTokenCount(address)").with_key(address(token0)).checked_write(
-            whitelistCount0
+            _whitelistCount0
         );
         stdstore.target(address(leafVoter)).sig("whitelistTokenCount(address)").with_key(address(token1)).checked_write(
-            whitelistCount1
+            _whitelistCount1
         );
 
         // It should set isAlive for gauge to false
@@ -68,7 +68,7 @@ contract KillGaugeIntegrationFuzzTest is LeafVoterTest {
         assertFalse(leafVoter.isAlive(address(leafGauge)));
         assertTrue(leafVoter.isWhitelistedToken(address(token0)));
         assertTrue(leafVoter.isWhitelistedToken(address(token1)));
-        assertEq(leafVoter.whitelistTokenCount(address(token0)), whitelistCount0 - 1);
-        assertEq(leafVoter.whitelistTokenCount(address(token1)), whitelistCount1 - 1);
+        assertEq(leafVoter.whitelistTokenCount(address(token0)), _whitelistCount0 - 1);
+        assertEq(leafVoter.whitelistTokenCount(address(token1)), _whitelistCount1 - 1);
     }
 }

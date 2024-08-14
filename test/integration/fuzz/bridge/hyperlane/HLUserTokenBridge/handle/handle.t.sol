@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../HLTokenBridge.t.sol";
+import "../HLUserTokenBridge.t.sol";
 
-contract HandleIntegrationFuzzTest is HLTokenBridgeTest {
+contract HandleIntegrationFuzzTest is HLUserTokenBridgeTest {
     function setUp() public override {
         super.setUp();
         vm.selectFork({forkId: leafId});
@@ -15,7 +15,7 @@ contract HandleIntegrationFuzzTest is HLTokenBridgeTest {
 
         vm.prank(_caller);
         vm.expectRevert(IHLTokenBridge.NotMailbox.selector);
-        leafModule.handle({
+        leafTokenModule.handle({
             _origin: leaf,
             _sender: TypeCasts.addressToBytes32(_caller),
             _message: abi.encode(_caller, 1)
@@ -40,7 +40,7 @@ contract HandleIntegrationFuzzTest is HLTokenBridgeTest {
 
         vm.prank(address(leafMailbox));
         vm.expectRevert(IXERC20.IXERC20_NotHighEnoughLimits.selector);
-        leafModule.handle{value: TOKEN_1 / 2}({
+        leafTokenModule.handle{value: TOKEN_1 / 2}({
             _origin: leaf,
             _sender: TypeCasts.addressToBytes32(users.alice),
             _message: _message
@@ -52,27 +52,26 @@ contract HandleIntegrationFuzzTest is HLTokenBridgeTest {
         uint256 _amount
     ) external whenTheCallerIsMailbox {
         // It should mint tokens to the destination module
-        // It should deposit the tokens into the gauge
         // It should emit {ReceivedMessage} event
         _mintingLimit = bound(_mintingLimit, WEEK, type(uint256).max / 2);
         _amount = bound(_amount, WEEK, _mintingLimit);
 
         vm.prank(users.owner);
-        leafXVelo.setLimits({_bridge: address(leafBridge), _mintingLimit: _mintingLimit, _burningLimit: 0});
+        leafXVelo.setLimits({_bridge: address(leafTokenBridge), _mintingLimit: _mintingLimit, _burningLimit: 0});
 
         vm.deal(address(leafMailbox), TOKEN_1 / 2);
 
         bytes memory _message = abi.encode(address(leafGauge), _amount);
 
         vm.prank(address(leafMailbox));
-        vm.expectEmit(address(leafModule));
+        vm.expectEmit(address(leafTokenModule));
         emit IHLTokenBridge.ReceivedMessage({
             _origin: leaf,
             _sender: TypeCasts.addressToBytes32(users.alice),
             _value: TOKEN_1 / 2,
             _message: string(_message)
         });
-        leafModule.handle{value: TOKEN_1 / 2}({
+        leafTokenModule.handle{value: TOKEN_1 / 2}({
             _origin: leaf,
             _sender: TypeCasts.addressToBytes32(users.alice),
             _message: _message

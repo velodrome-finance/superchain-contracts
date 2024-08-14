@@ -23,7 +23,9 @@ import {ILeafGaugeFactory, LeafGaugeFactory} from "src/gauges/LeafGaugeFactory.s
 import {IPool, Pool} from "src/pools/Pool.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {IBridge, Bridge} from "src/bridge/Bridge.sol";
+import {IUserTokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
 import {IMessageBridge, MessageBridge} from "src/bridge/MessageBridge.sol";
+import {HLUserTokenBridge} from "src/bridge/hyperlane/HLUserTokenBridge.sol";
 import {IHLTokenBridge, HLTokenBridge} from "src/bridge/hyperlane/HLTokenBridge.sol";
 import {IHLMessageBridge, HLMessageBridge} from "src/bridge/hyperlane/HLMessageBridge.sol";
 
@@ -60,6 +62,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
     XERC20 public rootXVelo;
     Bridge public rootBridge;
     HLTokenBridge public rootModule;
+    TokenBridge public rootTokenBridge;
+    HLUserTokenBridge public rootTokenModule;
     MessageBridge public rootMessageBridge;
     HLMessageBridge public rootMessageModule;
 
@@ -87,6 +91,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
     XERC20 public leafXVelo;
     Bridge public leafBridge;
     HLTokenBridge public leafModule;
+    TokenBridge public leafTokenBridge;
+    HLUserTokenBridge public leafTokenModule;
     MessageBridge public leafMessageBridge;
     HLMessageBridge public leafMessageModule;
 
@@ -228,6 +234,31 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 )
             })
         );
+        rootTokenModule = HLUserTokenBridge(
+            CreateXLibrary.computeCreate3Address({_entropy: HL_USER_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer})
+        );
+        rootTokenBridge = TokenBridge(
+            cx.deployCreate3({
+                salt: CreateXLibrary.calculateSalt({_entropy: TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer}),
+                initCode: abi.encodePacked(
+                    type(TokenBridge).creationCode,
+                    abi.encode(
+                        users.owner, // bridge owner
+                        address(rootXVelo), // xerc20 address
+                        address(rootTokenModule) // module
+                    )
+                )
+            })
+        );
+        rootTokenModule = HLUserTokenBridge(
+            cx.deployCreate3({
+                salt: CreateXLibrary.calculateSalt({_entropy: HL_USER_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer}),
+                initCode: abi.encodePacked(
+                    type(HLUserTokenBridge).creationCode,
+                    abi.encode(address(rootTokenBridge), address(rootMailbox), address(rootIsm))
+                )
+            })
+        );
 
         rootGaugeFactory = RootGaugeFactory(
             cx.deployCreate3({
@@ -263,8 +294,10 @@ abstract contract BaseForkFixture is Test, TestConstants {
         vm.label({account: address(rootGaugeFactory), newLabel: "Gauge Factory"});
         vm.label({account: address(rootXFactory), newLabel: "X Factory"});
         vm.label({account: address(rootXVelo), newLabel: "XVELO"});
-        vm.label({account: address(rootBridge), newLabel: "Bridge"});
-        vm.label({account: address(rootModule), newLabel: "Token Module"});
+        vm.label({account: address(rootTokenBridge), newLabel: "Token Bridge"});
+        vm.label({account: address(rootTokenModule), newLabel: "Token Module"});
+        vm.label({account: address(rootBridge), newLabel: "Gauge Token Bridge"});
+        vm.label({account: address(rootModule), newLabel: "Gauge Token Module"});
         vm.label({account: address(rootMessageBridge), newLabel: "Message Bridge"});
         vm.label({account: address(rootMessageModule), newLabel: "Message Module"});
     }
@@ -369,6 +402,31 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 )
             })
         );
+        leafTokenModule = HLUserTokenBridge(
+            CreateXLibrary.computeCreate3Address({_entropy: HL_USER_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer})
+        );
+        leafTokenBridge = TokenBridge(
+            cx.deployCreate3({
+                salt: CreateXLibrary.calculateSalt({_entropy: TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer}),
+                initCode: abi.encodePacked(
+                    type(TokenBridge).creationCode,
+                    abi.encode(
+                        users.owner, // bridge owner
+                        address(leafXVelo), // xerc20 address
+                        address(leafTokenModule) // module
+                    )
+                )
+            })
+        );
+        leafTokenModule = HLUserTokenBridge(
+            cx.deployCreate3({
+                salt: CreateXLibrary.calculateSalt({_entropy: HL_USER_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer}),
+                initCode: abi.encodePacked(
+                    type(HLUserTokenBridge).creationCode,
+                    abi.encode(address(leafTokenBridge), address(leafMailbox), address(leafIsm))
+                )
+            })
+        );
 
         leafGaugeFactory = LeafGaugeFactory(
             cx.deployCreate3({
@@ -449,9 +507,19 @@ abstract contract BaseForkFixture is Test, TestConstants {
             _mintingLimit: _rootMintingLimit,
             _burningLimit: _leafMintingLimit
         });
+        rootXVelo.setLimits({
+            _bridge: address(rootTokenBridge),
+            _mintingLimit: _rootMintingLimit,
+            _burningLimit: _leafMintingLimit
+        });
         vm.selectFork({forkId: leafId});
         leafXVelo.setLimits({
             _bridge: address(leafBridge),
+            _mintingLimit: _leafMintingLimit,
+            _burningLimit: _rootMintingLimit
+        });
+        leafXVelo.setLimits({
+            _bridge: address(leafTokenBridge),
             _mintingLimit: _leafMintingLimit,
             _burningLimit: _rootMintingLimit
         });

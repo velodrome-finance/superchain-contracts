@@ -1,52 +1,54 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../Bridge.t.sol";
+import "../TokenBridge.t.sol";
 
-contract SendTokenIntegrationFuzzTest is BridgeTest {
-    uint256 public burningLimit;
+contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
     uint256 public amount;
+    uint32 public chainid;
 
-    function testFuzz_WhenCallerIsNotAGaugeRegisteredInVoter() external {
-        // It reverts with NotValidGauge
+    modifier whenTheRequestedAmountIsNotZero() {
+        _;
     }
 
-    modifier whenCallerIsAGaugeRegisteredInVoter() {
+    modifier whenTheRequestedChainIsNotTheCurrentChain() {
+        chainid = leaf;
         _;
     }
 
     function testFuzz_WhenTheRequestedAmountIsHigherThanTheCurrentBurningLimitOfCaller(
         uint256 _burningLimit,
         uint256 _amount
-    ) external whenCallerIsAGaugeRegisteredInVoter {
+    ) external whenTheRequestedAmountIsNotZero whenTheRequestedChainIsNotTheCurrentChain {
         // It should revert with IXERC20_NotHighEnoughLimits
         _burningLimit = bound(_burningLimit, WEEK, type(uint256).max / 2 - 1);
-        _amount = bound(_amount, _burningLimit + 1, type(uint256).max / 2);
-        deal({token: address(rootXVelo), to: address(rootGauge), give: _amount});
+        amount = bound(_amount, _burningLimit + 1, type(uint256).max / 2);
 
+        deal({token: address(rootXVelo), to: address(rootGauge), give: amount});
         setLimits({_rootMintingLimit: 0, _leafMintingLimit: _burningLimit});
 
         vm.startPrank(address(rootGauge));
-        rootXVelo.approve({spender: address(rootBridge), value: _amount});
+        rootXVelo.approve({spender: address(rootTokenBridge), value: amount});
 
         vm.expectRevert(IXERC20.IXERC20_NotHighEnoughLimits.selector);
-        rootBridge.sendToken({_amount: _amount, _chainid: leaf});
+        rootTokenBridge.sendToken({_amount: amount, _chainid: chainid});
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(uint256 _burningLimit, uint256 _amount) {
-        burningLimit = bound(_burningLimit, WEEK, type(uint256).max / 2);
-        amount = bound(_amount, WEEK, burningLimit);
-        setLimits({_rootMintingLimit: 0, _leafMintingLimit: burningLimit});
+        _burningLimit = bound(_burningLimit, WEEK, type(uint256).max / 2);
+        amount = bound(_amount, WEEK, _burningLimit);
+        setLimits({_rootMintingLimit: 0, _leafMintingLimit: _burningLimit});
         _;
     }
 
-    function testFuzz_WhenTheAmountIsLargerThanTheBalanceOfTheCaller(
+    function testFuzz_WhenTheAmountIsLargerThanTheBalanceOfCaller(
         uint256 _burningLimit,
         uint256 _amount,
         uint256 _balance
     )
         external
-        whenCallerIsAGaugeRegisteredInVoter
+        whenTheRequestedAmountIsNotZero
+        whenTheRequestedChainIsNotTheCurrentChain
         whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(_burningLimit, _amount)
     {
         // It should revert with ERC20InsufficientBalance
@@ -54,50 +56,51 @@ contract SendTokenIntegrationFuzzTest is BridgeTest {
         deal({token: address(rootXVelo), to: address(rootGauge), give: _balance});
 
         vm.startPrank(address(rootGauge));
-        rootXVelo.approve({spender: address(rootBridge), value: amount});
+        rootXVelo.approve({spender: address(rootTokenBridge), value: amount});
 
         vm.expectRevert(
             abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, address(rootGauge), _balance, amount)
         );
-        rootBridge.sendToken({_amount: amount, _chainid: leaf});
+        rootTokenBridge.sendToken({_amount: amount, _chainid: chainid});
     }
 
-    function testFuzz_WhenTheAmountIsLessThanOrEqualToTheBalanceOfTheCaller(
+    function testFuzz_WhenTheAmountIsLessThanOrEqualToTheBalanceOfCaller(
         uint256 _burningLimit,
         uint256 _amount,
         uint256 _balance
     )
         external
-        whenCallerIsAGaugeRegisteredInVoter
+        whenTheRequestedAmountIsNotZero
+        whenTheRequestedChainIsNotTheCurrentChain
         whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(_burningLimit, _amount)
     {
         // It burns the caller's tokens
         // It mints the tokens to the caller at the destination
-        _balance = bound(_balance, amount, type(uint256).max / 2);
         uint256 ethAmount = TOKEN_1;
-        deal({token: address(rootXVelo), to: address(rootGauge), give: _balance});
+        _balance = bound(_balance, amount, type(uint256).max / 2);
         vm.deal({account: address(rootGauge), newBalance: ethAmount});
+        deal({token: address(rootXVelo), to: address(rootGauge), give: _balance});
 
         vm.startPrank(address(rootGauge));
-        rootXVelo.approve({spender: address(rootBridge), value: amount});
+        rootXVelo.approve({spender: address(rootTokenBridge), value: amount});
 
-        vm.expectEmit(address(rootModule));
+        vm.expectEmit(address(rootTokenModule));
         emit IHLTokenBridge.SentMessage({
-            _destination: leaf,
-            _recipient: TypeCasts.addressToBytes32(address(rootModule)),
+            _destination: chainid,
+            _recipient: TypeCasts.addressToBytes32(address(rootTokenModule)),
             _value: ethAmount,
             _message: string(abi.encode(address(leafGauge), amount))
         });
-        rootBridge.sendToken{value: ethAmount}({_amount: amount, _chainid: leaf});
+        rootTokenBridge.sendToken{value: ethAmount}({_amount: amount, _chainid: chainid});
 
         assertEq(rootXVelo.balanceOf(address(rootGauge)), _balance - amount);
-        assertEq(address(rootBridge).balance, 0);
+        assertEq(address(rootTokenBridge).balance, 0);
 
         vm.selectFork({forkId: leafId});
-        vm.expectEmit(address(leafModule));
+        vm.expectEmit(address(leafTokenModule));
         emit IHLTokenBridge.ReceivedMessage({
             _origin: root,
-            _sender: TypeCasts.addressToBytes32(address(leafModule)),
+            _sender: TypeCasts.addressToBytes32(address(leafTokenModule)),
             _value: 0,
             _message: string(abi.encode(address(leafGauge), amount))
         });
