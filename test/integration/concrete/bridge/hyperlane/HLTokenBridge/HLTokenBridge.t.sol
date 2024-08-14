@@ -9,10 +9,12 @@ abstract contract HLTokenBridgeTest is BaseForkFixture {
         assertEq(rootModule.bridge(), address(rootBridge));
         assertEq(rootModule.mailbox(), address(rootMailbox));
         assertEq(address(rootModule.securityModule()), address(rootIsm));
+        assertEq(address(rootModule).balance, 0);
 
         vm.selectFork({forkId: leafId});
         assertEq(leafModule.bridge(), address(leafBridge));
         assertEq(leafModule.mailbox(), address(leafMailbox));
         assertEq(address(leafModule.securityModule()), address(leafIsm));
+        assertEq(address(leafModule).balance, 0);
     }
 }

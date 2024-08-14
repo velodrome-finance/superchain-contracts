@@ -16,17 +16,21 @@ contract TransferIntegrationConcreteTest is HLTokenBridgeTest {
         // It emits a {SentMessage} event
         // It mints the amount of tokens to the caller on the destination chain
         uint256 amount = TOKEN_1 * 1000;
+        uint256 ethAmount = TOKEN_1;
         setLimits({_rootMintingLimit: amount, _leafMintingLimit: amount});
+        vm.deal({account: address(rootBridge), newBalance: ethAmount});
 
         vm.startPrank(address(rootBridge));
         vm.expectEmit(address(rootModule));
         emit IHLTokenBridge.SentMessage({
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootModule)),
-            _value: 0,
+            _value: ethAmount,
             _message: string(abi.encode(address(rootGauge), amount))
         });
-        rootModule.transfer({_sender: address(rootGauge), _amount: amount, _chainid: leaf});
+        rootModule.transfer{value: ethAmount}({_sender: address(rootGauge), _amount: amount, _chainid: leaf});
+
+        assertEq(address(rootModule).balance, 0);
 
         vm.selectFork({forkId: leafId});
         vm.expectEmit(address(leafModule));

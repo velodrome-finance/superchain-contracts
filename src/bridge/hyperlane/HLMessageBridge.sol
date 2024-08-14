@@ -29,7 +29,7 @@ contract HLMessageBridge is IHLMessageBridge {
         if (msg.sender != bridge) revert NotBridge();
         uint32 domain = uint32(_chainid);
         bytes memory message = abi.encode(_sender, _payload);
-        Mailbox(mailbox).dispatch({
+        Mailbox(mailbox).dispatch{value: msg.value}({
             _destinationDomain: domain,
             _recipientAddress: TypeCasts.addressToBytes32(address(this)),
             _messageBody: message

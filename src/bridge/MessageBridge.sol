@@ -25,6 +25,10 @@ contract MessageBridge is IMessageBridge, Ownable {
 
     /// @inheritdoc IMessageBridge
     function sendMessage(bytes calldata _payload, uint256 _chainid) external payable {
-        IMessageSender(module).sendMessage({_sender: msg.sender, _payload: _payload, _chainid: _chainid});
+        IMessageSender(module).sendMessage{value: msg.value}({
+            _sender: msg.sender,
+            _payload: _payload,
+            _chainid: _chainid
+        });
     }
 }

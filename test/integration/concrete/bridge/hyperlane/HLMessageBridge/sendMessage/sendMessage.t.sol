@@ -30,16 +30,25 @@ contract SendMessageIntegrationConcreteTest is HLMessageBridgeTest {
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
         // It calls receiveMessage on the recipient contract of the same address with the payload
+        uint256 ethAmount = TOKEN_1;
         bytes memory message = abi.encode(1000);
+        vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
+
         vm.prank(address(rootMessageBridge));
         vm.expectEmit(address(rootMessageModule));
         emit IHLMessageBridge.SentMessage({
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
-            _value: 0,
+            _value: ethAmount,
             _message: string(abi.encode(address(mockReceiver), message))
         });
-        rootMessageModule.sendMessage({_sender: address(mockReceiver), _payload: message, _chainid: leaf});
+        rootMessageModule.sendMessage{value: ethAmount}({
+            _sender: address(mockReceiver),
+            _payload: message,
+            _chainid: leaf
+        });
+
+        assertEq(address(rootMessageModule).balance, 0);
 
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage();

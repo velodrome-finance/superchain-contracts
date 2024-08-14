@@ -52,6 +52,6 @@ contract Bridge is IBridge, Ownable {
 
         IXERC20(xerc20).burn({_user: msg.sender, _amount: _amount});
 
-        ITokenBridge(module).transfer({_sender: msg.sender, _amount: _amount, _chainid: _chainid});
+        ITokenBridge(module).transfer{value: msg.value}({_sender: msg.sender, _amount: _amount, _chainid: _chainid});
     }
 }

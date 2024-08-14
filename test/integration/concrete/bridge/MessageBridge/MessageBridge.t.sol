@@ -8,9 +8,11 @@ abstract contract MessageBridgeTest is BaseForkFixture {
         vm.selectFork({forkId: rootId});
         assertEq(rootMessageBridge.module(), address(rootMessageModule));
         assertEq(rootMessageBridge.owner(), users.owner);
+        assertEq(address(rootMessageBridge).balance, 0);
 
         vm.selectFork({forkId: leafId});
         assertEq(leafMessageBridge.module(), address(leafMessageModule));
-        assertEq(rootMessageBridge.owner(), users.owner);
+        assertEq(leafMessageBridge.owner(), users.owner);
+        assertEq(address(leafMessageBridge).balance, 0);
     }
 }

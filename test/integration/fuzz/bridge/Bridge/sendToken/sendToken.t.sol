@@ -74,7 +74,9 @@ contract SendTokenIntegrationFuzzTest is BridgeTest {
         // It burns the caller's tokens
         // It mints the tokens to the caller at the destination
         _balance = bound(_balance, amount, type(uint256).max / 2);
+        uint256 ethAmount = TOKEN_1;
         deal({token: address(rootXVelo), to: address(rootGauge), give: _balance});
+        vm.deal({account: address(rootGauge), newBalance: ethAmount});
 
         vm.startPrank(address(rootGauge));
         rootXVelo.approve({spender: address(rootBridge), value: amount});
@@ -83,12 +85,13 @@ contract SendTokenIntegrationFuzzTest is BridgeTest {
         emit IHLTokenBridge.SentMessage({
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootModule)),
-            _value: 0,
+            _value: ethAmount,
             _message: string(abi.encode(address(leafGauge), amount))
         });
-        rootBridge.sendToken({_amount: amount, _chainid: leaf});
+        rootBridge.sendToken{value: ethAmount}({_amount: amount, _chainid: leaf});
 
         assertEq(rootXVelo.balanceOf(address(rootGauge)), _balance - amount);
+        assertEq(address(rootBridge).balance, 0);
 
         vm.selectFork({forkId: leafId});
         vm.expectEmit(address(leafModule));

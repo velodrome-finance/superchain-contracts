@@ -17,8 +17,13 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
 
     function test_WhenTheCallerIsAnyone() external {
         // It dispatches the message to the message module
+        uint256 ethAmount = TOKEN_1;
+        vm.deal({account: address(mockReceiver), newBalance: ethAmount});
+
         vm.prank(address(mockReceiver));
-        rootMessageBridge.sendMessage({_payload: abi.encode(1000), _chainid: leaf});
+        rootMessageBridge.sendMessage{value: ethAmount}({_payload: abi.encode(1000), _chainid: leaf});
+
+        assertEq(address(rootMessageModule).balance, 0);
 
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage();
