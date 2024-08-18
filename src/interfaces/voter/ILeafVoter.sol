@@ -30,16 +30,16 @@ interface ILeafVoter {
     function emergencyCouncil() external view returns (address);
 
     /// @dev Pool => Gauge
-    function gauges(address pool) external view returns (address);
+    function gauges(address _pool) external view returns (address);
 
     /// @dev Gauge => Pool
-    function poolForGauge(address gauge) external view returns (address);
+    function poolForGauge(address _gauge) external view returns (address);
 
     /// @dev Gauge => Fees Voting Reward
-    function gaugeToFees(address gauge) external view returns (address);
+    function gaugeToFees(address _gauge) external view returns (address);
 
     /// @dev Gauge => Bribes Voting Reward
-    function gaugeToBribe(address gauge) external view returns (address);
+    function gaugeToBribe(address _gauge) external view returns (address);
 
     /// @notice Check if a given address is a gauge
     /// @param _gauge The address to be checked

@@ -13,13 +13,12 @@ contract CreateGaugeIntegrationConcreteTest is LeafVoterTest {
 
     function test_WhenCallerIsNotBridge() external {
         // It should revert with NotAuthorized
-        // TODO: Implement when createGauge is permissioned
     }
 
     function test_WhenCallerIsBridge() external {
         // It should create new gauge
         // It should set gaugeToFees for new gauge
-        // It should set gaugeToBribes for new gauge
+        // It should set gaugeToBribe for new gauge
         // It should set gauges for given pool to new gauge
         // It should set poolForGauge for new gauge to given pool
         // It should set isGauge for new gauge to true
@@ -30,7 +29,7 @@ contract CreateGaugeIntegrationConcreteTest is LeafVoterTest {
         vm.expectEmit(true, true, true, false, address(leafVoter));
         emit ILeafVoter.GaugeCreated({
             poolFactory: address(leafPoolFactory),
-            votingRewardsFactory: address(leafMockRewardsFactory),
+            votingRewardsFactory: address(leafVotingRewardsFactory),
             gaugeFactory: address(leafGaugeFactory),
             pool: address(leafPool),
             bribeVotingReward: address(13),

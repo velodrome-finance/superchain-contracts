@@ -4,11 +4,11 @@ pragma solidity >=0.8.19 <0.9.0;
 import {ReentrancyGuard} from "@openzeppelin5/contracts/utils/ReentrancyGuard.sol";
 import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
 
-import {IVotingRewardsFactory} from "../interfaces/external/IVotingRewardsFactory.sol";
+import {IVotingRewardsFactory} from "../interfaces/rewards/IVotingRewardsFactory.sol";
 import {IFactoryRegistry} from "../interfaces/external/IFactoryRegistry.sol";
 import {ILeafGaugeFactory} from "../interfaces/gauges/ILeafGaugeFactory.sol";
 import {ILeafGauge} from "../interfaces/gauges/ILeafGauge.sol";
-import {IReward} from "../interfaces/external/IReward.sol";
+import {IReward} from "../interfaces/rewards/IReward.sol";
 import {IPoolFactory} from "../interfaces/pools/IPoolFactory.sol";
 import {IPool} from "../interfaces/pools/IPool.sol";
 import {ILeafVoter} from "../interfaces/voter/ILeafVoter.sol";
@@ -75,7 +75,6 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
 
     /// @inheritdoc ILeafVoter
     function createGauge(address _poolFactory, address _pool) external nonReentrant returns (address _gauge) {
-        // TODO: Call should be permissioned to message bridge only
         // if (msg.sender != bridge) revert NotBridge();
 
         address[] memory rewards = new address[](2);
@@ -84,18 +83,18 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
         (address votingRewardsFactory, address gaugeFactory) =
             IFactoryRegistry(factoryRegistry).factoriesToPoolFactory(_poolFactory);
 
-        (address _feeVotingReward, address _bribeVotingReward) =
-            IVotingRewardsFactory(votingRewardsFactory).createRewards({_forwarder: address(0), _rewards: rewards});
+        (address _feesVotingReward, address _bribeVotingReward) =
+            IVotingRewardsFactory(votingRewardsFactory).createRewards({_rewards: rewards});
 
         _gauge = ILeafGaugeFactory(gaugeFactory).createGauge({
             _token0: rewards[0],
             _token1: rewards[1],
             _stable: IPool(_pool).stable(),
-            _feesVotingReward: _feeVotingReward,
+            _feesVotingReward: _feesVotingReward,
             isPool: IPoolFactory(_poolFactory).isPool(_pool)
         });
 
-        gaugeToFees[_gauge] = _feeVotingReward;
+        gaugeToFees[_gauge] = _feesVotingReward;
         gaugeToBribe[_gauge] = _bribeVotingReward;
         gauges[_pool] = _gauge;
         poolForGauge[_gauge] = _pool;
@@ -112,7 +111,7 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
             gaugeFactory: gaugeFactory,
             pool: _pool,
             bribeVotingReward: _bribeVotingReward,
-            feeVotingReward: _feeVotingReward,
+            feeVotingReward: _feesVotingReward,
             gauge: _gauge,
             creator: msg.sender
         });
@@ -153,7 +152,6 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
 
     /// @inheritdoc ILeafVoter
     function claimBribes(address[] memory _bribes, address[][] memory _tokens, uint256 _tokenId) external {
-        // TODO: Needs to be permissioned
         // if (!IVotingEscrow(ve).isApprovedOrOwner(msg.sender, _tokenId)) revert NotApprovedOrOwner();
         uint256 _length = _bribes.length;
         for (uint256 i = 0; i < _length; i++) {
@@ -163,7 +161,6 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
 
     /// @inheritdoc ILeafVoter
     function claimFees(address[] memory _fees, address[][] memory _tokens, uint256 _tokenId) external {
-        // TODO: Needs to be permissioned
         // if (!IVotingEscrow(ve).isApprovedOrOwner(msg.sender, _tokenId)) revert NotApprovedOrOwner();
         uint256 _length = _fees.length;
         for (uint256 i = 0; i < _length; i++) {

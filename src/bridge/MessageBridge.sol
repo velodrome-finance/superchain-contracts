@@ -10,9 +10,12 @@ import {IMessageSender} from "../interfaces/bridge/IMessageSender.sol";
 /// @notice General purpose message bridge contract
 contract MessageBridge is IMessageBridge, Ownable {
     /// @inheritdoc IMessageBridge
+    address public immutable voter;
+    /// @inheritdoc IMessageBridge
     address public module;
 
-    constructor(address _owner, address _module) Ownable(_owner) {
+    constructor(address _owner, address _voter, address _module) Ownable(_owner) {
+        voter = _voter;
         module = _module;
     }
 
@@ -24,11 +27,7 @@ contract MessageBridge is IMessageBridge, Ownable {
     }
 
     /// @inheritdoc IMessageBridge
-    function sendMessage(bytes calldata _payload, uint256 _chainid) external payable {
-        IMessageSender(module).sendMessage{value: msg.value}({
-            _sender: msg.sender,
-            _payload: _payload,
-            _chainid: _chainid
-        });
+    function sendMessage(uint256 _chainid, bytes calldata _message) external payable {
+        IMessageSender(module).sendMessage{value: msg.value}({_chainid: _chainid, _message: _message});
     }
 }

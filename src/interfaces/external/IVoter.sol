@@ -10,7 +10,7 @@ interface IVoter {
 
     function gaugeToFees(address _gauge) external view returns (address);
 
-    function gaugeToBribes(address _gauge) external view returns (address);
+    function gaugeToBribe(address _gauge) external view returns (address);
 
     function createGauge(address _poolFactory, address _pool) external returns (address);
 
@@ -25,6 +25,8 @@ interface IVoter {
     function isAlive(address _gauge) external view returns (bool);
 
     function killGauge(address _gauge) external;
+
+    function isWhitelistedToken(address _token) external view returns (bool);
 
     function emergencyCouncil() external view returns (address);
 

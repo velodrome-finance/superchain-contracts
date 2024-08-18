@@ -7,7 +7,7 @@ import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.so
 import {ERC2771Context} from "@openzeppelin5/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin5/contracts/utils/ReentrancyGuard.sol";
 
-import {IReward} from "../interfaces/external/IReward.sol";
+import {IReward} from "../interfaces/rewards/IReward.sol";
 import {ILeafGauge} from "../interfaces/gauges/ILeafGauge.sol";
 import {IPool} from "../interfaces/pools/IPool.sol";
 import {IVoter} from "../interfaces/external/IVoter.sol";

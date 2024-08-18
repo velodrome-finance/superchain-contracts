@@ -1,0 +1,7 @@
+DepositIntegrationConcreteTest
+├── When caller is not the module set on the bridge
+│   └── It reverts with {NotAuthorized}
+└── When caller is the module set on the bridge
+    ├── It should update the total supply on the leaf incentive voting contract
+    ├── It should update the balance of the token id on the leaf incentive voting contract
+    └── It should emit a {Deposit} event

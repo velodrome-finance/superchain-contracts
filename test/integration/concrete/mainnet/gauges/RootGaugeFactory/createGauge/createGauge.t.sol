@@ -21,9 +21,19 @@ contract CreateGaugeIntegrationConcreteTest is RootGaugeFactoryTest {
 
     function test_WhenTheCallerIsVoter() external {
         // It creates a new gauge
+        address rootFVR = address(
+            new RootFeesVotingReward({
+                _bridge: address(rootBridge),
+                _voter: address(mockVoter),
+                _rewards: new address[](0)
+            })
+        );
+
         vm.prank(address(mockVoter));
         RootGauge rootGauge = RootGauge(
-            rootGaugeFactory.createGauge(address(0), address(rootPool), address(0), address(rootRewardToken), true)
+            rootGaugeFactory.createGauge(
+                address(0), address(rootPool), address(rootFVR), address(rootRewardToken), true
+            )
         );
 
         assertEq(rootGauge.rewardToken(), address(rootRewardToken));

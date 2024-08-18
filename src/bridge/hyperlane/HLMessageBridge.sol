@@ -1,18 +1,28 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
+import {Address} from "@openzeppelin5/contracts/utils/Address.sol";
 import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 
 import {IHLMessageBridge, IMessageSender} from "../../interfaces/bridge/hyperlane/IHLMessageBridge.sol";
 import {IMessageReceiver} from "../../interfaces/bridge/IMessageReceiver.sol";
+import {ILeafVoter} from "../../interfaces/voter/ILeafVoter.sol";
+import {IMessageBridge} from "../../interfaces/bridge/IMessageBridge.sol";
+import {IReward} from "../../interfaces/rewards/IReward.sol";
+
+import {Commands} from "../../libraries/Commands.sol";
 
 /// @title Hyperlane Token Bridge
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
 contract HLMessageBridge is IHLMessageBridge {
+    using Address for address;
     /// @inheritdoc IHLMessageBridge
+
     address public immutable bridge;
+    /// @inheritdoc IHLMessageBridge
+    address public immutable voter;
     /// @inheritdoc IHLMessageBridge
     address public immutable mailbox;
     /// @inheritdoc IHLMessageBridge
@@ -20,35 +30,49 @@ contract HLMessageBridge is IHLMessageBridge {
 
     constructor(address _bridge, address _mailbox, address _ism) {
         bridge = _bridge;
+        voter = IMessageBridge(_bridge).voter();
         mailbox = _mailbox;
         securityModule = IInterchainSecurityModule(_ism);
     }
 
     /// @inheritdoc IMessageSender
-    function sendMessage(address _sender, bytes calldata _payload, uint256 _chainid) external payable override {
+    function sendMessage(uint256 _chainid, bytes calldata _message) external payable override {
         if (msg.sender != bridge) revert NotBridge();
         uint32 domain = uint32(_chainid);
-        bytes memory message = abi.encode(_sender, _payload);
         Mailbox(mailbox).dispatch{value: msg.value}({
             _destinationDomain: domain,
             _recipientAddress: TypeCasts.addressToBytes32(address(this)),
-            _messageBody: message
+            _messageBody: _message
         });
 
         emit SentMessage({
             _destination: domain,
             _recipient: TypeCasts.addressToBytes32(address(this)),
             _value: msg.value,
-            _message: string(message)
+            _message: string(_message)
         });
     }
 
     /// @inheritdoc IHLMessageBridge
     function handle(uint32 _origin, bytes32 _sender, bytes calldata _message) external payable {
         if (msg.sender != mailbox) revert NotMailbox();
-        (address recipient, bytes memory payload) = abi.decode(_message, (address, bytes));
+        (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
 
-        IMessageReceiver(recipient).receiveMessage({_message: payload});
+        if (command == Commands.DEPOSIT) {
+            (address gauge, bytes memory payload) = abi.decode(messageWithoutCommand, (address, bytes));
+            address fvr = ILeafVoter(voter).gaugeToFees({_gauge: gauge});
+            IReward(fvr)._deposit({_payload: payload});
+            address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: gauge});
+            IReward(ivr)._deposit({_payload: payload});
+        } else if (command == Commands.WITHDRAW) {
+            (address gauge, bytes memory payload) = abi.decode(messageWithoutCommand, (address, bytes));
+            address fvr = ILeafVoter(voter).gaugeToFees({_gauge: gauge});
+            IReward(fvr)._withdraw({_payload: payload});
+            address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: gauge});
+            IReward(ivr)._withdraw({_payload: payload});
+        } else {
+            revert InvalidCommand();
+        }
 
         emit ReceivedMessage({_origin: _origin, _sender: _sender, _value: msg.value, _message: string(_message)});
     }

@@ -4,7 +4,7 @@ CreateGaugeIntegrationConcreteTest
 └── When caller is bridge
     ├── It should create new gauge
     ├── It should set gaugeToFees for new gauge
-    ├── It should set gaugeToBribes for new gauge
+    ├── It should set gaugeToBribe for new gauge
     ├── It should set gauges for given pool to new gauge
     ├── It should set poolForGauge for new gauge to given pool
     ├── It should set isGauge for new gauge to true

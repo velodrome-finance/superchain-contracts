@@ -11,7 +11,7 @@ abstract contract LeafGaugeFactoryTest is BaseForkFixture {
     }
 
     function test_InitialState() public view {
-        // assertEq(leafGaugeFactory.voter(), address(mockVoter));
+        assertEq(leafGaugeFactory.voter(), address(leafVoter));
         assertEq(leafGaugeFactory.xerc20(), address(rootXVelo));
         assertEq(leafGaugeFactory.factory(), address(leafPoolFactory));
         assertEq(leafGaugeFactory.bridge(), address(leafBridge));

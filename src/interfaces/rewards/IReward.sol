@@ -11,10 +11,10 @@ interface IReward {
     error NotWhitelisted();
     error ZeroAmount();
 
-    event Deposit(address indexed from, uint256 indexed tokenId, uint256 amount);
-    event Withdraw(address indexed from, uint256 indexed tokenId, uint256 amount);
-    event NotifyReward(address indexed from, address indexed reward, uint256 indexed epoch, uint256 amount);
-    event ClaimRewards(address indexed from, address indexed reward, uint256 amount);
+    event Deposit(address indexed _sender, uint256 indexed _tokenId, uint256 _amount);
+    event Withdraw(address indexed _sender, uint256 indexed _tokenId, uint256 _amount);
+    event NotifyReward(address indexed _sender, address indexed _reward, uint256 indexed _epoch, uint256 _amount);
+    event ClaimRewards(address indexed _sender, address indexed _reward, uint256 _amount);
 
     /// @notice A checkpoint for marking balance
     struct Checkpoint {
@@ -31,11 +31,8 @@ interface IReward {
     /// @notice Epoch duration constant (7 days)
     function DURATION() external view returns (uint256);
 
-    /// @notice Address of Voter.sol
+    /// @notice Address of LeafVoter.sol
     function voter() external view returns (address);
-
-    /// @notice Address of VotingEscrow.sol
-    function ve() external view returns (address);
 
     /// @dev Address which has permission to externally call _deposit() & _withdraw()
     function authorized() external view returns (address);
@@ -58,6 +55,11 @@ interface IReward {
     /// @return Timestamp
     function lastEarn(address token, uint256 tokenId) external view returns (uint256);
 
+    /// @notice List of reward tokens
+    /// @param _index Index of reward token
+    /// @return Address of reward token
+    function rewards(uint256 _index) external view returns (address);
+
     /// @notice True if a token is or has been an active reward token, else false
     function isReward(address token) external view returns (bool);
 
@@ -68,16 +70,14 @@ interface IReward {
     function supplyNumCheckpoints() external view returns (uint256);
 
     /// @notice Deposit an amount into the rewards contract to earn future rewards associated to a veNFT
-    /// @dev Internal notation used as only callable internally by `authorized`.
-    /// @param amount   Amount deposited for the veNFT
-    /// @param tokenId  Unique identifier of the veNFT
-    function _deposit(uint256 amount, uint256 tokenId) external;
+    /// @dev Internal notation used as only callable internally by `authorized.module()`.
+    /// @param _payload (uint256,uint256) encoding containing amount and token id
+    function _deposit(bytes calldata _payload) external;
 
     /// @notice Withdraw an amount from the rewards contract associated to a veNFT
-    /// @dev Internal notation used as only callable internally by `authorized`.
-    /// @param amount   Amount deposited for the veNFT
-    /// @param tokenId  Unique identifier of the veNFT
-    function _withdraw(uint256 amount, uint256 tokenId) external;
+    /// @dev Internal notation used as only callable internally by `authorized.module()`.
+    /// @param _payload (uint256,uint256) encoding containing amount and token id
+    function _withdraw(bytes calldata _payload) external;
 
     /// @notice Claim the rewards earned by a veNFT staker
     /// @param tokenId  Unique identifier of the veNFT

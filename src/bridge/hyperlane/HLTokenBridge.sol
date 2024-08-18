@@ -26,7 +26,6 @@ contract HLTokenBridge is IHLTokenBridge {
 
     /// @inheritdoc ITokenBridge
     function transfer(address _sender, uint256 _amount, uint256 _chainid) external payable override {
-        /// TODO: rename? due to clash with transfer on erc20
         if (msg.sender != bridge) revert NotBridge();
         uint32 domain = uint32(_chainid);
         bytes memory message = abi.encode(_sender, _amount);

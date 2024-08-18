@@ -2,5 +2,15 @@ HandleIntegrationConcreteTest
 ├── When caller is not mailbox
 │   └── It reverts with NotMailbox
 └── When caller is mailbox
-    ├── It calls receivedMessage on the recipient contract of the same address with the payload
-    └── It emits the {ReceivedMessage} event
+    ├── When the command is deposit
+    │   ├── It decodes the gauge address from the message
+    │   ├── It calls deposit on the fee rewards contract corresponding to the gauge with the payload
+    │   ├── It calls deposit on the incentive rewards contract corresponding to the gauge with the payload
+    │   └── It emits the {ReceivedMessage} event
+    ├── When the command is withdraw
+    │   ├── It decodes the gauge address from the message
+    │   ├── It calls withdraw on the fee rewards contract corresponding to the gauge with the payload
+    │   ├── It calls withdraw on the incentive rewards contract corresponding to the gauge with the payload
+    │   └── It emits the {ReceivedMessage} event
+    └── When the command is invalid
+        └── It reverts with {InvalidCommand}

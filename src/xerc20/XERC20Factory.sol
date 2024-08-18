@@ -39,7 +39,6 @@ import {CreateXLibrary} from "../libraries/CreateXLibrary.sol";
 contract XERC20Factory is IXERC20Factory {
     using CreateXLibrary for bytes11;
 
-    // TODO: can remove this, as the contract is saved in the library
     /// @inheritdoc IXERC20Factory
     ICreateX public immutable createx;
     /// @inheritdoc IXERC20Factory

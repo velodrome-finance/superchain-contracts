@@ -13,6 +13,5 @@ contract CreateGaugeIntegrationFuzzTest is LeafVoterTest {
 
     function testFuzz_WhenCallerIsNotBridge() external {
         // It should revert with NotAuthorized
-        // TODO: Implement when createGauge is permissioned
     }
 }

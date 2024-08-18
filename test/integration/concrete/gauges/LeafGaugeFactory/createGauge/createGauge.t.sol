@@ -13,7 +13,6 @@ contract CreateGaugeIntegrationConcreteTest is LeafGaugeFactoryTest {
 
     function test_WhenTheCallerIsNotVoter() external {
         // It reverts with NotVoter
-        // TODO: complete
     }
 
     function test_WhenTheCallerIsVoter() external {
@@ -28,7 +27,6 @@ contract CreateGaugeIntegrationConcreteTest is LeafGaugeFactoryTest {
             })
         );
 
-        // TODO: complete
         assertEq(leafGauge.stakingToken(), address(leafPool));
         // assertEq(leafGauge.feesVotingReward(), address(0));
         assertEq(leafGauge.rewardToken(), address(leafXVelo));

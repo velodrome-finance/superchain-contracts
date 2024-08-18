@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import {CreateXLibrary} from "../../libraries/CreateXLibrary.sol";
 import {IRootGaugeFactory} from "../../interfaces/mainnet/gauges/IRootGaugeFactory.sol";
 import {IRootPool} from "../../interfaces/mainnet/pools/IRootPool.sol";
+import {IRootFeesVotingReward} from "../../interfaces/mainnet/rewards/IRootFeesVotingReward.sol";
+
+import {CreateXLibrary} from "../../libraries/CreateXLibrary.sol";
 import {RootGauge} from "./RootGauge.sol";
 
 /// @notice Factory that creates root gauges on mainnet
@@ -27,7 +29,7 @@ contract RootGaugeFactory is IRootGaugeFactory {
     }
 
     /// @inheritdoc IRootGaugeFactory
-    function createGauge(address, address _pool, address, address _rewardToken, bool)
+    function createGauge(address, address _pool, address _feesVotingReward, address _rewardToken, bool)
         external
         returns (address gauge)
     {
@@ -52,5 +54,7 @@ contract RootGaugeFactory is IRootGaugeFactory {
                 )
             )
         });
+
+        IRootFeesVotingReward(_feesVotingReward).initialize(gauge);
     }
 }

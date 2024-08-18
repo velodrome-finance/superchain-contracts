@@ -9,7 +9,7 @@ import {IFactoryRegistry} from "src/interfaces/external/IFactoryRegistry.sol";
 import {IRootGauge} from "src/interfaces/mainnet/gauges/IRootGauge.sol";
 import {IRootPool} from "src/interfaces/mainnet/pools/IRootPool.sol";
 import {IRootPoolFactory} from "src/interfaces/mainnet/pools/IRootPoolFactory.sol";
-import {IVotingRewardsFactory} from "src/interfaces/external/IVotingRewardsFactory.sol";
+import {IRootVotingRewardsFactory} from "src/interfaces/mainnet/rewards/IRootVotingRewardsFactory.sol";
 
 contract MockVoter is IVoter {
     // mock addresses used for testing gauge creation, a copy is stored in Constants.sol
@@ -23,7 +23,8 @@ contract MockVoter is IVoter {
     /// @dev gauge => isAlive
     mapping(address => bool) public override isAlive;
     mapping(address => address) public override gaugeToFees;
-    mapping(address => address) public override gaugeToBribes;
+    mapping(address => address) public override gaugeToBribe;
+    mapping(address => bool) public override isWhitelistedToken;
 
     IERC20 internal immutable rewardToken;
     IFactoryRegistry public immutable override factoryRegistry;
@@ -49,16 +50,18 @@ contract MockVoter is IVoter {
         address[] memory rewards = new address[](2);
         rewards[0] = IRootPool(_pool).token0();
         rewards[1] = IRootPool(_pool).token1();
-        (address feesVotingReward, address bribeVotingReward) = (address(0), address(0));
-        // IVotingRewardsFactory(votingRewardsFactory).createRewards(forwarder, rewards);
+        (address feesVotingReward, address bribeVotingReward) =
+            IRootVotingRewardsFactory(votingRewardsFactory).createRewards(address(0), rewards);
 
         address gauge =
             RootGaugeFactory(gaugeFactory).createGauge(forwarder, _pool, feesVotingReward, address(rewardToken), true);
         require(IRootPoolFactory(_poolFactory).isPair(_pool));
         isAlive[gauge] = true;
         gauges[_pool] = gauge;
-        // gaugeToFees[gauge] = feesVotingReward;
-        // gaugeToBribes[gauge] = bribeVotingReward;
+        gaugeToFees[gauge] = feesVotingReward;
+        gaugeToBribe[gauge] = bribeVotingReward;
+        isWhitelistedToken[rewards[0]] = true;
+        isWhitelistedToken[rewards[1]] = true;
         return gauge;
     }
 

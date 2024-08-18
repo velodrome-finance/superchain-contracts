@@ -4,30 +4,27 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../MessageBridge.t.sol";
 
 contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
-    MockMessageReceiver mockReceiver;
-
-    function setUp() public override {
-        super.setUp();
-        vm.selectFork({forkId: leafId});
-
-        mockReceiver = new MockMessageReceiver();
-
-        vm.selectFork({forkId: rootId});
-    }
-
     function test_WhenTheCallerIsAnyone() external {
         // It dispatches the message to the message module
         uint256 ethAmount = TOKEN_1;
-        vm.deal({account: address(mockReceiver), newBalance: ethAmount});
+        vm.deal({account: users.alice, newBalance: ethAmount});
 
-        vm.prank(address(mockReceiver));
-        rootMessageBridge.sendMessage{value: ethAmount}({_payload: abi.encode(1000), _chainid: leaf});
+        uint256 amount = TOKEN_1 * 1000;
+        uint256 tokenId = 1;
+        bytes memory payload = abi.encode(amount, tokenId);
+        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
+
+        vm.prank(users.alice);
+        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
 
         assertEq(address(rootMessageModule).balance, 0);
 
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage();
 
-        assertEq(mockReceiver.amount(), 1000);
+        assertEq(leafFVR.totalSupply(), amount);
+        assertEq(leafFVR.balanceOf(tokenId), amount);
+        assertEq(leafIVR.totalSupply(), amount);
+        assertEq(leafIVR.balanceOf(tokenId), amount);
     }
 }

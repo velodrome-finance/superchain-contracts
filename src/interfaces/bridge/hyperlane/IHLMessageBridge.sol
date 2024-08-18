@@ -9,12 +9,16 @@ import {IMessageSender} from "../IMessageSender.sol";
 interface IHLMessageBridge is IMessageSender, IMessageRecipient {
     error NotBridge();
     error NotMailbox();
+    error InvalidCommand();
 
     event SentMessage(uint32 indexed _destination, bytes32 indexed _recipient, uint256 _value, string _message);
     event ReceivedMessage(uint32 indexed _origin, bytes32 indexed _sender, uint256 _value, string _message);
 
     /// @notice Returns the address of the bridge contract that this module is associated with
     function bridge() external view returns (address);
+
+    /// @notice Returns voter on current chain
+    function voter() external view returns (address);
 
     /// @notice Returns the address of the mailbox contract that is used to bridge by this contract
     function mailbox() external view returns (address);

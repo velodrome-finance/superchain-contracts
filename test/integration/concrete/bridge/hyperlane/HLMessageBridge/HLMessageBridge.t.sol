@@ -10,11 +10,13 @@ abstract contract HLMessageBridgeTest is BaseForkFixture {
         assertEq(rootMessageModule.mailbox(), address(rootMailbox));
         assertEq(address(rootMessageModule.securityModule()), address(rootIsm));
         assertEq(address(rootMessageModule).balance, 0);
+        assertEq(rootMessageModule.voter(), address(mockVoter));
 
         vm.selectFork({forkId: leafId});
         assertEq(leafMessageModule.bridge(), address(leafMessageBridge));
         assertEq(leafMessageModule.mailbox(), address(leafMailbox));
         assertEq(address(leafMessageModule.securityModule()), address(leafIsm));
         assertEq(address(leafMessageModule).balance, 0);
+        assertEq(leafMessageModule.voter(), address(leafVoter));
     }
 }

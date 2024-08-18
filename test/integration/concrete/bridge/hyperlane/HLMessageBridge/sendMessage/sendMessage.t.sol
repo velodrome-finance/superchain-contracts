@@ -4,26 +4,11 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../HLMessageBridge.t.sol";
 
 contract SendMessageIntegrationConcreteTest is HLMessageBridgeTest {
-    MockMessageReceiver mockReceiver;
-
-    function setUp() public override {
-        super.setUp();
-        vm.selectFork({forkId: leafId});
-
-        mockReceiver = new MockMessageReceiver();
-
-        vm.selectFork({forkId: rootId});
-    }
-
     function test_WhenTheCallerIsNotBridge() external {
         // It reverts with NotBridge
         vm.prank(users.charlie);
         vm.expectRevert(IHLMessageBridge.NotBridge.selector);
-        rootMessageModule.sendMessage({
-            _sender: users.charlie,
-            _payload: abi.encode(users.charlie, abi.encode(1)),
-            _chainid: leaf
-        });
+        rootMessageModule.sendMessage({_chainid: leaf, _message: abi.encode(users.charlie, abi.encode(1))});
     }
 
     function test_WhenTheCallerIsBridge() external {
@@ -31,7 +16,10 @@ contract SendMessageIntegrationConcreteTest is HLMessageBridgeTest {
         // It emits the {SentMessage} event
         // It calls receiveMessage on the recipient contract of the same address with the payload
         uint256 ethAmount = TOKEN_1;
-        bytes memory message = abi.encode(1000);
+        uint256 amount = TOKEN_1 * 1000;
+        uint256 tokenId = 1;
+        bytes memory payload = abi.encode(amount, tokenId);
+        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
 
         vm.prank(address(rootMessageBridge));
@@ -40,19 +28,18 @@ contract SendMessageIntegrationConcreteTest is HLMessageBridgeTest {
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
-            _message: string(abi.encode(address(mockReceiver), message))
+            _message: string(message)
         });
-        rootMessageModule.sendMessage{value: ethAmount}({
-            _sender: address(mockReceiver),
-            _payload: message,
-            _chainid: leaf
-        });
+        rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
 
         assertEq(address(rootMessageModule).balance, 0);
 
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage();
 
-        assertEq(mockReceiver.amount(), 1000);
+        assertEq(leafFVR.totalSupply(), amount);
+        assertEq(leafFVR.balanceOf(tokenId), amount);
+        assertEq(leafIVR.totalSupply(), amount);
+        assertEq(leafIVR.balanceOf(tokenId), amount);
     }
 }

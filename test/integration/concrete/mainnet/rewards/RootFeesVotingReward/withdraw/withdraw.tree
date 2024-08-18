@@ -1,0 +1,9 @@
+WithdrawIntegrationConcreteTest
+├── When caller is not voter
+│   └── It should revert with NotAuthorized
+└── When caller is voter
+    ├── It should encode the withdraw amount and token id
+    ├── It should forward the message to the corresponding rewards contract on the leaf chain
+    ├── It should update the total supply on the leaf fee + voting contracts
+    ├── It should update the balance of the token id on the leaf + fee voting contracts
+    └── It should emit a {Withdraw} event

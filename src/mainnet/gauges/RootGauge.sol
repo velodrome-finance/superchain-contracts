@@ -20,7 +20,6 @@ contract RootGauge is IRootGauge {
     address public immutable lockbox;
     /// @inheritdoc IRootGauge
     address public immutable bridge;
-    // TODO: probably need to include the tokens here
     /// @inheritdoc IRootGauge
     uint256 public immutable chainid;
 
@@ -34,7 +33,6 @@ contract RootGauge is IRootGauge {
 
     /// @inheritdoc IRootGauge
     function left() external pure returns (uint256) {
-        // TODO: check if this is safe
         return 0;
     }
 

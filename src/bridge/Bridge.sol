@@ -46,12 +46,7 @@ contract Bridge is IBridge, Ownable {
 
     /// @inheritdoc IBridge
     function sendToken(uint256 _amount, uint256 _chainid) external payable {
-        /// TODO: restrict to only callable by velodrome contracts
-        /// if contract is registered in voter
-        /// No need to check if gauge is killed as killed gauges do not receive rewards
-
         IXERC20(xerc20).burn({_user: msg.sender, _amount: _amount});
-
         ITokenBridge(module).transfer{value: msg.value}({_sender: msg.sender, _amount: _amount, _chainid: _chainid});
     }
 }

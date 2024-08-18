@@ -1,0 +1,6 @@
+CreateRewardsIntegrationConcreteTest
+├── When caller is not voter
+│   └── It reverts with {NotVoter}
+└── When caller is voter
+    ├── It creates a new fee rewards contract with CREATE
+    └── It creates a new incentive rewards contract with CREATE

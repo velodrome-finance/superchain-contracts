@@ -31,15 +31,10 @@ contract LeafGaugeFactory is ILeafGaugeFactory {
         external
         returns (address gauge)
     {
-        // TODO: this function needs to be reworked when doing message passing to create gauges
         bytes32 salt = keccak256(abi.encodePacked(block.chainid, _token0, _token1, _stable));
         bytes11 entropy = bytes11(salt);
         address pool = IPoolFactory(factory).getPool({tokenA: _token0, tokenB: _token1, stable: _stable});
 
-        // TODO: What happens if the pool is not yet created?
-        // TODO: This function might need to be protected
-        // Although it is harmless to create a gauge without a corresponding root gauge, it can
-        // mess things up for the frontend
         gauge = CreateXLibrary.CREATEX.deployCreate3({
             salt: entropy.calculateSalt({_deployer: address(this)}),
             initCode: abi.encodePacked(

@@ -9,6 +9,8 @@ import {TestIsm} from "@hyperlane/core/contracts/test/TestIsm.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 
 import {CreateXLibrary} from "src/libraries/CreateXLibrary.sol";
+import {Commands} from "src/libraries/Commands.sol";
+
 import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
 import {XERC20Factory} from "src/xerc20/XERC20Factory.sol";
 import {IXERC20, XERC20} from "src/xerc20/XERC20.sol";
@@ -28,16 +30,23 @@ import {IMessageBridge, MessageBridge} from "src/bridge/MessageBridge.sol";
 import {HLUserTokenBridge} from "src/bridge/hyperlane/HLUserTokenBridge.sol";
 import {IHLTokenBridge, HLTokenBridge} from "src/bridge/hyperlane/HLTokenBridge.sol";
 import {IHLMessageBridge, HLMessageBridge} from "src/bridge/hyperlane/HLMessageBridge.sol";
+import {IVotingRewardsFactory, VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
+
+import {IRootVotingRewardsFactory, RootVotingRewardsFactory} from "src/mainnet/rewards/RootVotingRewardsFactory.sol";
+import {RootBribeVotingReward} from "src/mainnet/rewards/RootBribeVotingReward.sol";
+import {IRootFeesVotingReward, RootFeesVotingReward} from "src/mainnet/rewards/RootFeesVotingReward.sol";
+
+import {FeesVotingReward} from "src/rewards/FeesVotingReward.sol";
+import {BribeVotingReward} from "src/rewards/BribeVotingReward.sol";
+import {IReward} from "src/interfaces/rewards/IReward.sol";
 
 import {CreateX} from "test/mocks/CreateX.sol";
 import {TestERC20} from "test/mocks/TestERC20.sol";
 import {MultichainMockMailbox} from "test/mocks/MultichainMockMailbox.sol";
 import {MockVoter} from "test/mocks/MockVoter.sol";
 import {MockFactoryRegistry} from "test/mocks/MockFactoryRegistry.sol";
-import {MockVotingRewardsFactory} from "test/mocks/MockVotingRewardsFactory.sol";
 import {MockWETH} from "test/mocks/MockWETH.sol";
 import {TestConstants} from "test/utils/TestConstants.sol";
-import {MockMessageReceiver} from "test/mocks/MockMessageReceiver.sol";
 import {Users} from "test/utils/Users.sol";
 
 abstract contract BaseForkFixture is Test, TestConstants {
@@ -69,10 +78,14 @@ abstract contract BaseForkFixture is Test, TestConstants {
 
     // root-only contracts
     XERC20Lockbox public rootLockbox;
-    RootPool public rootPool;
     RootPoolFactory public rootPoolFactory;
     RootGaugeFactory public rootGaugeFactory;
+    RootVotingRewardsFactory public rootVotingRewardsFactory;
+
+    RootPool public rootPool;
     RootGauge public rootGauge;
+    RootFeesVotingReward public rootFVR;
+    RootBribeVotingReward public rootIVR;
 
     // root-only mocks
     TestERC20 public rootRewardToken;
@@ -98,17 +111,20 @@ abstract contract BaseForkFixture is Test, TestConstants {
 
     // leaf-only contracts
     PoolFactory public leafPoolFactory;
-    Pool public leafPool;
     LeafGaugeFactory public leafGaugeFactory;
-    LeafGauge public leafGauge;
     LeafVoter public leafVoter;
+    VotingRewardsFactory public leafVotingRewardsFactory;
+
+    Pool public leafPool;
+    LeafGauge public leafGauge;
+    FeesVotingReward public leafFVR;
+    BribeVotingReward public leafIVR;
 
     // leaf-only mocks
     TestERC20 public token0;
     TestERC20 public token1;
     MultichainMockMailbox public leafMailbox;
     MockFactoryRegistry public leafMockFactoryRegistry;
-    MockVotingRewardsFactory public leafMockRewardsFactory;
     TestIsm public leafIsm;
 
     // common contracts
@@ -220,6 +236,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
                     type(MessageBridge).creationCode,
                     abi.encode(
                         users.owner, // message bridge owner
+                        address(mockVoter), // mock root voter
                         address(rootMessageModule) // message module
                     )
                 )
@@ -230,7 +247,11 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 salt: CreateXLibrary.calculateSalt({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
                     type(HLMessageBridge).creationCode,
-                    abi.encode(address(rootMessageBridge), address(rootMailbox), address(rootIsm))
+                    abi.encode(
+                        address(rootMessageBridge), // root bridge
+                        address(rootMailbox), // root mailbox
+                        address(rootIsm) // root security module
+                    )
                 )
             })
         );
@@ -274,10 +295,21 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 )
             })
         );
+        rootVotingRewardsFactory = RootVotingRewardsFactory(
+            cx.deployCreate3({
+                salt: CreateXLibrary.calculateSalt({_entropy: VOTING_REWARDS_FACTORY_ENTROPY, _deployer: users.deployer}),
+                initCode: abi.encodePacked(
+                    type(RootVotingRewardsFactory).creationCode,
+                    abi.encode(
+                        address(rootMessageBridge) // message bridge
+                    )
+                )
+            })
+        );
 
         mockFactoryRegistry.approve({
             poolFactory: address(rootPoolFactory),
-            votingRewardsFactory: address(11),
+            votingRewardsFactory: address(rootVotingRewardsFactory),
             gaugeFactory: address(rootGaugeFactory)
         });
         vm.stopPrank();
@@ -300,6 +332,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
         vm.label({account: address(rootModule), newLabel: "Gauge Token Module"});
         vm.label({account: address(rootMessageBridge), newLabel: "Message Bridge"});
         vm.label({account: address(rootMessageModule), newLabel: "Message Module"});
+        vm.label({account: address(rootVotingRewardsFactory), newLabel: "Voting Rewards Factory"});
     }
 
     function setUpLeafChain() public virtual {
@@ -312,8 +345,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
         leafMailbox = new MultichainMockMailbox(leaf);
         leafIsm = new TestIsm();
         leafMockFactoryRegistry = new MockFactoryRegistry();
-        leafMockRewardsFactory = new MockVotingRewardsFactory();
-        leafVoter = new LeafVoter({_factoryRegistry: address(leafMockFactoryRegistry), _emergencyCouncil: users.owner});
         vm.stopPrank();
 
         vm.startPrank(users.deployer);
@@ -346,6 +377,19 @@ abstract contract BaseForkFixture is Test, TestConstants {
                     abi.encode(
                         address(cx), // create x address
                         users.owner // xerc20 owner address
+                    )
+                )
+            })
+        );
+
+        leafVoter = LeafVoter(
+            cx.deployCreate3({
+                salt: CreateXLibrary.calculateSalt({_entropy: VOTER_ENTROPY, _deployer: users.deployer}),
+                initCode: abi.encodePacked(
+                    type(LeafVoter).creationCode,
+                    abi.encode(
+                        address(leafMockFactoryRegistry), // mock factory registry
+                        users.owner // emergency council
                     )
                 )
             })
@@ -388,6 +432,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
                     type(MessageBridge).creationCode,
                     abi.encode(
                         users.owner, // message bridge owner
+                        address(leafVoter), // mock root voter
                         address(leafMessageModule) // message module
                     )
                 )
@@ -398,7 +443,11 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 salt: CreateXLibrary.calculateSalt({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
                     type(HLMessageBridge).creationCode,
-                    abi.encode(address(leafMessageBridge), address(leafMailbox), address(leafIsm))
+                    abi.encode(
+                        address(leafMessageBridge), // leaf message bridge
+                        address(leafMailbox), // leaf mailbox
+                        address(leafIsm) // leaf security module
+                    )
                 )
             })
         );
@@ -434,7 +483,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 initCode: abi.encodePacked(
                     type(LeafGaugeFactory).creationCode,
                     abi.encode(
-                        address(mockVoter), // voter address
+                        address(leafVoter), // voter address
                         address(leafPoolFactory), // pool factory address
                         address(leafXVelo), // xerc20 address
                         address(leafBridge) // bridge address
@@ -443,9 +492,22 @@ abstract contract BaseForkFixture is Test, TestConstants {
             })
         );
 
+        leafVotingRewardsFactory = VotingRewardsFactory(
+            cx.deployCreate3({
+                salt: CreateXLibrary.calculateSalt({_entropy: REWARDS_FACTORY_ENTROPY, _deployer: users.deployer}),
+                initCode: abi.encodePacked(
+                    type(VotingRewardsFactory).creationCode,
+                    abi.encode(
+                        address(leafVoter), // voter address
+                        address(leafMessageBridge) // bridge address
+                    )
+                )
+            })
+        );
+
         leafMockFactoryRegistry.approve({
             poolFactory: address(leafPoolFactory),
-            votingRewardsFactory: address(leafMockRewardsFactory),
+            votingRewardsFactory: address(leafVotingRewardsFactory),
             gaugeFactory: address(leafGaugeFactory)
         });
         vm.stopPrank();
@@ -453,8 +515,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
         vm.label({account: address(leafMailbox), newLabel: "Leaf Mailbox"});
         vm.label({account: address(leafIsm), newLabel: "Leaf ISM"});
         vm.label({account: address(leafMockFactoryRegistry), newLabel: "Leaf Factory Registry"});
-        vm.label({account: address(leafMockRewardsFactory), newLabel: "Leaf Mock Rewards Factory"});
         vm.label({account: address(leafVoter), newLabel: "Leaf Voter"});
+        vm.label({account: address(leafVotingRewardsFactory), newLabel: "Leaf Voting Rewards Factory"});
     }
 
     // Any set up required to link the contracts across the two chains
@@ -467,11 +529,15 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootPool =
             RootPool(rootPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: false}));
         rootGauge = RootGauge(mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(rootPool)}));
+        rootFVR = RootFeesVotingReward(mockVoter.gaugeToFees(address(rootGauge)));
+        rootIVR = RootBribeVotingReward(mockVoter.gaugeToBribe(address(rootGauge)));
 
         // set up leaf pool & gauge
         vm.selectFork({forkId: leafId});
         leafPool = Pool(leafPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: false}));
         leafGauge = LeafGauge(leafVoter.createGauge({_poolFactory: address(leafPoolFactory), _pool: address(leafPool)}));
+        leafFVR = FeesVotingReward(leafVoter.gaugeToFees(address(leafGauge)));
+        leafIVR = BribeVotingReward(leafVoter.gaugeToBribe(address(leafGauge)));
     }
 
     function createUsers() internal {
