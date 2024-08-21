@@ -9,7 +9,7 @@ abstract contract VotingRewardsFactoryTest is BaseForkFixture {
         vm.selectFork({forkId: leafId});
     }
 
-    function test_InitialState() public {
+    function test_InitialState() public view {
         assertEq(leafVotingRewardsFactory.voter(), address(leafVoter));
         assertEq(leafVotingRewardsFactory.bridge(), address(leafMessageBridge));
     }

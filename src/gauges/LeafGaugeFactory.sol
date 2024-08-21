@@ -31,6 +31,7 @@ contract LeafGaugeFactory is ILeafGaugeFactory {
         external
         returns (address gauge)
     {
+        if (msg.sender != voter) revert NotVoter();
         bytes32 salt = keccak256(abi.encodePacked(block.chainid, _token0, _token1, _stable));
         bytes11 entropy = bytes11(salt);
         address pool = IPoolFactory(factory).getPool({tokenA: _token0, tokenB: _token1, stable: _stable});

@@ -9,7 +9,7 @@ abstract contract BribeVotingRewards is BaseForkFixture {
         vm.selectFork({forkId: leafId});
     }
 
-    function test_InitialState() public {
+    function test_InitialState() public view {
         assertEq(leafIVR.voter(), address(leafVoter));
         assertEq(leafIVR.authorized(), address(leafMessageBridge));
     }

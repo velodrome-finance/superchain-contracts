@@ -33,6 +33,10 @@ contract RootGauge is IRootGauge {
 
     /// @inheritdoc IRootGauge
     function left() external pure returns (uint256) {
+        /// Can safely be set to 0 as only checked by distribute()
+        /// Distribute only callable once per epoch for a gauge
+        /// & gauge distributes full reward to end of epoch (i.e. no overlap b/w epochs)
+        /// if claimable != 0, left() will always be zero
         return 0;
     }
 

@@ -31,6 +31,9 @@ abstract contract DeployBaseFixture is DeployFixture {
 
     DeploymentParameters internal _params;
 
+    /// @dev Used by tests to disable logging of output
+    bool public isTest;
+
     /// @dev Override if deploying extensions
     function deploy() internal virtual override {
         address _deployer = deployer;
@@ -102,6 +105,7 @@ abstract contract DeployBaseFixture is DeployFixture {
     }
 
     function logOutput() internal override {
+        if (isTest) return;
         string memory root = vm.projectRoot();
         string memory path = string(abi.encodePacked(root, "/deployment-addresses/", _params.outputFilename));
         /// @dev This might overwrite an existing output file

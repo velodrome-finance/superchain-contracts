@@ -26,6 +26,7 @@ contract ModeDeployBaseTest is BaseFixture {
 
         createUsers();
         stdstore.target(address(deploy)).sig("deployer()").checked_write(users.owner);
+        stdstore.target(address(deploy)).sig("isTest()").checked_write(true);
 
         fs = new FeeSharing();
         vm.etch(0x8680CEaBcb9b56913c519c069Add6Bc3494B7020, address(fs).code);

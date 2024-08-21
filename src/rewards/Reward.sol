@@ -7,7 +7,6 @@ import {IERC20} from "@openzeppelin5/contracts/token/ERC20/IERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin5/contracts/utils/ReentrancyGuard.sol";
 
 import {IReward} from "../interfaces/rewards/IReward.sol";
-import {IVoter} from "../interfaces/external/IVoter.sol";
 import {IMessageBridge} from "../interfaces/bridge/IMessageBridge.sol";
 
 import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";

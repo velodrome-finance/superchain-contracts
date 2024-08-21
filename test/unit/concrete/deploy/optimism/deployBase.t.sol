@@ -18,6 +18,7 @@ contract OptimismDeployBaseTest is BaseFixture {
 
         createUsers();
         stdstore.target(address(deploy)).sig("deployer()").checked_write(users.owner);
+        stdstore.target(address(deploy)).sig("isTest()").checked_write(true);
     }
 
     function testRun() public {

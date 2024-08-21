@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 interface ILeafGaugeFactory {
+    error NotVoter();
+
     /// @notice Voter contract
     function voter() external view returns (address);
     /// @notice Factory contract that produces pools that this gauge will link to
