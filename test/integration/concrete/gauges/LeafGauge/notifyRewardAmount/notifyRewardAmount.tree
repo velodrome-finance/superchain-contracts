@@ -1,0 +1,27 @@
+NotifyRewardAmountIntegrationConcreteTest
+├── When the caller is not bridge
+│   └── It should revert with NotBridge
+└── When the caller is bridge
+    ├── When the amount is zero
+    │   └── It should revert with ZeroAmount
+    ├── When the amount is greater than zero and smaller than the time until the next timestamp
+    │   └── It should revert with ZeroRewardRate
+    └── When the amount is greater than zero and greater than or equal to the time until the next timestamp
+        ├── When the current timestamp is greater than or equal to periodFinish
+        │   ├── It should claim fees from pool
+        │   ├── It should update rewardPerTokenStored
+        │   ├── It should deposit the amount of reward token
+        │   ├── It should update the reward rate
+        │   ├── It should cache the updated reward rate for this epoch
+        │   ├── It should update the last update timestamp
+        │   ├── It should update the period finish timestamp
+        │   └── It should emit a {NotifyReward} event
+        └── When the current timestamp is less than periodFinish
+            ├── It should claim fees from pool
+            ├── It should update rewardPerTokenStored
+            ├── It should deposit the amount of reward token
+            ├── It should update the reward rate, including any existing rewards
+            ├── It should cache the updated reward rate for this epoch
+            ├── It should update the last update timestamp
+            ├── It should update the period finish timestamp
+            └── It should emit a {NotifyReward} event

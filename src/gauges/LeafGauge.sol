@@ -4,18 +4,18 @@ pragma solidity >=0.8.19 <0.9.0;
 import {Math} from "@openzeppelin5/contracts/utils/math/Math.sol";
 import {IERC20} from "@openzeppelin5/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC2771Context} from "@openzeppelin5/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin5/contracts/utils/ReentrancyGuard.sol";
 
 import {IReward} from "../interfaces/rewards/IReward.sol";
 import {ILeafGauge} from "../interfaces/gauges/ILeafGauge.sol";
+import {ILeafGaugeFactory} from "../interfaces/gauges/ILeafGaugeFactory.sol";
 import {IPool} from "../interfaces/pools/IPool.sol";
-import {IVoter} from "../interfaces/external/IVoter.sol";
+import {ILeafVoter} from "../interfaces/voter/ILeafVoter.sol";
 import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
 
 /// @title Velodrome Superchain Gauge Contracts
 /// @notice Leaf gauge contract for distribution of emissions by address
-contract LeafGauge is ILeafGauge, ERC2771Context, ReentrancyGuard {
+contract LeafGauge is ILeafGauge, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /// @inheritdoc ILeafGauge
@@ -29,12 +29,12 @@ contract LeafGauge is ILeafGauge, ERC2771Context, ReentrancyGuard {
     /// @inheritdoc ILeafGauge
     address public immutable bridge;
     /// @inheritdoc ILeafGauge
-    address public immutable team;
+    address public immutable gaugeFactory;
 
     /// @inheritdoc ILeafGauge
     bool public immutable isPool;
 
-    uint256 internal constant DURATION = 7 days; // rewards are released over 7 days
+    uint256 internal constant WEEK = VelodromeTimeLibrary.WEEK; // rewards are released over 7 days
     uint256 internal constant PRECISION = 10 ** 18;
 
     /// @inheritdoc ILeafGauge
@@ -61,22 +61,22 @@ contract LeafGauge is ILeafGauge, ERC2771Context, ReentrancyGuard {
     /// @inheritdoc ILeafGauge
     uint256 public fees1;
 
-    // TODO: preserve notify admin functionality?
     // TODO: is isPool necessary? BATMIN/ROBIN gauges?
-    // TODO: remove ERC2771Context
     constructor(
         address _stakingToken,
         address _feesVotingReward,
         address _rewardToken,
         address _voter,
         address _bridge,
+        address _gaugeFactory,
         bool _isPool
-    ) ERC2771Context(address(1)) {
+    ) {
         stakingToken = _stakingToken;
         feesVotingReward = _feesVotingReward;
         rewardToken = _rewardToken;
         voter = _voter;
         bridge = _bridge;
+        gaugeFactory = _gaugeFactory;
         isPool = _isPool;
     }
 
@@ -89,14 +89,14 @@ contract LeafGauge is ILeafGauge, ERC2771Context, ReentrancyGuard {
             uint256 _fees0 = fees0 + claimed0;
             uint256 _fees1 = fees1 + claimed1;
             (address _token0, address _token1) = IPool(stakingToken).tokens();
-            if (_fees0 > DURATION) {
+            if (_fees0 > WEEK) {
                 fees0 = 0;
                 IERC20(_token0).safeIncreaseAllowance(feesVotingReward, _fees0);
                 IReward(feesVotingReward).notifyRewardAmount(_token0, _fees0);
             } else {
                 fees0 = _fees0;
             }
-            if (_fees1 > DURATION) {
+            if (_fees1 > WEEK) {
                 fees1 = 0;
                 IERC20(_token1).safeIncreaseAllowance(feesVotingReward, _fees1);
                 IReward(feesVotingReward).notifyRewardAmount(_token1, _fees1);
@@ -104,7 +104,7 @@ contract LeafGauge is ILeafGauge, ERC2771Context, ReentrancyGuard {
                 fees1 = _fees1;
             }
 
-            emit ClaimFees(_msgSender(), claimed0, claimed1);
+            emit ClaimFees(msg.sender, claimed0, claimed1);
         }
     }
 
@@ -124,8 +124,7 @@ contract LeafGauge is ILeafGauge, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc ILeafGauge
     function getReward(address _account) external nonReentrant {
-        address sender = _msgSender();
-        if (sender != _account && sender != voter) revert NotAuthorized();
+        if (msg.sender != _account && msg.sender != voter) revert NotAuthorized();
 
         _updateRewards(_account);
 
@@ -145,7 +144,7 @@ contract LeafGauge is ILeafGauge, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc ILeafGauge
     function deposit(uint256 _amount) external {
-        _depositFor(_amount, _msgSender());
+        _depositFor(_amount, msg.sender);
     }
 
     /// @inheritdoc ILeafGauge
@@ -155,29 +154,26 @@ contract LeafGauge is ILeafGauge, ERC2771Context, ReentrancyGuard {
 
     function _depositFor(uint256 _amount, address _recipient) internal nonReentrant {
         if (_amount == 0) revert ZeroAmount();
-        if (!IVoter(voter).isAlive(address(this))) revert NotAlive();
+        if (!ILeafVoter(voter).isAlive(address(this))) revert NotAlive();
 
-        address sender = _msgSender();
         _updateRewards(_recipient);
 
-        IERC20(stakingToken).safeTransferFrom(sender, address(this), _amount);
+        IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _amount);
         totalSupply += _amount;
         balanceOf[_recipient] += _amount;
 
-        emit Deposit(sender, _recipient, _amount);
+        emit Deposit(msg.sender, _recipient, _amount);
     }
 
     /// @inheritdoc ILeafGauge
     function withdraw(uint256 _amount) external nonReentrant {
-        address sender = _msgSender();
-
-        _updateRewards(sender);
+        _updateRewards(msg.sender);
 
         totalSupply -= _amount;
-        balanceOf[sender] -= _amount;
-        IERC20(stakingToken).safeTransfer(sender, _amount);
+        balanceOf[msg.sender] -= _amount;
+        IERC20(stakingToken).safeTransfer(msg.sender, _amount);
 
-        emit Withdraw(sender, _amount);
+        emit Withdraw(msg.sender, _amount);
     }
 
     function _updateRewards(address _account) internal {
@@ -196,37 +192,33 @@ contract LeafGauge is ILeafGauge, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc ILeafGauge
     function notifyRewardAmount(uint256 _amount) external nonReentrant {
-        address sender = _msgSender();
-        // TODO: requires msg.sender == bridge
+        if (msg.sender != bridge) revert NotBridge();
         if (_amount == 0) revert ZeroAmount();
         _claimFees();
-        _notifyRewardAmount(sender, _amount);
+        _notifyRewardAmount(_amount);
     }
 
     /// @inheritdoc ILeafGauge
     function notifyRewardWithoutClaim(uint256 _amount) external nonReentrant {
-        address sender = _msgSender();
-        if (sender != team) revert NotTeam();
+        if (msg.sender != ILeafGaugeFactory(gaugeFactory).notifyAdmin()) revert NotAuthorized();
         if (_amount == 0) revert ZeroAmount();
-        _notifyRewardAmount(sender, _amount);
+        _notifyRewardAmount(_amount);
     }
 
-    function _notifyRewardAmount(address sender, uint256 _amount) internal {
+    function _notifyRewardAmount(uint256 _amount) internal {
         rewardPerTokenStored = rewardPerToken();
-        // TODO: remove timestamp = block.timestamp;
-        uint256 timestamp = block.timestamp;
-        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(timestamp) - timestamp;
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
 
-        if (timestamp >= periodFinish) {
-            IERC20(rewardToken).safeTransferFrom(sender, address(this), _amount);
+        if (block.timestamp >= periodFinish) {
+            IERC20(rewardToken).safeTransferFrom(msg.sender, address(this), _amount);
             rewardRate = _amount / timeUntilNext;
         } else {
-            uint256 _remaining = periodFinish - timestamp;
+            uint256 _remaining = periodFinish - block.timestamp;
             uint256 _leftover = _remaining * rewardRate;
-            IERC20(rewardToken).safeTransferFrom(sender, address(this), _amount);
+            IERC20(rewardToken).safeTransferFrom(msg.sender, address(this), _amount);
             rewardRate = (_amount + _leftover) / timeUntilNext;
         }
-        rewardRateByEpoch[VelodromeTimeLibrary.epochStart(timestamp)] = rewardRate;
+        rewardRateByEpoch[VelodromeTimeLibrary.epochStart(block.timestamp)] = rewardRate;
         if (rewardRate == 0) revert ZeroRewardRate();
 
         // Ensure the provided reward amount is not more than the balance in the contract.
@@ -236,8 +228,8 @@ contract LeafGauge is ILeafGauge, ERC2771Context, ReentrancyGuard {
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
         if (rewardRate > balance / timeUntilNext) revert RewardRateTooHigh();
 
-        lastUpdateTime = timestamp;
-        periodFinish = timestamp + timeUntilNext;
-        emit NotifyReward(sender, _amount);
+        lastUpdateTime = block.timestamp;
+        periodFinish = block.timestamp + timeUntilNext;
+        emit NotifyReward(msg.sender, _amount);
     }
 }

@@ -99,6 +99,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
 
         skipTime(WEEK / 7 * 5);
 
+        vm.selectFork({forkId: rootId});
         vm.expectEmit(address(rootGauge));
         emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: amount});
         rootGauge.notifyRewardAmount({_amount: amount});

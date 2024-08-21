@@ -1,0 +1,9 @@
+SetNotifyAdminIntegrationConcreteTest
+├── When caller is not the notify admin
+│   └── It should revert with NotAuthorized
+└── When caller is the notify admin
+    ├── When admin is the zero address
+    │   └── It should revert with ZeroAddress
+    └── When admin is not the zero address
+        ├── It should set the new notify admin
+        └── It should emit a {SetNotifyAdmin} event

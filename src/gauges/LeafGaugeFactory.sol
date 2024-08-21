@@ -18,12 +18,23 @@ contract LeafGaugeFactory is ILeafGaugeFactory {
     address public immutable xerc20;
     /// @inheritdoc ILeafGaugeFactory
     address public immutable bridge;
+    /// @inheritdoc ILeafGaugeFactory
+    address public notifyAdmin;
 
-    constructor(address _voter, address _factory, address _xerc20, address _bridge) {
+    constructor(address _voter, address _factory, address _xerc20, address _bridge, address _notifyAdmin) {
         voter = _voter;
         factory = _factory;
         xerc20 = _xerc20;
         bridge = _bridge;
+        notifyAdmin = _notifyAdmin;
+    }
+
+    /// @inheritdoc ILeafGaugeFactory
+    function setNotifyAdmin(address _admin) external {
+        if (notifyAdmin != msg.sender) revert NotAuthorized();
+        if (_admin == address(0)) revert ZeroAddress();
+        notifyAdmin = _admin;
+        emit SetNotifyAdmin({notifyAdmin: _admin});
     }
 
     /// @inheritdoc ILeafGaugeFactory
@@ -46,6 +57,7 @@ contract LeafGaugeFactory is ILeafGaugeFactory {
                     xerc20, // xerc20 corresponding to reward token
                     voter, // superchain voter contract
                     bridge, // bridge to communicate x-chain
+                    address(this), // gauge factory
                     isPool
                 )
             )

@@ -3,8 +3,8 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "forge-std/console2.sol";
 import {Test, stdStorage, StdStorage} from "forge-std/Test.sol";
-import {IERC20Errors} from "@openzeppelin5/contracts/interfaces/draft-IERC6093.sol";
 import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
+import {IERC20, IERC20Errors} from "@openzeppelin5/contracts/token/ERC20/ERC20.sol";
 import {TestIsm} from "@hyperlane/core/contracts/test/TestIsm.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 
@@ -23,6 +23,7 @@ import {ILeafVoter, LeafVoter} from "src/voter/LeafVoter.sol";
 import {ILeafGauge, LeafGauge} from "src/gauges/LeafGauge.sol";
 import {ILeafGaugeFactory, LeafGaugeFactory} from "src/gauges/LeafGaugeFactory.sol";
 import {IPool, Pool} from "src/pools/Pool.sol";
+import {IRouter, Router} from "src/Router.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {IBridge, Bridge} from "src/bridge/Bridge.sol";
 import {IUserTokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
@@ -70,6 +71,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
     XERC20Factory public rootXFactory;
     XERC20 public rootXVelo;
     Bridge public rootBridge;
+    Router public rootRouter;
     HLTokenBridge public rootModule;
     TokenBridge public rootTokenBridge;
     HLUserTokenBridge public rootTokenModule;
@@ -103,6 +105,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
     XERC20Factory public leafXFactory;
     XERC20 public leafXVelo;
     Bridge public leafBridge;
+    Router public leafRouter;
     HLTokenBridge public leafModule;
     TokenBridge public leafTokenBridge;
     HLUserTokenBridge public leafTokenModule;
@@ -183,6 +186,20 @@ abstract contract BaseForkFixture is Test, TestConstants {
         vm.startPrank(users.deployer);
         rootPool = new RootPool();
         rootPoolFactory = new RootPoolFactory({_implementation: address(rootPool), _chainId: leaf});
+        rootRouter = Router(
+            payable(
+                cx.deployCreate3({
+                    salt: CreateXLibrary.calculateSalt({_entropy: ROUTER_ENTROPY, _deployer: users.deployer}),
+                    initCode: abi.encodePacked(
+                        type(Router).creationCode,
+                        abi.encode(
+                            address(rootPoolFactory), // pool factory
+                            address(weth) // weth contract
+                        )
+                    )
+                })
+            )
+        );
 
         rootXFactory = XERC20Factory(
             cx.deployCreate3({
@@ -368,6 +385,20 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 )
             })
         );
+        leafRouter = Router(
+            payable(
+                cx.deployCreate3({
+                    salt: CreateXLibrary.calculateSalt({_entropy: ROUTER_ENTROPY, _deployer: users.deployer}),
+                    initCode: abi.encodePacked(
+                        type(Router).creationCode,
+                        abi.encode(
+                            address(leafPoolFactory), // pool factory
+                            address(weth) // weth contract
+                        )
+                    )
+                })
+            )
+        );
 
         leafXFactory = XERC20Factory(
             cx.deployCreate3({
@@ -486,7 +517,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
                         address(leafVoter), // voter address
                         address(leafPoolFactory), // pool factory address
                         address(leafXVelo), // xerc20 address
-                        address(leafBridge) // bridge address
+                        address(leafBridge), // bridge address
+                        users.owner // notifyAdmin address
                     )
                 )
             })
@@ -595,12 +627,21 @@ abstract contract BaseForkFixture is Test, TestConstants {
 
     /// @dev Move time forward on all chains
     function skipTime(uint256 _time) internal {
+        uint256 activeFork = vm.activeFork();
         vm.selectFork({forkId: rootId});
         vm.warp({newTimestamp: block.timestamp + _time});
         vm.roll({newHeight: block.number + _time / 2});
         vm.selectFork({forkId: leafId});
         vm.warp({newTimestamp: block.timestamp + _time});
         vm.roll({newHeight: block.number + _time / 2});
-        vm.selectFork({forkId: rootId});
+        vm.selectFork({forkId: activeFork});
+    }
+
+    /// @dev Helper utility to forward time to next week on all chains
+    ///      note epoch requires at least one second to have
+    ///      passed into the new epoch
+    function skipToNextEpoch(uint256 _offset) public {
+        uint256 timeToNextEpoch = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
+        skipTime(timeToNextEpoch + _offset);
     }
 }

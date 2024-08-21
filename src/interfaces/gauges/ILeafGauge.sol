@@ -4,8 +4,7 @@ pragma solidity ^0.8.0;
 interface ILeafGauge {
     error NotAlive();
     error NotAuthorized();
-    error NotVoter();
-    error NotTeam();
+    error NotBridge();
     error RewardRateTooHigh();
     error ZeroAmount();
     error ZeroRewardRate();
@@ -31,8 +30,8 @@ interface ILeafGauge {
     /// @notice Address of Velodrome v2 Bridge
     function bridge() external view returns (address);
 
-    /// @notice Address of Velodrome v2 Team
-    function team() external view returns (address);
+    /// @notice Address of the factory that created this gauge
+    function gaugeFactory() external view returns (address);
 
     /// @notice Returns if gauge is linked to a legitimate Velodrome pool
     function isPool() external view returns (bool);
