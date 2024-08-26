@@ -93,6 +93,79 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         assertEq(leafIVR.balanceOf(tokenId), 0);
     }
 
+    modifier whenTheCommandIsCreateGauge() {
+        _;
+    }
+
+    function test_WhenThereIsNoPoolForNewGauge() external whenCallerIsMailbox whenTheCommandIsCreateGauge {
+        // It decodes the configuration from the message
+        // It calls createPool on pool factory with decoded config
+        // It calls createGauge on gauge factory for new pool
+        // It emits the {ReceivedMessage} event
+        address pool = Clones.predictDeterministicAddress({
+            deployer: address(leafPoolFactory),
+            implementation: leafPoolFactory.implementation(),
+            salt: keccak256(abi.encodePacked(address(token0), address(token1), true))
+        });
+        assertFalse(leafPoolFactory.isPool(pool));
+
+        bytes memory payload = abi.encode(address(token0), address(token1), true);
+        bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
+
+        emit IHLMessageBridge.ReceivedMessage({
+            _origin: leaf,
+            _sender: TypeCasts.addressToBytes32(address(leafMessageModule)),
+            _value: 0,
+            _message: string(message)
+        });
+        leafMessageModule.handle({
+            _origin: root,
+            _sender: TypeCasts.addressToBytes32(address(leafMessageModule)),
+            _message: message
+        });
+
+        assertTrue(leafPoolFactory.isPool(pool));
+        leafGauge = LeafGauge(leafVoter.gauges(pool));
+
+        assertEq(leafGauge.stakingToken(), pool);
+        assertNotEq(leafGauge.feesVotingReward(), address(0));
+        assertEq(leafGauge.rewardToken(), address(leafXVelo));
+        assertEq(leafGauge.bridge(), address(leafBridge));
+        assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
+    }
+
+    function test_WhenThereIsAPoolForNewGauge() external whenCallerIsMailbox whenTheCommandIsCreateGauge {
+        // It decodes the pool configuration from the message
+        // It calls createGauge on gauge factory for pool with given config
+        // It emits the {ReceivedMessage} event
+
+        // using stable = true to avoid collision with existing pool
+        leafPool = Pool(leafPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
+
+        bytes memory payload = abi.encode(address(token0), address(token1), true);
+        bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
+
+        emit IHLMessageBridge.ReceivedMessage({
+            _origin: leaf,
+            _sender: TypeCasts.addressToBytes32(address(leafMessageModule)),
+            _value: 0,
+            _message: string(message)
+        });
+        leafMessageModule.handle({
+            _origin: root,
+            _sender: TypeCasts.addressToBytes32(address(leafMessageModule)),
+            _message: message
+        });
+
+        leafGauge = LeafGauge(leafVoter.gauges(address(leafPool)));
+
+        assertEq(leafGauge.stakingToken(), address(leafPool));
+        assertNotEq(leafGauge.feesVotingReward(), address(0));
+        assertEq(leafGauge.rewardToken(), address(leafXVelo));
+        assertEq(leafGauge.bridge(), address(leafBridge));
+        assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
+    }
+
     function test_WhenTheCommandIsInvalid() external whenCallerIsMailbox {
         // It reverts with {InvalidCommand}
         uint256 amount = TOKEN_1 * 1000;

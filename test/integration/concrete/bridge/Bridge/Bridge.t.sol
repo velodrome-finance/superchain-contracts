@@ -9,12 +9,14 @@ abstract contract BridgeTest is BaseForkFixture {
         assertEq(rootBridge.owner(), users.owner);
         assertEq(rootBridge.xerc20(), address(rootXVelo));
         assertEq(rootBridge.module(), address(rootModule));
+        assertEq(rootBridge.voter(), address(mockVoter));
         assertEq(address(rootBridge).balance, 0);
 
         vm.selectFork({forkId: leafId});
         assertEq(leafBridge.owner(), users.owner);
         assertEq(leafBridge.xerc20(), address(leafXVelo));
         assertEq(leafBridge.module(), address(leafModule));
+        assertEq(leafBridge.voter(), address(leafVoter));
         assertEq(address(leafBridge).balance, 0);
     }
 }

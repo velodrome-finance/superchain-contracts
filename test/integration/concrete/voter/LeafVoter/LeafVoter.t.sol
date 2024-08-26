@@ -12,6 +12,7 @@ abstract contract LeafVoterTest is BaseForkFixture {
 
     function test_InitialState() public view {
         assertEq(leafVoter.factoryRegistry(), address(leafMockFactoryRegistry));
+        assertEq(leafVoter.bridge(), address(leafMessageBridge));
         assertEq(leafVoter.emergencyCouncil(), users.owner);
         assertTrue(leafVoter.isAlive(address(leafGauge)));
         assertEq(leafVoter.whitelistTokenCount(address(token0)), 1);

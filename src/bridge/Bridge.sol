@@ -9,6 +9,7 @@ import {IXERC20} from "../interfaces/xerc20/IXERC20.sol";
 import {IBridge} from "../interfaces/bridge/IBridge.sol";
 import {ITokenBridge} from "../interfaces/bridge/ITokenBridge.sol";
 import {ILeafGauge} from "../interfaces/gauges/ILeafGauge.sol";
+import {IVoter} from "../interfaces/external/IVoter.sol";
 
 /// @notice Bridge contract for use only by Velodrome contracts
 contract Bridge is IBridge, Ownable {
@@ -17,11 +18,14 @@ contract Bridge is IBridge, Ownable {
     /// @inheritdoc IBridge
     address public immutable xerc20;
     /// @inheritdoc IBridge
+    address public immutable voter;
+    /// @inheritdoc IBridge
     address public module;
 
-    constructor(address _owner, address _xerc20, address _module) Ownable(_owner) {
+    constructor(address _owner, address _xerc20, address _module, address _voter) Ownable(_owner) {
         xerc20 = _xerc20;
         module = _module;
+        voter = _voter;
     }
 
     /// @inheritdoc IBridge
@@ -46,6 +50,7 @@ contract Bridge is IBridge, Ownable {
 
     /// @inheritdoc IBridge
     function sendToken(uint256 _amount, uint256 _chainid) external payable {
+        if (!IVoter(voter).isAlive(msg.sender)) revert NotValidGauge();
         IXERC20(xerc20).burn({_user: msg.sender, _amount: _amount});
         ITokenBridge(module).transfer{value: msg.value}({_sender: msg.sender, _amount: _amount, _chainid: _chainid});
     }

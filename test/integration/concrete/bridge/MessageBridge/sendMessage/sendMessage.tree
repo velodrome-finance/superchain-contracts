@@ -1,3 +1,8 @@
 SendMessageIntegrationConcreteTest
-└── When the caller is anyone
+├── When the command is create gauge
+│   ├── When the caller is not root gauge factory
+│   │   └── It should revert with NotAuthorized
+│   └── When the caller is root gauge factory
+│       └── It dispatches the create gauge message to the message module
+└── When the command is not create gauge
     └── It dispatches the message to the message module

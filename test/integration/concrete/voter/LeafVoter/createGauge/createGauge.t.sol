@@ -11,11 +11,14 @@ contract CreateGaugeIntegrationConcreteTest is LeafVoterTest {
         leafPool = Pool(leafPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
     }
 
-    function test_WhenCallerIsNotBridge() external {
+    function test_WhenCallerIsNotBridgeModule() external {
         // It should revert with NotAuthorized
+        vm.prank(users.charlie);
+        vm.expectRevert(ILeafVoter.NotAuthorized.selector);
+        leafGauge = LeafGauge(leafVoter.createGauge({_poolFactory: address(leafPoolFactory), _pool: address(leafPool)}));
     }
 
-    function test_WhenCallerIsBridge() external {
+    function test_WhenCallerIsBridgeModule() external {
         // It should create new gauge
         // It should set gaugeToFees for new gauge
         // It should set gaugeToBribe for new gauge
@@ -26,16 +29,17 @@ contract CreateGaugeIntegrationConcreteTest is LeafVoterTest {
         // It should add given pool to pools
         // It should whitelist both tokens of pool
         // It should emit {GaugeCreated} event
+        vm.prank(address(leafMessageModule));
         vm.expectEmit(true, true, true, false, address(leafVoter));
         emit ILeafVoter.GaugeCreated({
             poolFactory: address(leafPoolFactory),
             votingRewardsFactory: address(leafVotingRewardsFactory),
             gaugeFactory: address(leafGaugeFactory),
-            pool: address(leafPool),
-            bribeVotingReward: address(13),
-            feeVotingReward: address(12),
+            pool: address(0),
+            bribeVotingReward: address(0),
+            feeVotingReward: address(0),
             gauge: address(0),
-            creator: address(this)
+            creator: address(0)
         });
         leafGauge = LeafGauge(leafVoter.createGauge({_poolFactory: address(leafPoolFactory), _pool: address(leafPool)}));
 

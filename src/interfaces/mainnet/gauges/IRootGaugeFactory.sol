@@ -13,8 +13,11 @@ interface IRootGaugeFactory {
     /// @notice Lockbox contract address
     function lockbox() external view returns (address);
 
-    /// @notice Bridge contract address
+    /// @notice Address of bridge contract used to bridge tokens
     function bridge() external view returns (address);
+
+    /// @notice Address of bridge contract used to forward x-chain messages
+    function messageBridge() external view returns (address);
 
     /// @notice Creates a new root gauge
     /// @param _pool Address of the pool contract

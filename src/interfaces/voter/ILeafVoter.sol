@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 interface ILeafVoter {
     error NotAGauge();
     error ZeroAddress();
+    error NotAuthorized();
     error GaugeAlreadyKilled();
     error GaugeAlreadyRevived();
     error NotEmergencyCouncil();
@@ -25,6 +26,9 @@ interface ILeafVoter {
 
     /// @notice Factory registry for valid pool / gauge / rewards factories
     function factoryRegistry() external view returns (address);
+
+    /// @notice Address of bridge contract used to forward x-chain messages
+    function bridge() external view returns (address);
 
     /// @notice credibly neutral party similar to Curve's Emergency DAO
     function emergencyCouncil() external view returns (address);

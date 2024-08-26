@@ -4,11 +4,15 @@ pragma solidity ^0.8.0;
 interface IBridge {
     error NotModule();
     error ZeroAddress();
+    error NotValidGauge();
 
     event SetModule(address indexed _sender, address indexed _module);
 
     /// @notice Returns the address of the xERC20 token that is bridged by this contract
     function xerc20() external view returns (address);
+
+    /// @notice Returns the address of the voter contract
+    function voter() external view returns (address);
 
     /// @notice Returns the address of the module contract that is allowed to mint xERC20 tokens
     function module() external view returns (address);

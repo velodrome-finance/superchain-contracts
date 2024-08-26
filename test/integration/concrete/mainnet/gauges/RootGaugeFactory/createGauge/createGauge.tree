@@ -2,4 +2,10 @@ CreateGaugeIntegrationConcreteTest
 ├── When the caller is not Voter
 │   └── It reverts with NotVoter
 └── When the caller is Voter
-    └── It creates a new gauge
+    ├── It creates a new gauge on root chain
+    ├── It should encode the root pool configuration
+    ├── It should create new pool on leaf chain with same config
+    ├── It should emit a {PoolCreated} event
+    ├── It should call createGauge with leaf pool and factory on corresponding leaf voter
+    ├── It should create a new gauge on leaf chain with same address as root gauge
+    └── It should emit a {GaugeCreated} event

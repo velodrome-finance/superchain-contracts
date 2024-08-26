@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 interface IMessageBridge {
     error ZeroAddress();
+    error NotAuthorized(uint256 command);
 
     event SetModule(address indexed _sender, address indexed _module);
 
@@ -12,6 +13,14 @@ interface IMessageBridge {
     /// @notice Returns the address of the voter contract
     /// @dev Used to verify the sender of a message
     function voter() external view returns (address);
+
+    /// @notice Returns the address of the Pool Factory associated with Bridge
+    /// @dev Pool Factory maintains the same address across all Leaf Chains but differs on the Root Chain
+    function poolFactory() external view returns (address);
+
+    /// @notice Returns the address of the Gauge Factory associated with Bridge
+    /// @dev Gauge Factory maintains the same address across all Chains
+    function gaugeFactory() external view returns (address);
 
     /// @notice Sets the address of the module contract that is allowed to send messages x-chain
     /// @dev Module handles x-chain messages

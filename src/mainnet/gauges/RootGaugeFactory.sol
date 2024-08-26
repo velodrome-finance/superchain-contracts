@@ -4,8 +4,10 @@ pragma solidity >=0.8.19 <0.9.0;
 import {IRootGaugeFactory} from "../../interfaces/mainnet/gauges/IRootGaugeFactory.sol";
 import {IRootPool} from "../../interfaces/mainnet/pools/IRootPool.sol";
 import {IRootFeesVotingReward} from "../../interfaces/mainnet/rewards/IRootFeesVotingReward.sol";
+import {IMessageBridge} from "../../interfaces/bridge/IMessageBridge.sol";
 
 import {CreateXLibrary} from "../../libraries/CreateXLibrary.sol";
+import {Commands} from "../../libraries/Commands.sol";
 import {RootGauge} from "./RootGauge.sol";
 
 /// @notice Factory that creates root gauges on mainnet
@@ -20,12 +22,15 @@ contract RootGaugeFactory is IRootGaugeFactory {
     address public immutable lockbox;
     /// @inheritdoc IRootGaugeFactory
     address public immutable bridge;
+    /// @inheritdoc IRootGaugeFactory
+    address public immutable messageBridge;
 
-    constructor(address _voter, address _xerc20, address _lockbox, address _bridge) {
+    constructor(address _voter, address _xerc20, address _lockbox, address _bridge, address _messageBridge) {
         voter = _voter;
         xerc20 = _xerc20;
         lockbox = _lockbox;
         bridge = _bridge;
+        messageBridge = _messageBridge;
     }
 
     /// @inheritdoc IRootGaugeFactory
@@ -56,5 +61,9 @@ contract RootGaugeFactory is IRootGaugeFactory {
         });
 
         IRootFeesVotingReward(_feesVotingReward).initialize(gauge);
+
+        bytes memory payload = abi.encode(_token0, _token1, _stable);
+        bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
+        IMessageBridge(messageBridge).sendMessage({_chainid: _chainId, _message: message});
     }
 }

@@ -6,6 +6,11 @@ import "../Bridge.t.sol";
 contract SendTokenIntegrationConcreteTest is BridgeTest {
     function test_WhenCallerIsNotAGaugeRegisteredInVoter() external {
         // It reverts with NotValidGauge
+        mockVoter.killGauge(address(leafGauge));
+
+        uint256 amount = 1;
+        vm.expectRevert(IBridge.NotValidGauge.selector);
+        rootBridge.sendToken({_amount: amount, _chainid: leaf});
     }
 
     modifier whenCallerIsAGaugeRegisteredInVoter() {

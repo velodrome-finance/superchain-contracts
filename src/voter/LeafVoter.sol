@@ -7,6 +7,7 @@ import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSe
 import {IVotingRewardsFactory} from "../interfaces/rewards/IVotingRewardsFactory.sol";
 import {IFactoryRegistry} from "../interfaces/external/IFactoryRegistry.sol";
 import {ILeafGaugeFactory} from "../interfaces/gauges/ILeafGaugeFactory.sol";
+import {IMessageBridge} from "../interfaces/bridge/IMessageBridge.sol";
 import {ILeafGauge} from "../interfaces/gauges/ILeafGauge.sol";
 import {IReward} from "../interfaces/rewards/IReward.sol";
 import {IPoolFactory} from "../interfaces/pools/IPoolFactory.sol";
@@ -21,6 +22,8 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
 
     /// @inheritdoc ILeafVoter
     address public immutable factoryRegistry;
+    /// @inheritdoc ILeafVoter
+    address public immutable bridge;
     /// @inheritdoc ILeafVoter
     address public emergencyCouncil;
 
@@ -43,9 +46,10 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
     /// @dev Set of Whitelisted Tokens
     EnumerableSet.AddressSet private _whitelistedTokens;
 
-    constructor(address _factoryRegistry, address _emergencyCouncil) {
+    constructor(address _factoryRegistry, address _emergencyCouncil, address _bridge) {
         factoryRegistry = _factoryRegistry;
         emergencyCouncil = _emergencyCouncil;
+        bridge = _bridge;
     }
 
     /// @inheritdoc ILeafVoter
@@ -75,7 +79,7 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
 
     /// @inheritdoc ILeafVoter
     function createGauge(address _poolFactory, address _pool) external nonReentrant returns (address _gauge) {
-        // if (msg.sender != bridge) revert NotBridge();
+        if (msg.sender != IMessageBridge(bridge).module()) revert NotAuthorized();
 
         address[] memory rewards = new address[](2);
         (rewards[0], rewards[1]) = IPool(_pool).tokens();

@@ -66,6 +66,7 @@ contract KillGaugeIntegrationConcreteTest is LeafVoterTest {
     {
         // create new gauge with same tokens to increase whitelistTokenCount
         leafPool = Pool(leafPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
+        vm.startPrank(address(leafMessageModule));
         leafGauge = LeafGauge(leafVoter.createGauge({_poolFactory: address(leafPoolFactory), _pool: address(leafPool)}));
 
         // It should set isAlive for gauge to false
@@ -86,6 +87,7 @@ contract KillGaugeIntegrationConcreteTest is LeafVoterTest {
             _bool: false
         });
         vm.expectEmit(address(leafVoter));
+        vm.startPrank(leafVoter.emergencyCouncil());
         emit ILeafVoter.GaugeKilled({gauge: address(leafGauge)});
         leafVoter.killGauge(address(leafGauge));
 

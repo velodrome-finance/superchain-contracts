@@ -1,7 +1,7 @@
 CreateGaugeIntegrationConcreteTest
-├── When caller is not bridge
+├── When caller is not bridge module
 │   └── It should revert with NotAuthorized
-└── When caller is bridge
+└── When caller is bridge module
     ├── It should create new gauge
     ├── It should set gaugeToFees for new gauge
     ├── It should set gaugeToBribe for new gauge

@@ -11,7 +11,11 @@ contract CreateGaugeIntegrationFuzzTest is LeafVoterTest {
         leafPool = Pool(leafPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
     }
 
-    function testFuzz_WhenCallerIsNotBridge() external {
+    function testFuzz_WhenCallerIsNotBridgeModule(address _caller) external {
         // It should revert with NotAuthorized
+        vm.assume(_caller != address(leafMessageModule));
+        vm.prank(_caller);
+        vm.expectRevert(ILeafVoter.NotAuthorized.selector);
+        leafGauge = LeafGauge(leafVoter.createGauge({_poolFactory: address(leafPoolFactory), _pool: address(leafPool)}));
     }
 }

@@ -9,6 +9,7 @@ import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 import {IHLMessageBridge, IMessageSender} from "../../interfaces/bridge/hyperlane/IHLMessageBridge.sol";
 import {IMessageReceiver} from "../../interfaces/bridge/IMessageReceiver.sol";
 import {ILeafVoter} from "../../interfaces/voter/ILeafVoter.sol";
+import {IPoolFactory} from "../../interfaces/pools/IPoolFactory.sol";
 import {IMessageBridge} from "../../interfaces/bridge/IMessageBridge.sol";
 import {IReward} from "../../interfaces/rewards/IReward.sol";
 
@@ -18,8 +19,8 @@ import {Commands} from "../../libraries/Commands.sol";
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
 contract HLMessageBridge is IHLMessageBridge {
     using Address for address;
-    /// @inheritdoc IHLMessageBridge
 
+    /// @inheritdoc IHLMessageBridge
     address public immutable bridge;
     /// @inheritdoc IHLMessageBridge
     address public immutable voter;
@@ -70,6 +71,15 @@ contract HLMessageBridge is IHLMessageBridge {
             IReward(fvr)._withdraw({_payload: payload});
             address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: gauge});
             IReward(ivr)._withdraw({_payload: payload});
+        } else if (command == Commands.CREATE_GAUGE) {
+            (address token0, address token1, bool stable) = abi.decode(messageWithoutCommand, (address, address, bool));
+            address poolFactory = IMessageBridge(bridge).poolFactory();
+
+            address pool = IPoolFactory(poolFactory).getPool({tokenA: token0, tokenB: token1, stable: stable});
+            if (pool == address(0)) {
+                pool = IPoolFactory(poolFactory).createPool({tokenA: token0, tokenB: token1, stable: stable});
+            }
+            ILeafVoter(voter).createGauge({_poolFactory: poolFactory, _pool: pool});
         } else {
             revert InvalidCommand();
         }

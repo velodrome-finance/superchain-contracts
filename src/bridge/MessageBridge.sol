@@ -6,17 +6,27 @@ import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 import {IMessageBridge} from "../interfaces/bridge/IMessageBridge.sol";
 import {IMessageSender} from "../interfaces/bridge/IMessageSender.sol";
 
+import {Commands} from "../libraries/Commands.sol";
+
 /// @title Message Bridge Contract
 /// @notice General purpose message bridge contract
 contract MessageBridge is IMessageBridge, Ownable {
     /// @inheritdoc IMessageBridge
     address public immutable voter;
     /// @inheritdoc IMessageBridge
+    address public immutable poolFactory;
+    /// @inheritdoc IMessageBridge
+    address public immutable gaugeFactory;
+    /// @inheritdoc IMessageBridge
     address public module;
 
-    constructor(address _owner, address _voter, address _module) Ownable(_owner) {
+    constructor(address _owner, address _voter, address _module, address _poolFactory, address _gaugeFactory)
+        Ownable(_owner)
+    {
         voter = _voter;
         module = _module;
+        poolFactory = _poolFactory;
+        gaugeFactory = _gaugeFactory;
     }
 
     /// @inheritdoc IMessageBridge
@@ -28,6 +38,11 @@ contract MessageBridge is IMessageBridge, Ownable {
 
     /// @inheritdoc IMessageBridge
     function sendMessage(uint256 _chainid, bytes calldata _message) external payable {
+        (uint256 command,) = abi.decode(_message, (uint256, bytes));
+        if (command == Commands.CREATE_GAUGE) {
+            if (msg.sender != gaugeFactory) revert NotAuthorized(Commands.CREATE_GAUGE);
+        }
+
         IMessageSender(module).sendMessage{value: msg.value}({_chainid: _chainid, _message: _message});
     }
 }

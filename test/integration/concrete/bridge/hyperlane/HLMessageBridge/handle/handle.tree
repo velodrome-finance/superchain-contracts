@@ -12,5 +12,15 @@ HandleIntegrationConcreteTest
     │   ├── It calls withdraw on the fee rewards contract corresponding to the gauge with the payload
     │   ├── It calls withdraw on the incentive rewards contract corresponding to the gauge with the payload
     │   └── It emits the {ReceivedMessage} event
+    ├── When the command is createGauge
+    │   ├── When there is no pool for new gauge
+    │   │   ├── It decodes the pool configuration from the message
+    │   │   ├── It calls createPool on pool factory with decoded config
+    │   │   ├── It calls createGauge on gauge factory for new pool
+    │   │   └── It emits the {ReceivedMessage} event
+    │   └── When there is a pool for new gauge
+    │       ├── It decodes the pool configuration from the message
+    │       ├── It calls createGauge on gauge factory for pool with given config
+    │       └── It emits the {ReceivedMessage} event
     └── When the command is invalid
         └── It reverts with {InvalidCommand}
