@@ -88,7 +88,7 @@ contract SendTokenIntegrationConcreteTest is BridgeTest {
 
         vm.selectFork({forkId: leafId});
         vm.expectEmit(address(leafModule));
-        emit IHLTokenBridge.ReceivedMessage({
+        emit IHLHandler.ReceivedMessage({
             _origin: root,
             _sender: TypeCasts.addressToBytes32(address(leafModule)),
             _value: 0,

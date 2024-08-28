@@ -30,9 +30,13 @@ import {IBridge, Bridge} from "src/bridge/Bridge.sol";
 import {IUserTokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
 import {IMessageBridge, MessageBridge} from "src/bridge/MessageBridge.sol";
 import {HLUserTokenBridge} from "src/bridge/hyperlane/HLUserTokenBridge.sol";
+import {IHLHandler} from "src/interfaces/bridge/hyperlane/IHLHandler.sol";
 import {IHLTokenBridge, HLTokenBridge} from "src/bridge/hyperlane/HLTokenBridge.sol";
 import {IHLMessageBridge, HLMessageBridge} from "src/bridge/hyperlane/HLMessageBridge.sol";
 import {IVotingRewardsFactory, VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
+
+import {RootHLMessageBridge} from "src/mainnet/bridge/hyperlane/RootHLMessageBridge.sol";
+import {RootHLTokenBridge} from "src/mainnet/bridge/hyperlane/RootHLTokenBridge.sol";
 
 import {IRootVotingRewardsFactory, RootVotingRewardsFactory} from "src/mainnet/rewards/RootVotingRewardsFactory.sol";
 import {RootBribeVotingReward} from "src/mainnet/rewards/RootBribeVotingReward.sol";
@@ -73,11 +77,11 @@ abstract contract BaseForkFixture is Test, TestConstants {
     XERC20 public rootXVelo;
     Bridge public rootBridge;
     Router public rootRouter;
-    HLTokenBridge public rootModule;
+    RootHLTokenBridge public rootModule;
     TokenBridge public rootTokenBridge;
     HLUserTokenBridge public rootTokenModule;
     MessageBridge public rootMessageBridge;
-    HLMessageBridge public rootMessageModule;
+    RootHLMessageBridge public rootMessageModule;
 
     // root-only contracts
     XERC20Lockbox public rootLockbox;
@@ -216,7 +220,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootXVelo = XERC20(_xVelo);
         rootLockbox = XERC20Lockbox(_lockbox);
 
-        rootModule = HLTokenBridge(
+        rootModule = RootHLTokenBridge(
             CreateXLibrary.computeCreate3Address({_entropy: HL_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer})
         );
         rootBridge = Bridge(
@@ -233,7 +237,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 )
             })
         );
-        rootModule = HLTokenBridge(
+        rootModule = RootHLTokenBridge(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: HL_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
@@ -242,7 +246,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 )
             })
         );
-        rootMessageModule = HLMessageBridge(
+        rootMessageModule = RootHLMessageBridge(
             CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer})
         );
         rootGaugeFactory = RootGaugeFactory(
@@ -263,7 +267,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 )
             })
         );
-        rootMessageModule = HLMessageBridge(
+        rootMessageModule = RootHLMessageBridge(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(

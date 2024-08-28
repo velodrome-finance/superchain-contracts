@@ -12,9 +12,11 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         vm.selectFork({forkId: leafId});
     }
 
-    function test_WhenTheCallerIsNotMailbox() external {
+    function test_WhenCallerIsNotMailbox(address _caller) external {
         // It reverts with NotMailbox
-        vm.prank(users.charlie);
+        vm.assume(_caller != address(leafMailbox));
+
+        vm.prank(_caller);
         vm.expectRevert(IHLHandler.NotMailbox.selector);
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: abi.encode(users.charlie, abi.encode(1))});
     }
@@ -24,10 +26,11 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         _;
     }
 
-    function test_WhenTheOriginIsNotRoot() external whenTheCallerIsMailbox {
+    function test_WhenTheOriginIsNotRoot(uint32 _origin) external whenTheCallerIsMailbox {
         // It should revert with NotRoot
+        vm.assume(_origin != root);
         vm.expectRevert(IHLHandler.NotRoot.selector);
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: abi.encode(users.charlie, abi.encode(1))});
+        leafMessageModule.handle({_origin: _origin, _sender: sender, _message: abi.encode(users.charlie, abi.encode(1))});
     }
 
     modifier whenTheOriginIsRoot() {
@@ -35,8 +38,10 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         _;
     }
 
-    function test_WhenTheSenderIsNotModule() external whenTheCallerIsMailbox whenTheOriginIsRoot {
+    function test_WhenTheSenderIsNotModule(address _sender) external whenTheCallerIsMailbox whenTheOriginIsRoot {
         // It should revert with NotModule
+        vm.assume(_sender != address(leafMessageModule));
+        sender = TypeCasts.addressToBytes32(_sender);
         vm.expectRevert(IHLMessageBridge.NotModule.selector);
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: abi.encode(users.charlie, abi.encode(1))});
     }
@@ -46,12 +51,16 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         _;
     }
 
-    function test_WhenTheCommandIsDeposit() external whenTheCallerIsMailbox whenTheOriginIsRoot whenTheSenderIsModule {
+    function test_WhenTheCommandIsDeposit(uint256 amount)
+        external
+        whenTheCallerIsMailbox
+        whenTheOriginIsRoot
+        whenTheSenderIsModule
+    {
         // It decodes the gauge address from the message
         // It calls deposit on the fee rewards contract corresponding to the gauge with the payload
         // It calls deposit on the incentive rewards contract corresponding to the gauge with the payload
         // It emits the {ReceivedMessage} event
-        uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
@@ -66,7 +75,7 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         assertEq(leafIVR.balanceOf(tokenId), amount);
     }
 
-    function test_WhenTheCommandIsWithdraw()
+    function test_WhenTheCommandIsWithdraw(uint256 amount)
         external
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
@@ -76,7 +85,6 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         // It calls withdraw on the fee rewards contract corresponding to the gauge with the payload
         // It calls withdraw on the incentive rewards contract corresponding to the gauge with the payload
         // It emits the {ReceivedMessage} event
-        uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
@@ -103,74 +111,13 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         _;
     }
 
-    function test_WhenThereIsNoPoolForNewGauge()
+    function test_WhenTheCommandIsInvalid(uint256 amount)
         external
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
         whenTheSenderIsModule
-        whenTheCommandIsCreateGauge
     {
-        // It decodes the configuration from the message
-        // It calls createPool on pool factory with decoded config
-        // It calls createGauge on gauge factory for new pool
-        // It emits the {ReceivedMessage} event
-        address pool = Clones.predictDeterministicAddress({
-            deployer: address(leafPoolFactory),
-            implementation: leafPoolFactory.implementation(),
-            salt: keccak256(abi.encodePacked(address(token0), address(token1), true))
-        });
-        assertFalse(leafPoolFactory.isPool(pool));
-
-        bytes memory payload = abi.encode(address(token0), address(token1), true);
-        bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
-
-        vm.expectEmit(address(leafMessageModule));
-        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
-
-        assertTrue(leafPoolFactory.isPool(pool));
-        leafGauge = LeafGauge(leafVoter.gauges(pool));
-
-        assertEq(leafGauge.stakingToken(), pool);
-        assertNotEq(leafGauge.feesVotingReward(), address(0));
-        assertEq(leafGauge.rewardToken(), address(leafXVelo));
-        assertEq(leafGauge.bridge(), address(leafBridge));
-        assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
-    }
-
-    function test_WhenThereIsAPoolForNewGauge()
-        external
-        whenTheCallerIsMailbox
-        whenTheOriginIsRoot
-        whenTheSenderIsModule
-        whenTheCommandIsCreateGauge
-    {
-        // It decodes the pool configuration from the message
-        // It calls createGauge on gauge factory for pool with given config
-        // It emits the {ReceivedMessage} event
-
-        // using stable = true to avoid collision with existing pool
-        leafPool = Pool(leafPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
-
-        bytes memory payload = abi.encode(address(token0), address(token1), true);
-        bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
-
-        vm.expectEmit(address(leafMessageModule));
-        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
-
-        leafGauge = LeafGauge(leafVoter.gauges(address(leafPool)));
-
-        assertEq(leafGauge.stakingToken(), address(leafPool));
-        assertNotEq(leafGauge.feesVotingReward(), address(0));
-        assertEq(leafGauge.rewardToken(), address(leafXVelo));
-        assertEq(leafGauge.bridge(), address(leafBridge));
-        assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
-    }
-
-    function test_WhenTheCommandIsInvalid() external whenTheCallerIsMailbox whenTheOriginIsRoot whenTheSenderIsModule {
         // It reverts with {InvalidCommand}
-        uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(type(uint256).max, abi.encode(address(leafGauge), payload));

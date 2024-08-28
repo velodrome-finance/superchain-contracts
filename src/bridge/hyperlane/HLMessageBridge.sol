@@ -7,6 +7,7 @@ import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/II
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 
 import {IHLMessageBridge, IMessageSender} from "../../interfaces/bridge/hyperlane/IHLMessageBridge.sol";
+import {IHLHandler} from "../../interfaces/bridge/hyperlane/IHLHandler.sol";
 import {IMessageReceiver} from "../../interfaces/bridge/IMessageReceiver.sol";
 import {ILeafVoter} from "../../interfaces/voter/ILeafVoter.sol";
 import {IPoolFactory} from "../../interfaces/pools/IPoolFactory.sol";
@@ -17,7 +18,7 @@ import {Commands} from "../../libraries/Commands.sol";
 
 /// @title Hyperlane Token Bridge
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
-contract HLMessageBridge is IHLMessageBridge {
+contract HLMessageBridge is IHLMessageBridge, IHLHandler {
     using Address for address;
 
     /// @inheritdoc IHLMessageBridge
@@ -54,9 +55,12 @@ contract HLMessageBridge is IHLMessageBridge {
         });
     }
 
-    /// @inheritdoc IHLMessageBridge
+    /// @inheritdoc IHLHandler
     function handle(uint32 _origin, bytes32 _sender, bytes calldata _message) external payable {
         if (msg.sender != mailbox) revert NotMailbox();
+        if (_origin != 10) revert NotRoot();
+        if (TypeCasts.bytes32ToAddress(_sender) != address(this)) revert NotModule();
+
         (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
 
         if (command == Commands.DEPOSIT) {

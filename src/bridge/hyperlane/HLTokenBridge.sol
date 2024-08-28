@@ -6,11 +6,12 @@ import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/II
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 
 import {IBridge} from "../../interfaces/bridge/IBridge.sol";
+import {IHLHandler} from "../../interfaces/bridge/hyperlane/IHLHandler.sol";
 import {IHLTokenBridge, ITokenBridge} from "../../interfaces/bridge/hyperlane/IHLTokenBridge.sol";
 
 /// @title Hyperlane Token Bridge
 /// @notice Hyperlane module used to bridge emissions between chains
-contract HLTokenBridge is IHLTokenBridge {
+contract HLTokenBridge is IHLTokenBridge, IHLHandler {
     /// @inheritdoc IHLTokenBridge
     address public immutable bridge;
     /// @inheritdoc IHLTokenBridge
@@ -43,9 +44,12 @@ contract HLTokenBridge is IHLTokenBridge {
         });
     }
 
-    /// @inheritdoc IHLTokenBridge
+    /// @inheritdoc IHLHandler
     function handle(uint32 _origin, bytes32 _sender, bytes calldata _message) external payable {
         if (msg.sender != mailbox) revert NotMailbox();
+        if (_origin != 10) revert NotRoot();
+        if (TypeCasts.bytes32ToAddress(_sender) != address(this)) revert NotModule();
+
         (address recipient, uint256 amount) = abi.decode(_message, (address, uint256));
 
         IBridge(bridge).mint({_user: address(bridge), _amount: amount});

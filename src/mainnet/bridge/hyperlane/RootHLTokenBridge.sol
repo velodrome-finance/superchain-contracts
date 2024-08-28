@@ -5,13 +5,12 @@ import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 
-import {IBridge} from "../../interfaces/bridge/IBridge.sol";
-import {IHLHandler} from "../../interfaces/bridge/hyperlane/IHLHandler.sol";
-import {IHLTokenBridge, ITokenBridge} from "../../interfaces/bridge/hyperlane/IHLTokenBridge.sol";
+import {IBridge} from "src/interfaces/bridge/IBridge.sol";
+import {IHLTokenBridge, ITokenBridge} from "src/interfaces/bridge/hyperlane/IHLTokenBridge.sol";
 
 /// @title Hyperlane Token Bridge
-/// @notice Token Bridge module for general use
-contract HLUserTokenBridge is IHLTokenBridge, IHLHandler {
+/// @notice Hyperlane module used to bridge emissions between chains
+contract RootHLTokenBridge is IHLTokenBridge {
     /// @inheritdoc IHLTokenBridge
     address public immutable bridge;
     /// @inheritdoc IHLTokenBridge
@@ -27,7 +26,6 @@ contract HLUserTokenBridge is IHLTokenBridge, IHLHandler {
 
     /// @inheritdoc ITokenBridge
     function transfer(address _sender, uint256 _amount, uint256 _chainid) external payable override {
-        /// TODO: rename? due to clash with transfer on erc20
         if (msg.sender != bridge) revert NotBridge();
         uint32 domain = uint32(_chainid);
         bytes memory message = abi.encode(_sender, _amount);
@@ -43,17 +41,5 @@ contract HLUserTokenBridge is IHLTokenBridge, IHLHandler {
             _value: msg.value,
             _message: string(message)
         });
-    }
-
-    /// @inheritdoc IHLHandler
-    function handle(uint32 _origin, bytes32 _sender, bytes calldata _message) external payable {
-        if (msg.sender != mailbox) revert NotMailbox();
-        if (TypeCasts.bytes32ToAddress(_sender) != address(this)) revert NotModule();
-
-        (address recipient, uint256 amount) = abi.decode(_message, (address, uint256));
-
-        IBridge(bridge).mint({_user: recipient, _amount: amount});
-
-        emit ReceivedMessage({_origin: _origin, _sender: _sender, _value: msg.value, _message: string(_message)});
     }
 }
