@@ -49,7 +49,7 @@ contract CreateGaugeIntegrationConcreteTest is LeafVoterTest {
         assertEq(leafVoter.poolForGauge(address(leafGauge)), address(leafPool));
         assertTrue(leafVoter.isGauge(address(leafGauge)));
         assertTrue(leafVoter.isAlive(address(leafGauge)));
-        assertEq(leafVoter.pools(1), address(leafPool));
+        assertEq(leafVoter.pools(2), address(leafPool));
         assertTrue(leafVoter.isWhitelistedToken(address(token0)));
         assertTrue(leafVoter.isWhitelistedToken(address(token1)));
         assertEq(leafVoter.whitelistTokenCount(address(token0)), 2);

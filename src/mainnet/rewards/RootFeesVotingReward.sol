@@ -13,13 +13,16 @@ contract RootFeesVotingReward is IRootFeesVotingReward {
     /// @inheritdoc IRootFeesVotingReward
     address public immutable voter;
     /// @inheritdoc IRootFeesVotingReward
+    address public immutable bribeVotingReward;
+    /// @inheritdoc IRootFeesVotingReward
     address public gauge;
     /// @inheritdoc IRootFeesVotingReward
     uint256 public chainid;
 
-    constructor(address _bridge, address _voter, address[] memory _rewards) {
+    constructor(address _bridge, address _voter, address _bribeVotingReward, address[] memory _rewards) {
         voter = _voter;
         bridge = _bridge;
+        bribeVotingReward = _bribeVotingReward;
     }
 
     /// @inheritdoc IRootFeesVotingReward
@@ -48,6 +51,4 @@ contract RootFeesVotingReward is IRootFeesVotingReward {
 
         IMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
     }
-
-    // function getReward(uint256 tokenId, address[] memory tokens) {}
 }

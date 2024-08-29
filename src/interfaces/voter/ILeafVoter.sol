@@ -103,20 +103,6 @@ interface ILeafVoter {
     /// @param _gauges Array of gauges to collect emissions from.
     function claimRewards(address[] memory _gauges) external;
 
-    /// @notice Claim bribes for a given NFT.
-    /// @dev Utility to help batch bribe claims.
-    /// @param _bribes  Array of BribeVotingReward contracts to collect from.
-    /// @param _tokens  Array of tokens that are used as bribes.
-    /// @param _tokenId Id of veNFT that you wish to claim bribes for.
-    function claimBribes(address[] memory _bribes, address[][] memory _tokens, uint256 _tokenId) external;
-
-    /// @notice Claim fees for a given NFT.
-    /// @dev Utility to help batch fee claims.
-    /// @param _fees    Array of FeesVotingReward contracts to collect from.
-    /// @param _tokens  Array of tokens that are used as fees.
-    /// @param _tokenId Id of veNFT that you wish to claim fees for.
-    function claimFees(address[] memory _fees, address[][] memory _tokens, uint256 _tokenId) external;
-
     /// @notice Set new emergency council.
     /// @dev Throws if not called by emergency council.
     /// @param _council New emergency council to be set

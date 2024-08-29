@@ -3,6 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {IRootGaugeFactory} from "../../interfaces/mainnet/gauges/IRootGaugeFactory.sol";
 import {IRootPool} from "../../interfaces/mainnet/pools/IRootPool.sol";
+import {IRootBribeVotingReward} from "../../interfaces/mainnet/rewards/IRootBribeVotingReward.sol";
 import {IRootFeesVotingReward} from "../../interfaces/mainnet/rewards/IRootFeesVotingReward.sol";
 import {IMessageBridge} from "../../interfaces/bridge/IMessageBridge.sol";
 
@@ -60,7 +61,9 @@ contract RootGaugeFactory is IRootGaugeFactory {
             )
         });
 
+        address _bribeVotingReward = IRootFeesVotingReward(_feesVotingReward).bribeVotingReward();
         IRootFeesVotingReward(_feesVotingReward).initialize(gauge);
+        IRootBribeVotingReward(_bribeVotingReward).initialize(gauge);
 
         bytes memory payload = abi.encode(_token0, _token1, _stable);
         bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);

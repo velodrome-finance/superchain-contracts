@@ -19,7 +19,15 @@ contract RootVotingRewardsFactory is IRootVotingRewardsFactory {
         external
         returns (address feesVotingReward, address bribeVotingReward)
     {
-        // bribeVotingReward = address(new RootBribeVotingReward(msg.sender, _rewards));
-        feesVotingReward = address(new RootFeesVotingReward({_bridge: bridge, _voter: msg.sender, _rewards: _rewards}));
+        bribeVotingReward =
+            address(new RootBribeVotingReward({_bridge: bridge, _voter: msg.sender, _rewards: _rewards}));
+        feesVotingReward = address(
+            new RootFeesVotingReward({
+                _bridge: bridge,
+                _voter: msg.sender,
+                _bribeVotingReward: bribeVotingReward,
+                _rewards: _rewards
+            })
+        );
     }
 }

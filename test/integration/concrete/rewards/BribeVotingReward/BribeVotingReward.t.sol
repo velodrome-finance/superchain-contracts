@@ -3,8 +3,8 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "test/BaseForkFixture.sol";
 
-abstract contract BribeVotingRewards is BaseForkFixture {
-    function setUp() public override {
+abstract contract BribeVotingRewardTest is BaseForkFixture {
+    function setUp() public virtual override {
         super.setUp();
         vm.selectFork({forkId: leafId});
     }

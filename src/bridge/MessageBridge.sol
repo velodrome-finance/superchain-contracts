@@ -5,6 +5,7 @@ import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 
 import {IMessageBridge} from "../interfaces/bridge/IMessageBridge.sol";
 import {IMessageSender} from "../interfaces/bridge/IMessageSender.sol";
+import {IVoter} from "../interfaces/external/IVoter.sol";
 
 import {Commands} from "../libraries/Commands.sol";
 
@@ -38,9 +39,12 @@ contract MessageBridge is IMessageBridge, Ownable {
 
     /// @inheritdoc IMessageBridge
     function sendMessage(uint256 _chainid, bytes calldata _message) external payable {
-        (uint256 command,) = abi.decode(_message, (uint256, bytes));
+        (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
         if (command == Commands.CREATE_GAUGE) {
             if (msg.sender != gaugeFactory) revert NotAuthorized(Commands.CREATE_GAUGE);
+        } else if (command == Commands.GET_REWARD) {
+            (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
+            if (msg.sender != IVoter(voter).gaugeToBribe(gauge)) revert NotAuthorized(Commands.GET_REWARD);
         }
 
         IMessageSender(module).sendMessage{value: msg.value}({_chainid: _chainid, _message: _message});

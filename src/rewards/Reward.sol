@@ -213,17 +213,17 @@ abstract contract Reward is IReward, ReentrancyGuard {
     }
 
     /// @inheritdoc IReward
-    function getReward(uint256 tokenId, address[] memory tokens) external virtual nonReentrant {}
+    function getReward(bytes calldata _payload) external virtual nonReentrant {}
 
     /// @dev used with all getReward implementations
-    function _getReward(address recipient, uint256 tokenId, address[] memory tokens) internal {
-        uint256 _length = tokens.length;
+    function _getReward(address _recipient, uint256 _tokenId, address[] memory _tokens) internal {
+        uint256 _length = _tokens.length;
         for (uint256 i = 0; i < _length; i++) {
-            uint256 _reward = earned(tokens[i], tokenId);
-            lastEarn[tokens[i]][tokenId] = block.timestamp;
-            if (_reward > 0) IERC20(tokens[i]).safeTransfer(recipient, _reward);
+            uint256 _reward = earned(_tokens[i], _tokenId);
+            lastEarn[_tokens[i]][_tokenId] = block.timestamp;
+            if (_reward > 0) IERC20(_tokens[i]).safeTransfer(_recipient, _reward);
 
-            emit ClaimRewards(recipient, tokens[i], _reward);
+            emit ClaimRewards(_recipient, _tokens[i], _reward);
         }
     }
 

@@ -10,6 +10,8 @@ interface IRootFeesVotingReward {
     function bridge() external view returns (address);
     /// @notice Address of voter contract that sets voting power
     function voter() external view returns (address);
+    /// @notice Address of bribe voting reward contract associated with the gauge
+    function bribeVotingReward() external view returns (address);
     /// @notice Address of gauge contract corresponding to this contract
     /// @dev Settable once on deploy only
     function gauge() external view returns (address);
@@ -31,6 +33,4 @@ interface IRootFeesVotingReward {
     /// @param _amount Amount of voting power to withdraw
     /// @param _tokenId token id to withdraw voting power from
     function _withdraw(uint256 _amount, uint256 _tokenId) external;
-
-    // function getReward(uint256 tokenId, address[] memory tokens) {}
 }

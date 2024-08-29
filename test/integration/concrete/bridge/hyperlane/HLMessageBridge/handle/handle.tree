@@ -2,12 +2,12 @@ HandleIntegrationConcreteTest
 ├── When the caller is not mailbox
 │   └── It reverts with NotMailbox
 └── When the caller is mailbox
-    ├── When the origin is not root 
+    ├── When the origin is not root
     │   └── It should revert with NotRoot
-    └── When the origin is root 
-        ├── When the sender is not module 
+    └── When the origin is root
+        ├── When the sender is not module
         │   └── It should revert with NotModule
-        └── When the sender is module 
+        └── When the sender is module
             ├── When the command is deposit
             │   ├── It decodes the gauge address from the message
             │   ├── It calls deposit on the fee rewards contract corresponding to the gauge with the payload
@@ -17,6 +17,11 @@ HandleIntegrationConcreteTest
             │   ├── It decodes the gauge address from the message
             │   ├── It calls withdraw on the fee rewards contract corresponding to the gauge with the payload
             │   ├── It calls withdraw on the incentive rewards contract corresponding to the gauge with the payload
+            │   └── It emits the {ReceivedMessage} event
+            ├── When the command is get reward
+            │   ├── It decodes the gauge address from the message
+            │   ├── It calls get reward on the fee rewards contract corresponding to the gauge with the payload
+            │   ├── It calls get reward on the incentive rewards contract corresponding to the gauge with the payload
             │   └── It emits the {ReceivedMessage} event
             ├── When the command is createGauge
             │   ├── When there is no pool for new gauge

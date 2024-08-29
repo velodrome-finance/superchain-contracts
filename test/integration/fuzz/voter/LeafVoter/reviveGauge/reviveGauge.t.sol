@@ -20,7 +20,7 @@ contract ReviveGaugeIntegrationFuzzTest is LeafVoterTest {
     }
 
     function testFuzz_WhenAddressGivenIsNotAGauge(address _gauge) external whenCallerIsEmergencyCouncil {
-        vm.assume(_gauge != address(leafGauge));
+        vm.assume(_gauge != address(leafGauge) && _gauge != address(bribeGauge));
         // It should revert with NotAGauge
         vm.expectRevert(ILeafVoter.NotAGauge.selector);
         leafVoter.reviveGauge(_gauge);

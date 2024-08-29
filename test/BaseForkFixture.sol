@@ -39,7 +39,7 @@ import {RootHLMessageBridge} from "src/mainnet/bridge/hyperlane/RootHLMessageBri
 import {RootHLTokenBridge} from "src/mainnet/bridge/hyperlane/RootHLTokenBridge.sol";
 
 import {IRootVotingRewardsFactory, RootVotingRewardsFactory} from "src/mainnet/rewards/RootVotingRewardsFactory.sol";
-import {RootBribeVotingReward} from "src/mainnet/rewards/RootBribeVotingReward.sol";
+import {IRootBribeVotingReward, RootBribeVotingReward} from "src/mainnet/rewards/RootBribeVotingReward.sol";
 import {IRootFeesVotingReward, RootFeesVotingReward} from "src/mainnet/rewards/RootFeesVotingReward.sol";
 
 import {FeesVotingReward} from "src/rewards/FeesVotingReward.sol";
@@ -50,6 +50,7 @@ import {CreateX} from "test/mocks/CreateX.sol";
 import {TestERC20} from "test/mocks/TestERC20.sol";
 import {MultichainMockMailbox} from "test/mocks/MultichainMockMailbox.sol";
 import {MockVoter} from "test/mocks/MockVoter.sol";
+import {MockVotingEscrow} from "test/mocks/MockVotingEscrow.sol";
 import {MockFactoryRegistry} from "test/mocks/MockFactoryRegistry.sol";
 import {MockWETH} from "test/mocks/MockWETH.sol";
 import {TestConstants} from "test/utils/TestConstants.sol";
@@ -98,6 +99,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
     // root-only mocks
     TestERC20 public rootRewardToken;
     MockVoter public mockVoter;
+    MockVotingEscrow public mockEscrow;
     MockFactoryRegistry public mockFactoryRegistry;
     MultichainMockMailbox public rootMailbox;
     TestIsm public rootIsm;
@@ -180,8 +182,12 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootIsm = new TestIsm();
         rootRewardToken = new TestERC20("Reward Token", "RWRD", 18);
         mockFactoryRegistry = new MockFactoryRegistry();
-        mockVoter =
-            new MockVoter({_rewardToken: address(rootRewardToken), _factoryRegistry: address(mockFactoryRegistry)});
+        mockEscrow = new MockVotingEscrow();
+        mockVoter = new MockVoter({
+            _rewardToken: address(rootRewardToken),
+            _factoryRegistry: address(mockFactoryRegistry),
+            _ve: address(mockEscrow)
+        });
         vm.stopPrank();
 
         // deploy root contracts
@@ -584,6 +590,10 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootFVR = RootFeesVotingReward(mockVoter.gaugeToFees(address(rootGauge)));
         rootIVR = RootBribeVotingReward(mockVoter.gaugeToBribe(address(rootGauge)));
 
+        // create pool & gauge to whitelist WETH as bribe token
+        address bribePool = rootPoolFactory.createPool({tokenA: address(token0), tokenB: address(weth), stable: false});
+        mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(bribePool)});
+
         vm.selectFork({forkId: leafId});
         // set up leaf pool & gauge by processing pending `createGauge` message in mailbox
         leafMailbox.processNextInboundMessage();
@@ -591,6 +601,9 @@ abstract contract BaseForkFixture is Test, TestConstants {
         leafGauge = LeafGauge(leafVoter.gauges(address(leafPool)));
         leafFVR = FeesVotingReward(leafVoter.gaugeToFees(address(leafGauge)));
         leafIVR = BribeVotingReward(leafVoter.gaugeToBribe(address(leafGauge)));
+
+        // set up pool & gauge for bribe token on leaf by processing pending `createGauge` message in mailbox
+        leafMailbox.processNextInboundMessage();
     }
 
     function createUsers() internal {

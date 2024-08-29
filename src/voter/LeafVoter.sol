@@ -155,24 +155,6 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
     }
 
     /// @inheritdoc ILeafVoter
-    function claimBribes(address[] memory _bribes, address[][] memory _tokens, uint256 _tokenId) external {
-        // if (!IVotingEscrow(ve).isApprovedOrOwner(msg.sender, _tokenId)) revert NotApprovedOrOwner();
-        uint256 _length = _bribes.length;
-        for (uint256 i = 0; i < _length; i++) {
-            IReward(_bribes[i]).getReward(_tokenId, _tokens[i]);
-        }
-    }
-
-    /// @inheritdoc ILeafVoter
-    function claimFees(address[] memory _fees, address[][] memory _tokens, uint256 _tokenId) external {
-        // if (!IVotingEscrow(ve).isApprovedOrOwner(msg.sender, _tokenId)) revert NotApprovedOrOwner();
-        uint256 _length = _fees.length;
-        for (uint256 i = 0; i < _length; i++) {
-            IReward(_fees[i]).getReward(_tokenId, _tokens[i]);
-        }
-    }
-
-    /// @inheritdoc ILeafVoter
     function setEmergencyCouncil(address _council) public {
         if (msg.sender != emergencyCouncil) revert NotEmergencyCouncil();
         if (_council == address(0)) revert ZeroAddress();

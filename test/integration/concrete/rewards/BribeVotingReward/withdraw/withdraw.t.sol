@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "../BribeVotingReward.t.sol";
 
-contract WithdrawIntegrationConcreteTest is BribeVotingRewards {
+contract WithdrawIntegrationConcreteTest is BribeVotingRewardTest {
     function test_WhenCallerIsNotTheModuleSetOnTheBridge() external {
         // It reverts with {NotAuthorized}
         uint256 amount = TOKEN_1 * 1000;

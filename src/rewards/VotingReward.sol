@@ -2,6 +2,7 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import {Reward} from "./Reward.sol";
+import {IMessageBridge} from "../interfaces/bridge/IMessageBridge.sol";
 
 /// @title Base voting reward contract for distribution of rewards by token id
 ///        on a weekly basis
@@ -20,9 +21,11 @@ abstract contract VotingReward is Reward {
     }
 
     /// @inheritdoc Reward
-    function getReward(uint256 tokenId, address[] memory tokens) external override nonReentrant {
-        // if (!IVotingEscrow(ve).isApprovedOrOwner(sender, tokenId) && sender != voter) revert NotAuthorized();
-        _getReward(msg.sender, tokenId, tokens);
+    function getReward(bytes calldata _payload) external override nonReentrant {
+        if (msg.sender != IMessageBridge(authorized).module()) revert NotAuthorized();
+        (address owner, uint256 tokenId, address[] memory tokens) = abi.decode(_payload, (address, uint256, address[]));
+
+        _getReward({_recipient: owner, _tokenId: tokenId, _tokens: tokens});
     }
 
     /// @inheritdoc Reward

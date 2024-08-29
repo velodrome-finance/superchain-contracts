@@ -1,0 +1,11 @@
+GetRewardIntegrationConcreteTest
+├── When caller is not the module set on the bridge
+│   └── It reverts with {NotAuthorized}
+└── When caller is the module set on the bridge
+    ├── When there are no claimable rewards for token id
+    │   ├── It should update lastEarn timestamp for token id on the leaf fee voting contract
+    │   └── It should emit a {ClaimRewards} event
+    └── When there are claimable rewards for token id
+        ├── It should update lastEarn timestamp for token id on the leaf fee voting contract
+        ├── It should transfer token id's rewards to recipient on the leaf fee voting contract
+        └── It should emit a {ClaimRewards} event

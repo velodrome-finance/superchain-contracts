@@ -27,15 +27,8 @@ contract CreateGaugeIntegrationConcreteTest is RootGaugeFactoryTest {
         // It should call createGauge with leaf pool and factory on corresponding leaf voter
         // It should create a new gauge on leaf chain with same address as root gauge
         // It should emit a {GaugeCreated} event
-        address rootFVR = address(
-            new RootFeesVotingReward({
-                _bridge: address(rootBridge),
-                _voter: address(mockVoter),
-                _rewards: new address[](0)
-            })
-        );
-
-        vm.prank(address(mockVoter));
+        vm.startPrank(address(mockVoter));
+        (address rootFVR,) = rootVotingRewardsFactory.createRewards(address(0), new address[](0));
         RootGauge rootGauge = RootGauge(
             rootGaugeFactory.createGauge(
                 address(0), address(rootPool), address(rootFVR), address(rootRewardToken), true
