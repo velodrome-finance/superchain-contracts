@@ -4,7 +4,111 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../MessageBridge.t.sol";
 
 contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
+    uint256 public command;
+
+    modifier whenTheCommandIsDeposit() {
+        command = Commands.DEPOSIT;
+        _;
+    }
+
+    function test_WhenTheCallerIsNotAFeeContractRegisteredOnTheVoter() external whenTheCommandIsDeposit {
+        // It should revert with {NotAuthorized}
+        uint256 ethAmount = TOKEN_1;
+        vm.deal({account: users.charlie, newBalance: ethAmount});
+
+        uint256 amount = TOKEN_1 * 1000;
+        uint256 tokenId = 1;
+        bytes memory payload = abi.encode(amount, tokenId);
+        bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
+
+        vm.prank(users.charlie);
+        vm.expectRevert(abi.encodeWithSelector(IMessageBridge.NotAuthorized.selector, Commands.DEPOSIT));
+        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+    }
+
+    function test_WhenTheCallerIsAFeeContractRegisteredOnTheVoter() external whenTheCommandIsDeposit {
+        // It dispatches the deposit message to the message module
+        uint256 ethAmount = TOKEN_1;
+        vm.deal({account: address(rootFVR), newBalance: ethAmount});
+
+        uint256 amount = TOKEN_1 * 1000;
+        uint256 tokenId = 1;
+        bytes memory payload = abi.encode(amount, tokenId);
+        bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
+
+        vm.prank(address(rootFVR));
+        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+
+        assertEq(address(rootMessageModule).balance, 0);
+
+        vm.selectFork({forkId: leafId});
+        leafMailbox.processNextInboundMessage();
+
+        assertEq(leafFVR.totalSupply(), amount);
+        assertEq(leafFVR.balanceOf(tokenId), amount);
+        assertEq(leafIVR.totalSupply(), amount);
+        assertEq(leafIVR.balanceOf(tokenId), amount);
+    }
+
+    modifier whenTheCommandIsWithdraw() {
+        command = Commands.WITHDRAW;
+        _;
+    }
+
+    function test_WhenTheCallerIsNotAFeeContractRegisteredOnTheVoter_() external whenTheCommandIsWithdraw {
+        // It should revert with {NotAuthorized}
+        uint256 ethAmount = TOKEN_1;
+        vm.deal({account: address(rootFVR), newBalance: ethAmount});
+        vm.deal({account: users.charlie, newBalance: ethAmount});
+
+        uint256 amount = TOKEN_1 * 1000;
+        uint256 tokenId = 1;
+        bytes memory payload = abi.encode(amount, tokenId);
+        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
+
+        vm.startPrank(address(rootFVR));
+        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+        message = abi.encode(command, abi.encode(address(leafGauge), payload));
+        vm.startPrank(users.charlie);
+        vm.expectRevert(abi.encodeWithSelector(IMessageBridge.NotAuthorized.selector, Commands.WITHDRAW));
+        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+    }
+
+    function test_WhenTheCallerIsAFeeContractRegisteredOnTheVoter_() external whenTheCommandIsWithdraw {
+        // It dispatches the withdraw message to the message module
+        uint256 ethAmount = TOKEN_1;
+        vm.deal({account: address(rootFVR), newBalance: ethAmount});
+
+        uint256 amount = TOKEN_1 * 1000;
+        uint256 tokenId = 1;
+        bytes memory payload = abi.encode(amount, tokenId);
+        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
+
+        vm.startPrank(address(rootFVR));
+        rootMessageBridge.sendMessage{value: ethAmount / 2}({_chainid: leaf, _message: message});
+        message = abi.encode(command, abi.encode(address(leafGauge), payload));
+        rootMessageBridge.sendMessage{value: ethAmount / 2}({_chainid: leaf, _message: message});
+
+        assertEq(address(rootMessageModule).balance, 0);
+
+        vm.selectFork({forkId: leafId});
+        leafMailbox.processNextInboundMessage();
+
+        assertEq(leafFVR.totalSupply(), amount);
+        assertEq(leafFVR.balanceOf(tokenId), amount);
+        assertEq(leafIVR.totalSupply(), amount);
+        assertEq(leafIVR.balanceOf(tokenId), amount);
+
+        leafMailbox.processNextInboundMessage();
+
+        assertEq(leafFVR.totalSupply(), 0);
+        assertEq(leafFVR.balanceOf(tokenId), 0);
+        assertEq(leafIVR.totalSupply(), 0);
+        assertEq(leafIVR.balanceOf(tokenId), 0);
+    }
+
     modifier whenTheCommandIsCreateGauge() {
+        command = Commands.CREATE_GAUGE;
         _;
     }
 
@@ -131,27 +235,17 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         assertEq(weth.balanceOf(users.alice), TOKEN_1);
     }
 
-    function test_WhenTheCommandIsNotCreateGauge() external {
-        // It dispatches the message to the message module
+    function test_WhenTheCommandIsNotAnyExpectedCommand() external {
+        // It should revert with {InvalidCommand}
         uint256 ethAmount = TOKEN_1;
+        command = type(uint256).max;
         vm.deal({account: users.alice, newBalance: ethAmount});
 
-        uint256 amount = TOKEN_1 * 1000;
-        uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
+        bytes memory payload = abi.encode(address(token0), address(token1), true);
+        bytes memory message = abi.encode(command, payload);
 
         vm.prank(users.alice);
+        vm.expectRevert(IMessageBridge.InvalidCommand.selector);
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
-
-        assertEq(address(rootMessageModule).balance, 0);
-
-        vm.selectFork({forkId: leafId});
-        leafMailbox.processNextInboundMessage();
-
-        assertEq(leafFVR.totalSupply(), amount);
-        assertEq(leafFVR.balanceOf(tokenId), amount);
-        assertEq(leafIVR.totalSupply(), amount);
-        assertEq(leafIVR.balanceOf(tokenId), amount);
     }
 }

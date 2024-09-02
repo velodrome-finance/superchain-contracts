@@ -1,7 +1,17 @@
 SendMessageIntegrationConcreteTest
+├── When the command is deposit
+│   ├── When the caller is not a fee contract registered on the voter
+│   │   └── It should revert with {NotAuthorized}
+│   └── When the caller is a fee contract registered on the voter
+│       └── It dispatches the deposit message to the message module
+├── When the command is withdraw
+│   ├── When the caller is not a fee contract registered on the voter_
+│   │   └── It should revert with {NotAuthorized}
+│   └── When the caller is a fee contract registered on the voter_
+│       └── It dispatches the withdraw message to the message module
 ├── When the command is create gauge
 │   ├── When the caller is not root gauge factory
-│   │   └── It should revert with NotAuthorized
+│   │   └── It should revert with {NotAuthorized}
 │   └── When the caller is root gauge factory
 │       └── It dispatches the create gauge message to the message module
 ├── When the command is get reward
@@ -9,5 +19,5 @@ SendMessageIntegrationConcreteTest
 │   │   └── It should revert with NotAuthorized
 │   └── When the caller is an incentive contract registered on the voter
 │       └── It dispatches the get reward message to the message module
-└── When the command is not create gauge
-    └── It dispatches the message to the message module
+└── When the command is not any expected command
+    └── It should revert with {InvalidCommand}

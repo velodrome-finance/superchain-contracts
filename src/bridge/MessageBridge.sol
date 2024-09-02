@@ -40,11 +40,19 @@ contract MessageBridge is IMessageBridge, Ownable {
     /// @inheritdoc IMessageBridge
     function sendMessage(uint256 _chainid, bytes calldata _message) external payable {
         (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
-        if (command == Commands.CREATE_GAUGE) {
+        if (command == Commands.DEPOSIT) {
+            (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
+            if (msg.sender != IVoter(voter).gaugeToFees(gauge)) revert NotAuthorized(Commands.DEPOSIT);
+        } else if (command == Commands.WITHDRAW) {
+            (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
+            if (msg.sender != IVoter(voter).gaugeToFees(gauge)) revert NotAuthorized(Commands.WITHDRAW);
+        } else if (command == Commands.CREATE_GAUGE) {
             if (msg.sender != gaugeFactory) revert NotAuthorized(Commands.CREATE_GAUGE);
         } else if (command == Commands.GET_REWARD) {
             (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
             if (msg.sender != IVoter(voter).gaugeToBribe(gauge)) revert NotAuthorized(Commands.GET_REWARD);
+        } else {
+            revert InvalidCommand();
         }
 
         IMessageSender(module).sendMessage{value: msg.value}({_chainid: _chainid, _message: _message});

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IMessageBridge {
+    error InvalidCommand();
     error ZeroAddress();
     error NotAuthorized(uint256 command);
 
