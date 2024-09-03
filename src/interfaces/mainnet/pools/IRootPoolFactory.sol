@@ -34,17 +34,13 @@ interface IRootPoolFactory {
     /// @return Address of pool
     function getPool(address tokenA, address tokenB, bool stable) external view returns (address);
 
-    /// @notice Is a valid pool created by this factory
-    /// @dev Used by voter for gauge creation
-    /// @param pool Address of pool
-    /// @return Boolean indicating if pool is created by this factory
-    function isPool(address pool) external view returns (bool);
+    /// @notice Always returns false as these pools are not real pools
+    /// @dev Guarantees gauges attached to pools must be created by the governor
+    function isPool(address pool) external pure returns (bool);
 
-    /// @notice Is a valid pool created by this factory
-    /// @dev Used by voter for gauge creation
-    /// @param pool Address of pool
-    /// @return Boolean indicating if pool is created by this factory
-    function isPair(address pool) external view returns (bool);
+    /// @notice Always returns false as these pools are not real pools
+    /// @dev Guarantees gauges attached to pools must be created by the governor
+    function isPair(address pool) external pure returns (bool);
 
     /// @notice Create a pool given two tokens
     /// @dev Token order does not matter

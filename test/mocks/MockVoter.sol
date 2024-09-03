@@ -19,23 +19,25 @@ contract MockVoter is IVoter {
     uint256 internal constant DURATION = 7 days;
 
     /// @dev pool => gauge
-    mapping(address => address) public override gauges;
+    mapping(address => address) public gauges;
     /// @dev gauge => isAlive
-    mapping(address => bool) public override isAlive;
-    mapping(address => address) public override gaugeToFees;
-    mapping(address => address) public override gaugeToBribe;
-    mapping(address => bool) public override isWhitelistedToken;
+    mapping(address => bool) public isAlive;
+    mapping(address => address) public gaugeToFees;
+    mapping(address => address) public gaugeToBribe;
+    mapping(address => bool) public isWhitelistedToken;
 
     IERC20 internal immutable rewardToken;
-    IFactoryRegistry public immutable override factoryRegistry;
-    address public immutable override emergencyCouncil;
-    address public immutable override ve;
+    IFactoryRegistry public immutable factoryRegistry;
+    address public immutable emergencyCouncil;
+    address public immutable ve;
+    address public immutable governor;
 
-    constructor(address _rewardToken, address _factoryRegistry, address _ve) {
+    constructor(address _rewardToken, address _factoryRegistry, address _ve, address _governor) {
         rewardToken = IERC20(_rewardToken);
         factoryRegistry = IFactoryRegistry(_factoryRegistry);
         emergencyCouncil = msg.sender;
         ve = _ve;
+        governor = _governor;
     }
 
     function claimFees(address[] memory, address[][] memory, uint256) external override {}
@@ -57,7 +59,7 @@ contract MockVoter is IVoter {
 
         address gauge =
             RootGaugeFactory(gaugeFactory).createGauge(forwarder, _pool, feesVotingReward, address(rewardToken), true);
-        require(IRootPoolFactory(_poolFactory).isPair(_pool));
+        require(IRootPoolFactory(_poolFactory).isPair(_pool) || msg.sender == governor);
         isAlive[gauge] = true;
         gauges[_pool] = gauge;
         gaugeToFees[gauge] = feesVotingReward;

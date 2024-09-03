@@ -186,7 +186,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
         mockVoter = new MockVoter({
             _rewardToken: address(rootRewardToken),
             _factoryRegistry: address(mockFactoryRegistry),
-            _ve: address(mockEscrow)
+            _ve: address(mockEscrow),
+            _governor: users.owner
         });
         vm.stopPrank();
 
@@ -584,6 +585,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootMailbox.setDomainForkId({_domain: leaf, _forkId: leafId});
 
         // set up root pool & gauge
+        vm.startPrank(users.owner);
         rootPool =
             RootPool(rootPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: false}));
         rootGauge = RootGauge(mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(rootPool)}));
@@ -593,6 +595,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
         // create pool & gauge to whitelist WETH as bribe token
         address bribePool = rootPoolFactory.createPool({tokenA: address(token0), tokenB: address(weth), stable: false});
         mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(bribePool)});
+        vm.stopPrank();
 
         vm.selectFork({forkId: leafId});
         // set up leaf pool & gauge by processing pending `createGauge` message in mailbox

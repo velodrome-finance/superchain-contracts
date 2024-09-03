@@ -17,8 +17,6 @@ contract RootPoolFactory is IRootPoolFactory {
     mapping(address => mapping(address => mapping(bool => address))) private _getPool;
     /// @dev List of all pools
     address[] internal _allPools;
-    /// @dev Checks if address is pool (used by Voter)
-    mapping(address => bool) private _isPool;
 
     constructor(address _implementation, uint256 _chainId) {
         implementation = _implementation;
@@ -46,13 +44,13 @@ contract RootPoolFactory is IRootPoolFactory {
     }
 
     /// @inheritdoc IRootPoolFactory
-    function isPool(address pool) external view returns (bool) {
-        return _isPool[pool];
+    function isPool(address pool) external pure returns (bool) {
+        return false;
     }
 
     /// @inheritdoc IRootPoolFactory
-    function isPair(address pool) external view returns (bool) {
-        return _isPool[pool];
+    function isPair(address pool) external pure returns (bool) {
+        return false;
     }
 
     /// @inheritdoc IRootPoolFactory
@@ -67,7 +65,6 @@ contract RootPoolFactory is IRootPoolFactory {
         _getPool[token0][token1][stable] = pool;
         _getPool[token1][token0][stable] = pool; // populate mapping in the reverse direction
         _allPools.push(pool);
-        _isPool[pool] = true;
         emit PoolCreated({token0: token0, token1: token1, stable: stable, pool: pool, length: _allPools.length});
     }
 }

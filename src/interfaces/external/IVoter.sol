@@ -32,6 +32,8 @@ interface IVoter {
 
     function ve() external view returns (address);
 
+    function governor() external view returns (address);
+
     /// @notice Claim emissions from gauges.
     /// @param _gauges Array of gauges to collect emissions from.
     // function claimRewards(address[] memory _gauges) external;
