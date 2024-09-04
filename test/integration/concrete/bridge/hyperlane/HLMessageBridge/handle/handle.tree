@@ -36,5 +36,11 @@ HandleIntegrationConcreteTest
             │       ├── It decodes the pool configuration from the message
             │       ├── It calls createGauge on gauge factory for pool with given config
             │       └── It emits the {ReceivedMessage} event
+            ├── When the command is notify
+            │   ├── It decodes the gauge address and the amount from the message
+            │   ├── It calls mint on the bridge
+            │   ├── It approves the gauge to spend amount of xerc20
+            │   ├── It calls notify reward amount on the decoded gauge 
+            │   └── It emits the {ReceivedMessage} event
             └── When the command is invalid
                 └── It reverts with {InvalidCommand}

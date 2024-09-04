@@ -6,10 +6,14 @@ import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 
+import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "@openzeppelin5/contracts/token/ERC20/IERC20.sol";
+
 import {IHLMessageBridge, IMessageSender} from "../../interfaces/bridge/hyperlane/IHLMessageBridge.sol";
 import {IHLHandler} from "../../interfaces/bridge/hyperlane/IHLHandler.sol";
 import {IMessageReceiver} from "../../interfaces/bridge/IMessageReceiver.sol";
 import {ILeafVoter} from "../../interfaces/voter/ILeafVoter.sol";
+import {ILeafGauge} from "../../interfaces/gauges/ILeafGauge.sol";
 import {IPoolFactory} from "../../interfaces/pools/IPoolFactory.sol";
 import {IMessageBridge} from "../../interfaces/bridge/IMessageBridge.sol";
 import {IReward} from "../../interfaces/rewards/IReward.sol";
@@ -20,9 +24,12 @@ import {Commands} from "../../libraries/Commands.sol";
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
 contract HLMessageBridge is IHLMessageBridge, IHLHandler {
     using Address for address;
+    using SafeERC20 for IERC20;
 
     /// @inheritdoc IHLMessageBridge
     address public immutable bridge;
+    /// @inheritdoc IHLMessageBridge
+    address public immutable xerc20;
     /// @inheritdoc IHLMessageBridge
     address public immutable voter;
     /// @inheritdoc IHLMessageBridge
@@ -32,6 +39,7 @@ contract HLMessageBridge is IHLMessageBridge, IHLHandler {
 
     constructor(address _bridge, address _mailbox, address _ism) {
         bridge = _bridge;
+        xerc20 = IMessageBridge(_bridge).xerc20();
         voter = IMessageBridge(_bridge).voter();
         mailbox = _mailbox;
         securityModule = IInterchainSecurityModule(_ism);
@@ -92,6 +100,11 @@ contract HLMessageBridge is IHLMessageBridge, IHLHandler {
             (address gauge, bytes memory payload) = abi.decode(messageWithoutCommand, (address, bytes));
             address fvr = ILeafVoter(voter).gaugeToFees({_gauge: gauge});
             IReward(fvr).getReward({_payload: payload});
+        } else if (command == Commands.NOTIFY) {
+            (address gauge, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
+            IMessageBridge(bridge).mint({_recipient: address(this), _amount: amount});
+            IERC20(xerc20).safeIncreaseAllowance({spender: gauge, value: amount});
+            ILeafGauge(gauge).notifyRewardAmount({amount: amount});
         } else {
             revert InvalidCommand();
         }

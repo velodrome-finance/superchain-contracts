@@ -55,7 +55,7 @@ contract RootGaugeFactory is IRootGaugeFactory {
                     _rewardToken, // reward token
                     xerc20, // xerc20 corresponding to reward token
                     lockbox, // lockbox to convert reward token to xerc20
-                    bridge, // bridge to communicate x-chain
+                    messageBridge, // message bridge to communicate x-chain
                     _chainId // chain id associated with gauge
                 )
             )

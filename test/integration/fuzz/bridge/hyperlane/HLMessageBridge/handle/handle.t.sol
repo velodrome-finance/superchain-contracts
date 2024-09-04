@@ -10,6 +10,8 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
     function setUp() public override {
         super.setUp();
         vm.selectFork({forkId: leafId});
+
+        setLimits({_rootMintingLimit: MAX_TOKENS, _leafMintingLimit: MAX_TOKENS});
     }
 
     function test_WhenCallerIsNotMailbox(address _caller) external {
@@ -109,6 +111,39 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
 
     modifier whenTheCommandIsCreateGauge() {
         _;
+    }
+
+    function test_WhenTheCommandIsNotify(uint256 amount)
+        external
+        whenTheCallerIsMailbox
+        whenTheOriginIsRoot
+        whenTheSenderIsModule
+    {
+        // It decodes the gauge address and the amount from the message
+        // It calls mint on the bridge
+        // It approves the gauge to spend amount of xerc20
+        // It calls notify reward amount on the decoded gauge
+        // It emits the {ReceivedMessage} event
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
+
+        amount = bound(amount, timeUntilNext, MAX_TOKENS);
+        bytes memory payload = abi.encode(address(leafGauge), amount);
+        bytes memory message = abi.encode(Commands.NOTIFY, payload);
+
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), 0);
+
+        vm.expectEmit(address(leafMessageModule));
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
+        assertEq(leafGauge.rewardPerTokenStored(), 0);
+        assertEq(leafGauge.rewardRate(), amount / WEEK);
+        assertEq(leafGauge.rewardRateByEpoch(rootStartTime), amount / WEEK);
+        assertEq(leafGauge.lastUpdateTime(), block.timestamp);
+        assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
     }
 
     function test_WhenTheCommandIsInvalid(uint256 amount)

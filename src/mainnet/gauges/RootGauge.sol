@@ -6,7 +6,10 @@ import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.so
 
 import {IRootGauge} from "../../interfaces/mainnet/gauges/IRootGauge.sol";
 import {IXERC20Lockbox} from "../../interfaces/xerc20/IXERC20Lockbox.sol";
-import {IBridge} from "../../interfaces/bridge/IBridge.sol";
+import {IMessageBridge} from "../../interfaces/bridge/IMessageBridge.sol";
+import {Commands} from "../../libraries/Commands.sol";
+
+import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
 
 /// @notice RootGauge that forward emissions to the corresponding LeafGauge on the leaf chain
 contract RootGauge is IRootGauge {
@@ -42,13 +45,20 @@ contract RootGauge is IRootGauge {
 
     /// @inheritdoc IRootGauge
     function notifyRewardAmount(uint256 _amount) external {
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
+        if (_amount == 0) revert ZeroAmount();
+        if (_amount < timeUntilNext) revert ZeroRewardRate();
+
         IERC20(rewardToken).transferFrom(msg.sender, address(this), _amount);
 
         IERC20(rewardToken).safeIncreaseAllowance({spender: lockbox, value: _amount});
         IXERC20Lockbox(lockbox).deposit({_amount: _amount});
 
         IERC20(xerc20).safeIncreaseAllowance({spender: bridge, value: _amount});
-        IBridge(bridge).sendToken({_amount: _amount, _chainid: uint32(chainid)});
+
+        bytes memory payload = abi.encode(address(this), _amount);
+        bytes memory message = abi.encode(Commands.NOTIFY, payload);
+        IMessageBridge(bridge).sendMessage({_chainid: uint32(chainid), _message: message});
 
         emit NotifyReward({_sender: msg.sender, _amount: _amount});
     }

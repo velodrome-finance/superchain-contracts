@@ -6,7 +6,7 @@ import "../LeafGauge.t.sol";
 contract NotifyRewardAmountIntegrationFuzzTest is LeafGaugeTest {
     function testFuzz_WhenTheCallerIsNotBridge(address _caller) external {
         // It should revert with NotBridge
-        vm.assume(_caller != address(leafBridge));
+        vm.assume(_caller != address(leafMessageModule));
 
         vm.prank(_caller);
         vm.expectRevert(ILeafGauge.NotBridge.selector);
@@ -14,7 +14,7 @@ contract NotifyRewardAmountIntegrationFuzzTest is LeafGaugeTest {
     }
 
     modifier whenTheCallerIsBridge() {
-        vm.startPrank(address(leafBridge));
+        vm.startPrank(address(leafMessageModule));
         _;
     }
 
@@ -24,7 +24,7 @@ contract NotifyRewardAmountIntegrationFuzzTest is LeafGaugeTest {
     {
         // It should revert with ZeroRewardRate
         _amount = bound(_amount, 1, WEEK - 1);
-        deal({token: address(leafXVelo), to: address(leafBridge), give: _amount});
+        deal({token: address(leafXVelo), to: address(leafMessageModule), give: _amount});
         leafXVelo.approve({spender: address(leafGauge), value: _amount});
 
         vm.expectRevert(ILeafGauge.ZeroRewardRate.selector);
@@ -49,15 +49,15 @@ contract NotifyRewardAmountIntegrationFuzzTest is LeafGaugeTest {
         // It should update the period finish timestamp
         // It should emit a {NotifyReward} event
         _amount = bound(_amount, WEEK, MAX_TOKENS);
-        deal({token: address(leafXVelo), to: address(leafBridge), give: _amount});
+        deal({token: address(leafXVelo), to: address(leafMessageModule), give: _amount});
         leafXVelo.approve({spender: address(leafGauge), value: _amount});
 
         vm.expectCall(address(leafPool), abi.encodeCall(IPool.claimFees, ()));
         vm.expectEmit(address(leafGauge));
-        emit ILeafGauge.NotifyReward({_sender: address(leafBridge), _amount: _amount});
+        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: _amount});
         leafGauge.notifyRewardAmount({_amount: _amount});
 
-        assertEq(leafXVelo.balanceOf(address(leafBridge)), 0);
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), _amount);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);
@@ -85,21 +85,21 @@ contract NotifyRewardAmountIntegrationFuzzTest is LeafGaugeTest {
         _amount = bound(_amount, WEEK - _timeskip, MAX_TOKENS);
 
         // inital deposit of partial amount
-        deal({token: address(leafXVelo), to: address(leafBridge), give: initialAmount});
+        deal({token: address(leafXVelo), to: address(leafMessageModule), give: initialAmount});
         leafXVelo.approve({spender: address(leafGauge), value: initialAmount});
         leafGauge.notifyRewardAmount({_amount: initialAmount});
 
         skipTime(_timeskip);
 
-        deal({token: address(leafXVelo), to: address(leafBridge), give: _amount});
+        deal({token: address(leafXVelo), to: address(leafMessageModule), give: _amount});
         leafXVelo.approve({spender: address(leafGauge), value: _amount});
 
         vm.expectCall(address(leafPool), abi.encodeCall(IPool.claimFees, ()));
         vm.expectEmit(address(leafGauge));
-        emit ILeafGauge.NotifyReward({_sender: address(leafBridge), _amount: _amount});
+        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: _amount});
         leafGauge.notifyRewardAmount({_amount: _amount});
 
-        assertEq(leafXVelo.balanceOf(address(leafBridge)), 0);
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), _amount + initialAmount);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);

@@ -2,6 +2,9 @@
 pragma solidity ^0.8.0;
 
 interface IRootGauge {
+    error ZeroAmount();
+    error ZeroRewardRate();
+
     event NotifyReward(address indexed _sender, uint256 _amount);
 
     /// @notice Reward token supported by this gauge

@@ -149,7 +149,7 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         assertEq(leafGauge.stakingToken(), pool);
         assertNotEq(leafGauge.feesVotingReward(), address(0));
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
-        assertEq(leafGauge.bridge(), address(leafBridge));
+        assertEq(leafGauge.bridge(), address(leafMessageBridge));
         assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
     }
 
@@ -297,6 +297,60 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
 
         assertEq(token0.balanceOf(users.alice), TOKEN_1);
         assertEq(token1.balanceOf(users.alice), TOKEN_1);
+    }
+
+    modifier whenTheCommandIsNotify() {
+        command = Commands.NOTIFY;
+        _;
+    }
+
+    function test_WhenTheCallerIsNotAnAliveGauge() external whenTheCommandIsNotify {
+        // It should revert with NotValidGauge
+        uint256 ethAmount = TOKEN_1;
+        vm.deal({account: users.charlie, newBalance: ethAmount});
+
+        uint256 amount = TOKEN_1 * 1000;
+        bytes memory payload = abi.encode(address(leafGauge), amount);
+        bytes memory message = abi.encode(command, payload);
+
+        vm.prank(users.charlie);
+        vm.expectRevert(abi.encodeWithSelector(IMessageBridge.NotValidGauge.selector));
+        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+    }
+
+    function test_WhenTheCallerIsAnAliveGauge() external whenTheCommandIsNotify {
+        // It dispatches the notify message to the message module
+        uint256 ethAmount = TOKEN_1;
+        vm.deal({account: address(rootGauge), newBalance: ethAmount});
+
+        uint256 amount = TOKEN_1 * 1000;
+        deal(address(leafXVelo), address(rootGauge), amount);
+
+        setLimits({_rootMintingLimit: amount, _leafMintingLimit: amount});
+
+        bytes memory payload = abi.encode(address(leafGauge), amount);
+        bytes memory message = abi.encode(command, payload);
+
+        vm.startPrank(address(rootGauge));
+        leafXVelo.approve(address(rootMessageBridge), amount);
+        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+
+        assertEq(address(rootMessageModule).balance, 0);
+
+        vm.selectFork({forkId: leafId});
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), 0);
+
+        leafMailbox.processNextInboundMessage();
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
+
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
+        assertEq(leafGauge.rewardPerTokenStored(), 0);
+        assertEq(leafGauge.rewardRate(), amount / timeUntilNext);
+        assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), amount / timeUntilNext);
+        assertEq(leafGauge.lastUpdateTime(), block.timestamp);
+        assertEq(leafGauge.periodFinish(), block.timestamp + timeUntilNext);
     }
 
     function test_WhenTheCommandIsNotAnyExpectedCommand() external {

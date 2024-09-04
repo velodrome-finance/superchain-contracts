@@ -38,7 +38,7 @@ contract CreateGaugeIntegrationConcreteTest is RootGaugeFactoryTest {
         assertEq(rootGauge.rewardToken(), address(rootRewardToken));
         assertEq(rootGauge.xerc20(), address(rootXVelo));
         assertEq(rootGauge.lockbox(), address(rootLockbox));
-        assertEq(rootGauge.bridge(), address(rootBridge));
+        assertEq(rootGauge.bridge(), address(rootMessageBridge));
         assertEq(rootGauge.chainid(), leaf);
 
         vm.selectFork({forkId: leafId});
@@ -78,7 +78,7 @@ contract CreateGaugeIntegrationConcreteTest is RootGaugeFactoryTest {
         assertEq(leafGauge.stakingToken(), pool);
         assertNotEq(leafGauge.feesVotingReward(), address(0));
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
-        assertEq(leafGauge.bridge(), address(leafBridge));
+        assertEq(leafGauge.bridge(), address(leafMessageBridge));
         assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
 
         assertEq(address(leafGauge), address(rootGauge));

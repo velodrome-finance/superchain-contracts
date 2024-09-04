@@ -24,5 +24,10 @@ SendMessageIntegrationConcreteTest
 │   │   └── It should revert with NotAuthorized
 │   └── When the caller is a fees contract registered on the voter
 │       └── It dispatches the get fees message to the message module
+├── When the command is notify
+│   ├── When the caller is not an alive gauge 
+│   │   └── It should revert with NotValidGauge
+│   └── When the caller is an alive gauge 
+│       └── It dispatches the notify message to the message module
 └── When the command is not any expected command
     └── It should revert with {InvalidCommand}

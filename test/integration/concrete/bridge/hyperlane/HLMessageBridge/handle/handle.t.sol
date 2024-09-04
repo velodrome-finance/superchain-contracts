@@ -30,6 +30,8 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         leafIVR.notifyRewardAmount(address(token1), TOKEN_1);
         leafIVR.notifyRewardAmount(address(weth), TOKEN_1);
         vm.stopPrank();
+
+        setLimits({_rootMintingLimit: TOKEN_1 * 1000, _leafMintingLimit: TOKEN_1 * 1000});
     }
 
     function test_WhenTheCallerIsNotMailbox() external {
@@ -226,7 +228,7 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         assertEq(leafGauge.stakingToken(), pool);
         assertNotEq(leafGauge.feesVotingReward(), address(0));
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
-        assertEq(leafGauge.bridge(), address(leafBridge));
+        assertEq(leafGauge.bridge(), address(leafMessageBridge));
         assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
     }
 
@@ -256,8 +258,30 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         assertEq(leafGauge.stakingToken(), address(leafPool));
         assertNotEq(leafGauge.feesVotingReward(), address(0));
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
-        assertEq(leafGauge.bridge(), address(leafBridge));
+        assertEq(leafGauge.bridge(), address(leafMessageBridge));
         assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
+    }
+
+    function test_WhenTheCommandIsNotify() external whenTheCallerIsMailbox whenTheOriginIsRoot whenTheSenderIsModule {
+        // It decodes the gauge address and the amount from the message
+        // It calls mint on the bridge
+        // It approves the gauge to spend amount of xerc20
+        // It calls notify reward amount on the decoded gauge
+        // It emits the {ReceivedMessage} event
+
+        uint256 amount = TOKEN_1 * 1000;
+        bytes memory payload = abi.encode(address(leafGauge), amount);
+        bytes memory message = abi.encode(Commands.NOTIFY, payload);
+
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), 0);
+
+        vm.expectEmit(address(leafMessageModule));
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
     }
 
     function test_WhenTheCommandIsInvalid() external whenTheCallerIsMailbox whenTheOriginIsRoot whenTheSenderIsModule {

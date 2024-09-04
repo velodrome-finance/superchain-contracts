@@ -10,9 +10,9 @@ contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
         vm.selectFork({forkId: leafId});
 
         uint256 amount = TOKEN_1 * 1000;
-        deal({token: address(leafXVelo), to: address(leafBridge), give: amount});
+        deal({token: address(leafXVelo), to: address(leafMessageModule), give: amount});
 
-        vm.prank(address(leafBridge));
+        vm.prank(address(leafMessageModule));
         leafXVelo.approve({spender: address(leafGauge), value: amount});
     }
 
@@ -24,7 +24,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
     }
 
     modifier whenTheCallerIsBridge() {
-        vm.startPrank(address(leafBridge));
+        vm.startPrank(address(leafMessageModule));
         _;
     }
 
@@ -63,10 +63,10 @@ contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
         uint256 amount = TOKEN_1 * 1000;
         vm.expectCall(address(leafPool), abi.encodeCall(IPool.claimFees, ()));
         vm.expectEmit(address(leafGauge));
-        emit ILeafGauge.NotifyReward({_sender: address(leafBridge), _amount: amount});
+        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: amount});
         leafGauge.notifyRewardAmount({_amount: amount});
 
-        assertEq(leafXVelo.balanceOf(address(leafBridge)), 0);
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);
@@ -90,7 +90,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
         // It should update the period finish timestamp
         // It should emit a {NotifyReward} event
         uint256 amount = TOKEN_1 * 1000;
-        deal({token: address(leafXVelo), to: address(leafBridge), give: amount * 2});
+        deal({token: address(leafXVelo), to: address(leafMessageModule), give: amount * 2});
         leafXVelo.approve({spender: address(leafGauge), value: amount * 2});
 
         // inital deposit of partial amount
@@ -100,10 +100,10 @@ contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
 
         vm.expectCall(address(leafPool), abi.encodeCall(IPool.claimFees, ()));
         vm.expectEmit(address(leafGauge));
-        emit ILeafGauge.NotifyReward({_sender: address(leafBridge), _amount: amount});
+        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: amount});
         leafGauge.notifyRewardAmount({_amount: amount});
 
-        assertEq(leafXVelo.balanceOf(address(leafBridge)), 0);
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount * 2);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);

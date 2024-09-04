@@ -18,9 +18,11 @@ import {Commands} from "src/libraries/Commands.sol";
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
 contract RootHLMessageBridge is IHLMessageBridge {
     using Address for address;
-    /// @inheritdoc IHLMessageBridge
 
+    /// @inheritdoc IHLMessageBridge
     address public immutable bridge;
+    /// @inheritdoc IHLMessageBridge
+    address public immutable xerc20;
     /// @inheritdoc IHLMessageBridge
     address public immutable voter;
     /// @inheritdoc IHLMessageBridge
@@ -30,6 +32,7 @@ contract RootHLMessageBridge is IHLMessageBridge {
 
     constructor(address _bridge, address _mailbox, address _ism) {
         bridge = _bridge;
+        xerc20 = IMessageBridge(_bridge).xerc20();
         voter = IMessageBridge(_bridge).voter();
         mailbox = _mailbox;
         securityModule = IInterchainSecurityModule(_ism);

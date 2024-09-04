@@ -3,6 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 
+import {IXERC20} from "../interfaces/xerc20/IXERC20.sol";
 import {IMessageBridge} from "../interfaces/bridge/IMessageBridge.sol";
 import {IMessageSender} from "../interfaces/bridge/IMessageSender.sol";
 import {IVoter} from "../interfaces/external/IVoter.sol";
@@ -13,6 +14,8 @@ import {Commands} from "../libraries/Commands.sol";
 /// @notice General purpose message bridge contract
 contract MessageBridge is IMessageBridge, Ownable {
     /// @inheritdoc IMessageBridge
+    address public immutable xerc20;
+    /// @inheritdoc IMessageBridge
     address public immutable voter;
     /// @inheritdoc IMessageBridge
     address public immutable poolFactory;
@@ -21,9 +24,15 @@ contract MessageBridge is IMessageBridge, Ownable {
     /// @inheritdoc IMessageBridge
     address public module;
 
-    constructor(address _owner, address _voter, address _module, address _poolFactory, address _gaugeFactory)
-        Ownable(_owner)
-    {
+    constructor(
+        address _owner,
+        address _xerc20,
+        address _voter,
+        address _module,
+        address _poolFactory,
+        address _gaugeFactory
+    ) Ownable(_owner) {
+        xerc20 = _xerc20;
         voter = _voter;
         module = _module;
         poolFactory = _poolFactory;
@@ -35,6 +44,12 @@ contract MessageBridge is IMessageBridge, Ownable {
         if (_module == address(0)) revert ZeroAddress();
         module = _module;
         emit SetModule({_sender: msg.sender, _module: _module});
+    }
+
+    /// @inheritdoc IMessageBridge
+    function mint(address _recipient, uint256 _amount) external {
+        if (msg.sender != module) revert NotModule();
+        IXERC20(xerc20).mint({_user: _recipient, _amount: _amount});
     }
 
     /// @inheritdoc IMessageBridge
@@ -54,6 +69,10 @@ contract MessageBridge is IMessageBridge, Ownable {
         } else if (command == Commands.GET_FEES) {
             (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
             if (msg.sender != IVoter(voter).gaugeToFees(gauge)) revert NotAuthorized(Commands.GET_FEES);
+        } else if (command == Commands.NOTIFY) {
+            if (!IVoter(voter).isAlive(msg.sender)) revert NotValidGauge();
+            (, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
+            IXERC20(xerc20).burn({_user: msg.sender, _amount: amount});
         } else {
             revert InvalidCommand();
         }

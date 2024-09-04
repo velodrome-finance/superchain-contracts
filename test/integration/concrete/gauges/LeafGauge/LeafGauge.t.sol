@@ -11,7 +11,7 @@ contract LeafGaugeTest is BaseForkFixture {
 
         vm.selectFork({forkId: leafId});
         skipToNextEpoch(0); // warp to start of next epoch
-        deal(address(leafXVelo), address(leafBridge), TOKEN_1);
+        deal(address(leafXVelo), address(leafMessageModule), TOKEN_1);
         deal(address(leafXVelo), leafGaugeFactory.notifyAdmin(), TOKEN_1);
         _addLiquidityToPool(users.alice, address(leafRouter), address(token0), address(token1), false, TOKEN_1, USDC_1);
     }
@@ -21,7 +21,7 @@ contract LeafGaugeTest is BaseForkFixture {
         assertEq(leafGauge.feesVotingReward(), address(leafFVR));
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
         assertEq(leafGauge.voter(), address(leafVoter));
-        assertEq(leafGauge.bridge(), address(leafBridge));
+        assertEq(leafGauge.bridge(), address(leafMessageBridge));
         assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
         assertTrue(leafGauge.isPool());
     }
@@ -228,7 +228,7 @@ contract LeafGaugeTest is BaseForkFixture {
         vm.stopPrank();
 
         uint256 reward = TOKEN_1;
-        _addRewardToGauge(address(leafBridge), address(leafGauge), reward);
+        _addRewardToGauge(address(leafMessageModule), address(leafGauge), reward);
 
         skip(1 weeks / 2);
 
@@ -277,7 +277,7 @@ contract LeafGaugeTest is BaseForkFixture {
         vm.stopPrank();
 
         uint256 reward = TOKEN_1;
-        _addRewardToGauge(address(leafBridge), address(leafGauge), reward);
+        _addRewardToGauge(address(leafMessageModule), address(leafGauge), reward);
 
         skip(1 weeks / 2);
 
@@ -317,7 +317,7 @@ contract LeafGaugeTest is BaseForkFixture {
         vm.stopPrank();
 
         uint256 reward = TOKEN_1;
-        _addRewardToGauge(address(leafBridge), address(leafGauge), reward);
+        _addRewardToGauge(address(leafMessageModule), address(leafGauge), reward);
 
         skip(1 days);
 
@@ -373,7 +373,7 @@ contract LeafGaugeTest is BaseForkFixture {
         vm.stopPrank();
 
         uint256 reward = TOKEN_1;
-        _addRewardToGauge(address(leafBridge), address(leafGauge), reward);
+        _addRewardToGauge(address(leafMessageModule), address(leafGauge), reward);
 
         skip(1 days);
 
@@ -435,7 +435,7 @@ contract LeafGaugeTest is BaseForkFixture {
 
         // reward added late in epoch
         uint256 reward = TOKEN_1;
-        _addRewardToGauge(address(leafBridge), address(leafGauge), reward);
+        _addRewardToGauge(address(leafMessageModule), address(leafGauge), reward);
         uint256 expectedRewardRate = reward / (DURATION / 2);
         assertApproxEqRel(leafGauge.rewardRate(), expectedRewardRate, 1e6);
 
@@ -451,7 +451,7 @@ contract LeafGaugeTest is BaseForkFixture {
         skip(1 days);
         uint256 reward2 = TOKEN_1 * 2;
         expectedRewardRate = reward2 / (6 days);
-        _addRewardToGauge(address(leafBridge), address(leafGauge), reward2);
+        _addRewardToGauge(address(leafMessageModule), address(leafGauge), reward2);
         assertApproxEqRel(leafGauge.rewardRate(), expectedRewardRate, 1e6);
 
         skip(1 days);
@@ -491,7 +491,7 @@ contract LeafGaugeTest is BaseForkFixture {
         vm.stopPrank();
 
         uint256 reward = TOKEN_1;
-        _addRewardToGauge(address(leafBridge), address(leafGauge), reward);
+        _addRewardToGauge(address(leafMessageModule), address(leafGauge), reward);
         uint256 expectedRewardRate = TOKEN_1 / DURATION;
         assertApproxEqRel(leafGauge.rewardRate(), expectedRewardRate, 1e6);
 
@@ -502,7 +502,7 @@ contract LeafGaugeTest is BaseForkFixture {
 
         skip(1 days); // rewards distributed over 6 days intead of 7
         uint256 reward2 = TOKEN_1 * 2;
-        _addRewardToGauge(address(leafBridge), address(leafGauge), reward2);
+        _addRewardToGauge(address(leafMessageModule), address(leafGauge), reward2);
         expectedRewardRate = reward2 / (6 days);
         assertApproxEqRel(leafGauge.rewardRate(), expectedRewardRate, 1e6);
 
@@ -519,7 +519,7 @@ contract LeafGaugeTest is BaseForkFixture {
 
     function testNotifyRewardsWithoutClaimAfterClaimingFees() public {
         uint256 reward = TOKEN_1;
-        vm.startPrank(address(leafBridge));
+        vm.startPrank(address(leafMessageModule));
         leafXVelo.approve(address(leafGauge), reward);
         LeafGauge(leafGauge).notifyRewardAmount(reward);
         vm.stopPrank();
@@ -559,7 +559,7 @@ contract LeafGaugeTest is BaseForkFixture {
         vm.stopPrank();
 
         uint256 reward = TOKEN_1;
-        _addRewardToGauge(address(leafBridge), address(leafGauge), reward);
+        _addRewardToGauge(address(leafMessageModule), address(leafGauge), reward);
 
         vm.expectRevert(ILeafGauge.NotAuthorized.selector);
         vm.prank(users.bob);

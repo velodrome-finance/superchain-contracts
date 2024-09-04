@@ -15,6 +15,9 @@ interface IHLMessageBridge is IMessageSender {
     /// @notice Returns the address of the bridge contract that this module is associated with
     function bridge() external view returns (address);
 
+    /// @notice Returns the address of the xERC20 token that is bridged by this contract
+    function xerc20() external view returns (address);
+
     /// @notice Returns voter on current chain
     function voter() external view returns (address);
 

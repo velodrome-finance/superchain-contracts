@@ -266,6 +266,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
                     type(MessageBridge).creationCode,
                     abi.encode(
                         users.owner, // message bridge owner
+                        address(rootXVelo), // xerc20 address
                         address(mockVoter), // mock root voter
                         address(rootMessageModule), // message module
                         address(0), // pool factory
@@ -488,6 +489,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
                     type(MessageBridge).creationCode,
                     abi.encode(
                         users.owner, // message bridge owner
+                        address(leafXVelo), // xerc20 address
                         address(leafVoter), // leaf voter
                         address(leafMessageModule), // message module
                         address(leafPoolFactory), // leaf pool factory
@@ -544,7 +546,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
                         address(leafVoter), // voter address
                         address(leafPoolFactory), // pool factory address
                         address(leafXVelo), // xerc20 address
-                        address(leafBridge), // bridge address
+                        address(leafMessageBridge), // bridge address
                         users.owner // notifyAdmin address
                     )
                 )
@@ -647,6 +649,11 @@ abstract contract BaseForkFixture is Test, TestConstants {
             _mintingLimit: _rootMintingLimit,
             _burningLimit: _leafMintingLimit
         });
+        rootXVelo.setLimits({
+            _bridge: address(rootMessageBridge),
+            _mintingLimit: _rootMintingLimit,
+            _burningLimit: _leafMintingLimit
+        });
         vm.selectFork({forkId: leafId});
         leafXVelo.setLimits({
             _bridge: address(leafBridge),
@@ -655,6 +662,11 @@ abstract contract BaseForkFixture is Test, TestConstants {
         });
         leafXVelo.setLimits({
             _bridge: address(leafTokenBridge),
+            _mintingLimit: _leafMintingLimit,
+            _burningLimit: _rootMintingLimit
+        });
+        leafXVelo.setLimits({
+            _bridge: address(leafMessageBridge),
             _mintingLimit: _leafMintingLimit,
             _burningLimit: _rootMintingLimit
         });

@@ -40,7 +40,7 @@ contract CreateGaugeIntegrationConcreteTest is LeafGaugeFactoryTest {
         assertEq(leafGauge.stakingToken(), address(leafPool));
         assertEq(leafGauge.feesVotingReward(), address(11));
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
-        assertEq(leafGauge.bridge(), address(leafBridge));
+        assertEq(leafGauge.bridge(), address(leafMessageBridge));
         assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
     }
 }

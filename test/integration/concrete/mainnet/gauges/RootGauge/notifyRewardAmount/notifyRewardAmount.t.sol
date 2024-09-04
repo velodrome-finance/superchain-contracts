@@ -14,6 +14,8 @@ contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
 
     function test_WhenTheAmountIsZero() external whenTheCallerIsVoter {
         // It should revert with ZeroAmount
+        vm.expectRevert(IRootGauge.ZeroAmount.selector);
+        rootGauge.notifyRewardAmount({_amount: 0});
     }
 
     function test_WhenTheAmountIsGreaterThanZeroAndSmallerThanTheTimeUntilTheNextTimestamp()
@@ -21,6 +23,10 @@ contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
         whenTheCallerIsVoter
     {
         // It should revert with ZeroRewardRate
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
+        uint256 amount = timeUntilNext - 1;
+        vm.expectRevert(IRootGauge.ZeroRewardRate.selector);
+        rootGauge.notifyRewardAmount({_amount: amount});
     }
 
     modifier whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeUntilTheNextTimestamp() {
@@ -60,7 +66,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
 
         vm.selectFork({forkId: leafId});
         vm.expectEmit(address(leafGauge));
-        emit ILeafGauge.NotifyReward({_sender: address(leafBridge), _amount: amount});
+        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: amount});
         leafMailbox.processNextInboundMessage();
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
 
@@ -110,7 +116,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
 
         vm.selectFork({forkId: leafId});
         vm.expectEmit(address(leafGauge));
-        emit ILeafGauge.NotifyReward({_sender: address(leafBridge), _amount: amount});
+        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: amount});
         leafMailbox.processNextInboundMessage();
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount * 2);
 
