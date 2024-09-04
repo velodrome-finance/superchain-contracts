@@ -84,12 +84,14 @@ contract HLMessageBridge is IHLMessageBridge, IHLHandler {
                 pool = IPoolFactory(poolFactory).createPool({tokenA: token0, tokenB: token1, stable: stable});
             }
             ILeafVoter(voter).createGauge({_poolFactory: poolFactory, _pool: pool});
-        } else if (command == Commands.GET_REWARD) {
+        } else if (command == Commands.GET_INCENTIVES) {
+            (address gauge, bytes memory payload) = abi.decode(messageWithoutCommand, (address, bytes));
+            address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: gauge});
+            IReward(ivr).getReward({_payload: payload});
+        } else if (command == Commands.GET_FEES) {
             (address gauge, bytes memory payload) = abi.decode(messageWithoutCommand, (address, bytes));
             address fvr = ILeafVoter(voter).gaugeToFees({_gauge: gauge});
             IReward(fvr).getReward({_payload: payload});
-            address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: gauge});
-            IReward(ivr).getReward({_payload: payload});
         } else {
             revert InvalidCommand();
         }

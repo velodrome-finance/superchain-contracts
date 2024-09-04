@@ -40,7 +40,7 @@ contract RootBribeVotingReward is IRootBribeVotingReward {
 
         address _owner = IVotingEscrow(ve).ownerOf(_tokenId);
         bytes memory payload = abi.encode(_owner, _tokenId, _tokens);
-        bytes memory message = abi.encode(Commands.GET_REWARD, abi.encode(gauge, payload));
+        bytes memory message = abi.encode(Commands.GET_INCENTIVES, abi.encode(gauge, payload));
 
         IMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
     }

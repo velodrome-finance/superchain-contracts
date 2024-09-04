@@ -23,7 +23,7 @@ interface IRootBribeVotingReward {
     /// @dev Not protected as tx is atomic
     function initialize(address _gauge) external;
 
-    /// @notice Claims rewards from leaf reward contracts corresponding to gauge
+    /// @notice Claims rewards from leaf incentive reward contract corresponding to gauge
     /// @param _tokenId  token id to claim rewards from
     /// @param _tokens   Array of tokens to claim rewards of
     function getReward(uint256 _tokenId, address[] memory _tokens) external;

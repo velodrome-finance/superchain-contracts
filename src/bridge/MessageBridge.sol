@@ -48,9 +48,12 @@ contract MessageBridge is IMessageBridge, Ownable {
             if (msg.sender != IVoter(voter).gaugeToFees(gauge)) revert NotAuthorized(Commands.WITHDRAW);
         } else if (command == Commands.CREATE_GAUGE) {
             if (msg.sender != gaugeFactory) revert NotAuthorized(Commands.CREATE_GAUGE);
-        } else if (command == Commands.GET_REWARD) {
+        } else if (command == Commands.GET_INCENTIVES) {
             (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
-            if (msg.sender != IVoter(voter).gaugeToBribe(gauge)) revert NotAuthorized(Commands.GET_REWARD);
+            if (msg.sender != IVoter(voter).gaugeToBribe(gauge)) revert NotAuthorized(Commands.GET_INCENTIVES);
+        } else if (command == Commands.GET_FEES) {
+            (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
+            if (msg.sender != IVoter(voter).gaugeToFees(gauge)) revert NotAuthorized(Commands.GET_FEES);
         } else {
             revert InvalidCommand();
         }

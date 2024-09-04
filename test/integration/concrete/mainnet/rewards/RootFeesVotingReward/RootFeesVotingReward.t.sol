@@ -7,6 +7,7 @@ abstract contract RootFeesVotingRewardTest is BaseForkFixture {
     function test_InitialState() public view {
         assertEq(rootFVR.bridge(), address(rootMessageBridge));
         assertEq(rootFVR.voter(), address(mockVoter));
+        assertEq(rootIVR.ve(), address(mockEscrow));
         assertEq(rootFVR.bribeVotingReward(), address(rootIVR));
         assertEq(rootFVR.gauge(), address(rootGauge));
         assertEq(rootFVR.chainid(), leaf);

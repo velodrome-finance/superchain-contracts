@@ -18,10 +18,13 @@ HandleIntegrationConcreteTest
             │   ├── It calls withdraw on the fee rewards contract corresponding to the gauge with the payload
             │   ├── It calls withdraw on the incentive rewards contract corresponding to the gauge with the payload
             │   └── It emits the {ReceivedMessage} event
-            ├── When the command is get reward
+            ├── When the command is get incentives
+            │   ├── It decodes the gauge address from the message
+            │   ├── It calls get reward on the incentive rewards contract corresponding to the gauge with the payload
+            │   └── It emits the {ReceivedMessage} event
+            ├── When the command is get fees
             │   ├── It decodes the gauge address from the message
             │   ├── It calls get reward on the fee rewards contract corresponding to the gauge with the payload
-            │   ├── It calls get reward on the incentive rewards contract corresponding to the gauge with the payload
             │   └── It emits the {ReceivedMessage} event
             ├── When the command is createGauge
             │   ├── When there is no pool for new gauge

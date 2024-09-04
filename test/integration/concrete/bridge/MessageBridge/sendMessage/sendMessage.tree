@@ -14,10 +14,15 @@ SendMessageIntegrationConcreteTest
 │   │   └── It should revert with {NotAuthorized}
 │   └── When the caller is root gauge factory
 │       └── It dispatches the create gauge message to the message module
-├── When the command is get reward
+├── When the command is get incentives
 │   ├── When the caller is not an incentive contract registered on the voter
 │   │   └── It should revert with NotAuthorized
 │   └── When the caller is an incentive contract registered on the voter
-│       └── It dispatches the get reward message to the message module
+│       └── It dispatches the get incentives message to the message module
+├── When the command is get fees
+│   ├── When the caller is not a fees contract registered on the voter
+│   │   └── It should revert with NotAuthorized
+│   └── When the caller is a fees contract registered on the voter
+│       └── It dispatches the get fees message to the message module
 └── When the command is not any expected command
     └── It should revert with {InvalidCommand}

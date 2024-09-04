@@ -153,19 +153,17 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
     }
 
-    modifier whenTheCommandIsGetReward() {
+    modifier whenTheCommandIsGetIncentives() {
+        command = Commands.GET_INCENTIVES;
+
         vm.selectFork({forkId: leafId});
-        deal(address(token0), address(leafGauge), TOKEN_1 * 2);
-        deal(address(token1), address(leafGauge), TOKEN_1 * 2);
+        deal(address(token0), address(leafGauge), TOKEN_1);
+        deal(address(token1), address(leafGauge), TOKEN_1);
         // Using WETH as Bribe token
         deal(address(weth), address(leafGauge), TOKEN_1);
 
         // Notify rewards contracts
         vm.startPrank(address(leafGauge));
-        token0.approve(address(leafFVR), TOKEN_1);
-        token1.approve(address(leafFVR), TOKEN_1);
-        leafFVR.notifyRewardAmount(address(token0), TOKEN_1);
-        leafFVR.notifyRewardAmount(address(token1), TOKEN_1);
 
         token0.approve(address(leafIVR), TOKEN_1);
         token1.approve(address(leafIVR), TOKEN_1);
@@ -178,11 +176,8 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         // Deposit into Reward contracts and Skip to next epoch to accrue rewards
         uint256 tokenId = 1;
         bytes memory depositPayload = abi.encode(TOKEN_1, tokenId);
-        vm.stopPrank();
-        vm.startPrank(address(leafMessageModule));
-        leafFVR._deposit({_payload: depositPayload});
+        vm.prank(address(leafMessageModule));
         leafIVR._deposit({_payload: depositPayload});
-        vm.stopPrank();
 
         skipToNextEpoch(1);
 
@@ -190,30 +185,30 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         _;
     }
 
-    function test_WhenTheCallerIsNotAnIncentiveContractRegisteredOnTheVoter() external whenTheCommandIsGetReward {
+    function test_WhenTheCallerIsNotAnIncentiveContractRegisteredOnTheVoter() external whenTheCommandIsGetIncentives {
         // It should revert with NotAuthorized
         uint256 tokenId = 1;
         address[] memory tokens = new address[](0);
         bytes memory payload = abi.encode(users.alice, tokenId, tokens);
-        bytes memory message = abi.encode(Commands.GET_REWARD, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
 
         uint256 ethAmount = TOKEN_1;
         vm.deal({account: users.charlie, newBalance: ethAmount});
 
         vm.prank(users.charlie);
-        vm.expectRevert(abi.encodeWithSelector(IMessageBridge.NotAuthorized.selector, Commands.GET_REWARD));
+        vm.expectRevert(abi.encodeWithSelector(IMessageBridge.NotAuthorized.selector, Commands.GET_INCENTIVES));
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
-    function test_WhenTheCallerIsAnIncentiveContractRegisteredOnTheVoter() external whenTheCommandIsGetReward {
-        // It dispatches the get reward message to the message module
+    function test_WhenTheCallerIsAnIncentiveContractRegisteredOnTheVoter() external whenTheCommandIsGetIncentives {
+        // It dispatches the get incentives message to the message module
         uint256 tokenId = 1;
         address[] memory tokens = new address[](3);
         tokens[0] = address(token0);
         tokens[1] = address(token1);
         tokens[2] = address(weth);
         bytes memory payload = abi.encode(users.alice, tokenId, tokens);
-        bytes memory message = abi.encode(Commands.GET_REWARD, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
 
         uint256 ethAmount = TOKEN_1;
         vm.deal({account: address(rootIVR), newBalance: ethAmount});
@@ -230,9 +225,78 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
 
         leafMailbox.processNextInboundMessage();
 
-        assertEq(token0.balanceOf(users.alice), TOKEN_1 * 2);
-        assertEq(token1.balanceOf(users.alice), TOKEN_1 * 2);
+        assertEq(token0.balanceOf(users.alice), TOKEN_1);
+        assertEq(token1.balanceOf(users.alice), TOKEN_1);
         assertEq(weth.balanceOf(users.alice), TOKEN_1);
+    }
+
+    modifier whenTheCommandIsGetFees() {
+        command = Commands.GET_FEES;
+
+        vm.selectFork({forkId: leafId});
+        deal(address(token0), address(leafGauge), TOKEN_1);
+        deal(address(token1), address(leafGauge), TOKEN_1);
+
+        // Notify rewards contracts
+        vm.startPrank(address(leafGauge));
+        token0.approve(address(leafFVR), TOKEN_1);
+        token1.approve(address(leafFVR), TOKEN_1);
+        leafFVR.notifyRewardAmount(address(token0), TOKEN_1);
+        leafFVR.notifyRewardAmount(address(token1), TOKEN_1);
+        vm.stopPrank();
+
+        // Deposit into Reward contracts and Skip to next epoch to accrue rewards
+        uint256 tokenId = 1;
+        bytes memory depositPayload = abi.encode(TOKEN_1, tokenId);
+        vm.prank(address(leafMessageModule));
+        leafFVR._deposit({_payload: depositPayload});
+
+        skipToNextEpoch(1);
+
+        vm.selectFork({forkId: rootId});
+        _;
+    }
+
+    function test_WhenTheCallerIsNotAFeesContractRegisteredOnTheVoter() external whenTheCommandIsGetFees {
+        // It should revert with NotAuthorized
+        uint256 tokenId = 1;
+        address[] memory tokens = new address[](0);
+        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
+        bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
+
+        uint256 ethAmount = TOKEN_1;
+        vm.deal({account: users.charlie, newBalance: ethAmount});
+
+        vm.prank(users.charlie);
+        vm.expectRevert(abi.encodeWithSelector(IMessageBridge.NotAuthorized.selector, Commands.GET_FEES));
+        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+    }
+
+    function test_WhenTheCallerIsAFeesContractRegisteredOnTheVoter() external whenTheCommandIsGetFees {
+        // It dispatches the get fees message to the message module
+        uint256 tokenId = 1;
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(token0);
+        tokens[1] = address(token1);
+        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
+        bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
+
+        uint256 ethAmount = TOKEN_1;
+        vm.deal({account: address(rootFVR), newBalance: ethAmount});
+
+        vm.prank(address(rootFVR));
+        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+
+        assertEq(address(rootMessageModule).balance, 0);
+
+        vm.selectFork({forkId: leafId});
+        assertEq(token0.balanceOf(users.alice), 0);
+        assertEq(token1.balanceOf(users.alice), 0);
+
+        leafMailbox.processNextInboundMessage();
+
+        assertEq(token0.balanceOf(users.alice), TOKEN_1);
+        assertEq(token1.balanceOf(users.alice), TOKEN_1);
     }
 
     function test_WhenTheCommandIsNotAnyExpectedCommand() external {

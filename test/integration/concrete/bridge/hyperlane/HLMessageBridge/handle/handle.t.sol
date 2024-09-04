@@ -119,23 +119,21 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         assertEq(leafIVR.balanceOf(tokenId), 0);
     }
 
-    function test_WhenTheCommandIsGetReward()
+    function test_WhenTheCommandIsGetIncentives()
         external
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
         whenTheSenderIsModule
     {
         // It decodes the gauge address from the message
-        // It calls get reward on the fee rewards contract corresponding to the gauge with the payload
         // It calls get reward on the incentive rewards contract corresponding to the gauge with the payload
         // It emits the {ReceivedMessage} event
 
-        // Deposit into Reward contracts and Skip to next epoch to accrue rewards
+        // Deposit into Incentives Reward contract and Skip to next epoch to accrue rewards
         uint256 tokenId = 1;
         bytes memory depositPayload = abi.encode(TOKEN_1, tokenId);
         vm.stopPrank();
         vm.startPrank(address(leafMessageModule));
-        leafFVR._deposit({_payload: depositPayload});
         leafIVR._deposit({_payload: depositPayload});
         vm.stopPrank();
 
@@ -146,7 +144,7 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         tokens[1] = address(token1);
         tokens[2] = address(weth);
         bytes memory payload = abi.encode(users.alice, tokenId, tokens);
-        bytes memory message = abi.encode(Commands.GET_REWARD, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encode(Commands.GET_INCENTIVES, abi.encode(address(leafGauge), payload));
 
         assertEq(token0.balanceOf(users.alice), 0);
         assertEq(token1.balanceOf(users.alice), 0);
@@ -156,9 +154,41 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
 
-        assertEq(token0.balanceOf(users.alice), TOKEN_1 * 2);
-        assertEq(token1.balanceOf(users.alice), TOKEN_1 * 2);
+        assertEq(token0.balanceOf(users.alice), TOKEN_1);
+        assertEq(token1.balanceOf(users.alice), TOKEN_1);
         assertEq(weth.balanceOf(users.alice), TOKEN_1);
+    }
+
+    function test_WhenTheCommandIsGetFees() external whenTheCallerIsMailbox whenTheOriginIsRoot whenTheSenderIsModule {
+        // It decodes the gauge address from the message
+        // It calls get reward on the fee rewards contract corresponding to the gauge with the payload
+        // It emits the {ReceivedMessage} event
+
+        // Deposit into Fees Reward contract and Skip to next epoch to accrue rewards
+        uint256 tokenId = 1;
+        bytes memory depositPayload = abi.encode(TOKEN_1, tokenId);
+        vm.stopPrank();
+        vm.startPrank(address(leafMessageModule));
+        leafFVR._deposit({_payload: depositPayload});
+        vm.stopPrank();
+
+        skipToNextEpoch(1);
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(token0);
+        tokens[1] = address(token1);
+        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
+        bytes memory message = abi.encode(Commands.GET_FEES, abi.encode(address(leafGauge), payload));
+
+        assertEq(token0.balanceOf(users.alice), 0);
+        assertEq(token1.balanceOf(users.alice), 0);
+
+        vm.startPrank(address(leafMailbox));
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+
+        assertEq(token0.balanceOf(users.alice), TOKEN_1);
+        assertEq(token1.balanceOf(users.alice), TOKEN_1);
     }
 
     modifier whenTheCommandIsCreateGauge() {
