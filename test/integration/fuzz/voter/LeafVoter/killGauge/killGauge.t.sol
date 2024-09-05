@@ -20,7 +20,7 @@ contract KillGaugeIntegrationFuzzTest is LeafVoterTest {
     }
 
     function testFuzz_WhenAddressIsNotALiveGauge(address _gauge) external whenCallerIsEmergencyCouncil {
-        vm.assume(_gauge != address(leafGauge));
+        vm.assume(_gauge != address(leafGauge) && _gauge != address(bribeGauge));
         // It should revert with GaugeAlreadyKilled
         vm.expectRevert(ILeafVoter.GaugeAlreadyKilled.selector);
         leafVoter.killGauge(_gauge);

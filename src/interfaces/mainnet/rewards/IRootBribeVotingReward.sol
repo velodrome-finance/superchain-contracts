@@ -27,4 +27,14 @@ interface IRootBribeVotingReward {
     /// @param _tokenId  token id to claim rewards from
     /// @param _tokens   Array of tokens to claim rewards of
     function getReward(uint256 _tokenId, address[] memory _tokens) external;
+
+    /// @notice Deposits voting power to leaf contract corresponding to gauge
+    /// @param _amount Amount of voting power to deposit
+    /// @param _tokenId token id to deposit voting power to
+    function _deposit(uint256 _amount, uint256 _tokenId) external;
+
+    /// @notice Withdraws voting power from leaf contract corresponding to gauge
+    /// @param _amount Amount of voting power to withdraw
+    /// @param _tokenId token id to withdraw voting power from
+    function _withdraw(uint256 _amount, uint256 _tokenId) external;
 }

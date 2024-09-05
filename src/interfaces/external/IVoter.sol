@@ -14,8 +14,6 @@ interface IVoter {
 
     function createGauge(address _poolFactory, address _pool) external returns (address);
 
-    // function distribute(address gauge) external;
-
     function factoryRegistry() external view returns (IFactoryRegistry);
 
     /// @dev Utility to distribute to gauges of pools in array.

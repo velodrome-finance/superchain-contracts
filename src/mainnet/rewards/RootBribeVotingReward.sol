@@ -44,4 +44,10 @@ contract RootBribeVotingReward is IRootBribeVotingReward {
 
         IMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
     }
+
+    /// @inheritdoc IRootBribeVotingReward
+    function _deposit(uint256 _amount, uint256 _tokenId) external {}
+
+    /// @inheritdoc IRootBribeVotingReward
+    function _withdraw(uint256 _amount, uint256 _tokenId) external {}
 }

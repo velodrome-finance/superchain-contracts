@@ -49,10 +49,10 @@ import {IReward} from "src/interfaces/rewards/IReward.sol";
 import {CreateX} from "test/mocks/CreateX.sol";
 import {TestERC20} from "test/mocks/TestERC20.sol";
 import {MultichainMockMailbox} from "test/mocks/MultichainMockMailbox.sol";
-import {MockVoter} from "test/mocks/MockVoter.sol";
-import {MockVotingEscrow} from "test/mocks/MockVotingEscrow.sol";
-import {MockFactoryRegistry} from "test/mocks/MockFactoryRegistry.sol";
-import {MockWETH} from "test/mocks/MockWETH.sol";
+import {IVoter, MockVoter} from "test/mocks/MockVoter.sol";
+import {IVotingEscrow, MockVotingEscrow} from "test/mocks/MockVotingEscrow.sol";
+import {IFactoryRegistry, MockFactoryRegistry} from "test/mocks/MockFactoryRegistry.sol";
+import {IWETH, MockWETH} from "test/mocks/MockWETH.sol";
 import {TestConstants} from "test/utils/TestConstants.sol";
 import {Users} from "test/utils/Users.sol";
 
@@ -97,10 +97,10 @@ abstract contract BaseForkFixture is Test, TestConstants {
     RootBribeVotingReward public rootIVR;
 
     // root-only mocks
-    TestERC20 public rootRewardToken;
-    MockVoter public mockVoter;
-    MockVotingEscrow public mockEscrow;
-    MockFactoryRegistry public mockFactoryRegistry;
+    IERC20 public rootRewardToken;
+    IVoter public mockVoter;
+    IVotingEscrow public mockEscrow;
+    IFactoryRegistry public mockFactoryRegistry;
     MultichainMockMailbox public rootMailbox;
     TestIsm public rootIsm;
 
@@ -139,7 +139,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
     TestIsm public leafIsm;
 
     // common contracts
-    MockWETH public weth;
+    IWETH public weth;
     CreateX public cx = CreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
 
     // common variables
@@ -160,22 +160,20 @@ abstract contract BaseForkFixture is Test, TestConstants {
         vm.startPrank(users.owner);
         rootId = vm.createSelectFork({urlOrAlias: "optimism", blockNumber: 123316800});
         deployCreateX();
-        weth = new MockWETH();
+        weth = IWETH(new MockWETH());
         rootStartTime = VelodromeTimeLibrary.epochStart(block.timestamp);
         vm.warp({newTimestamp: rootStartTime});
 
         leafId = vm.createSelectFork({urlOrAlias: "mode", blockNumber: 11032400});
         deployCreateX();
-        weth = new MockWETH();
+        weth = IWETH(new MockWETH());
 
         leafStartTime = VelodromeTimeLibrary.epochStart(block.timestamp);
         vm.warp({newTimestamp: leafStartTime});
         vm.stopPrank();
     }
 
-    function setUpRootChain() public virtual {
-        vm.selectFork({forkId: rootId});
-
+    function deployRootDependencies() public virtual {
         // deploy root mocks
         vm.startPrank(users.owner);
         rootMailbox = new MultichainMockMailbox(root);
@@ -190,6 +188,11 @@ abstract contract BaseForkFixture is Test, TestConstants {
             _governor: users.owner
         });
         vm.stopPrank();
+    }
+
+    function setUpRootChain() public virtual {
+        vm.selectFork({forkId: rootId});
+        deployRootDependencies();
 
         // deploy root contracts
         vm.startPrank(users.deployer);
@@ -341,6 +344,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
             })
         );
 
+        vm.startPrank(Ownable(address(mockFactoryRegistry)).owner());
         mockFactoryRegistry.approve({
             poolFactory: address(rootPoolFactory),
             votingRewardsFactory: address(rootVotingRewardsFactory),
@@ -587,7 +591,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootMailbox.setDomainForkId({_domain: leaf, _forkId: leafId});
 
         // set up root pool & gauge
-        vm.startPrank(users.owner);
+        vm.startPrank(mockVoter.governor());
         rootPool =
             RootPool(rootPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: false}));
         rootGauge = RootGauge(mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(rootPool)}));
