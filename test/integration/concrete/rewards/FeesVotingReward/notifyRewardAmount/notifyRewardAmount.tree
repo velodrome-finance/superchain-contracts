@@ -1,0 +1,13 @@
+NotifyRewardAmountIntegrationConcreteTest
+├── When caller is not the gauge
+│   └── It should revert with NotGauge
+└── When caller is the gauge
+    ├── When token is not reward
+    │   └── It should revert with InvalidReward
+    └── When token is reward
+        ├── When amount is zero 
+        │   └── It should revert with ZeroAmount 
+        └── When amount is not zero
+            ├── It should transfer amount from sender to bribe contract 
+            ├── It should update tokenRewardsPerEpoch mapping
+            └── It should emit {NotifyReward}

@@ -46,6 +46,18 @@ contract MockVoter is IVoter {
         revert("Not implemented");
     }
 
+    function poke(uint256) external pure override {
+        revert("Not implemented");
+    }
+
+    function reset(uint256) external pure override {
+        revert("Not implemented");
+    }
+
+    function whitelistToken(address, bool) external pure {
+        revert("Not implemented");
+    }
+
     function createGauge(address _poolFactory, address _pool) external override returns (address) {
         require(factoryRegistry.isPoolFactoryApproved(_poolFactory));
         (address votingRewardsFactory, address gaugeFactory) = factoryRegistry.factoriesToPoolFactory(_poolFactory);

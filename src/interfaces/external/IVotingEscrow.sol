@@ -14,4 +14,10 @@ interface IVotingEscrow is IERC721 {
     /// @param _lockDuration Number of seconds to lock tokens for (rounded down to nearest week)
     /// @return TokenId of created veNFT
     function createLock(uint256 _value, uint256 _lockDuration) external returns (uint256);
+
+    /// @notice Get the voting power for _tokenId at the current timestamp
+    /// @dev Returns 0 if called in the same block as a transfer.
+    /// @param _tokenId .
+    /// @return Voting power
+    function balanceOfNFT(uint256 _tokenId) external view returns (uint256);
 }

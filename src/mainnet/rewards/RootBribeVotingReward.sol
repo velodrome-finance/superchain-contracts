@@ -46,8 +46,8 @@ contract RootBribeVotingReward is IRootBribeVotingReward {
     }
 
     /// @inheritdoc IRootBribeVotingReward
-    function _deposit(uint256 _amount, uint256 _tokenId) external {}
+    function _deposit(uint256, uint256) external {}
 
     /// @inheritdoc IRootBribeVotingReward
-    function _withdraw(uint256 _amount, uint256 _tokenId) external {}
+    function _withdraw(uint256, uint256) external {}
 }

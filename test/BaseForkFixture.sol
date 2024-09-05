@@ -2,6 +2,11 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import "forge-std/console2.sol";
+import {IVoter} from "src/interfaces/external/IVoter.sol";
+import {IVotingEscrow} from "src/interfaces/external/IVotingEscrow.sol";
+import {IFactoryRegistry} from "src/interfaces/external/IFactoryRegistry.sol";
+import {IWETH} from "src/interfaces/external/IWETH.sol";
+
 import {Test, stdStorage, StdStorage} from "forge-std/Test.sol";
 import {Clones} from "@openzeppelin5/contracts/proxy/Clones.sol";
 import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";

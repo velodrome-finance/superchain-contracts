@@ -30,8 +30,6 @@ interface IVoter {
 
     function ve() external view returns (address);
 
-    function governor() external view returns (address);
-
     /// @notice Claim emissions from gauges.
     /// @param _gauges Array of gauges to collect emissions from.
     // function claimRewards(address[] memory _gauges) external;
@@ -42,4 +40,24 @@ interface IVoter {
     /// @param _tokens  Array of tokens that are used as fees.
     /// @param _tokenId Id of veNFT that you wish to claim fees for.
     function claimFees(address[] memory _fees, address[][] memory _tokens, uint256 _tokenId) external;
+
+    /// @notice Called by users to update voting balances in voting rewards contracts.
+    /// @param _tokenId Id of veNFT whose balance you wish to update.
+    function poke(uint256 _tokenId) external;
+
+    /// @notice Called by users to reset voting state. Required if you wish to make changes to
+    ///         veNFT state (e.g. merge, split, deposit into managed etc).
+    ///         Cannot reset in the same epoch that you voted in.
+    ///         Can vote or deposit into a managed NFT again after reset.
+    /// @param _tokenId Id of veNFT you are reseting.
+    function reset(uint256 _tokenId) external;
+
+    /// @notice Standard OZ IGovernor using ve for vote weights.
+    function governor() external view returns (address);
+
+    /// @notice Whitelist (or unwhitelist) token for use in bribes.
+    /// @dev Throws if not called by governor.
+    /// @param _token .
+    /// @param _bool .
+    function whitelistToken(address _token, bool _bool) external;
 }

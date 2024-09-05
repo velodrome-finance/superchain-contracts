@@ -19,4 +19,8 @@ contract MockVotingEscrow is IVotingEscrow, ERC721 {
         _mint(msg.sender, ++tokenId);
         return tokenId;
     }
+
+    function balanceOfNFT(uint256) public pure returns (uint256) {
+        revert("Not implemented");
+    }
 }
