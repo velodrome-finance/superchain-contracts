@@ -1,0 +1,9 @@
+DeregisterChainIntegrationConcreteTest
+├── When the caller is not the owner
+│   └── It reverts with {OwnableUnauthorizedAccount}
+└── When the caller is the owner
+    ├── When the chain is not registered
+    │   └── It reverts with {NotRegistered}
+    └── When the chain is registered
+        ├── It deregisters the chain id
+        └── It emits the {ChainRegistered} event

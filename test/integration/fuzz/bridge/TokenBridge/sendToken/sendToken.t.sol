@@ -5,21 +5,21 @@ import "../TokenBridge.t.sol";
 
 contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
     uint256 public amount;
-    uint32 public chainid;
 
     modifier whenTheRequestedAmountIsNotZero() {
         _;
     }
 
-    modifier whenTheRequestedChainIsNotTheCurrentChain() {
-        chainid = leaf;
+    modifier whenTheRequestedChainIsARegisteredChain() {
+        vm.prank(users.owner);
+        rootTokenBridge.registerChain({_chainid: leaf});
         _;
     }
 
     function testFuzz_WhenTheRequestedAmountIsHigherThanTheCurrentBurningLimitOfCaller(
         uint256 _burningLimit,
         uint256 _amount
-    ) external whenTheRequestedAmountIsNotZero whenTheRequestedChainIsNotTheCurrentChain {
+    ) external whenTheRequestedAmountIsNotZero whenTheRequestedChainIsARegisteredChain {
         // It should revert with IXERC20_NotHighEnoughLimits
         _burningLimit = bound(_burningLimit, WEEK, type(uint256).max / 2 - 1);
         amount = bound(_amount, _burningLimit + 1, type(uint256).max / 2);
@@ -31,7 +31,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
         rootXVelo.approve({spender: address(rootTokenBridge), value: amount});
 
         vm.expectRevert(IXERC20.IXERC20_NotHighEnoughLimits.selector);
-        rootTokenBridge.sendToken({_amount: amount, _chainid: chainid});
+        rootTokenBridge.sendToken({_amount: amount, _chainid: leaf});
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(uint256 _burningLimit, uint256 _amount) {
@@ -48,7 +48,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
     )
         external
         whenTheRequestedAmountIsNotZero
-        whenTheRequestedChainIsNotTheCurrentChain
+        whenTheRequestedChainIsARegisteredChain
         whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(_burningLimit, _amount)
     {
         // It should revert with ERC20InsufficientBalance
@@ -61,7 +61,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
         vm.expectRevert(
             abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, address(rootGauge), _balance, amount)
         );
-        rootTokenBridge.sendToken({_amount: amount, _chainid: chainid});
+        rootTokenBridge.sendToken({_amount: amount, _chainid: leaf});
     }
 
     function testFuzz_WhenTheAmountIsLessThanOrEqualToTheBalanceOfCaller(
@@ -71,7 +71,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
     )
         external
         whenTheRequestedAmountIsNotZero
-        whenTheRequestedChainIsNotTheCurrentChain
+        whenTheRequestedChainIsARegisteredChain
         whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(_burningLimit, _amount)
     {
         // It burns the caller's tokens
@@ -86,12 +86,12 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
 
         vm.expectEmit(address(rootTokenModule));
         emit IHLTokenBridge.SentMessage({
-            _destination: chainid,
+            _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootTokenModule)),
             _value: ethAmount,
             _message: string(abi.encode(address(leafGauge), amount))
         });
-        rootTokenBridge.sendToken{value: ethAmount}({_amount: amount, _chainid: chainid});
+        rootTokenBridge.sendToken{value: ethAmount}({_amount: amount, _chainid: leaf});
 
         assertEq(rootXVelo.balanceOf(address(rootGauge)), _balance - amount);
         assertEq(address(rootTokenBridge).balance, 0);

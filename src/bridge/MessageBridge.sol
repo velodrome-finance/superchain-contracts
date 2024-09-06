@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
+import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
 
 import {IXERC20} from "../interfaces/xerc20/IXERC20.sol";
 import {IMessageBridge} from "../interfaces/bridge/IMessageBridge.sol";
@@ -9,10 +9,13 @@ import {IMessageSender} from "../interfaces/bridge/IMessageSender.sol";
 import {IVoter} from "../interfaces/external/IVoter.sol";
 
 import {Commands} from "../libraries/Commands.sol";
+import {ChainRegistry} from "./ChainRegistry.sol";
 
 /// @title Message Bridge Contract
 /// @notice General purpose message bridge contract
-contract MessageBridge is IMessageBridge, Ownable {
+contract MessageBridge is IMessageBridge, ChainRegistry {
+    using EnumerableSet for EnumerableSet.UintSet;
+
     /// @inheritdoc IMessageBridge
     address public immutable xerc20;
     /// @inheritdoc IMessageBridge
@@ -31,7 +34,7 @@ contract MessageBridge is IMessageBridge, Ownable {
         address _module,
         address _poolFactory,
         address _gaugeFactory
-    ) Ownable(_owner) {
+    ) ChainRegistry(_owner) {
         xerc20 = _xerc20;
         voter = _voter;
         module = _module;
@@ -54,6 +57,8 @@ contract MessageBridge is IMessageBridge, Ownable {
 
     /// @inheritdoc IMessageBridge
     function sendMessage(uint256 _chainid, bytes calldata _message) external payable {
+        if (!_chainids.contains({value: _chainid})) revert NotRegistered();
+
         (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
         if (command == Commands.DEPOSIT) {
             (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));

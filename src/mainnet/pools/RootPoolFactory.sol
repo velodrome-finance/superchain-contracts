@@ -44,12 +44,12 @@ contract RootPoolFactory is IRootPoolFactory {
     }
 
     /// @inheritdoc IRootPoolFactory
-    function isPool(address pool) external pure returns (bool) {
+    function isPool(address) external pure returns (bool) {
         return false;
     }
 
     /// @inheritdoc IRootPoolFactory
-    function isPair(address pool) external pure returns (bool) {
+    function isPair(address) external pure returns (bool) {
         return false;
     }
 

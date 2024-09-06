@@ -39,6 +39,7 @@ import {IHLHandler} from "src/interfaces/bridge/hyperlane/IHLHandler.sol";
 import {IHLTokenBridge, HLTokenBridge} from "src/bridge/hyperlane/HLTokenBridge.sol";
 import {IHLMessageBridge, HLMessageBridge} from "src/bridge/hyperlane/HLMessageBridge.sol";
 import {IVotingRewardsFactory, VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
+import {IChainRegistry} from "src/interfaces/bridge/IChainRegistry.sol";
 
 import {RootHLMessageBridge} from "src/mainnet/bridge/hyperlane/RootHLMessageBridge.sol";
 import {RootHLTokenBridge} from "src/mainnet/bridge/hyperlane/RootHLTokenBridge.sol";
@@ -596,9 +597,12 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootMailbox.setDomainForkId({_domain: leaf, _forkId: leafId});
 
         // set up root pool & gauge
-        vm.startPrank(mockVoter.governor());
+        vm.startPrank(users.owner);
+        rootMessageBridge.registerChain({_chainid: leaf});
+
         rootPool =
             RootPool(rootPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: false}));
+        vm.startPrank(mockVoter.governor());
         rootGauge = RootGauge(mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(rootPool)}));
         rootFVR = RootFeesVotingReward(mockVoter.gaugeToFees(address(rootGauge)));
         rootIVR = RootBribeVotingReward(mockVoter.gaugeToBribe(address(rootGauge)));

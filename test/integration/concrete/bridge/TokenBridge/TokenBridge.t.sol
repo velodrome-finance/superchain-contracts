@@ -11,10 +11,16 @@ abstract contract TokenBridgeTest is BaseForkFixture {
         assertEq(rootTokenBridge.module(), address(rootTokenModule));
         assertEq(address(rootTokenBridge).balance, 0);
 
+        uint256[] memory chainids = rootTokenBridge.chainids();
+        assertEq(chainids.length, 0);
+
         vm.selectFork({forkId: leafId});
         assertEq(leafTokenBridge.owner(), users.owner);
         assertEq(leafTokenBridge.xerc20(), address(leafXVelo));
         assertEq(leafTokenBridge.module(), address(leafTokenModule));
         assertEq(address(leafTokenBridge).balance, 0);
+
+        chainids = rootTokenBridge.chainids();
+        assertEq(chainids.length, 0);
     }
 }

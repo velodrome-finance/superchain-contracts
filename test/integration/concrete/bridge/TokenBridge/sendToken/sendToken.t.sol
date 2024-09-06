@@ -5,12 +5,15 @@ import "../TokenBridge.t.sol";
 
 contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
     uint256 public amount;
-    uint32 public chainid;
+
+    function setUp() public override {
+        super.setUp();
+    }
 
     function test_WhenTheRequestedAmountIsZero() external {
         // It should revert with ZeroAmount
         vm.expectRevert(IUserTokenBridge.ZeroAmount.selector);
-        rootTokenBridge.sendToken({_amount: amount, _chainid: chainid});
+        rootTokenBridge.sendToken({_amount: amount, _chainid: leaf});
     }
 
     modifier whenTheRequestedAmountIsNotZero() {
@@ -18,22 +21,22 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         _;
     }
 
-    function test_WhenTheRequestedChainIsTheCurrentChain() external whenTheRequestedAmountIsNotZero {
-        // It should revert with InvalidChain
-        chainid = root;
-        vm.expectRevert(IUserTokenBridge.InvalidChain.selector);
-        rootTokenBridge.sendToken({_amount: amount, _chainid: chainid});
+    function test_WhenTheRequestedChainIsNotARegisteredChain() external whenTheRequestedAmountIsNotZero {
+        // It should revert with {NotRegistered}
+        vm.expectRevert(IChainRegistry.NotRegistered.selector);
+        rootTokenBridge.sendToken({_amount: amount, _chainid: leaf});
     }
 
-    modifier whenTheRequestedChainIsNotTheCurrentChain() {
-        chainid = leaf;
+    modifier whenTheRequestedChainIsARegisteredChain() {
+        vm.prank(users.owner);
+        rootTokenBridge.registerChain({_chainid: leaf});
         _;
     }
 
     function test_WhenTheRequestedAmountIsHigherThanTheCurrentBurningLimitOfCaller()
         external
         whenTheRequestedAmountIsNotZero
-        whenTheRequestedChainIsNotTheCurrentChain
+        whenTheRequestedChainIsARegisteredChain
     {
         // It should revert with IXERC20_NotHighEnoughLimits
         amount = 1;
@@ -43,7 +46,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         rootXVelo.approve({spender: address(rootTokenBridge), value: amount});
 
         vm.expectRevert(IXERC20.IXERC20_NotHighEnoughLimits.selector);
-        rootTokenBridge.sendToken({_amount: amount, _chainid: chainid});
+        rootTokenBridge.sendToken({_amount: amount, _chainid: leaf});
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller() {
@@ -54,7 +57,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
     function test_WhenTheAmountIsLargerThanTheBalanceOfCaller()
         external
         whenTheRequestedAmountIsNotZero
-        whenTheRequestedChainIsNotTheCurrentChain
+        whenTheRequestedChainIsARegisteredChain
         whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
     {
         // It should revert with ERC20InsufficientBalance
@@ -68,13 +71,13 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
                 IERC20Errors.ERC20InsufficientBalance.selector, address(rootGauge), amount - 1, amount
             )
         );
-        rootTokenBridge.sendToken({_amount: amount, _chainid: chainid});
+        rootTokenBridge.sendToken({_amount: amount, _chainid: leaf});
     }
 
     function test_WhenTheAmountIsLessThanOrEqualToTheBalanceOfCaller()
         external
         whenTheRequestedAmountIsNotZero
-        whenTheRequestedChainIsNotTheCurrentChain
+        whenTheRequestedChainIsARegisteredChain
         whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
     {
         // It burns the caller's tokens
@@ -88,12 +91,12 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
 
         vm.expectEmit(address(rootTokenModule));
         emit IHLTokenBridge.SentMessage({
-            _destination: chainid,
+            _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootTokenModule)),
             _value: ethAmount,
             _message: string(abi.encode(address(leafGauge), amount))
         });
-        rootTokenBridge.sendToken{value: ethAmount}({_amount: amount, _chainid: chainid});
+        rootTokenBridge.sendToken{value: ethAmount}({_amount: amount, _chainid: leaf});
 
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
         assertEq(address(rootTokenBridge).balance, 0);

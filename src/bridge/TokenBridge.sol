@@ -2,20 +2,25 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
+import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
 
 import {IUserTokenBridge} from "../interfaces/bridge/IUserTokenBridge.sol";
 import {ITokenBridge} from "../interfaces/bridge/ITokenBridge.sol";
 import {IXERC20} from "../interfaces/xerc20/IXERC20.sol";
 
+import {ChainRegistry} from "./ChainRegistry.sol";
+
 /// @title Token Bridge Contract
-/// @notice General purpose Token bridge contract
-contract TokenBridge is IUserTokenBridge, Ownable {
+/// @notice General Purpose Token Bridge
+contract TokenBridge is IUserTokenBridge, ChainRegistry {
+    using EnumerableSet for EnumerableSet.UintSet;
+
     /// @inheritdoc IUserTokenBridge
     address public immutable xerc20;
     /// @inheritdoc IUserTokenBridge
     address public module;
 
-    constructor(address _owner, address _xerc20, address _module) Ownable(_owner) {
+    constructor(address _owner, address _xerc20, address _module) ChainRegistry(_owner) {
         xerc20 = _xerc20;
         module = _module;
     }
@@ -36,7 +41,7 @@ contract TokenBridge is IUserTokenBridge, Ownable {
     /// @inheritdoc IUserTokenBridge
     function sendToken(uint256 _amount, uint256 _chainid) external payable {
         if (_amount == 0) revert ZeroAmount();
-        if (_chainid == block.chainid) revert InvalidChain();
+        if (!_chainids.contains({value: _chainid})) revert NotRegistered();
 
         IXERC20(xerc20).burn({_user: msg.sender, _amount: _amount});
 

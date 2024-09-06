@@ -5,7 +5,6 @@ interface IUserTokenBridge {
     error NotModule();
     error ZeroAmount();
     error ZeroAddress();
-    error InvalidChain();
 
     event SetModule(address indexed _sender, address indexed _module);
 

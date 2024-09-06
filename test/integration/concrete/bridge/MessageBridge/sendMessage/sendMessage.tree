@@ -1,33 +1,36 @@
 SendMessageIntegrationConcreteTest
-├── When the command is deposit
-│   ├── When the caller is not a fee contract registered on the voter
-│   │   └── It should revert with {NotAuthorized}
-│   └── When the caller is a fee contract registered on the voter
-│       └── It dispatches the deposit message to the message module
-├── When the command is withdraw
-│   ├── When the caller is not a fee contract registered on the voter_
-│   │   └── It should revert with {NotAuthorized}
-│   └── When the caller is a fee contract registered on the voter_
-│       └── It dispatches the withdraw message to the message module
-├── When the command is create gauge
-│   ├── When the caller is not root gauge factory
-│   │   └── It should revert with {NotAuthorized}
-│   └── When the caller is root gauge factory
-│       └── It dispatches the create gauge message to the message module
-├── When the command is get incentives
-│   ├── When the caller is not an incentive contract registered on the voter
-│   │   └── It should revert with NotAuthorized
-│   └── When the caller is an incentive contract registered on the voter
-│       └── It dispatches the get incentives message to the message module
-├── When the command is get fees
-│   ├── When the caller is not a fees contract registered on the voter
-│   │   └── It should revert with NotAuthorized
-│   └── When the caller is a fees contract registered on the voter
-│       └── It dispatches the get fees message to the message module
-├── When the command is notify
-│   ├── When the caller is not an alive gauge 
-│   │   └── It should revert with NotValidGauge
-│   └── When the caller is an alive gauge 
-│       └── It dispatches the notify message to the message module
-└── When the command is not any expected command
-    └── It should revert with {InvalidCommand}
+├── When the chain id is not registered
+│   └── It should revert with {NotRegistered}
+└── When the chain id is registered
+    ├── When the command is deposit
+    │   ├── When the caller is not a fee contract registered on the voter
+    │   │   └── It should revert with {NotAuthorized}
+    │   └── When the caller is a fee contract registered on the voter
+    │       └── It dispatches the deposit message to the message module
+    ├── When the command is withdraw
+    │   ├── When the caller is not a fee contract registered on the voter_
+    │   │   └── It should revert with {NotAuthorized}
+    │   └── When the caller is a fee contract registered on the voter_
+    │       └── It dispatches the withdraw message to the message module
+    ├── When the command is create gauge
+    │   ├── When the caller is not root gauge factory
+    │   │   └── It should revert with {NotAuthorized}
+    │   └── When the caller is root gauge factory
+    │       └── It dispatches the create gauge message to the message module
+    ├── When the command is get incentives
+    │   ├── When the caller is not an incentive contract registered on the voter
+    │   │   └── It should revert with NotAuthorized
+    │   └── When the caller is an incentive contract registered on the voter
+    │       └── It dispatches the get incentives message to the message module
+    ├── When the command is get fees
+    │   ├── When the caller is not a fees contract registered on the voter
+    │   │   └── It should revert with NotAuthorized
+    │   └── When the caller is a fees contract registered on the voter
+    │       └── It dispatches the get fees message to the message module
+    ├── When the command is notify
+    │   ├── When the caller is not an alive gauge 
+    │   │   └── It should revert with NotValidGauge
+    │   └── When the caller is an alive gauge 
+    │       └── It dispatches the notify message to the message module
+    └── When the command is not any expected command
+        └── It should revert with {InvalidCommand}

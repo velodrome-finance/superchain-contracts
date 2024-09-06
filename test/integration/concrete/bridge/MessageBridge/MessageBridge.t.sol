@@ -19,8 +19,8 @@ abstract contract MessageBridgeTest is BaseForkFixture {
         assertEq(leafMessageBridge.owner(), users.owner);
         assertEq(leafMessageBridge.xerc20(), address(leafXVelo));
         assertEq(leafMessageBridge.voter(), address(leafVoter));
-        assertEq(rootMessageBridge.poolFactory(), address(leafPoolFactory));
-        assertEq(rootMessageBridge.gaugeFactory(), address(0));
+        assertEq(leafMessageBridge.poolFactory(), address(leafPoolFactory));
+        assertEq(leafMessageBridge.gaugeFactory(), address(0));
         assertEq(address(leafMessageBridge).balance, 0);
     }
 }

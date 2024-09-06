@@ -6,12 +6,43 @@ import "../MessageBridge.t.sol";
 contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
     uint256 public command;
 
+    function setUp() public override {
+        super.setUp();
+        vm.prank(users.owner);
+        rootMessageBridge.deregisterChain({_chainid: leaf});
+    }
+
+    function test_WhenTheChainIdIsNotRegistered() external {
+        // It should revert with {NotRegistered}
+        uint256 ethAmount = TOKEN_1;
+        vm.deal({account: users.charlie, newBalance: ethAmount});
+
+        uint256 amount = TOKEN_1 * 1000;
+        uint256 tokenId = 1;
+        bytes memory payload = abi.encode(amount, tokenId);
+        bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
+
+        vm.prank(users.charlie);
+        vm.expectRevert(IChainRegistry.NotRegistered.selector);
+        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+    }
+
+    modifier whenTheChainIdIsRegistered() {
+        vm.prank(users.owner);
+        rootMessageBridge.registerChain({_chainid: leaf});
+        _;
+    }
+
     modifier whenTheCommandIsDeposit() {
         command = Commands.DEPOSIT;
         _;
     }
 
-    function test_WhenTheCallerIsNotAFeeContractRegisteredOnTheVoter() external whenTheCommandIsDeposit {
+    function test_WhenTheCallerIsNotAFeeContractRegisteredOnTheVoter()
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsDeposit
+    {
         // It should revert with {NotAuthorized}
         uint256 ethAmount = TOKEN_1;
         vm.deal({account: users.charlie, newBalance: ethAmount});
@@ -26,7 +57,11 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
-    function test_WhenTheCallerIsAFeeContractRegisteredOnTheVoter() external whenTheCommandIsDeposit {
+    function test_WhenTheCallerIsAFeeContractRegisteredOnTheVoter()
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsDeposit
+    {
         // It dispatches the deposit message to the message module
         uint256 ethAmount = TOKEN_1;
         vm.deal({account: address(rootFVR), newBalance: ethAmount});
@@ -55,7 +90,11 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         _;
     }
 
-    function test_WhenTheCallerIsNotAFeeContractRegisteredOnTheVoter_() external whenTheCommandIsWithdraw {
+    function test_WhenTheCallerIsNotAFeeContractRegisteredOnTheVoter_()
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsWithdraw
+    {
         // It should revert with {NotAuthorized}
         uint256 ethAmount = TOKEN_1;
         vm.deal({account: address(rootFVR), newBalance: ethAmount});
@@ -74,7 +113,11 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
-    function test_WhenTheCallerIsAFeeContractRegisteredOnTheVoter_() external whenTheCommandIsWithdraw {
+    function test_WhenTheCallerIsAFeeContractRegisteredOnTheVoter_()
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsWithdraw
+    {
         // It dispatches the withdraw message to the message module
         uint256 ethAmount = TOKEN_1;
         vm.deal({account: address(rootFVR), newBalance: ethAmount});
@@ -112,7 +155,11 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         _;
     }
 
-    function test_WhenTheCallerIsNotRootGaugeFactory() external whenTheCommandIsCreateGauge {
+    function test_WhenTheCallerIsNotRootGaugeFactory()
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsCreateGauge
+    {
         // It should revert with NotAuthorized
         uint256 ethAmount = TOKEN_1;
         vm.deal({account: users.charlie, newBalance: ethAmount});
@@ -125,7 +172,7 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
-    function test_WhenTheCallerIsRootGaugeFactory() external whenTheCommandIsCreateGauge {
+    function test_WhenTheCallerIsRootGaugeFactory() external whenTheChainIdIsRegistered whenTheCommandIsCreateGauge {
         // It dispatches the create gauge message to the message module
         uint256 ethAmount = TOKEN_1;
         vm.deal({account: address(rootGaugeFactory), newBalance: ethAmount});
@@ -185,7 +232,11 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         _;
     }
 
-    function test_WhenTheCallerIsNotAnIncentiveContractRegisteredOnTheVoter() external whenTheCommandIsGetIncentives {
+    function test_WhenTheCallerIsNotAnIncentiveContractRegisteredOnTheVoter()
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsGetIncentives
+    {
         // It should revert with NotAuthorized
         uint256 tokenId = 1;
         address[] memory tokens = new address[](0);
@@ -200,7 +251,11 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
-    function test_WhenTheCallerIsAnIncentiveContractRegisteredOnTheVoter() external whenTheCommandIsGetIncentives {
+    function test_WhenTheCallerIsAnIncentiveContractRegisteredOnTheVoter()
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsGetIncentives
+    {
         // It dispatches the get incentives message to the message module
         uint256 tokenId = 1;
         address[] memory tokens = new address[](3);
@@ -257,7 +312,11 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         _;
     }
 
-    function test_WhenTheCallerIsNotAFeesContractRegisteredOnTheVoter() external whenTheCommandIsGetFees {
+    function test_WhenTheCallerIsNotAFeesContractRegisteredOnTheVoter()
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsGetFees
+    {
         // It should revert with NotAuthorized
         uint256 tokenId = 1;
         address[] memory tokens = new address[](0);
@@ -272,7 +331,11 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
-    function test_WhenTheCallerIsAFeesContractRegisteredOnTheVoter() external whenTheCommandIsGetFees {
+    function test_WhenTheCallerIsAFeesContractRegisteredOnTheVoter()
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsGetFees
+    {
         // It dispatches the get fees message to the message module
         uint256 tokenId = 1;
         address[] memory tokens = new address[](2);
@@ -304,7 +367,7 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         _;
     }
 
-    function test_WhenTheCallerIsNotAnAliveGauge() external whenTheCommandIsNotify {
+    function test_WhenTheCallerIsNotAnAliveGauge() external whenTheChainIdIsRegistered whenTheCommandIsNotify {
         // It should revert with NotValidGauge
         uint256 ethAmount = TOKEN_1;
         vm.deal({account: users.charlie, newBalance: ethAmount});
@@ -318,7 +381,7 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
-    function test_WhenTheCallerIsAnAliveGauge() external whenTheCommandIsNotify {
+    function test_WhenTheCallerIsAnAliveGauge() external whenTheChainIdIsRegistered whenTheCommandIsNotify {
         // It dispatches the notify message to the message module
         uint256 ethAmount = TOKEN_1;
         vm.deal({account: address(rootGauge), newBalance: ethAmount});
@@ -353,7 +416,7 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         assertEq(leafGauge.periodFinish(), block.timestamp + timeUntilNext);
     }
 
-    function test_WhenTheCommandIsNotAnyExpectedCommand() external {
+    function test_WhenTheCommandIsNotAnyExpectedCommand() external whenTheChainIdIsRegistered {
         // It should revert with {InvalidCommand}
         uint256 ethAmount = TOKEN_1;
         command = type(uint256).max;

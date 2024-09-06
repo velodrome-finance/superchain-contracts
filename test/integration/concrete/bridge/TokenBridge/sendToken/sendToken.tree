@@ -1,10 +1,10 @@
 SendTokenIntegrationConcreteTest
 ├── When the requested amount is zero
-│   └── It should revert with ZeroAmount
+│   └── It should revert with {ZeroAmount}
 └── When the requested amount is not zero
-    ├── When the requested chain is the current chain
-    │   └── It should revert with InvalidChain
-    └── When the requested chain is not the current chain
+    ├── When the requested chain is not a registered chain
+    │   └── It should revert with {NotRegistered}
+    └── When the requested chain is a registered chain
         ├── When the requested amount is higher than the current burning limit of caller
         │   └── It should revert with IXERC20_NotHighEnoughLimits
         └── When the amount is less than or equal to the current burning limit of caller

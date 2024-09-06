@@ -1,0 +1,12 @@
+RegisterChainIntegrationConcreteTest
+├── When the caller is not the owner
+│   └── It reverts with {OwnableUnauthorizedAccount}
+└── When the caller is the owner
+    ├── When the chain is the current chain
+    │   └── It reverts with {InvalidChain}
+    └── When the chain is not the current chain
+        ├── When the chain is already registered
+        │   └── It reverts with {AlreadyRegistered}
+        └── When the chain is not already registered
+            ├── It registers the chain id
+            └── It emits the {ChainRegistered} event
