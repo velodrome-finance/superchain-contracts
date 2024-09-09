@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IRootGauge {
+    error NotVoter();
     error ZeroAmount();
     error ZeroRewardRate();
 
@@ -12,6 +13,9 @@ interface IRootGauge {
 
     /// @notice XERC20 token corresponding to reward token
     function xerc20() external view returns (address);
+
+    /// @notice Address of voter contract that sets voting power
+    function voter() external view returns (address);
 
     /// @notice Lockbox to wrap and unwrap reward token to and from XERC20
     function lockbox() external view returns (address);

@@ -10,6 +10,7 @@ import {IRootMessageBridge} from "../../interfaces/mainnet/bridge/IRootMessageBr
 import {Commands} from "../../libraries/Commands.sol";
 
 import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
+import {Commands} from "../../libraries/Commands.sol";
 
 /// @notice RootGauge that forward emissions to the corresponding LeafGauge on the leaf chain
 contract RootGauge is IRootGauge {
@@ -19,6 +20,8 @@ contract RootGauge is IRootGauge {
     address public immutable rewardToken;
     /// @inheritdoc IRootGauge
     address public immutable xerc20;
+    /// @inheritdoc IRootGauge
+    address public immutable voter;
     /// @inheritdoc IRootGauge
     address public immutable lockbox;
     /// @inheritdoc IRootGauge
@@ -32,6 +35,7 @@ contract RootGauge is IRootGauge {
         lockbox = _lockbox;
         bridge = _bridge;
         chainid = _chainid;
+        voter = IRootMessageBridge(_bridge).voter();
     }
 
     /// @inheritdoc IRootGauge
@@ -45,8 +49,9 @@ contract RootGauge is IRootGauge {
 
     /// @inheritdoc IRootGauge
     function notifyRewardAmount(uint256 _amount) external {
-        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
+        if (msg.sender != voter) revert NotVoter();
         if (_amount == 0) revert ZeroAmount();
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
         if (_amount < timeUntilNext) revert ZeroRewardRate();
 
         IERC20(rewardToken).transferFrom(msg.sender, address(this), _amount);

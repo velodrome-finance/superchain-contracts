@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "test/BaseForkFixture.sol";
+import "../RootGauge.t.sol";
 
-contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
+contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
     function test_WhenTheCallerIsNotVoter() external {
         // It should revert with NotVoter
+        vm.prank(users.charlie);
+        vm.expectRevert(IRootGauge.NotVoter.selector);
+        rootGauge.notifyRewardAmount({_amount: 0});
     }
 
     modifier whenTheCallerIsVoter() {
+        vm.startPrank(address(mockVoter));
         _;
     }
 
