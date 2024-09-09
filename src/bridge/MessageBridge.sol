@@ -1,21 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
+import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 
-import {IXERC20} from "../interfaces/xerc20/IXERC20.sol";
 import {IMessageBridge} from "../interfaces/bridge/IMessageBridge.sol";
-import {IMessageSender} from "../interfaces/bridge/IMessageSender.sol";
-import {IVoter} from "../interfaces/external/IVoter.sol";
-
-import {Commands} from "../libraries/Commands.sol";
-import {ChainRegistry} from "./ChainRegistry.sol";
+import {IXERC20} from "../interfaces/xerc20/IXERC20.sol";
 
 /// @title Message Bridge Contract
 /// @notice General purpose message bridge contract
-contract MessageBridge is IMessageBridge, ChainRegistry {
-    using EnumerableSet for EnumerableSet.UintSet;
-
+contract MessageBridge is IMessageBridge, Ownable {
     /// @inheritdoc IMessageBridge
     address public immutable xerc20;
     /// @inheritdoc IMessageBridge
@@ -23,23 +16,15 @@ contract MessageBridge is IMessageBridge, ChainRegistry {
     /// @inheritdoc IMessageBridge
     address public immutable poolFactory;
     /// @inheritdoc IMessageBridge
-    address public immutable gaugeFactory;
-    /// @inheritdoc IMessageBridge
     address public module;
 
-    constructor(
-        address _owner,
-        address _xerc20,
-        address _voter,
-        address _module,
-        address _poolFactory,
-        address _gaugeFactory
-    ) ChainRegistry(_owner) {
+    constructor(address _owner, address _xerc20, address _voter, address _module, address _poolFactory)
+        Ownable(_owner)
+    {
         xerc20 = _xerc20;
         voter = _voter;
         module = _module;
         poolFactory = _poolFactory;
-        gaugeFactory = _gaugeFactory;
     }
 
     /// @inheritdoc IMessageBridge
@@ -53,35 +38,5 @@ contract MessageBridge is IMessageBridge, ChainRegistry {
     function mint(address _recipient, uint256 _amount) external {
         if (msg.sender != module) revert NotModule();
         IXERC20(xerc20).mint({_user: _recipient, _amount: _amount});
-    }
-
-    /// @inheritdoc IMessageBridge
-    function sendMessage(uint256 _chainid, bytes calldata _message) external payable {
-        if (!_chainids.contains({value: _chainid})) revert NotRegistered();
-
-        (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
-        if (command == Commands.DEPOSIT) {
-            (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
-            if (msg.sender != IVoter(voter).gaugeToFees(gauge)) revert NotAuthorized(Commands.DEPOSIT);
-        } else if (command == Commands.WITHDRAW) {
-            (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
-            if (msg.sender != IVoter(voter).gaugeToFees(gauge)) revert NotAuthorized(Commands.WITHDRAW);
-        } else if (command == Commands.CREATE_GAUGE) {
-            if (msg.sender != gaugeFactory) revert NotAuthorized(Commands.CREATE_GAUGE);
-        } else if (command == Commands.GET_INCENTIVES) {
-            (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
-            if (msg.sender != IVoter(voter).gaugeToBribe(gauge)) revert NotAuthorized(Commands.GET_INCENTIVES);
-        } else if (command == Commands.GET_FEES) {
-            (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
-            if (msg.sender != IVoter(voter).gaugeToFees(gauge)) revert NotAuthorized(Commands.GET_FEES);
-        } else if (command == Commands.NOTIFY) {
-            if (!IVoter(voter).isAlive(msg.sender)) revert NotValidGauge();
-            (, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
-            IXERC20(xerc20).burn({_user: msg.sender, _amount: amount});
-        } else {
-            revert InvalidCommand();
-        }
-
-        IMessageSender(module).sendMessage{value: msg.value}({_chainid: _chainid, _message: _message});
     }
 }

@@ -3,14 +3,11 @@ pragma solidity ^0.8.0;
 
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
 
-import {IMessageSender} from "../IMessageSender.sol";
+import {IHLHandler} from "./IHLHandler.sol";
 
-interface IHLMessageBridge is IMessageSender {
-    error NotBridge();
+interface IHLMessageBridge is IHLHandler {
     error InvalidCommand();
     error NotModule();
-
-    event SentMessage(uint32 indexed _destination, bytes32 indexed _recipient, uint256 _value, string _message);
 
     /// @notice Returns the address of the bridge contract that this module is associated with
     function bridge() external view returns (address);

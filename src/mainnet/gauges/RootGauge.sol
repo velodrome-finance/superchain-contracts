@@ -6,7 +6,7 @@ import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.so
 
 import {IRootGauge} from "../../interfaces/mainnet/gauges/IRootGauge.sol";
 import {IXERC20Lockbox} from "../../interfaces/xerc20/IXERC20Lockbox.sol";
-import {IMessageBridge} from "../../interfaces/bridge/IMessageBridge.sol";
+import {IRootMessageBridge} from "../../interfaces/mainnet/bridge/IRootMessageBridge.sol";
 import {Commands} from "../../libraries/Commands.sol";
 
 import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
@@ -58,7 +58,7 @@ contract RootGauge is IRootGauge {
 
         bytes memory payload = abi.encode(address(this), _amount);
         bytes memory message = abi.encode(Commands.NOTIFY, payload);
-        IMessageBridge(bridge).sendMessage({_chainid: uint32(chainid), _message: message});
+        IRootMessageBridge(bridge).sendMessage({_chainid: uint32(chainid), _message: message});
 
         emit NotifyReward({_sender: msg.sender, _amount: _amount});
     }

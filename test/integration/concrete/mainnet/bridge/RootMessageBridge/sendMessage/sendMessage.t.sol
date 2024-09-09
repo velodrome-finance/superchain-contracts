@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../MessageBridge.t.sol";
+import "../RootMessageBridge.t.sol";
 
-contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
+contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
     uint256 public command;
 
     function setUp() public override {
@@ -53,7 +53,7 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
 
         vm.prank(users.charlie);
-        vm.expectRevert(abi.encodeWithSelector(IMessageBridge.NotAuthorized.selector, Commands.DEPOSIT));
+        vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.DEPOSIT));
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
@@ -109,7 +109,7 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
         message = abi.encode(command, abi.encode(address(leafGauge), payload));
         vm.startPrank(users.charlie);
-        vm.expectRevert(abi.encodeWithSelector(IMessageBridge.NotAuthorized.selector, Commands.WITHDRAW));
+        vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.WITHDRAW));
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
@@ -168,7 +168,7 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
 
         vm.prank(users.charlie);
-        vm.expectRevert(abi.encodeWithSelector(IMessageBridge.NotAuthorized.selector, Commands.CREATE_GAUGE));
+        vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.CREATE_GAUGE));
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
@@ -247,7 +247,7 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         vm.deal({account: users.charlie, newBalance: ethAmount});
 
         vm.prank(users.charlie);
-        vm.expectRevert(abi.encodeWithSelector(IMessageBridge.NotAuthorized.selector, Commands.GET_INCENTIVES));
+        vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.GET_INCENTIVES));
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
@@ -327,7 +327,7 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         vm.deal({account: users.charlie, newBalance: ethAmount});
 
         vm.prank(users.charlie);
-        vm.expectRevert(abi.encodeWithSelector(IMessageBridge.NotAuthorized.selector, Commands.GET_FEES));
+        vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.GET_FEES));
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
@@ -377,7 +377,7 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         bytes memory message = abi.encode(command, payload);
 
         vm.prank(users.charlie);
-        vm.expectRevert(abi.encodeWithSelector(IMessageBridge.NotValidGauge.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotValidGauge.selector));
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
@@ -426,7 +426,7 @@ contract SendMessageIntegrationConcreteTest is MessageBridgeTest {
         bytes memory message = abi.encode(command, payload);
 
         vm.prank(users.alice);
-        vm.expectRevert(IMessageBridge.InvalidCommand.selector);
+        vm.expectRevert(IRootMessageBridge.InvalidCommand.selector);
         rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 }

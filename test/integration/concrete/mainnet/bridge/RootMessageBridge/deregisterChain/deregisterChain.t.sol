@@ -1,24 +1,23 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../MessageBridge.t.sol";
+import "../RootMessageBridge.t.sol";
 
-contract DeregisterChainIntegrationConcreteTest is MessageBridgeTest {
+contract DeregisterChainIntegrationConcreteTest is RootMessageBridgeTest {
     function setUp() public override {
         super.setUp();
 
         // deploy fresh instance
-        rootMessageBridge = MessageBridge(
+        rootMessageBridge = RootMessageBridge(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
-                    type(MessageBridge).creationCode,
+                    type(RootMessageBridge).creationCode,
                     abi.encode(
                         users.owner, // message bridge owner
                         address(rootXVelo), // xerc20 address
                         address(mockVoter), // mock root voter
                         address(rootMessageModule), // message module
-                        address(0), // pool factory
                         address(rootGaugeFactory) // root gauge factory
                     )
                 )

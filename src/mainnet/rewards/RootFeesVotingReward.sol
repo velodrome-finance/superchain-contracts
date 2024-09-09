@@ -2,9 +2,9 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import {IRootFeesVotingReward} from "../../interfaces/mainnet/rewards/IRootFeesVotingReward.sol";
+import {IRootMessageBridge} from "../../interfaces/mainnet/bridge/IRootMessageBridge.sol";
 import {IRootGauge} from "../../interfaces/mainnet/gauges/IRootGauge.sol";
 import {IVotingEscrow} from "../../interfaces/external/IVotingEscrow.sol";
-import {IMessageBridge} from "../../interfaces/bridge/IMessageBridge.sol";
 import {IVoter} from "../../interfaces/external/IVoter.sol";
 
 import {Commands} from "../../libraries/Commands.sol";
@@ -44,7 +44,7 @@ contract RootFeesVotingReward is IRootFeesVotingReward {
         bytes memory payload = abi.encode(_amount, _tokenId);
         bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(gauge, payload));
 
-        IMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
+        IRootMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
     }
 
     /// @inheritdoc IRootFeesVotingReward
@@ -54,7 +54,7 @@ contract RootFeesVotingReward is IRootFeesVotingReward {
         bytes memory payload = abi.encode(_amount, _tokenId);
         bytes memory message = abi.encode(Commands.WITHDRAW, abi.encode(gauge, payload));
 
-        IMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
+        IRootMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
     }
 
     /// @inheritdoc IRootFeesVotingReward
@@ -65,6 +65,6 @@ contract RootFeesVotingReward is IRootFeesVotingReward {
         bytes memory payload = abi.encode(_owner, _tokenId, _tokens);
         bytes memory message = abi.encode(Commands.GET_FEES, abi.encode(gauge, payload));
 
-        IMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
+        IRootMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
     }
 }

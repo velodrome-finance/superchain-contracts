@@ -34,6 +34,7 @@ import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {IBridge, Bridge} from "src/bridge/Bridge.sol";
 import {IUserTokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
 import {IMessageBridge, MessageBridge} from "src/bridge/MessageBridge.sol";
+import {IRootMessageBridge, RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
 import {HLUserTokenBridge} from "src/bridge/hyperlane/HLUserTokenBridge.sol";
 import {IHLHandler} from "src/interfaces/bridge/hyperlane/IHLHandler.sol";
 import {IHLTokenBridge, HLTokenBridge} from "src/bridge/hyperlane/HLTokenBridge.sol";
@@ -41,7 +42,7 @@ import {IHLMessageBridge, HLMessageBridge} from "src/bridge/hyperlane/HLMessageB
 import {IVotingRewardsFactory, VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
 import {IChainRegistry} from "src/interfaces/bridge/IChainRegistry.sol";
 
-import {RootHLMessageBridge} from "src/mainnet/bridge/hyperlane/RootHLMessageBridge.sol";
+import {IMessageSender, RootHLMessageBridge} from "src/mainnet/bridge/hyperlane/RootHLMessageBridge.sol";
 import {RootHLTokenBridge} from "src/mainnet/bridge/hyperlane/RootHLTokenBridge.sol";
 
 import {IRootVotingRewardsFactory, RootVotingRewardsFactory} from "src/mainnet/rewards/RootVotingRewardsFactory.sol";
@@ -87,7 +88,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
     RootHLTokenBridge public rootModule;
     TokenBridge public rootTokenBridge;
     HLUserTokenBridge public rootTokenModule;
-    MessageBridge public rootMessageBridge;
+    RootMessageBridge public rootMessageBridge;
     RootHLMessageBridge public rootMessageModule;
 
     // root-only contracts
@@ -268,17 +269,16 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootGaugeFactory = RootGaugeFactory(
             CreateXLibrary.computeCreate3Address({_entropy: GAUGE_FACTORY_ENTROPY, _deployer: users.deployer})
         );
-        rootMessageBridge = MessageBridge(
+        rootMessageBridge = RootMessageBridge(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
-                    type(MessageBridge).creationCode,
+                    type(RootMessageBridge).creationCode,
                     abi.encode(
                         users.owner, // message bridge owner
                         address(rootXVelo), // xerc20 address
                         address(mockVoter), // mock root voter
                         address(rootMessageModule), // message module
-                        address(0), // pool factory
                         address(rootGaugeFactory) // root gauge factory
                     )
                 )
@@ -288,11 +288,10 @@ abstract contract BaseForkFixture is Test, TestConstants {
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
-                    type(HLMessageBridge).creationCode,
+                    type(RootHLMessageBridge).creationCode,
                     abi.encode(
                         address(rootMessageBridge), // root bridge
-                        address(rootMailbox), // root mailbox
-                        address(rootIsm) // root security module
+                        address(rootMailbox) // root mailbox
                     )
                 )
             })
@@ -502,8 +501,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
                         address(leafXVelo), // xerc20 address
                         address(leafVoter), // leaf voter
                         address(leafMessageModule), // message module
-                        address(leafPoolFactory), // leaf pool factory
-                        address(0) // gauge factory
+                        address(leafPoolFactory) // leaf pool factory
                     )
                 )
             })

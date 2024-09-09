@@ -5,7 +5,7 @@ import {IRootGaugeFactory} from "../../interfaces/mainnet/gauges/IRootGaugeFacto
 import {IRootPool} from "../../interfaces/mainnet/pools/IRootPool.sol";
 import {IRootBribeVotingReward} from "../../interfaces/mainnet/rewards/IRootBribeVotingReward.sol";
 import {IRootFeesVotingReward} from "../../interfaces/mainnet/rewards/IRootFeesVotingReward.sol";
-import {IMessageBridge} from "../../interfaces/bridge/IMessageBridge.sol";
+import {IRootMessageBridge} from "../../interfaces/mainnet/bridge/IRootMessageBridge.sol";
 
 import {CreateXLibrary} from "../../libraries/CreateXLibrary.sol";
 import {Commands} from "../../libraries/Commands.sol";
@@ -67,6 +67,6 @@ contract RootGaugeFactory is IRootGaugeFactory {
 
         bytes memory payload = abi.encode(_token0, _token1, _stable);
         bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
-        IMessageBridge(messageBridge).sendMessage({_chainid: _chainId, _message: message});
+        IRootMessageBridge(messageBridge).sendMessage({_chainid: _chainId, _message: message});
     }
 }

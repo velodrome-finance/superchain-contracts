@@ -2,9 +2,9 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import {IRootBribeVotingReward} from "../../interfaces/mainnet/rewards/IRootBribeVotingReward.sol";
+import {IRootMessageBridge} from "../../interfaces/mainnet/bridge/IRootMessageBridge.sol";
 import {IRootGauge} from "../../interfaces/mainnet/gauges/IRootGauge.sol";
 import {IVotingEscrow} from "../../interfaces/external/IVotingEscrow.sol";
-import {IMessageBridge} from "../../interfaces/bridge/IMessageBridge.sol";
 import {IVoter} from "../../interfaces/external/IVoter.sol";
 
 import {Commands} from "../../libraries/Commands.sol";
@@ -42,7 +42,7 @@ contract RootBribeVotingReward is IRootBribeVotingReward {
         bytes memory payload = abi.encode(_owner, _tokenId, _tokens);
         bytes memory message = abi.encode(Commands.GET_INCENTIVES, abi.encode(gauge, payload));
 
-        IMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
+        IRootMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
     }
 
     /// @inheritdoc IRootBribeVotingReward

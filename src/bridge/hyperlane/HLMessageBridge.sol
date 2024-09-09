@@ -1,29 +1,24 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import {Address} from "@openzeppelin5/contracts/utils/Address.sol";
-import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
-import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
+import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
 
 import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin5/contracts/token/ERC20/IERC20.sol";
 
-import {IHLMessageBridge, IMessageSender} from "../../interfaces/bridge/hyperlane/IHLMessageBridge.sol";
-import {IHLHandler} from "../../interfaces/bridge/hyperlane/IHLHandler.sol";
-import {IMessageReceiver} from "../../interfaces/bridge/IMessageReceiver.sol";
-import {ILeafVoter} from "../../interfaces/voter/ILeafVoter.sol";
-import {ILeafGauge} from "../../interfaces/gauges/ILeafGauge.sol";
-import {IPoolFactory} from "../../interfaces/pools/IPoolFactory.sol";
+import {IHLMessageBridge, IHLHandler} from "../../interfaces/bridge/hyperlane/IHLMessageBridge.sol";
 import {IMessageBridge} from "../../interfaces/bridge/IMessageBridge.sol";
+import {IPoolFactory} from "../../interfaces/pools/IPoolFactory.sol";
+import {ILeafGauge} from "../../interfaces/gauges/ILeafGauge.sol";
+import {ILeafVoter} from "../../interfaces/voter/ILeafVoter.sol";
 import {IReward} from "../../interfaces/rewards/IReward.sol";
 
 import {Commands} from "../../libraries/Commands.sol";
 
 /// @title Hyperlane Token Bridge
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
-contract HLMessageBridge is IHLMessageBridge, IHLHandler {
-    using Address for address;
+contract HLMessageBridge is IHLMessageBridge {
     using SafeERC20 for IERC20;
 
     /// @inheritdoc IHLMessageBridge
@@ -43,24 +38,6 @@ contract HLMessageBridge is IHLMessageBridge, IHLHandler {
         voter = IMessageBridge(_bridge).voter();
         mailbox = _mailbox;
         securityModule = IInterchainSecurityModule(_ism);
-    }
-
-    /// @inheritdoc IMessageSender
-    function sendMessage(uint256 _chainid, bytes calldata _message) external payable override {
-        if (msg.sender != bridge) revert NotBridge();
-        uint32 domain = uint32(_chainid);
-        Mailbox(mailbox).dispatch{value: msg.value}({
-            _destinationDomain: domain,
-            _recipientAddress: TypeCasts.addressToBytes32(address(this)),
-            _messageBody: _message
-        });
-
-        emit SentMessage({
-            _destination: domain,
-            _recipient: TypeCasts.addressToBytes32(address(this)),
-            _value: msg.value,
-            _message: string(_message)
-        });
     }
 
     /// @inheritdoc IHLHandler
