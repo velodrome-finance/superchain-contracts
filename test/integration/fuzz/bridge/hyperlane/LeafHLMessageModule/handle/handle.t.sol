@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../HLMessageBridge.t.sol";
+import "../LeafHLMessageModule.t.sol";
 
-contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
+contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
     uint32 origin;
     bytes32 sender = TypeCasts.addressToBytes32(users.charlie);
 
@@ -44,7 +44,7 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         // It should revert with NotModule
         vm.assume(_sender != address(leafMessageModule));
         sender = TypeCasts.addressToBytes32(_sender);
-        vm.expectRevert(IHLMessageBridge.NotModule.selector);
+        vm.expectRevert(ILeafHLMessageModule.NotModule.selector);
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: abi.encode(users.charlie, abi.encode(1))});
     }
 
@@ -157,7 +157,7 @@ contract HandleIntegrationConcreteTest is HLMessageBridgeTest {
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(type(uint256).max, abi.encode(address(leafGauge), payload));
 
-        vm.expectRevert(IHLMessageBridge.InvalidCommand.selector);
+        vm.expectRevert(ILeafHLMessageModule.InvalidCommand.selector);
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
     }
 }

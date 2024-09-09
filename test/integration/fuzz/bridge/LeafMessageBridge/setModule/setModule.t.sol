@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../MessageBridge.t.sol";
+import "../LeafMessageBridge.t.sol";
 
-contract SetModuleIntegrationFuzzTest is MessageBridgeTest {
+contract SetModuleIntegrationFuzzTest is LeafMessageBridgeTest {
     function testFuzz_WhenCallerIsNotOwner(address _caller) external {
         // It reverts with {OwnableUnauthorizedAccount}
         vm.assume(_caller != users.owner);
@@ -24,7 +24,7 @@ contract SetModuleIntegrationFuzzTest is MessageBridgeTest {
         vm.assume(_module != address(0));
 
         vm.expectEmit(address(rootMessageBridge));
-        emit IMessageBridge.SetModule({_sender: users.owner, _module: _module});
+        emit ILeafMessageBridge.SetModule({_sender: users.owner, _module: _module});
         rootMessageBridge.setModule({_module: _module});
 
         assertEq(rootMessageBridge.module(), _module);

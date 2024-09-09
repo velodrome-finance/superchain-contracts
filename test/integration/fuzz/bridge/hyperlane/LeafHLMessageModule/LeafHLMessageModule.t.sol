@@ -3,4 +3,4 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "test/BaseForkFixture.sol";
 
-abstract contract MessageBridgeTest is BaseForkFixture {}
+abstract contract LeafHLMessageModuleTest is BaseForkFixture {}

@@ -13,7 +13,7 @@ import {IPool} from "../interfaces/pools/IPool.sol";
 import {ILeafVoter} from "../interfaces/voter/ILeafVoter.sol";
 import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
 
-import {IMessageBridge} from "../interfaces/bridge/IMessageBridge.sol";
+import {ILeafMessageBridge} from "../interfaces/bridge/ILeafMessageBridge.sol";
 
 /// @title Velodrome Superchain Gauge Contracts
 /// @notice Leaf gauge contract for distribution of emissions by address
@@ -194,7 +194,7 @@ contract LeafGauge is ILeafGauge, ReentrancyGuard {
 
     /// @inheritdoc ILeafGauge
     function notifyRewardAmount(uint256 _amount) external nonReentrant {
-        if (msg.sender != IMessageBridge(bridge).module()) revert NotBridge();
+        if (msg.sender != ILeafMessageBridge(bridge).module()) revert NotBridge();
         if (_amount == 0) revert ZeroAmount();
         _claimFees();
         _notifyRewardAmount(_amount);

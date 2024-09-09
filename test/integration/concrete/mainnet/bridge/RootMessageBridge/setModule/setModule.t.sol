@@ -18,7 +18,7 @@ contract SetModuleIntegrationConcreteTest is RootMessageBridgeTest {
 
     function test_WhenModuleIsZeroAddress() external whenCallerIsOwner {
         // It reverts with {ZeroAddress}
-        vm.expectRevert(IMessageBridge.ZeroAddress.selector);
+        vm.expectRevert(ILeafMessageBridge.ZeroAddress.selector);
         rootMessageBridge.setModule({_module: address(0)});
     }
 
@@ -26,7 +26,7 @@ contract SetModuleIntegrationConcreteTest is RootMessageBridgeTest {
         // It sets new module
         // It emits {SetModule}
         address module = address(
-            new HLMessageBridge({
+            new LeafHLMessageModule({
                 _bridge: address(rootMessageBridge),
                 _mailbox: address(rootMailbox),
                 _ism: address(rootIsm)
@@ -34,7 +34,7 @@ contract SetModuleIntegrationConcreteTest is RootMessageBridgeTest {
         );
 
         vm.expectEmit(address(rootMessageBridge));
-        emit IMessageBridge.SetModule({_sender: users.owner, _module: module});
+        emit ILeafMessageBridge.SetModule({_sender: users.owner, _module: module});
         rootMessageBridge.setModule({_module: module});
 
         assertEq(rootMessageBridge.module(), module);

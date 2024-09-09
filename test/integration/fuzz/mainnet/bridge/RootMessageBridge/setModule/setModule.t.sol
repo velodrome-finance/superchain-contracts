@@ -24,7 +24,7 @@ contract SetModuleIntegrationFuzzTest is RootMessageBridgeTest {
         vm.assume(_module != address(0));
 
         vm.expectEmit(address(rootMessageBridge));
-        emit IMessageBridge.SetModule({_sender: users.owner, _module: _module});
+        emit ILeafMessageBridge.SetModule({_sender: users.owner, _module: _module});
         rootMessageBridge.setModule({_module: _module});
 
         assertEq(rootMessageBridge.module(), _module);

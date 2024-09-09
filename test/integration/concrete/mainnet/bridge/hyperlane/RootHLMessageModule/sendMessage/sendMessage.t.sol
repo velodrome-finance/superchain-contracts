@@ -1,21 +1,22 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../RootHLMessageBridge.t.sol";
+import "../RootHLMessageModule.t.sol";
 
-contract SendMessageIntegrationConcreteTest is RootHLMessageBridgeTest {
-    function test_WhenTheCallerIsNotBridge(address _caller) external {
+contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
+    function test_WhenTheCallerIsNotBridge() external {
         // It reverts with NotBridge
-        vm.assume(_caller != address(rootMessageBridge));
-        vm.prank(_caller);
+        vm.prank(users.charlie);
         vm.expectRevert(IMessageSender.NotBridge.selector);
         rootMessageModule.sendMessage({_chainid: leaf, _message: abi.encode(users.charlie, abi.encode(1))});
     }
 
-    function test_WhenTheCallerIsBridge(uint256 ethAmount, uint256 amount) external {
+    function test_WhenTheCallerIsBridge() external {
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
         // It calls receiveMessage on the recipient contract of the same address with the payload
+        uint256 ethAmount = TOKEN_1;
+        uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));

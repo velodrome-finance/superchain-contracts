@@ -7,7 +7,7 @@ import {IERC20} from "@openzeppelin5/contracts/token/ERC20/IERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin5/contracts/utils/ReentrancyGuard.sol";
 
 import {IReward} from "../interfaces/rewards/IReward.sol";
-import {IMessageBridge} from "../interfaces/bridge/IMessageBridge.sol";
+import {ILeafMessageBridge} from "../interfaces/bridge/ILeafMessageBridge.sol";
 
 import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
 
@@ -186,7 +186,7 @@ abstract contract Reward is IReward, ReentrancyGuard {
 
     /// @inheritdoc IReward
     function _deposit(bytes calldata _payload) external nonReentrant {
-        if (msg.sender != IMessageBridge(authorized).module()) revert NotAuthorized();
+        if (msg.sender != ILeafMessageBridge(authorized).module()) revert NotAuthorized();
         (uint256 amount, uint256 tokenId) = abi.decode(_payload, (uint256, uint256));
 
         totalSupply += amount;
@@ -200,7 +200,7 @@ abstract contract Reward is IReward, ReentrancyGuard {
 
     /// @inheritdoc IReward
     function _withdraw(bytes calldata _payload) external nonReentrant {
-        if (msg.sender != IMessageBridge(authorized).module()) revert NotAuthorized();
+        if (msg.sender != ILeafMessageBridge(authorized).module()) revert NotAuthorized();
         (uint256 amount, uint256 tokenId) = abi.decode(_payload, (uint256, uint256));
 
         totalSupply -= amount;

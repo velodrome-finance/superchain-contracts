@@ -33,7 +33,7 @@ contract HandleIntegrationFuzzTest is HLUserTokenBridgeTest {
         // It should revert with NotModule
         vm.assume(_sender != address(leafTokenModule));
         sender = TypeCasts.addressToBytes32(_sender);
-        vm.expectRevert(IHLMessageBridge.NotModule.selector);
+        vm.expectRevert(ILeafHLMessageModule.NotModule.selector);
         leafTokenModule.handle({_origin: root, _sender: sender, _message: abi.encode(users.charlie, abi.encode(1))});
     }
 

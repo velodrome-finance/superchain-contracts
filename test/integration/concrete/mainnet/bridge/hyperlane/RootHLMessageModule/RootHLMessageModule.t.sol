@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "test/BaseForkFixture.sol";
 
-abstract contract RootHLMessageBridgeTest is BaseForkFixture {
+abstract contract RootHLMessageModuleTest is BaseForkFixture {
     function test_InitialState() public {
         vm.selectFork({forkId: rootId});
         assertEq(rootMessageModule.bridge(), address(rootMessageBridge));

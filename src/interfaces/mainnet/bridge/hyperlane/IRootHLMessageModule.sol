@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IMessageSender} from "../IMessageSender.sol";
 
-interface IRootHLMessageBridge is IMessageSender {
+interface IRootHLMessageModule is IMessageSender {
     /// @notice Returns the address of the bridge contract that this module is associated with
     function bridge() external view returns (address);
 

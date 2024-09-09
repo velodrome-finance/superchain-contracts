@@ -5,15 +5,15 @@ import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 
 import {
-    IRootHLMessageBridge, IMessageSender
-} from "../../../interfaces/mainnet/bridge/hyperlane/IRootHLMessageBridge.sol";
+    IRootHLMessageModule, IMessageSender
+} from "../../../interfaces/mainnet/bridge/hyperlane/IRootHLMessageModule.sol";
 
 /// @title Hyperlane Token Bridge
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
-contract RootHLMessageBridge is IRootHLMessageBridge {
-    /// @inheritdoc IRootHLMessageBridge
+contract RootHLMessageModule is IRootHLMessageModule {
+    /// @inheritdoc IRootHLMessageModule
     address public immutable bridge;
-    /// @inheritdoc IRootHLMessageBridge
+    /// @inheritdoc IRootHLMessageModule
     address public immutable mailbox;
 
     constructor(address _bridge, address _mailbox) {

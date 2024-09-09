@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../MessageBridge.t.sol";
+import "../LeafMessageBridge.t.sol";
 
-contract SetModuleIntegrationConcreteTest is MessageBridgeTest {
+contract SetModuleIntegrationConcreteTest is LeafMessageBridgeTest {
     function test_WhenCallerIsNotOwner() external {
         // It reverts with {OwnableUnauthorizedAccount}
         vm.prank(users.charlie);
@@ -18,7 +18,7 @@ contract SetModuleIntegrationConcreteTest is MessageBridgeTest {
 
     function test_WhenModuleIsZeroAddress() external whenCallerIsOwner {
         // It reverts with {ZeroAddress}
-        vm.expectRevert(IMessageBridge.ZeroAddress.selector);
+        vm.expectRevert(ILeafMessageBridge.ZeroAddress.selector);
         rootMessageBridge.setModule({_module: address(0)});
     }
 
@@ -26,7 +26,7 @@ contract SetModuleIntegrationConcreteTest is MessageBridgeTest {
         // It sets new module
         // It emits {SetModule}
         address module = address(
-            new HLMessageBridge({
+            new LeafHLMessageModule({
                 _bridge: address(rootMessageBridge),
                 _mailbox: address(rootMailbox),
                 _ism: address(rootIsm)
@@ -34,7 +34,7 @@ contract SetModuleIntegrationConcreteTest is MessageBridgeTest {
         );
 
         vm.expectEmit(address(rootMessageBridge));
-        emit IMessageBridge.SetModule({_sender: users.owner, _module: module});
+        emit ILeafMessageBridge.SetModule({_sender: users.owner, _module: module});
         rootMessageBridge.setModule({_module: module});
 
         assertEq(rootMessageBridge.module(), module);

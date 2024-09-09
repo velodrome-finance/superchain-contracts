@@ -33,16 +33,16 @@ import {IRouter, Router} from "src/Router.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {IBridge, Bridge} from "src/bridge/Bridge.sol";
 import {IUserTokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
-import {IMessageBridge, MessageBridge} from "src/bridge/MessageBridge.sol";
+import {ILeafMessageBridge, LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
 import {IRootMessageBridge, RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
 import {HLUserTokenBridge} from "src/bridge/hyperlane/HLUserTokenBridge.sol";
 import {IHLHandler} from "src/interfaces/bridge/hyperlane/IHLHandler.sol";
 import {IHLTokenBridge, HLTokenBridge} from "src/bridge/hyperlane/HLTokenBridge.sol";
-import {IHLMessageBridge, HLMessageBridge} from "src/bridge/hyperlane/HLMessageBridge.sol";
+import {ILeafHLMessageModule, LeafHLMessageModule} from "src/bridge/hyperlane/LeafHLMessageModule.sol";
 import {IVotingRewardsFactory, VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
 import {IChainRegistry} from "src/interfaces/bridge/IChainRegistry.sol";
 
-import {IMessageSender, RootHLMessageBridge} from "src/mainnet/bridge/hyperlane/RootHLMessageBridge.sol";
+import {IMessageSender, RootHLMessageModule} from "src/mainnet/bridge/hyperlane/RootHLMessageModule.sol";
 import {RootHLTokenBridge} from "src/mainnet/bridge/hyperlane/RootHLTokenBridge.sol";
 
 import {IRootVotingRewardsFactory, RootVotingRewardsFactory} from "src/mainnet/rewards/RootVotingRewardsFactory.sol";
@@ -89,7 +89,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
     TokenBridge public rootTokenBridge;
     HLUserTokenBridge public rootTokenModule;
     RootMessageBridge public rootMessageBridge;
-    RootHLMessageBridge public rootMessageModule;
+    RootHLMessageModule public rootMessageModule;
 
     // root-only contracts
     XERC20Lockbox public rootLockbox;
@@ -124,8 +124,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
     HLTokenBridge public leafModule;
     TokenBridge public leafTokenBridge;
     HLUserTokenBridge public leafTokenModule;
-    MessageBridge public leafMessageBridge;
-    HLMessageBridge public leafMessageModule;
+    LeafMessageBridge public leafMessageBridge;
+    LeafHLMessageModule public leafMessageModule;
 
     // leaf-only contracts
     PoolFactory public leafPoolFactory;
@@ -263,7 +263,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 )
             })
         );
-        rootMessageModule = RootHLMessageBridge(
+        rootMessageModule = RootHLMessageModule(
             CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer})
         );
         rootGaugeFactory = RootGaugeFactory(
@@ -284,11 +284,11 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 )
             })
         );
-        rootMessageModule = RootHLMessageBridge(
+        rootMessageModule = RootHLMessageModule(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
-                    type(RootHLMessageBridge).creationCode,
+                    type(RootHLMessageModule).creationCode,
                     abi.encode(
                         address(rootMessageBridge), // root bridge
                         address(rootMailbox) // root mailbox
@@ -443,7 +443,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
             })
         );
 
-        leafMessageBridge = MessageBridge(
+        leafMessageBridge = LeafMessageBridge(
             CreateXLibrary.computeCreate3Address({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer})
         );
         leafVoter = LeafVoter(
@@ -488,14 +488,14 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 )
             })
         );
-        leafMessageModule = HLMessageBridge(
+        leafMessageModule = LeafHLMessageModule(
             CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer})
         );
-        leafMessageBridge = MessageBridge(
+        leafMessageBridge = LeafMessageBridge(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
-                    type(MessageBridge).creationCode,
+                    type(LeafMessageBridge).creationCode,
                     abi.encode(
                         users.owner, // message bridge owner
                         address(leafXVelo), // xerc20 address
@@ -506,11 +506,11 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 )
             })
         );
-        leafMessageModule = HLMessageBridge(
+        leafMessageModule = LeafHLMessageModule(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
-                    type(HLMessageBridge).creationCode,
+                    type(LeafHLMessageModule).creationCode,
                     abi.encode(
                         address(leafMessageBridge), // leaf message bridge
                         address(leafMailbox), // leaf mailbox

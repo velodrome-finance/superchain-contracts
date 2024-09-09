@@ -7,8 +7,8 @@ import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/II
 import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin5/contracts/token/ERC20/IERC20.sol";
 
-import {IHLMessageBridge, IHLHandler} from "../../interfaces/bridge/hyperlane/IHLMessageBridge.sol";
-import {IMessageBridge} from "../../interfaces/bridge/IMessageBridge.sol";
+import {ILeafHLMessageModule, IHLHandler} from "../../interfaces/bridge/hyperlane/ILeafHLMessageModule.sol";
+import {ILeafMessageBridge} from "../../interfaces/bridge/ILeafMessageBridge.sol";
 import {IPoolFactory} from "../../interfaces/pools/IPoolFactory.sol";
 import {ILeafGauge} from "../../interfaces/gauges/ILeafGauge.sol";
 import {ILeafVoter} from "../../interfaces/voter/ILeafVoter.sol";
@@ -18,24 +18,24 @@ import {Commands} from "../../libraries/Commands.sol";
 
 /// @title Hyperlane Token Bridge
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
-contract HLMessageBridge is IHLMessageBridge {
+contract LeafHLMessageModule is ILeafHLMessageModule {
     using SafeERC20 for IERC20;
 
-    /// @inheritdoc IHLMessageBridge
+    /// @inheritdoc ILeafHLMessageModule
     address public immutable bridge;
-    /// @inheritdoc IHLMessageBridge
+    /// @inheritdoc ILeafHLMessageModule
     address public immutable xerc20;
-    /// @inheritdoc IHLMessageBridge
+    /// @inheritdoc ILeafHLMessageModule
     address public immutable voter;
-    /// @inheritdoc IHLMessageBridge
+    /// @inheritdoc ILeafHLMessageModule
     address public immutable mailbox;
-    /// @inheritdoc IHLMessageBridge
+    /// @inheritdoc ILeafHLMessageModule
     IInterchainSecurityModule public immutable securityModule;
 
     constructor(address _bridge, address _mailbox, address _ism) {
         bridge = _bridge;
-        xerc20 = IMessageBridge(_bridge).xerc20();
-        voter = IMessageBridge(_bridge).voter();
+        xerc20 = ILeafMessageBridge(_bridge).xerc20();
+        voter = ILeafMessageBridge(_bridge).voter();
         mailbox = _mailbox;
         securityModule = IInterchainSecurityModule(_ism);
     }
@@ -62,7 +62,7 @@ contract HLMessageBridge is IHLMessageBridge {
             IReward(ivr)._withdraw({_payload: payload});
         } else if (command == Commands.CREATE_GAUGE) {
             (address token0, address token1, bool stable) = abi.decode(messageWithoutCommand, (address, address, bool));
-            address poolFactory = IMessageBridge(bridge).poolFactory();
+            address poolFactory = ILeafMessageBridge(bridge).poolFactory();
 
             address pool = IPoolFactory(poolFactory).getPool({tokenA: token0, tokenB: token1, stable: stable});
             if (pool == address(0)) {
@@ -79,7 +79,7 @@ contract HLMessageBridge is IHLMessageBridge {
             IReward(fvr).getReward({_payload: payload});
         } else if (command == Commands.NOTIFY) {
             (address gauge, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
-            IMessageBridge(bridge).mint({_recipient: address(this), _amount: amount});
+            ILeafMessageBridge(bridge).mint({_recipient: address(this), _amount: amount});
             IERC20(xerc20).safeIncreaseAllowance({spender: gauge, value: amount});
             ILeafGauge(gauge).notifyRewardAmount({amount: amount});
         } else {

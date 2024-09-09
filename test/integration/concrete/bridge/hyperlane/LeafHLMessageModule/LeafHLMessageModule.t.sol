@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "test/BaseForkFixture.sol";
 
-abstract contract HLMessageBridgeTest is BaseForkFixture {
+abstract contract LeafHLMessageModuleTest is BaseForkFixture {
     function test_InitialState() public {
         vm.selectFork({forkId: leafId});
         assertEq(leafMessageModule.bridge(), address(leafMessageBridge));

@@ -7,7 +7,7 @@ import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSe
 import {IVotingRewardsFactory} from "../interfaces/rewards/IVotingRewardsFactory.sol";
 import {IFactoryRegistry} from "../interfaces/external/IFactoryRegistry.sol";
 import {ILeafGaugeFactory} from "../interfaces/gauges/ILeafGaugeFactory.sol";
-import {IMessageBridge} from "../interfaces/bridge/IMessageBridge.sol";
+import {ILeafMessageBridge} from "../interfaces/bridge/ILeafMessageBridge.sol";
 import {ILeafGauge} from "../interfaces/gauges/ILeafGauge.sol";
 import {IReward} from "../interfaces/rewards/IReward.sol";
 import {IPoolFactory} from "../interfaces/pools/IPoolFactory.sol";
@@ -79,7 +79,7 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
 
     /// @inheritdoc ILeafVoter
     function createGauge(address _poolFactory, address _pool) external nonReentrant returns (address _gauge) {
-        if (msg.sender != IMessageBridge(bridge).module()) revert NotAuthorized();
+        if (msg.sender != ILeafMessageBridge(bridge).module()) revert NotAuthorized();
 
         address[] memory rewards = new address[](2);
         (rewards[0], rewards[1]) = IPool(_pool).tokens();

@@ -5,7 +5,7 @@ import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/II
 
 import {IHLHandler} from "./IHLHandler.sol";
 
-interface IHLMessageBridge is IHLHandler {
+interface ILeafHLMessageModule is IHLHandler {
     error InvalidCommand();
     error NotModule();
 
