@@ -175,7 +175,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
         deployCreateX();
         weth = IWETH(new MockWETH());
 
-        leafStartTime = VelodromeTimeLibrary.epochStart(block.timestamp);
+        leafStartTime = rootStartTime;
         vm.warp({newTimestamp: leafStartTime});
         vm.stopPrank();
     }
