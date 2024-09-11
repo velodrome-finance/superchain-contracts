@@ -54,7 +54,7 @@ contract BribeVotingRewardFuzzTest is BaseForkFixture {
         uint256 expectedEarned12 = votePower2 * amount2 / (votePower1 + votePower2);
 
         // ts1
-        skipTime(_ts1);
+        skip(_ts1);
 
         assertEq(leafIVR.earned(address(weth), 1), 0);
         assertEq(leafIVR.earned(address(weth), 2), 0);
@@ -73,7 +73,7 @@ contract BribeVotingRewardFuzzTest is BaseForkFixture {
         assertEq(weth.balanceOf(users.bob), 0);
 
         // ts2
-        skipTime(_ts2);
+        skip(_ts2);
         stillCurrentEpoch =
             VelodromeTimeLibrary.epochStart(notifyTimestamp) == VelodromeTimeLibrary.epochStart(block.timestamp);
 
@@ -102,7 +102,7 @@ contract BribeVotingRewardFuzzTest is BaseForkFixture {
 
         // ts3
         uint256 beforeTs = block.timestamp;
-        skipTime(_ts3);
+        skip(_ts3);
         changedEpochOnLastIteration = changedEpochNow;
         stillCurrentEpoch =
             VelodromeTimeLibrary.epochStart(notifyTimestamp) == VelodromeTimeLibrary.epochStart(block.timestamp);
@@ -152,7 +152,7 @@ contract BribeVotingRewardFuzzTest is BaseForkFixture {
 
         beforeTs = block.timestamp;
         // ts4
-        skipTime(_ts4);
+        skip(_ts4);
         changedEpochOnLastIteration = changedEpochNow;
         stillCurrentEpoch =
             VelodromeTimeLibrary.epochStart(notifyTimestamp) == VelodromeTimeLibrary.epochStart(block.timestamp);
@@ -227,7 +227,7 @@ contract BribeVotingRewardFuzzTest is BaseForkFixture {
         uint256 expectedEarned12 = votePower2 * amount2 / (votePower1 + votePower2);
 
         // ts1
-        skipTime(_ts1);
+        skip(_ts1);
 
         assertEq(leafIVR.earned(address(weth), 1), 0);
         assertEq(leafIVR.earned(address(weth), 2), 0);
@@ -246,7 +246,7 @@ contract BribeVotingRewardFuzzTest is BaseForkFixture {
         assertEq(weth.balanceOf(users.bob), 0);
 
         // ts2
-        skipTime(_ts2);
+        skip(_ts2);
         stillCurrentEpoch =
             VelodromeTimeLibrary.epochStart(notifyTimestamp) == VelodromeTimeLibrary.epochStart(block.timestamp);
         changedEpochNow = !stillCurrentEpoch;
@@ -278,7 +278,7 @@ contract BribeVotingRewardFuzzTest is BaseForkFixture {
 
         uint256 beforeTs = block.timestamp;
         // ts3
-        skipTime(_ts3);
+        skip(_ts3);
         changedEpochOnLastIteration = changedEpochNow;
         stillCurrentEpoch =
             VelodromeTimeLibrary.epochStart(notifyTimestamp) == VelodromeTimeLibrary.epochStart(block.timestamp);
