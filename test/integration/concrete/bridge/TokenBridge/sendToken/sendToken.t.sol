@@ -12,7 +12,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
 
     function test_WhenTheRequestedAmountIsZero() external {
         // It should revert with ZeroAmount
-        vm.expectRevert(IUserTokenBridge.ZeroAmount.selector);
+        vm.expectRevert(ITokenBridge.ZeroAmount.selector);
         rootTokenBridge.sendToken({_amount: amount, _chainid: leaf});
     }
 
@@ -89,10 +89,10 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         vm.startPrank(address(rootGauge));
         rootXVelo.approve({spender: address(rootTokenBridge), value: amount});
 
-        vm.expectEmit(address(rootTokenModule));
-        emit IHLTokenBridge.SentMessage({
+        vm.expectEmit(address(rootTokenBridge));
+        emit ITokenBridge.SentMessage({
             _destination: leaf,
-            _recipient: TypeCasts.addressToBytes32(address(rootTokenModule)),
+            _recipient: TypeCasts.addressToBytes32(address(rootTokenBridge)),
             _value: ethAmount,
             _message: string(abi.encode(address(leafGauge), amount))
         });
@@ -102,10 +102,10 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         assertEq(address(rootTokenBridge).balance, 0);
 
         vm.selectFork({forkId: leafId});
-        vm.expectEmit(address(leafTokenModule));
+        vm.expectEmit(address(leafTokenBridge));
         emit IHLHandler.ReceivedMessage({
             _origin: root,
-            _sender: TypeCasts.addressToBytes32(address(leafTokenModule)),
+            _sender: TypeCasts.addressToBytes32(address(leafTokenBridge)),
             _value: 0,
             _message: string(abi.encode(address(leafGauge), amount))
         });

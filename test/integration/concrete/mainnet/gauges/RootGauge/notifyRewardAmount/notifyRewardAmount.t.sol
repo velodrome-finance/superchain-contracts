@@ -76,7 +76,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);
         assertEq(leafGauge.rewardRate(), amount / WEEK);
-        assertEq(leafGauge.rewardRateByEpoch(rootStartTime), amount / WEEK);
+        assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), amount / WEEK);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
         assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
     }
@@ -128,7 +128,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         uint256 timeUntilNext = WEEK * 2 / 7;
         uint256 rewardRate = ((amount / WEEK) * timeUntilNext + amount) / timeUntilNext;
         assertEq(leafGauge.rewardRate(), rewardRate);
-        assertEq(leafGauge.rewardRateByEpoch(rootStartTime), rewardRate);
+        assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), rewardRate);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
         assertEq(leafGauge.periodFinish(), block.timestamp + WEEK / 7 * 2);
     }

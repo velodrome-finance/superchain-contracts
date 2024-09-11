@@ -5,22 +5,22 @@ import "../LeafGauge.t.sol";
 
 contract NotifyRewardAmountIntegrationFuzzTest is LeafGaugeTest {
     function testFuzz_WhenTheCallerIsNotBridge(address _caller) external {
-        // It should revert with NotBridge
+        // It should revert with NotModule
         vm.assume(_caller != address(leafMessageModule));
 
         vm.prank(_caller);
-        vm.expectRevert(ILeafGauge.NotBridge.selector);
+        vm.expectRevert(ILeafGauge.NotModule.selector);
         leafGauge.notifyRewardAmount({_amount: TOKEN_1 * 1000});
     }
 
-    modifier whenTheCallerIsBridge() {
+    modifier whenTheCallerIsModule() {
         vm.startPrank(address(leafMessageModule));
         _;
     }
 
     function testFuzz_WhenTheAmountIsGreaterThanZeroAndSmallerThanTheTimeUntilTheNextTimestamp(uint256 _amount)
         external
-        whenTheCallerIsBridge
+        whenTheCallerIsModule
     {
         // It should revert with ZeroRewardRate
         _amount = bound(_amount, 1, WEEK - 1);
@@ -37,7 +37,7 @@ contract NotifyRewardAmountIntegrationFuzzTest is LeafGaugeTest {
 
     function testFuzz_WhenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish(uint256 _amount)
         external
-        whenTheCallerIsBridge
+        whenTheCallerIsModule
         whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeUntilTheNextTimestamp
     {
         // It should claim fees from pool
@@ -69,7 +69,7 @@ contract NotifyRewardAmountIntegrationFuzzTest is LeafGaugeTest {
 
     function testFuzz_WhenTheCurrentTimestampIsLessThanPeriodFinish(uint256 _amount, uint256 _timeskip)
         external
-        whenTheCallerIsBridge
+        whenTheCallerIsModule
         whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeUntilTheNextTimestamp
     {
         // It should claim fees from pool

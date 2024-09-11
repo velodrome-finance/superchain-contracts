@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 interface ILeafGauge {
     error NotAlive();
     error NotAuthorized();
-    error NotBridge();
+    error NotModule();
     error RewardRateTooHigh();
     error ZeroAmount();
     error ZeroRewardRate();

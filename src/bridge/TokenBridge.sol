@@ -4,47 +4,65 @@ pragma solidity >=0.8.19 <0.9.0;
 import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
 
-import {IUserTokenBridge} from "../interfaces/bridge/IUserTokenBridge.sol";
+import {IHLHandler} from "../interfaces/bridge/hyperlane/IHLHandler.sol";
 import {ITokenBridge} from "../interfaces/bridge/ITokenBridge.sol";
 import {IXERC20} from "../interfaces/xerc20/IXERC20.sol";
+import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
+import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
+import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 
 import {ChainRegistry} from "./ChainRegistry.sol";
 
 /// @title Token Bridge Contract
 /// @notice General Purpose Token Bridge
-contract TokenBridge is IUserTokenBridge, ChainRegistry {
+contract TokenBridge is ITokenBridge, IHLHandler, ChainRegistry {
     using EnumerableSet for EnumerableSet.UintSet;
 
-    /// @inheritdoc IUserTokenBridge
+    /// @inheritdoc ITokenBridge
     address public immutable xerc20;
-    /// @inheritdoc IUserTokenBridge
-    address public module;
+    /// @inheritdoc ITokenBridge
+    address public immutable mailbox;
+    /// @inheritdoc ITokenBridge
+    IInterchainSecurityModule public immutable securityModule;
 
-    constructor(address _owner, address _xerc20, address _module) ChainRegistry(_owner) {
+    constructor(address _owner, address _xerc20, address _mailbox, address _ism) ChainRegistry(_owner) {
         xerc20 = _xerc20;
-        module = _module;
+        mailbox = _mailbox;
+        securityModule = IInterchainSecurityModule(_ism);
     }
 
-    /// @inheritdoc IUserTokenBridge
-    function setModule(address _module) external onlyOwner {
-        if (_module == address(0)) revert ZeroAddress();
-        module = _module;
-        emit SetModule({_sender: msg.sender, _module: _module});
-    }
-
-    /// @inheritdoc IUserTokenBridge
-    function mint(address _user, uint256 _amount) external {
-        if (msg.sender != module) revert NotModule();
-        IXERC20(xerc20).mint({_user: _user, _amount: _amount});
-    }
-
-    /// @inheritdoc IUserTokenBridge
+    /// @inheritdoc ITokenBridge
     function sendToken(uint256 _amount, uint256 _chainid) external payable {
         if (_amount == 0) revert ZeroAmount();
         if (!_chainids.contains({value: _chainid})) revert NotRegistered();
 
         IXERC20(xerc20).burn({_user: msg.sender, _amount: _amount});
 
-        ITokenBridge(module).transfer{value: msg.value}({_sender: msg.sender, _amount: _amount, _chainid: _chainid});
+        uint32 domain = uint32(_chainid);
+        bytes memory message = abi.encode(msg.sender, _amount);
+        Mailbox(mailbox).dispatch{value: msg.value}({
+            _destinationDomain: domain,
+            _recipientAddress: TypeCasts.addressToBytes32(address(this)),
+            _messageBody: message
+        });
+
+        emit SentMessage({
+            _destination: domain,
+            _recipient: TypeCasts.addressToBytes32(address(this)),
+            _value: msg.value,
+            _message: string(message)
+        });
+    }
+
+    /// @inheritdoc IHLHandler
+    function handle(uint32 _origin, bytes32 _sender, bytes calldata _message) external payable {
+        if (msg.sender != mailbox) revert NotMailbox();
+        if (_sender != TypeCasts.addressToBytes32(address(this))) revert NotBridge();
+
+        (address recipient, uint256 amount) = abi.decode(_message, (address, uint256));
+
+        IXERC20(xerc20).mint({_user: recipient, _amount: amount});
+
+        emit ReceivedMessage({_origin: _origin, _sender: _sender, _value: msg.value, _message: string(_message)});
     }
 }

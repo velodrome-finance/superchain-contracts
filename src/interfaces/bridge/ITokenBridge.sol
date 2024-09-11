@@ -1,12 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
+
 interface ITokenBridge {
-    /// @notice Transfers an amount of the bridged token to the destination domain
-    /// @dev Requires approval for amount in order to bridge
-    /// @dev Tokens are sent to the same address as msg.sender
-    /// @param _sender The address of the sender that initiated a request to send tokens
-    /// @param _amount The amount of the xERC20 token to transfer
-    /// @param _chainid The id of the chain to which the tokens should be sent
-    function transfer(address _sender, uint256 _amount, uint256 _chainid) external payable;
+    error NotBridge();
+    error ZeroAmount();
+    error ZeroAddress();
+
+    event SentMessage(uint32 indexed _destination, bytes32 indexed _recipient, uint256 _value, string _message);
+
+    /// @notice Returns the address of the xERC20 token that is bridged by this contract
+    function xerc20() external view returns (address);
+
+    /// @notice Returns the address of the mailbox contract that is used to bridge by this contract
+    function mailbox() external view returns (address);
+
+    /// @notice Returns the address of the security module contract used by the bridge
+    function securityModule() external view returns (IInterchainSecurityModule);
+
+    /// @notice Burns xERC20 tokens from the sender and triggers a x-chain transfer
+    /// @param _amount The amount of xERC20 tokens to send
+    /// @param _chainid The chain id of the destination chain
+    function sendToken(uint256 _amount, uint256 _chainid) external payable;
 }

@@ -31,19 +31,15 @@ import {ILeafGaugeFactory, LeafGaugeFactory} from "src/gauges/LeafGaugeFactory.s
 import {IPool, Pool} from "src/pools/Pool.sol";
 import {IRouter, Router} from "src/Router.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
-import {IBridge, Bridge} from "src/bridge/Bridge.sol";
-import {IUserTokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
+import {ITokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
 import {ILeafMessageBridge, LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
 import {IRootMessageBridge, RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
-import {HLUserTokenBridge} from "src/bridge/hyperlane/HLUserTokenBridge.sol";
 import {IHLHandler} from "src/interfaces/bridge/hyperlane/IHLHandler.sol";
-import {IHLTokenBridge, HLTokenBridge} from "src/bridge/hyperlane/HLTokenBridge.sol";
 import {ILeafHLMessageModule, LeafHLMessageModule} from "src/bridge/hyperlane/LeafHLMessageModule.sol";
 import {IVotingRewardsFactory, VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
 import {IChainRegistry} from "src/interfaces/bridge/IChainRegistry.sol";
 
 import {IMessageSender, RootHLMessageModule} from "src/mainnet/bridge/hyperlane/RootHLMessageModule.sol";
-import {RootHLTokenBridge} from "src/mainnet/bridge/hyperlane/RootHLTokenBridge.sol";
 
 import {IRootVotingRewardsFactory, RootVotingRewardsFactory} from "src/mainnet/rewards/RootVotingRewardsFactory.sol";
 import {IRootBribeVotingReward, RootBribeVotingReward} from "src/mainnet/rewards/RootBribeVotingReward.sol";
@@ -83,11 +79,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
     // root superchain contracts
     XERC20Factory public rootXFactory;
     XERC20 public rootXVelo;
-    Bridge public rootBridge;
     Router public rootRouter;
-    RootHLTokenBridge public rootModule;
     TokenBridge public rootTokenBridge;
-    HLUserTokenBridge public rootTokenModule;
     RootMessageBridge public rootMessageBridge;
     RootHLMessageModule public rootMessageModule;
 
@@ -119,11 +112,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
     // leaf superchain contracts
     XERC20Factory public leafXFactory;
     XERC20 public leafXVelo;
-    Bridge public leafBridge;
     Router public leafRouter;
-    HLTokenBridge public leafModule;
     TokenBridge public leafTokenBridge;
-    HLUserTokenBridge public leafTokenModule;
     LeafMessageBridge public leafMessageBridge;
     LeafHLMessageModule public leafMessageModule;
 
@@ -237,32 +227,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootXVelo = XERC20(_xVelo);
         rootLockbox = XERC20Lockbox(_lockbox);
 
-        rootModule = RootHLTokenBridge(
-            CreateXLibrary.computeCreate3Address({_entropy: HL_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer})
-        );
-        rootBridge = Bridge(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: BRIDGE_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(Bridge).creationCode,
-                    abi.encode(
-                        users.owner, // bridge owner
-                        address(rootXVelo), // xerc20 address
-                        address(rootModule), // module
-                        address(mockVoter) // mock voter address
-                    )
-                )
-            })
-        );
-        rootModule = RootHLTokenBridge(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: HL_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(HLTokenBridge).creationCode,
-                    abi.encode(address(rootBridge), address(rootMailbox), address(rootIsm))
-                )
-            })
-        );
         rootMessageModule = RootHLMessageModule(
             CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer})
         );
@@ -296,9 +260,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 )
             })
         );
-        rootTokenModule = HLUserTokenBridge(
-            CreateXLibrary.computeCreate3Address({_entropy: HL_USER_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer})
-        );
         rootTokenBridge = TokenBridge(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer}),
@@ -307,17 +268,9 @@ abstract contract BaseForkFixture is Test, TestConstants {
                     abi.encode(
                         users.owner, // bridge owner
                         address(rootXVelo), // xerc20 address
-                        address(rootTokenModule) // module
+                        address(rootMailbox), // mailbox
+                        address(rootIsm) // security module
                     )
-                )
-            })
-        );
-        rootTokenModule = HLUserTokenBridge(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: HL_USER_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(HLUserTokenBridge).creationCode,
-                    abi.encode(address(rootTokenBridge), address(rootMailbox), address(rootIsm))
                 )
             })
         );
@@ -331,7 +284,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
                         address(mockVoter), // voter address
                         address(rootXVelo), // xerc20 address
                         address(rootLockbox), // lockbox address
-                        address(rootBridge), // gauge token bridge address
                         address(rootMessageBridge) // message bridge address
                     )
                 )
@@ -370,9 +322,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
         vm.label({account: address(rootXFactory), newLabel: "X Factory"});
         vm.label({account: address(rootXVelo), newLabel: "XVELO"});
         vm.label({account: address(rootTokenBridge), newLabel: "Token Bridge"});
-        vm.label({account: address(rootTokenModule), newLabel: "Token Module"});
-        vm.label({account: address(rootBridge), newLabel: "Gauge Token Bridge"});
-        vm.label({account: address(rootModule), newLabel: "Gauge Token Module"});
         vm.label({account: address(rootMessageBridge), newLabel: "Message Bridge"});
         vm.label({account: address(rootMessageModule), newLabel: "Message Module"});
         vm.label({account: address(rootVotingRewardsFactory), newLabel: "Voting Rewards Factory"});
@@ -462,32 +411,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
 
         leafXVelo = XERC20(leafXFactory.deployXERC20());
 
-        leafModule = HLTokenBridge(
-            CreateXLibrary.computeCreate3Address({_entropy: HL_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer})
-        );
-        leafBridge = Bridge(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: BRIDGE_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(Bridge).creationCode,
-                    abi.encode(
-                        users.owner, // bridge owner
-                        address(leafXVelo), // xerc20 address
-                        address(leafModule), // module
-                        address(leafVoter) // voter address
-                    )
-                )
-            })
-        );
-        leafModule = HLTokenBridge(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: HL_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(HLTokenBridge).creationCode,
-                    abi.encode(address(leafBridge), address(leafMailbox), address(leafIsm))
-                )
-            })
-        );
         leafMessageModule = LeafHLMessageModule(
             CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer})
         );
@@ -519,9 +442,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 )
             })
         );
-        leafTokenModule = HLUserTokenBridge(
-            CreateXLibrary.computeCreate3Address({_entropy: HL_USER_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer})
-        );
         leafTokenBridge = TokenBridge(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer}),
@@ -530,17 +450,9 @@ abstract contract BaseForkFixture is Test, TestConstants {
                     abi.encode(
                         users.owner, // bridge owner
                         address(leafXVelo), // xerc20 address
-                        address(leafTokenModule) // module
+                        address(leafMailbox), // mailbox
+                        address(leafIsm) // security module
                     )
-                )
-            })
-        );
-        leafTokenModule = HLUserTokenBridge(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: HL_USER_TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(HLUserTokenBridge).creationCode,
-                    abi.encode(address(leafTokenBridge), address(leafMailbox), address(leafIsm))
                 )
             })
         );
@@ -650,11 +562,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
         vm.startPrank(users.owner);
         vm.selectFork({forkId: rootId});
         rootXVelo.setLimits({
-            _bridge: address(rootBridge),
-            _mintingLimit: _rootMintingLimit,
-            _burningLimit: _leafMintingLimit
-        });
-        rootXVelo.setLimits({
             _bridge: address(rootTokenBridge),
             _mintingLimit: _rootMintingLimit,
             _burningLimit: _leafMintingLimit
@@ -665,11 +572,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
             _burningLimit: _leafMintingLimit
         });
         vm.selectFork({forkId: leafId});
-        leafXVelo.setLimits({
-            _bridge: address(leafBridge),
-            _mintingLimit: _leafMintingLimit,
-            _burningLimit: _rootMintingLimit
-        });
         leafXVelo.setLimits({
             _bridge: address(leafTokenBridge),
             _mintingLimit: _leafMintingLimit,

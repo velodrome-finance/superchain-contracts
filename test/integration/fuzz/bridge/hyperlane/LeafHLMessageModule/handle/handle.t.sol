@@ -141,7 +141,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
         assertEq(leafGauge.rewardPerTokenStored(), 0);
         assertEq(leafGauge.rewardRate(), amount / WEEK);
-        assertEq(leafGauge.rewardRateByEpoch(rootStartTime), amount / WEEK);
+        assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), amount / WEEK);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
         assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
     }

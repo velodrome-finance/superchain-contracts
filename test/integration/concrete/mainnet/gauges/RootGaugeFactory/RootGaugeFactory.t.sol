@@ -8,7 +8,6 @@ contract RootGaugeFactoryTest is BaseForkFixture {
         assertEq(rootGaugeFactory.voter(), address(mockVoter));
         assertEq(rootGaugeFactory.xerc20(), address(rootXVelo));
         assertEq(rootGaugeFactory.lockbox(), address(rootLockbox));
-        assertEq(rootGaugeFactory.bridge(), address(rootBridge));
         assertEq(rootGaugeFactory.messageBridge(), address(rootMessageBridge));
     }
 }

@@ -22,15 +22,12 @@ contract RootGaugeFactory is IRootGaugeFactory {
     /// @inheritdoc IRootGaugeFactory
     address public immutable lockbox;
     /// @inheritdoc IRootGaugeFactory
-    address public immutable bridge;
-    /// @inheritdoc IRootGaugeFactory
     address public immutable messageBridge;
 
-    constructor(address _voter, address _xerc20, address _lockbox, address _bridge, address _messageBridge) {
+    constructor(address _voter, address _xerc20, address _lockbox, address _messageBridge) {
         voter = _voter;
         xerc20 = _xerc20;
         lockbox = _lockbox;
-        bridge = _bridge;
         messageBridge = _messageBridge;
     }
 

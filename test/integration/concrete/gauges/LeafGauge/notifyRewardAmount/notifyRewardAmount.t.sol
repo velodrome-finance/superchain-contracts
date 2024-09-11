@@ -16,19 +16,19 @@ contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
         leafXVelo.approve({spender: address(leafGauge), value: amount});
     }
 
-    function test_WhenTheCallerIsNotBridge() external {
-        // It should revert with NotBridge
+    function test_WhenTheCallerIsNotModule() external {
+        // It should revert with NotModule
         vm.prank(users.charlie);
-        vm.expectRevert(ILeafGauge.NotBridge.selector);
+        vm.expectRevert(ILeafGauge.NotModule.selector);
         leafGauge.notifyRewardAmount({_amount: TOKEN_1 * 1000});
     }
 
-    modifier whenTheCallerIsBridge() {
+    modifier whenTheCallerIsModule() {
         vm.startPrank(address(leafMessageModule));
         _;
     }
 
-    function test_WhenTheAmountIsZero() external whenTheCallerIsBridge {
+    function test_WhenTheAmountIsZero() external whenTheCallerIsModule {
         // It should revert with ZeroAmount
         vm.expectRevert(ILeafGauge.ZeroAmount.selector);
         leafGauge.notifyRewardAmount({_amount: 0});
@@ -36,7 +36,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
 
     function test_WhenTheAmountIsGreaterThanZeroAndSmallerThanTheTimeUntilTheNextTimestamp()
         external
-        whenTheCallerIsBridge
+        whenTheCallerIsModule
     {
         // It should revert with ZeroRewardRate
         vm.expectRevert(ILeafGauge.ZeroRewardRate.selector);
@@ -49,7 +49,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
 
     function test_WhenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish()
         external
-        whenTheCallerIsBridge
+        whenTheCallerIsModule
         whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeUntilTheNextTimestamp
     {
         // It should claim fees from pool
@@ -78,7 +78,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
 
     function test_WhenTheCurrentTimestampIsLessThanPeriodFinish()
         external
-        whenTheCallerIsBridge
+        whenTheCallerIsModule
         whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeUntilTheNextTimestamp
     {
         // It should claim fees from pool
