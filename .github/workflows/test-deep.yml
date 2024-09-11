@@ -48,7 +48,7 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          forge test -vvv
+          FOUNDRY_NO_MATCH_CONTRACT=DISABLE forge test -vvv
         id: test
         env: 
           OPTIMISM_RPC_URL: ${{ secrets.OPTIMISM_RPC_URL }}

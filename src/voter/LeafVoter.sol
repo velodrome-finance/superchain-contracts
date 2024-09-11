@@ -91,9 +91,7 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
             IVotingRewardsFactory(votingRewardsFactory).createRewards({_rewards: rewards});
 
         _gauge = ILeafGaugeFactory(gaugeFactory).createGauge({
-            _token0: rewards[0],
-            _token1: rewards[1],
-            _stable: IPool(_pool).stable(),
+            _pool: _pool,
             _feesVotingReward: _feesVotingReward,
             isPool: IPoolFactory(_poolFactory).isPool(_pool)
         });

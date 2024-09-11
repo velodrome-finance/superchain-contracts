@@ -15,26 +15,14 @@ contract CreateGaugeIntegrationConcreteTest is LeafGaugeFactoryTest {
         // It reverts with NotVoter
         vm.prank(users.charlie);
         vm.expectRevert(ILeafGaugeFactory.NotVoter.selector);
-        leafGaugeFactory.createGauge({
-            _token0: address(token0),
-            _token1: address(token1),
-            _stable: true,
-            _feesVotingReward: address(0),
-            isPool: true
-        });
+        leafGaugeFactory.createGauge({_pool: address(leafPool), _feesVotingReward: address(0), isPool: true});
     }
 
     function test_WhenTheCallerIsVoter() external {
         // It creates a new gauge
         vm.prank(address(leafVoter));
         LeafGauge leafGauge = LeafGauge(
-            leafGaugeFactory.createGauge({
-                _token0: address(token0),
-                _token1: address(token1),
-                _stable: true,
-                _feesVotingReward: address(11),
-                isPool: true
-            })
+            leafGaugeFactory.createGauge({_pool: address(leafPool), _feesVotingReward: address(11), isPool: true})
         );
 
         assertEq(leafGauge.stakingToken(), address(leafPool));

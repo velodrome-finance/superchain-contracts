@@ -552,7 +552,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
                     type(LeafGaugeFactory).creationCode,
                     abi.encode(
                         address(leafVoter), // voter address
-                        address(leafPoolFactory), // pool factory address
                         address(leafXVelo), // xerc20 address
                         address(leafMessageBridge), // bridge address
                         users.owner // notifyAdmin address
