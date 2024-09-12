@@ -22,25 +22,21 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         rootGauge.notifyRewardAmount({_amount: 0});
     }
 
-    function test_WhenTheAmountIsGreaterThanZeroAndSmallerThanTheTimeUntilTheNextTimestamp()
-        external
-        whenTheCallerIsVoter
-    {
+    function test_WhenTheAmountIsGreaterThanZeroAndSmallerThanTheTimeInAWeek() external whenTheCallerIsVoter {
         // It should revert with ZeroRewardRate
-        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
-        uint256 amount = timeUntilNext - 1;
+        uint256 amount = WEEK - 1;
         vm.expectRevert(IRootGauge.ZeroRewardRate.selector);
         rootGauge.notifyRewardAmount({_amount: amount});
     }
 
-    modifier whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeUntilTheNextTimestamp() {
+    modifier whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeInAWeek() {
         _;
     }
 
     function test_WhenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish()
         external
         whenTheCallerIsVoter
-        whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeUntilTheNextTimestamp
+        whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeInAWeek
     {
         // It should wrap the tokens to the XERC20 token
         // It should bridge the XERC20 token to the corresponding LeafGauge
@@ -84,7 +80,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
     function test_WhenTheCurrentTimestampIsLessThanPeriodFinish()
         external
         whenTheCallerIsVoter
-        whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeUntilTheNextTimestamp
+        whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeInAWeek
     {
         // It should wrap the tokens to the XERC20 token
         // It should bridge the XERC20 token to the corresponding LeafGauge

@@ -4,9 +4,9 @@ NotifyRewardAmountIntegrationConcreteTest
 └── When the caller is voter
     ├── When the amount is zero
     │   └── It should revert with ZeroAmount
-    ├── When the amount is greater than zero and smaller than the time until the next timestamp
+    ├── When the amount is greater than zero and smaller than the time in a week
     │   └── It should revert with ZeroRewardRate
-    └── When the amount is greater than zero and greater than or equal to the time until the next timestamp
+    └── When the amount is greater than zero and greater than or equal to the time in a week
         ├── When the current timestamp is greater than or equal to periodFinish
         │   ├── It should wrap the tokens to the XERC20 token
         │   ├── It should bridge the XERC20 token to the corresponding LeafGauge

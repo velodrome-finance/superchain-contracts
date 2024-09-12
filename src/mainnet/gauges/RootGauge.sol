@@ -51,8 +51,7 @@ contract RootGauge is IRootGauge {
     function notifyRewardAmount(uint256 _amount) external {
         if (msg.sender != voter) revert NotVoter();
         if (_amount == 0) revert ZeroAmount();
-        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
-        if (_amount < timeUntilNext) revert ZeroRewardRate();
+        if (_amount < VelodromeTimeLibrary.WEEK) revert ZeroRewardRate();
 
         IERC20(rewardToken).transferFrom(msg.sender, address(this), _amount);
 
