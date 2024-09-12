@@ -291,7 +291,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
         );
         rootVotingRewardsFactory = RootVotingRewardsFactory(
             cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: VOTING_REWARDS_FACTORY_ENTROPY, _deployer: users.deployer}),
+                salt: CreateXLibrary.calculateSalt({_entropy: REWARDS_FACTORY_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(
                     type(RootVotingRewardsFactory).creationCode,
                     abi.encode(
