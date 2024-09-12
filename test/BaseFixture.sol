@@ -12,11 +12,19 @@ import {Clones} from "@openzeppelin5/contracts/proxy/Clones.sol";
 import {IPool, Pool} from "src/pools/Pool.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {IRouter, Router} from "src/Router.sol";
+import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
+import {ITokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
 import {IXERC20, XERC20} from "src/xerc20/XERC20.sol";
 import {IXERC20Lockbox, XERC20Lockbox} from "src/xerc20/XERC20Lockbox.sol";
 import {IXERC20Factory, XERC20Factory} from "src/xerc20/XERC20Factory.sol";
 import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
 import {ILeafGauge} from "src/interfaces/gauges/ILeafGauge.sol";
+import {ILeafMessageBridge, LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
+import {IRootMessageBridge, RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
+import {ILeafHLMessageModule, LeafHLMessageModule} from "src/bridge/hyperlane/LeafHLMessageModule.sol";
+import {ILeafGaugeFactory, LeafGaugeFactory} from "src/gauges/LeafGaugeFactory.sol";
+import {ILeafVoter, LeafVoter} from "src/voter/LeafVoter.sol";
+import {IVotingRewardsFactory, VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
 import {CreateXLibrary} from "src/libraries/CreateXLibrary.sol";
 
 import {Users} from "test/utils/Users.sol";
@@ -37,6 +45,21 @@ abstract contract BaseFixture is Test, TestConstants {
     XERC20Lockbox public lockbox;
     XERC20Factory public xFactory;
     address public bridge = address(1); // placeholder
+
+    // leaf superchain contracts
+    XERC20Factory public leafXFactory;
+    XERC20 public leafXVelo;
+    Router public leafRouter;
+    TokenBridge public leafTokenBridge;
+    LeafMessageBridge public leafMessageBridge;
+    LeafHLMessageModule public leafMessageModule;
+
+    // leaf-only contracts
+    PoolFactory public leafPoolFactory;
+    LeafGaugeFactory public leafGaugeFactory;
+    LeafVoter public leafVoter;
+    VotingRewardsFactory public leafVotingRewardsFactory;
+    IInterchainSecurityModule public leafIsm;
 
     /// tokens
     TestERC20 public rewardToken;

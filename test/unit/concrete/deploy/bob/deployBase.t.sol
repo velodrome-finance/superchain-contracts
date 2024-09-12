@@ -1,22 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import {DeployBase} from "script/deployParameters/mode/DeployBase.s.sol";
-import {ModePoolFactory} from "src/pools/extensions/ModePoolFactory.sol";
-import {ModePool} from "src/pools/extensions/ModePool.sol";
-import {ModeRouter} from "src/extensions/ModeRouter.sol";
-
 import "test/BaseFixture.sol";
-import {FeeSharing} from "test/mocks/mode/FeeSharing.sol";
+import {DeployBase} from "script/deployParameters/bob/DeployBase.s.sol";
 
-contract ModeDeployBaseTest is BaseFixture {
+contract BobDeployBaseTest is BaseFixture {
     using stdStorage for StdStorage;
 
     DeployBase public deploy;
     DeployBase.DeploymentParameters public params;
-    DeployBase.ModeDeploymentParameters public modeParams;
-
-    FeeSharing public fs;
 
     function setUp() public override {
         deploy = new DeployBase();
@@ -27,18 +19,15 @@ contract ModeDeployBaseTest is BaseFixture {
         stdstore.target(address(deploy)).sig("deployer()").checked_write(users.owner);
         stdstore.target(address(deploy)).sig("isTest()").checked_write(true);
 
-        fs = new FeeSharing();
-        vm.etch(0x8680CEaBcb9b56913c519c069Add6Bc3494B7020, address(fs).code);
-
         deployCreateX();
     }
 
     function testRun() public {
         deploy.run();
 
-        ModePool poolImplementation = ModePool(address(deploy.poolImplementation()));
-        ModePoolFactory poolFactory = ModePoolFactory(address(deploy.poolFactory()));
-        ModeRouter router = ModeRouter(payable(address(deploy.router())));
+        poolImplementation = deploy.poolImplementation();
+        poolFactory = deploy.poolFactory();
+
         leafGaugeFactory = deploy.gaugeFactory();
         leafVotingRewardsFactory = deploy.votingRewardsFactory();
         leafVoter = deploy.voter();
@@ -51,9 +40,9 @@ contract ModeDeployBaseTest is BaseFixture {
         leafMessageModule = deploy.messageModule();
 
         leafIsm = deploy.ism();
+        leafRouter = deploy.router();
 
         params = deploy.params();
-        modeParams = deploy.modeParams();
 
         assertNotEq(address(poolImplementation), address(0));
         assertNotEq(address(poolFactory), address(0));
@@ -70,7 +59,7 @@ contract ModeDeployBaseTest is BaseFixture {
         assertNotEq(address(leafMessageModule), address(0));
 
         // assertNotEq(address(leafIsm), address(0));
-        assertNotEq(address(router), address(0));
+        assertNotEq(address(leafRouter), address(0));
 
         assertEq(poolFactory.implementation(), address(poolImplementation));
         assertEq(poolFactory.poolAdmin(), params.poolAdmin);
@@ -79,8 +68,6 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(poolFactory.isPaused(), false);
         assertEq(poolFactory.stableFee(), 5);
         assertEq(poolFactory.volatileFee(), 30);
-        assertEq(poolFactory.sfs(), modeParams.sfs);
-        assertEq(poolFactory.tokenId(), 0);
 
         assertEq(leafGaugeFactory.voter(), address(leafVoter));
         assertEq(leafGaugeFactory.xerc20(), address(leafXVelo));
@@ -119,14 +106,13 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(leafMessageBridge.poolFactory(), address(poolFactory));
 
         assertEq(leafMessageModule.bridge(), address(leafMessageBridge));
-        assertEq(leafMessageModule.mailbox(), params.mailbox);
         assertEq(leafMessageModule.xerc20(), address(leafXVelo));
         assertEq(leafMessageModule.voter(), address(leafVoter));
+        assertEq(leafMessageModule.mailbox(), params.mailbox);
         assertEq(address(leafMessageModule.securityModule()), address(leafIsm));
 
-        assertEq(router.factory(), address(poolFactory));
-        assertEq(router.poolImplementation(), address(poolImplementation));
-        assertEq(address(router.weth()), params.weth);
-        assertNotEq(router.tokenId(), 0);
+        assertEq(leafRouter.factory(), address(poolFactory));
+        assertEq(leafRouter.poolImplementation(), address(poolImplementation));
+        assertEq(address(leafRouter.weth()), params.weth);
     }
 }
