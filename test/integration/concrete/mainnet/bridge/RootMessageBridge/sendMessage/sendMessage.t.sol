@@ -10,13 +10,15 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         super.setUp();
         vm.prank(users.owner);
         rootMessageBridge.deregisterChain({_chainid: leaf});
+
+        // use users.alice as tx.origin
+        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE});
+        vm.prank(users.alice);
+        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
     }
 
     function test_WhenTheChainIdIsNotRegistered() external {
         // It should revert with {NotRegistered}
-        uint256 ethAmount = TOKEN_1;
-        vm.deal({account: users.charlie, newBalance: ethAmount});
-
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
@@ -24,7 +26,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
         vm.prank(users.charlie);
         vm.expectRevert(IChainRegistry.NotRegistered.selector);
-        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
     modifier whenTheChainIdIsRegistered() {
@@ -44,9 +46,6 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         whenTheCommandIsDeposit
     {
         // It should revert with {NotAuthorized}
-        uint256 ethAmount = TOKEN_1;
-        vm.deal({account: users.charlie, newBalance: ethAmount});
-
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
@@ -54,7 +53,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.DEPOSIT));
-        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
     function test_WhenTheCallerIsAFeeContractRegisteredOnTheVoter()
@@ -63,18 +62,15 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         whenTheCommandIsDeposit
     {
         // It dispatches the deposit message to the message module
-        uint256 ethAmount = TOKEN_1;
-        vm.deal({account: address(rootFVR), newBalance: ethAmount});
-
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
 
-        vm.prank(address(rootFVR));
-        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+        vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
 
-        assertEq(address(rootMessageModule).balance, 0);
+        assertEq(weth.balanceOf(users.alice), 0);
 
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage();
@@ -96,21 +92,17 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         whenTheCommandIsWithdraw
     {
         // It should revert with {NotAuthorized}
-        uint256 ethAmount = TOKEN_1;
-        vm.deal({account: address(rootFVR), newBalance: ethAmount});
-        vm.deal({account: users.charlie, newBalance: ethAmount});
-
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
 
-        vm.startPrank(address(rootFVR));
-        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+        vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
         message = abi.encode(command, abi.encode(address(leafGauge), payload));
         vm.startPrank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.WITHDRAW));
-        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
     function test_WhenTheCallerIsAFeeContractRegisteredOnTheVoter_()
@@ -119,20 +111,22 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         whenTheCommandIsWithdraw
     {
         // It dispatches the withdraw message to the message module
-        uint256 ethAmount = TOKEN_1;
-        vm.deal({account: address(rootFVR), newBalance: ethAmount});
+        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE * 2});
+        vm.prank(users.alice);
+        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
 
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
 
-        vm.startPrank(address(rootFVR));
-        rootMessageBridge.sendMessage{value: ethAmount / 2}({_chainid: leaf, _message: message});
+        vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
         message = abi.encode(command, abi.encode(address(leafGauge), payload));
-        rootMessageBridge.sendMessage{value: ethAmount / 2}({_chainid: leaf, _message: message});
+        vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
 
-        assertEq(address(rootMessageModule).balance, 0);
+        assertEq(weth.balanceOf(users.alice), 0);
 
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage();
@@ -161,27 +155,21 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         whenTheCommandIsCreateGauge
     {
         // It should revert with NotAuthorized
-        uint256 ethAmount = TOKEN_1;
-        vm.deal({account: users.charlie, newBalance: ethAmount});
-
         bytes memory payload = abi.encode(address(token0), address(token1), true);
         bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
 
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.CREATE_GAUGE));
-        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
     function test_WhenTheCallerIsRootGaugeFactory() external whenTheChainIdIsRegistered whenTheCommandIsCreateGauge {
         // It dispatches the create gauge message to the message module
-        uint256 ethAmount = TOKEN_1;
-        vm.deal({account: address(rootGaugeFactory), newBalance: ethAmount});
-
         bytes memory payload = abi.encode(address(token0), address(token1), true);
         bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
 
-        vm.prank(address(rootGaugeFactory));
-        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+        vm.prank({msgSender: address(rootGaugeFactory), txOrigin: users.alice});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
 
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage();
@@ -243,12 +231,9 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         bytes memory payload = abi.encode(users.alice, tokenId, tokens);
         bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
 
-        uint256 ethAmount = TOKEN_1;
-        vm.deal({account: users.charlie, newBalance: ethAmount});
-
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.GET_INCENTIVES));
-        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
     function test_WhenTheCallerIsAnIncentiveContractRegisteredOnTheVoter()
@@ -265,13 +250,10 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         bytes memory payload = abi.encode(users.alice, tokenId, tokens);
         bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
 
-        uint256 ethAmount = TOKEN_1;
-        vm.deal({account: address(rootIVR), newBalance: ethAmount});
+        vm.prank({msgSender: address(rootIVR), txOrigin: users.alice});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
 
-        vm.prank(address(rootIVR));
-        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
-
-        assertEq(address(rootMessageModule).balance, 0);
+        assertEq(weth.balanceOf(users.alice), 0);
 
         vm.selectFork({forkId: leafId});
         assertEq(token0.balanceOf(users.alice), 0);
@@ -323,12 +305,9 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         bytes memory payload = abi.encode(users.alice, tokenId, tokens);
         bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
 
-        uint256 ethAmount = TOKEN_1;
-        vm.deal({account: users.charlie, newBalance: ethAmount});
-
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.GET_FEES));
-        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
     function test_WhenTheCallerIsAFeesContractRegisteredOnTheVoter()
@@ -344,13 +323,10 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         bytes memory payload = abi.encode(users.alice, tokenId, tokens);
         bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
 
-        uint256 ethAmount = TOKEN_1;
-        vm.deal({account: address(rootFVR), newBalance: ethAmount});
+        vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
 
-        vm.prank(address(rootFVR));
-        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
-
-        assertEq(address(rootMessageModule).balance, 0);
+        assertEq(weth.balanceOf(users.alice), 0);
 
         vm.selectFork({forkId: leafId});
         assertEq(token0.balanceOf(users.alice), 0);
@@ -369,23 +345,17 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
     function test_WhenTheCallerIsNotAnAliveGauge() external whenTheChainIdIsRegistered whenTheCommandIsNotify {
         // It should revert with NotValidGauge
-        uint256 ethAmount = TOKEN_1;
-        vm.deal({account: users.charlie, newBalance: ethAmount});
-
         uint256 amount = TOKEN_1 * 1000;
         bytes memory payload = abi.encode(address(leafGauge), amount);
         bytes memory message = abi.encode(command, payload);
 
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotValidGauge.selector));
-        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
     function test_WhenTheCallerIsAnAliveGauge() external whenTheChainIdIsRegistered whenTheCommandIsNotify {
         // It dispatches the notify message to the message module
-        uint256 ethAmount = TOKEN_1;
-        vm.deal({account: address(rootGauge), newBalance: ethAmount});
-
         uint256 amount = TOKEN_1 * 1000;
         deal(address(leafXVelo), address(rootGauge), amount);
 
@@ -394,11 +364,12 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         bytes memory payload = abi.encode(address(leafGauge), amount);
         bytes memory message = abi.encode(command, payload);
 
-        vm.startPrank(address(rootGauge));
+        vm.prank(address(rootGauge));
         leafXVelo.approve(address(rootMessageBridge), amount);
-        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+        vm.prank({msgSender: address(rootGauge), txOrigin: users.alice});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
 
-        assertEq(address(rootMessageModule).balance, 0);
+        assertEq(weth.balanceOf(users.alice), 0);
 
         vm.selectFork({forkId: leafId});
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
@@ -418,15 +389,13 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
     function test_WhenTheCommandIsNotAnyExpectedCommand() external whenTheChainIdIsRegistered {
         // It should revert with {InvalidCommand}
-        uint256 ethAmount = TOKEN_1;
         command = type(uint256).max;
-        vm.deal({account: users.alice, newBalance: ethAmount});
 
         bytes memory payload = abi.encode(address(token0), address(token1), true);
         bytes memory message = abi.encode(command, payload);
 
         vm.prank(users.alice);
         vm.expectRevert(IRootMessageBridge.InvalidCommand.selector);
-        rootMessageBridge.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 }

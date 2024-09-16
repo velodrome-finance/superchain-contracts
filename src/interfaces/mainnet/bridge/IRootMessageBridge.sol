@@ -6,6 +6,7 @@ interface IRootMessageBridge {
     error ZeroAddress();
     error NotAuthorized(uint256 command);
     error NotValidGauge();
+    error NotWETH();
 
     event SetModule(address indexed _sender, address indexed _module);
 
@@ -23,6 +24,9 @@ interface IRootMessageBridge {
     /// @dev Gauge Factory maintains the same address across all Chains
     function gaugeFactory() external view returns (address);
 
+    /// @notice Returns the address of the WETH contract
+    function weth() external view returns (address);
+
     /// @notice Sets the address of the module contract that is allowed to send messages x-chain
     /// @dev Module handles x-chain messages
     /// @param _module The address of the new module contract
@@ -31,5 +35,5 @@ interface IRootMessageBridge {
     /// @notice Sends a message to the msg.sender via the module contract
     /// @param _message The message
     /// @param _chainid The chain id of chain the recipient contract is on
-    function sendMessage(uint256 _chainid, bytes calldata _message) external payable;
+    function sendMessage(uint256 _chainid, bytes calldata _message) external;
 }

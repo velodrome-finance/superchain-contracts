@@ -51,11 +51,10 @@ import {IReward} from "src/interfaces/rewards/IReward.sol";
 
 import {CreateX} from "test/mocks/CreateX.sol";
 import {TestERC20} from "test/mocks/TestERC20.sol";
-import {MultichainMockMailbox} from "test/mocks/MultichainMockMailbox.sol";
+import {Mailbox, MultichainMockMailbox} from "test/mocks/MultichainMockMailbox.sol";
 import {IVoter, MockVoter} from "test/mocks/MockVoter.sol";
 import {IVotingEscrow, MockVotingEscrow} from "test/mocks/MockVotingEscrow.sol";
 import {IFactoryRegistry, MockFactoryRegistry} from "test/mocks/MockFactoryRegistry.sol";
-import {IWETH, MockWETH} from "test/mocks/MockWETH.sol";
 import {TestConstants} from "test/utils/TestConstants.sol";
 import {Users} from "test/utils/Users.sol";
 
@@ -142,6 +141,9 @@ abstract contract BaseForkFixture is Test, TestConstants {
     // common variables
     Users internal users;
 
+    /// @dev Fixed fee used for x-chain message quotes
+    uint256 public constant MESSAGE_FEE = 1 ether / 10_000; // 0.0001 ETH
+
     function setUp() public virtual {
         createUsers();
 
@@ -149,6 +151,11 @@ abstract contract BaseForkFixture is Test, TestConstants {
         setUpRootChain();
         setUpLeafChain();
         setUpPostCommon();
+        vm.mockCall({
+            callee: address(rootMailbox),
+            data: abi.encode(bytes4(keccak256("quoteDispatch(uint32,bytes32,bytes)"))),
+            returnData: abi.encode(MESSAGE_FEE)
+        });
 
         vm.selectFork({forkId: rootId});
     }
@@ -157,13 +164,13 @@ abstract contract BaseForkFixture is Test, TestConstants {
         vm.startPrank(users.owner);
         rootId = vm.createSelectFork({urlOrAlias: "optimism", blockNumber: 123316800});
         deployCreateX();
-        weth = IWETH(new MockWETH());
+        weth = IWETH(0x4200000000000000000000000000000000000006);
         rootStartTime = VelodromeTimeLibrary.epochStart(block.timestamp);
         vm.warp({newTimestamp: rootStartTime});
 
         leafId = vm.createSelectFork({urlOrAlias: "mode", blockNumber: 11032400});
         deployCreateX();
-        weth = IWETH(new MockWETH());
+        weth = IWETH(0x4200000000000000000000000000000000000006);
 
         leafStartTime = rootStartTime;
         vm.warp({newTimestamp: leafStartTime});
@@ -234,19 +241,22 @@ abstract contract BaseForkFixture is Test, TestConstants {
             CreateXLibrary.computeCreate3Address({_entropy: GAUGE_FACTORY_ENTROPY, _deployer: users.deployer})
         );
         rootMessageBridge = RootMessageBridge(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(RootMessageBridge).creationCode,
-                    abi.encode(
-                        users.owner, // message bridge owner
-                        address(rootXVelo), // xerc20 address
-                        address(mockVoter), // mock root voter
-                        address(rootMessageModule), // message module
-                        address(rootGaugeFactory) // root gauge factory
+            payable(
+                cx.deployCreate3({
+                    salt: CreateXLibrary.calculateSalt({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
+                    initCode: abi.encodePacked(
+                        type(RootMessageBridge).creationCode,
+                        abi.encode(
+                            users.owner, // message bridge owner
+                            address(rootXVelo), // xerc20 address
+                            address(mockVoter), // mock root voter
+                            address(rootMessageModule), // message module
+                            address(rootGaugeFactory), // root gauge factory
+                            address(weth) // weth contract
+                        )
                     )
-                )
-            })
+                })
+            )
         );
         rootMessageModule = RootHLMessageModule(
             cx.deployCreate3({

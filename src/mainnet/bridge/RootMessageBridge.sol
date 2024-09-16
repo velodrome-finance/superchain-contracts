@@ -2,11 +2,13 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
+import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IRootMessageBridge} from "../../interfaces/mainnet/bridge/IRootMessageBridge.sol";
 import {IMessageSender} from "../../interfaces/mainnet/bridge/IMessageSender.sol";
 import {IVoter} from "../../interfaces/external/IVoter.sol";
 import {IXERC20} from "../../interfaces/xerc20/IXERC20.sol";
+import {IWETH} from "../../interfaces/external/IWETH.sol";
 
 import {ChainRegistry} from "../../bridge/ChainRegistry.sol";
 import {Commands} from "../../libraries/Commands.sol";
@@ -15,6 +17,7 @@ import {Commands} from "../../libraries/Commands.sol";
 /// @notice General purpose message bridge contract
 contract RootMessageBridge is IRootMessageBridge, ChainRegistry {
     using EnumerableSet for EnumerableSet.UintSet;
+    using SafeERC20 for IWETH;
 
     /// @inheritdoc IRootMessageBridge
     address public immutable xerc20;
@@ -23,15 +26,22 @@ contract RootMessageBridge is IRootMessageBridge, ChainRegistry {
     /// @inheritdoc IRootMessageBridge
     address public immutable gaugeFactory;
     /// @inheritdoc IRootMessageBridge
+    address public immutable weth;
+    /// @inheritdoc IRootMessageBridge
     address public module;
 
-    constructor(address _owner, address _xerc20, address _voter, address _module, address _gaugeFactory)
+    constructor(address _owner, address _xerc20, address _voter, address _module, address _gaugeFactory, address _weth)
         ChainRegistry(_owner)
     {
         xerc20 = _xerc20;
         voter = _voter;
         module = _module;
         gaugeFactory = _gaugeFactory;
+        weth = _weth;
+    }
+
+    receive() external payable {
+        if (msg.sender != weth) revert NotWETH();
     }
 
     /// @inheritdoc IRootMessageBridge
@@ -42,7 +52,7 @@ contract RootMessageBridge is IRootMessageBridge, ChainRegistry {
     }
 
     /// @inheritdoc IRootMessageBridge
-    function sendMessage(uint256 _chainid, bytes calldata _message) external payable {
+    function sendMessage(uint256 _chainid, bytes calldata _message) external {
         if (!_chainids.contains({value: _chainid})) revert NotRegistered();
 
         (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
@@ -68,6 +78,10 @@ contract RootMessageBridge is IRootMessageBridge, ChainRegistry {
             revert InvalidCommand();
         }
 
-        IMessageSender(module).sendMessage{value: msg.value}({_chainid: _chainid, _message: _message});
+        uint256 fee = IMessageSender(module).quote({_destinationDomain: _chainid, _messageBody: _message});
+        IWETH(weth).safeTransferFrom({from: tx.origin, to: address(this), value: fee});
+        IWETH(weth).withdraw({wad: fee});
+
+        IMessageSender(module).sendMessage{value: fee}({_chainid: _chainid, _message: _message});
     }
 }

@@ -17,10 +17,14 @@ contract DepositIntegrationConcreteTest is RootFeesVotingRewardTest {
         // It should update the total supply on the leaf fee + incentive voting contracts
         // It should update the balance of the token id on the leaf fee + incentive voting contracts
         // It should emit a {Deposit} event
+        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE});
+        vm.prank(users.alice);
+        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
+
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
 
-        vm.prank(address(mockVoter));
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootFVR._deposit({_amount: amount, _tokenId: tokenId});
 
         vm.selectFork({forkId: leafId});

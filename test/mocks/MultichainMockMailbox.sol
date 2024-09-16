@@ -41,7 +41,6 @@ contract MultichainMockMailbox is Mailbox, Test {
         remoteMailboxes[_domain] = _mailbox;
     }
 
-    /// @dev This will switch the chain to the destination chain on resolution
     function dispatch(
         uint32 destinationDomain,
         bytes32 recipientAddress,

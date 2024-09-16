@@ -35,6 +35,10 @@ contract GetRewardIntegrationConcreteTest is RootBribeVotingRewardTest {
         vm.selectFork({forkId: rootId});
         vm.prank(users.alice);
         mockEscrow.createLock(TOKEN_1, WEEK);
+
+        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE});
+        vm.prank(users.alice);
+        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
     }
 
     modifier whenCallerIsNotApprovedOrOwnerOfTokenId() {
@@ -60,7 +64,7 @@ contract GetRewardIntegrationConcreteTest is RootBribeVotingRewardTest {
         tokens[1] = address(token1);
         tokens[2] = address(weth);
 
-        vm.prank(address(mockVoter));
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootIVR.getReward({_tokenId: tokenId, _tokens: tokens});
 
         vm.selectFork({forkId: leafId});
@@ -90,7 +94,7 @@ contract GetRewardIntegrationConcreteTest is RootBribeVotingRewardTest {
         tokens[1] = address(token1);
         tokens[2] = address(weth);
 
-        vm.prank(mockEscrow.ownerOf(tokenId));
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootIVR.getReward({_tokenId: tokenId, _tokens: tokens});
 
         vm.selectFork({forkId: leafId});

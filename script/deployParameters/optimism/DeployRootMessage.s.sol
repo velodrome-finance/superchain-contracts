@@ -6,6 +6,7 @@ import {DeployRootMessageFixture} from "../../01_DeployRootMessageFixture.s.sol"
 contract DeployRootMessage is DeployRootMessageFixture {
     function setUp() public override {
         _params = DeployRootMessageFixture.RootDeploymentParameters({
+            weth: 0x4200000000000000000000000000000000000006,
             tokenAdmin: 0x0000000000000000000000000000000000000001,
             voter: 0x41C914ee0c7E1A5edCD0295623e6dC557B5aBf3C,
             bridgeOwner: 0x0000000000000000000000000000000000000001,

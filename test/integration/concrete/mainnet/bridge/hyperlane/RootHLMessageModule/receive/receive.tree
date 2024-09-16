@@ -1,0 +1,5 @@
+ReceiveIntegrationConcreteTest
+├── When the caller is not WETH
+│   └── It reverts with {NotWETH}
+└── When the caller is WETH
+    └── It receives ETH

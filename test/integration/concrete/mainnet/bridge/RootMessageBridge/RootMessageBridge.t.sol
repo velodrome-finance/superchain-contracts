@@ -11,6 +11,6 @@ abstract contract RootMessageBridgeTest is BaseForkFixture {
         assertEq(rootMessageBridge.xerc20(), address(rootXVelo));
         assertEq(rootMessageBridge.voter(), address(mockVoter));
         assertEq(rootMessageBridge.gaugeFactory(), address(rootGaugeFactory));
-        assertEq(address(rootMessageBridge).balance, 0);
+        assertEq(rootMessageBridge.weth(), address(weth));
     }
 }

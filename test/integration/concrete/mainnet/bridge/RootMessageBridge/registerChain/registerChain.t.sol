@@ -9,19 +9,22 @@ contract RegisterChainIntegrationConcreteTest is RootMessageBridgeTest {
 
         // deploy fresh instance
         rootMessageBridge = RootMessageBridge(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(RootMessageBridge).creationCode,
-                    abi.encode(
-                        users.owner, // message bridge owner
-                        address(rootXVelo), // xerc20 address
-                        address(mockVoter), // mock root voter
-                        address(rootMessageModule), // message module
-                        address(rootGaugeFactory) // root gauge factory
+            payable(
+                cx.deployCreate3({
+                    salt: CreateXLibrary.calculateSalt({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
+                    initCode: abi.encodePacked(
+                        type(RootMessageBridge).creationCode,
+                        abi.encode(
+                            users.owner, // message bridge owner
+                            address(rootXVelo), // xerc20 address
+                            address(mockVoter), // mock root voter
+                            address(rootMessageModule), // message module
+                            address(rootGaugeFactory), // root gauge factory
+                            address(weth) // root weth
+                        )
                     )
-                )
-            })
+                })
+            )
         );
     }
 

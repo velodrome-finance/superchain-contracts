@@ -12,15 +12,19 @@ contract WithdrawIntegrationConcreteTest is RootFeesVotingRewardTest {
     }
 
     function test_WhenCallerIsVoter() external {
-        // It should encode the deposit amount and token id
+        // It should encode the withdraw amount and token id
         // It should forward the message to the corresponding rewards contract on the leaf chain
-        // It should update the total supply on the leaf fee + voting contracts
-        // It should update the balance of the token id on the leaf + fee voting contracts
-        // It should emit a {Deposit} event
+        // It should update the total supply on the leaf fee + incentive voting contracts
+        // It should update the balance of the token id on the leaf fee + incentive voting contracts
+        // It should emit a {Withdraw} event
+        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE * 2});
+        vm.prank(users.alice);
+        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
+
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
 
-        vm.startPrank(address(mockVoter));
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootFVR._deposit({_amount: amount, _tokenId: tokenId});
 
         vm.selectFork({forkId: leafId});
@@ -31,6 +35,7 @@ contract WithdrawIntegrationConcreteTest is RootFeesVotingRewardTest {
         assertEq(leafIVR.balanceOf(tokenId), amount);
 
         vm.selectFork({forkId: rootId});
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootFVR._withdraw({_amount: amount, _tokenId: tokenId});
 
         vm.selectFork({forkId: leafId});

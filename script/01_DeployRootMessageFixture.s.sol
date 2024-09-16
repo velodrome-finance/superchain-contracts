@@ -16,6 +16,7 @@ abstract contract DeployRootMessageFixture is DeployFixture {
     using CreateXLibrary for bytes11;
 
     struct RootDeploymentParameters {
+        address weth;
         address tokenAdmin;
         address voter;
         address bridgeOwner;
@@ -66,19 +67,22 @@ abstract contract DeployRootMessageFixture is DeployFixture {
             CreateXLibrary.computeCreate3Address({_entropy: GAUGE_FACTORY_ENTROPY, _deployer: _deployer})
         );
         messageBridge = RootMessageBridge(
-            cx.deployCreate3({
-                salt: MESSAGE_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
-                initCode: abi.encodePacked(
-                    type(RootMessageBridge).creationCode,
-                    abi.encode(
-                        _params.bridgeOwner, // message bridge owner
-                        address(xVelo), // xerc20 address
-                        _params.voter, // root voter
-                        address(messageModule), // message module
-                        address(gaugeFactory) // gauge factory
+            payable(
+                cx.deployCreate3({
+                    salt: MESSAGE_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
+                    initCode: abi.encodePacked(
+                        type(RootMessageBridge).creationCode,
+                        abi.encode(
+                            _params.bridgeOwner, // message bridge owner
+                            address(xVelo), // xerc20 address
+                            _params.voter, // root voter
+                            address(messageModule), // message module
+                            address(gaugeFactory), // gauge factory
+                            _params.weth // weth address
+                        )
                     )
-                )
-            })
+                })
+            )
         );
         checkAddress({_entropy: MESSAGE_BRIDGE_ENTROPY, _output: address(messageBridge)});
 

@@ -31,6 +31,10 @@ contract GetRewardIntegrationConcreteTest is RootFeesVotingRewardTest {
         vm.selectFork({forkId: rootId});
         vm.prank(users.alice);
         mockEscrow.createLock(TOKEN_1, WEEK);
+
+        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE});
+        vm.prank(users.alice);
+        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
     }
 
     modifier whenCallerIsNotApprovedOrOwnerOfTokenId() {
@@ -55,7 +59,7 @@ contract GetRewardIntegrationConcreteTest is RootFeesVotingRewardTest {
         tokens[0] = address(token0);
         tokens[1] = address(token1);
 
-        vm.prank(address(mockVoter));
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootFVR.getReward({_tokenId: tokenId, _tokens: tokens});
 
         vm.selectFork({forkId: leafId});
@@ -82,7 +86,7 @@ contract GetRewardIntegrationConcreteTest is RootFeesVotingRewardTest {
         tokens[0] = address(token0);
         tokens[1] = address(token1);
 
-        vm.prank(mockEscrow.ownerOf(tokenId));
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootFVR.getReward({_tokenId: tokenId, _tokens: tokens});
 
         vm.selectFork({forkId: leafId});

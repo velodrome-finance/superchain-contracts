@@ -1,0 +1,3 @@
+QuoteIntegrationConcreteTest
+└── When the caller is anyone
+    └── It returns the quote

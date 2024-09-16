@@ -10,6 +10,11 @@ contract CreateGaugeIntegrationConcreteTest is RootGaugeFactoryTest {
         // we use stable = true to avoid collision with existing pool
         rootPool =
             RootPool(rootPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
+
+        // use users.alice as tx.origin
+        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE});
+        vm.prank(users.alice);
+        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
     }
 
     function test_WhenTheCallerIsNotVoter() external {
@@ -27,8 +32,9 @@ contract CreateGaugeIntegrationConcreteTest is RootGaugeFactoryTest {
         // It should call createGauge with leaf pool and factory on corresponding leaf voter
         // It should create a new gauge on leaf chain with same address as root gauge
         // It should emit a {GaugeCreated} event
-        vm.startPrank(address(mockVoter));
+        vm.prank(address(mockVoter));
         (address rootFVR,) = rootVotingRewardsFactory.createRewards(address(0), new address[](0));
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         RootGauge rootGauge = RootGauge(
             rootGaugeFactory.createGauge(
                 address(0), address(rootPool), address(rootFVR), address(rootRewardToken), true

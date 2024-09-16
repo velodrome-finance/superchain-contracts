@@ -4,6 +4,15 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../RootGauge.t.sol";
 
 contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
+    function setUp() public override {
+        super.setUp();
+
+        // use users.alice as tx.origin
+        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE});
+        vm.prank(users.alice);
+        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
+    }
+
     function test_WhenTheCallerIsNotVoter() external {
         // It should revert with NotVoter
         vm.prank(users.charlie);
@@ -12,7 +21,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
     }
 
     modifier whenTheCallerIsVoter() {
-        vm.startPrank(address(mockVoter));
+        vm.prank(address(mockVoter));
         _;
     }
 
@@ -51,11 +60,12 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         setLimits({_rootMintingLimit: amount, _leafMintingLimit: amount});
 
         deal({token: address(rootRewardToken), to: address(mockVoter), give: amount});
-        vm.startPrank(address(mockVoter));
+        vm.prank(address(mockVoter));
         rootRewardToken.approve({spender: address(rootGauge), value: amount});
 
         assertEq(rootGauge.rewardToken(), address(rootRewardToken));
 
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         vm.expectEmit(address(rootGauge));
         emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: amount});
         rootGauge.notifyRewardAmount({_amount: amount});
@@ -91,14 +101,19 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         // It should update the last update timestamp
         // It should update the period finish timestamp
         // It should emit a {NotifyReward} event
+        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE * 2});
+        vm.prank(users.alice);
+        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
+
         uint256 amount = TOKEN_1 * 1_000;
         setLimits({_rootMintingLimit: amount * 2, _leafMintingLimit: amount * 2});
 
         deal({token: address(rootRewardToken), to: address(mockVoter), give: amount * 2});
-        vm.startPrank(address(mockVoter));
+        vm.prank(address(mockVoter));
         rootRewardToken.approve({spender: address(rootGauge), value: amount * 2});
 
         // inital deposit of partial amount
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootGauge.notifyRewardAmount({_amount: amount});
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage();
@@ -106,6 +121,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         skipTime(WEEK / 7 * 5);
 
         vm.selectFork({forkId: rootId});
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         vm.expectEmit(address(rootGauge));
         emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: amount});
         rootGauge.notifyRewardAmount({_amount: amount});
