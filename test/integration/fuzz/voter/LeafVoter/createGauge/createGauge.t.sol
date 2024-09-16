@@ -16,6 +16,13 @@ contract CreateGaugeIntegrationFuzzTest is LeafVoterTest {
         vm.assume(_caller != address(leafMessageModule));
         vm.prank(_caller);
         vm.expectRevert(ILeafVoter.NotAuthorized.selector);
-        leafGauge = LeafGauge(leafVoter.createGauge({_poolFactory: address(leafPoolFactory), _pool: address(leafPool)}));
+        leafGauge = LeafGauge(
+            leafVoter.createGauge({
+                _poolFactory: address(leafPoolFactory),
+                _pool: address(leafPool),
+                _votingRewardsFactory: address(leafVotingRewardsFactory),
+                _gaugeFactory: address(leafGaugeFactory)
+            })
+        );
     }
 }

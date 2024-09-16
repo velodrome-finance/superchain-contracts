@@ -61,14 +61,20 @@ contract LeafHLMessageModule is ILeafHLMessageModule {
             address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: gauge});
             IReward(ivr)._withdraw({_payload: payload});
         } else if (command == Commands.CREATE_GAUGE) {
-            (address token0, address token1, bool stable) = abi.decode(messageWithoutCommand, (address, address, bool));
+            (address token0, address token1, bool stable, address votingRewardsFactory, address gaugeFactory) =
+                abi.decode(messageWithoutCommand, (address, address, bool, address, address));
             address poolFactory = ILeafMessageBridge(bridge).poolFactory();
 
             address pool = IPoolFactory(poolFactory).getPool({tokenA: token0, tokenB: token1, stable: stable});
             if (pool == address(0)) {
                 pool = IPoolFactory(poolFactory).createPool({tokenA: token0, tokenB: token1, stable: stable});
             }
-            ILeafVoter(voter).createGauge({_poolFactory: poolFactory, _pool: pool});
+            ILeafVoter(voter).createGauge({
+                _poolFactory: poolFactory,
+                _pool: pool,
+                _votingRewardsFactory: votingRewardsFactory,
+                _gaugeFactory: gaugeFactory
+            });
         } else if (command == Commands.GET_INCENTIVES) {
             (address gauge, bytes memory payload) = abi.decode(messageWithoutCommand, (address, bytes));
             address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: gauge});

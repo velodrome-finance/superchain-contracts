@@ -72,7 +72,14 @@ contract ReviveGaugeIntegrationConcreteTest is LeafVoterTest {
         // create new gauge with same tokens to increase whitelistTokenCount
         address newPool = leafPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true});
         vm.startPrank(address(leafMessageModule));
-        LeafGauge(leafVoter.createGauge({_poolFactory: address(leafPoolFactory), _pool: newPool}));
+        LeafGauge(
+            leafVoter.createGauge({
+                _poolFactory: address(leafPoolFactory),
+                _pool: newPool,
+                _votingRewardsFactory: address(leafVotingRewardsFactory),
+                _gaugeFactory: address(leafGaugeFactory)
+            })
+        );
 
         // It should set isAlive for gauge to true
         // It should keep gauge tokens in set of whitelisted tokens

@@ -215,7 +215,9 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         });
         assertFalse(leafPoolFactory.isPool(pool));
 
-        bytes memory payload = abi.encode(address(token0), address(token1), true);
+        bytes memory payload = abi.encode(
+            address(token0), address(token1), true, address(leafVotingRewardsFactory), address(leafGaugeFactory)
+        );
         bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
 
         vm.expectEmit(address(leafMessageModule));
@@ -246,7 +248,9 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         // using stable = true to avoid collision with existing pool
         leafPool = Pool(leafPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
 
-        bytes memory payload = abi.encode(address(token0), address(token1), true);
+        bytes memory payload = abi.encode(
+            address(token0), address(token1), true, address(leafVotingRewardsFactory), address(leafGaugeFactory)
+        );
         bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
 
         vm.expectEmit(address(leafMessageModule));

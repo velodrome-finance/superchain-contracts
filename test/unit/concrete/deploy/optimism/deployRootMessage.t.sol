@@ -7,6 +7,7 @@ import {IRootGaugeFactory, RootGaugeFactory} from "src/mainnet/gauges/RootGaugeF
 import {IRootMessageBridge, RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
 import {IMessageSender, RootHLMessageModule} from "src/mainnet/bridge/hyperlane/RootHLMessageModule.sol";
 import {EmergencyCouncil} from "src/mainnet/emergencyCouncil/EmergencyCouncil.sol";
+import {IRootVotingRewardsFactory, RootVotingRewardsFactory} from "src/mainnet/rewards/RootVotingRewardsFactory.sol";
 
 contract OptimismDeployRootMessageTest is BaseFixture {
     using stdStorage for StdStorage;
@@ -24,6 +25,7 @@ contract OptimismDeployRootMessageTest is BaseFixture {
     EmergencyCouncil public emergencyCouncil;
 
     RootGaugeFactory public rootGaugeFactory;
+    RootVotingRewardsFactory public rootVotingRewardsFactory;
 
     function setUp() public override {
         vm.createSelectFork({urlOrAlias: "optimism", blockNumber: 123316800});
@@ -41,6 +43,7 @@ contract OptimismDeployRootMessageTest is BaseFixture {
         deploy.run();
 
         rootGaugeFactory = deploy.gaugeFactory();
+        rootVotingRewardsFactory = deploy.votingRewardsFactory();
 
         rootXFactory = deploy.xerc20Factory();
         rootXVelo = deploy.xVelo();
@@ -93,9 +96,12 @@ contract OptimismDeployRootMessageTest is BaseFixture {
         assertEq(emergencyCouncil.votingEscrow(), params.votingEscrow);
         assertEq(emergencyCouncil.bridge(), address(rootMessageBridge));
 
+        assertEq(rootVotingRewardsFactory.bridge(), address(rootMessageBridge));
+
         assertEq(rootGaugeFactory.voter(), params.voter);
         assertEq(rootGaugeFactory.xerc20(), address(rootXVelo));
         assertEq(rootGaugeFactory.lockbox(), address(rootLockbox));
         assertEq(rootGaugeFactory.messageBridge(), address(rootMessageBridge));
+        assertEq(rootGaugeFactory.votingRewardsFactory(), address(rootVotingRewardsFactory));
     }
 }

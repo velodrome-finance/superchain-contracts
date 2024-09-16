@@ -13,6 +13,7 @@ import {RootHLMessageModule} from "src/mainnet/bridge/hyperlane/RootHLMessageMod
 import {EmergencyCouncil} from "src/mainnet/emergencyCouncil/EmergencyCouncil.sol";
 
 import {IRootGaugeFactory, RootGaugeFactory} from "src/mainnet/gauges/RootGaugeFactory.sol";
+import {IRootVotingRewardsFactory, RootVotingRewardsFactory} from "src/mainnet/rewards/RootVotingRewardsFactory.sol";
 
 abstract contract DeployRootMessageFixture is DeployFixture {
     using CreateXLibrary for bytes11;
@@ -37,6 +38,7 @@ abstract contract DeployRootMessageFixture is DeployFixture {
     RootHLMessageModule public messageModule;
 
     RootGaugeFactory public gaugeFactory;
+    RootVotingRewardsFactory public votingRewardsFactory;
 
     EmergencyCouncil public emergencyCouncil;
 
@@ -51,7 +53,7 @@ abstract contract DeployRootMessageFixture is DeployFixture {
 
         xerc20Factory = XERC20Factory(
             cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: XERC20_FACTORY_ENTROPY, _deployer: _deployer}),
+                salt: XERC20_FACTORY_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(XERC20Factory).creationCode,
                     abi.encode(
@@ -107,20 +109,36 @@ abstract contract DeployRootMessageFixture is DeployFixture {
         );
         checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _output: address(messageModule)});
 
+        votingRewardsFactory = RootVotingRewardsFactory(
+            cx.deployCreate3({
+                salt: REWARDS_FACTORY_ENTROPY.calculateSalt({_deployer: _deployer}),
+                initCode: abi.encodePacked(
+                    type(RootVotingRewardsFactory).creationCode,
+                    abi.encode(
+                        address(messageBridge) // message bridge
+                    )
+                )
+            })
+        );
+        checkAddress({_entropy: REWARDS_FACTORY_ENTROPY, _output: address(votingRewardsFactory)});
+
         gaugeFactory = RootGaugeFactory(
             cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: GAUGE_FACTORY_ENTROPY, _deployer: _deployer}),
+                salt: GAUGE_FACTORY_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(RootGaugeFactory).creationCode,
                     abi.encode(
                         _params.voter, // voter address
                         xVelo, // xerc20 address
                         address(lockbox), // lockbox address
-                        address(messageBridge) // message bridge address
+                        address(messageBridge), // message bridge address
+                        address(votingRewardsFactory)
                     )
                 )
             })
         );
+        checkAddress({_entropy: GAUGE_FACTORY_ENTROPY, _output: address(gaugeFactory)});
+
         emergencyCouncil = new EmergencyCouncil({
             _owner: _params.emergencyCouncilOwner,
             _voter: _params.voter,

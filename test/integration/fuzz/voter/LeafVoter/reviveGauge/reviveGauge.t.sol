@@ -44,7 +44,14 @@ contract ReviveGaugeIntegrationFuzzTest is LeafVoterTest {
         // create new gauge with same tokens to increase whitelistTokenCount
         address newPool = leafPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true});
         vm.startPrank(address(leafMessageModule));
-        LeafGauge(leafVoter.createGauge({_poolFactory: address(leafPoolFactory), _pool: newPool}));
+        LeafGauge(
+            leafVoter.createGauge({
+                _poolFactory: address(leafPoolFactory),
+                _pool: newPool,
+                _votingRewardsFactory: address(leafVotingRewardsFactory),
+                _gaugeFactory: address(leafGaugeFactory)
+            })
+        );
 
         _whitelistCount0 = bound(_whitelistCount0, 1, type(uint256).max - 1);
         _whitelistCount1 = bound(_whitelistCount1, 1, type(uint256).max - 1);

@@ -22,9 +22,6 @@ interface ILeafVoter {
     event GaugeRevived(address indexed gauge);
     event WhitelistToken(address indexed whitelister, address indexed token, bool indexed _bool);
 
-    /// @notice Factory registry for valid pool / gauge / rewards factories
-    function factoryRegistry() external view returns (address);
-
     /// @notice Address of bridge contract used to forward x-chain messages
     function bridge() external view returns (address);
 
@@ -79,7 +76,11 @@ interface ILeafVoter {
     /// @dev Only callable by Message Bridge
     /// @param _poolFactory .
     /// @param _pool .
-    function createGauge(address _poolFactory, address _pool) external returns (address _gauge);
+    /// @param _votingRewardsFactory .
+    /// @param _gaugeFactory .
+    function createGauge(address _poolFactory, address _pool, address _votingRewardsFactory, address _gaugeFactory)
+        external
+        returns (address _gauge);
 
     /// @notice Kills a gauge. The gauge will not receive any new emissions and cannot be deposited into.
     ///         Can still withdraw from gauge.

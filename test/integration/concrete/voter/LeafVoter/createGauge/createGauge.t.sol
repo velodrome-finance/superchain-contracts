@@ -15,7 +15,14 @@ contract CreateGaugeIntegrationConcreteTest is LeafVoterTest {
         // It should revert with NotAuthorized
         vm.prank(users.charlie);
         vm.expectRevert(ILeafVoter.NotAuthorized.selector);
-        leafGauge = LeafGauge(leafVoter.createGauge({_poolFactory: address(leafPoolFactory), _pool: address(leafPool)}));
+        leafGauge = LeafGauge(
+            leafVoter.createGauge({
+                _poolFactory: address(leafPoolFactory),
+                _pool: address(leafPool),
+                _votingRewardsFactory: address(leafVotingRewardsFactory),
+                _gaugeFactory: address(leafGaugeFactory)
+            })
+        );
     }
 
     function test_WhenCallerIsBridgeModule() external {
@@ -41,7 +48,14 @@ contract CreateGaugeIntegrationConcreteTest is LeafVoterTest {
             gauge: address(0),
             creator: address(0)
         });
-        leafGauge = LeafGauge(leafVoter.createGauge({_poolFactory: address(leafPoolFactory), _pool: address(leafPool)}));
+        leafGauge = LeafGauge(
+            leafVoter.createGauge({
+                _poolFactory: address(leafPoolFactory),
+                _pool: address(leafPool),
+                _votingRewardsFactory: address(leafVotingRewardsFactory),
+                _gaugeFactory: address(leafGaugeFactory)
+            })
+        );
 
         assertNotEq(leafVoter.gaugeToFees(address(leafGauge)), address(0));
         assertNotEq(leafVoter.gaugeToBribe(address(leafGauge)), address(0));

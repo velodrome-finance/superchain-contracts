@@ -155,7 +155,9 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         whenTheCommandIsCreateGauge
     {
         // It should revert with NotAuthorized
-        bytes memory payload = abi.encode(address(token0), address(token1), true);
+        bytes memory payload = abi.encode(
+            address(token0), address(token1), true, address(rootVotingRewardsFactory), address(rootGaugeFactory)
+        );
         bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
 
         vm.prank(users.charlie);
@@ -165,7 +167,9 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
     function test_WhenTheCallerIsRootGaugeFactory() external whenTheChainIdIsRegistered whenTheCommandIsCreateGauge {
         // It dispatches the create gauge message to the message module
-        bytes memory payload = abi.encode(address(token0), address(token1), true);
+        bytes memory payload = abi.encode(
+            address(token0), address(token1), true, address(rootVotingRewardsFactory), address(rootGaugeFactory)
+        );
         bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
 
         vm.prank({msgSender: address(rootGaugeFactory), txOrigin: users.alice});

@@ -23,12 +23,21 @@ contract RootGaugeFactory is IRootGaugeFactory {
     address public immutable lockbox;
     /// @inheritdoc IRootGaugeFactory
     address public immutable messageBridge;
+    /// @inheritdoc IRootGaugeFactory
+    address public immutable votingRewardsFactory;
 
-    constructor(address _voter, address _xerc20, address _lockbox, address _messageBridge) {
+    constructor(
+        address _voter,
+        address _xerc20,
+        address _lockbox,
+        address _messageBridge,
+        address _votingRewardsFactory
+    ) {
         voter = _voter;
         xerc20 = _xerc20;
         lockbox = _lockbox;
         messageBridge = _messageBridge;
+        votingRewardsFactory = _votingRewardsFactory;
     }
 
     /// @inheritdoc IRootGaugeFactory
@@ -62,7 +71,7 @@ contract RootGaugeFactory is IRootGaugeFactory {
         IRootFeesVotingReward(_feesVotingReward).initialize(gauge);
         IRootBribeVotingReward(_bribeVotingReward).initialize(gauge);
 
-        bytes memory payload = abi.encode(_token0, _token1, _stable);
+        bytes memory payload = abi.encode(_token0, _token1, _stable, votingRewardsFactory, address(this));
         bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
         IRootMessageBridge(messageBridge).sendMessage({_chainid: _chainId, _message: message});
     }

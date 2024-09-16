@@ -289,6 +289,18 @@ abstract contract BaseForkFixture is Test, TestConstants {
             })
         );
 
+        rootVotingRewardsFactory = RootVotingRewardsFactory(
+            cx.deployCreate3({
+                salt: CreateXLibrary.calculateSalt({_entropy: REWARDS_FACTORY_ENTROPY, _deployer: users.deployer}),
+                initCode: abi.encodePacked(
+                    type(RootVotingRewardsFactory).creationCode,
+                    abi.encode(
+                        address(rootMessageBridge) // message bridge
+                    )
+                )
+            })
+        );
+
         rootGaugeFactory = RootGaugeFactory(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: GAUGE_FACTORY_ENTROPY, _deployer: users.deployer}),
@@ -298,18 +310,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
                         address(mockVoter), // voter address
                         address(rootXVelo), // xerc20 address
                         address(rootLockbox), // lockbox address
-                        address(rootMessageBridge) // message bridge address
-                    )
-                )
-            })
-        );
-        rootVotingRewardsFactory = RootVotingRewardsFactory(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: REWARDS_FACTORY_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(RootVotingRewardsFactory).creationCode,
-                    abi.encode(
-                        address(rootMessageBridge) // message bridge
+                        address(rootMessageBridge), // message bridge address
+                        address(rootVotingRewardsFactory) // voting rewards factory
                     )
                 )
             })
@@ -423,7 +425,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
                 initCode: abi.encodePacked(
                     type(LeafVoter).creationCode,
                     abi.encode(
-                        address(leafMockFactoryRegistry), // mock factory registry
                         address(leafMessageBridge) // message bridge
                     )
                 )
@@ -506,11 +507,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
             })
         );
 
-        leafMockFactoryRegistry.approve({
-            poolFactory: address(leafPoolFactory),
-            votingRewardsFactory: address(leafVotingRewardsFactory),
-            gaugeFactory: address(leafGaugeFactory)
-        });
         vm.stopPrank();
 
         vm.label({account: address(leafMailbox), newLabel: "Leaf Mailbox"});

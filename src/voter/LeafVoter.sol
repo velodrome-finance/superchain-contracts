@@ -5,7 +5,6 @@ import {ReentrancyGuard} from "@openzeppelin5/contracts/utils/ReentrancyGuard.so
 import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
 
 import {IVotingRewardsFactory} from "../interfaces/rewards/IVotingRewardsFactory.sol";
-import {IFactoryRegistry} from "../interfaces/external/IFactoryRegistry.sol";
 import {ILeafGaugeFactory} from "../interfaces/gauges/ILeafGaugeFactory.sol";
 import {ILeafMessageBridge} from "../interfaces/bridge/ILeafMessageBridge.sol";
 import {ILeafGauge} from "../interfaces/gauges/ILeafGauge.sol";
@@ -20,8 +19,6 @@ import {ILeafVoter} from "../interfaces/voter/ILeafVoter.sol";
 contract LeafVoter is ILeafVoter, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    /// @inheritdoc ILeafVoter
-    address public immutable factoryRegistry;
     /// @inheritdoc ILeafVoter
     address public immutable bridge;
 
@@ -44,8 +41,7 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
     /// @dev Set of Whitelisted Tokens
     EnumerableSet.AddressSet private _whitelistedTokens;
 
-    constructor(address _factoryRegistry, address _bridge) {
-        factoryRegistry = _factoryRegistry;
+    constructor(address _bridge) {
         bridge = _bridge;
     }
 
@@ -75,19 +71,20 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
     }
 
     /// @inheritdoc ILeafVoter
-    function createGauge(address _poolFactory, address _pool) external nonReentrant returns (address _gauge) {
+    function createGauge(address _poolFactory, address _pool, address _votingRewardsFactory, address _gaugeFactory)
+        external
+        nonReentrant
+        returns (address _gauge)
+    {
         if (msg.sender != ILeafMessageBridge(bridge).module()) revert NotAuthorized();
 
         address[] memory rewards = new address[](2);
         (rewards[0], rewards[1]) = IPool(_pool).tokens();
 
-        (address votingRewardsFactory, address gaugeFactory) =
-            IFactoryRegistry(factoryRegistry).factoriesToPoolFactory(_poolFactory);
-
         (address _feesVotingReward, address _bribeVotingReward) =
-            IVotingRewardsFactory(votingRewardsFactory).createRewards({_rewards: rewards});
+            IVotingRewardsFactory(_votingRewardsFactory).createRewards({_rewards: rewards});
 
-        _gauge = ILeafGaugeFactory(gaugeFactory).createGauge({
+        _gauge = ILeafGaugeFactory(_gaugeFactory).createGauge({
             _pool: _pool,
             _feesVotingReward: _feesVotingReward,
             isPool: IPoolFactory(_poolFactory).isPool(_pool)
@@ -106,8 +103,8 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
 
         emit GaugeCreated({
             poolFactory: _poolFactory,
-            votingRewardsFactory: votingRewardsFactory,
-            gaugeFactory: gaugeFactory,
+            votingRewardsFactory: _votingRewardsFactory,
+            gaugeFactory: _gaugeFactory,
             pool: _pool,
             bribeVotingReward: _bribeVotingReward,
             feeVotingReward: _feesVotingReward,

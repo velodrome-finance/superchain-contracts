@@ -121,7 +121,6 @@ abstract contract DeployBaseFixture is DeployFixture {
                 initCode: abi.encodePacked(
                     type(LeafVoter).creationCode,
                     abi.encode(
-                        address(0), // factory registry
                         address(messageBridge) // message bridge
                     )
                 )

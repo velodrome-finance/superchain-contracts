@@ -90,7 +90,6 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(leafVotingRewardsFactory.voter(), address(leafVoter));
         assertEq(leafVotingRewardsFactory.bridge(), address(leafMessageBridge));
 
-        assertEq(leafVoter.factoryRegistry(), address(0));
         assertEq(leafVoter.bridge(), address(leafMessageBridge));
 
         assertEq(address(leafXFactory.createx()), address(cx));
