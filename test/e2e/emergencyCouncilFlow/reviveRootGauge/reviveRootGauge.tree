@@ -1,0 +1,9 @@
+ReviveRootGaugeE2ETest
+├── When caller is not owner
+│   └── It should revert with OwnableUnauthorizedAccount 
+└── When caller is owner
+    ├── When gauge is alive
+    │   └── It should revert with GaugeAlreadyRevived
+    └── When gauge is not alive
+        ├── It should set isAlive as true for gauge
+        └── It should emit a {GaugeRevived} event

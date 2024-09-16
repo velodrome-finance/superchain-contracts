@@ -32,7 +32,7 @@ contract LeafGaugeTest is BaseForkFixture {
     }
 
     function testCannotDepositWithRecipientWithKilledGauge() public {
-        vm.prank(leafVoter.emergencyCouncil());
+        vm.prank(address(leafMessageModule));
         leafVoter.killGauge(address(leafGauge));
 
         vm.expectRevert(ILeafGauge.NotAlive.selector);
@@ -83,7 +83,7 @@ contract LeafGaugeTest is BaseForkFixture {
     }
 
     function testCannotDepositWithKilledGauge() public {
-        vm.prank(leafVoter.emergencyCouncil());
+        vm.prank(address(leafMessageModule));
         leafVoter.killGauge(address(leafGauge));
 
         vm.expectRevert(ILeafGauge.NotAlive.selector);

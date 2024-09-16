@@ -1,7 +1,7 @@
 ReviveGaugeIntegrationConcreteTest
-├── When caller is not emergency council
-│   └── It should revert with NotEmergencyCouncil
-└── When caller is emergency council
+├── When caller is not the module set on the bridge
+│   └── It should revert with NotAuthorized
+└── When caller is the module set on the bridge
     ├── When address given is not a gauge
     │   └── It should revert with NotAGauge
     └── When address given is a gauge

@@ -1,0 +1,15 @@
+KillRootGaugeE2ETest
+├── When caller is not owner
+│   └── It should revert with OwnableUnauthorizedAccount 
+└── When caller is owner
+    ├── When gauge is not alive
+    │   └── It should revert with GaugeAlreadyKilled
+    └── When gauge is alive
+        ├── Given claimable is greater than zero
+        │   ├── It should transfer claimable to minter
+        │   ├── It should set claimable to zero 
+        │   ├── It should set isAlive as false for gauge
+        │   └── It should emit a {GaugeKilled} event
+        └── Given claimable is zero 
+            ├── It should set isAlive as false for gauge
+            └── It should emit a {GaugeKilled} event

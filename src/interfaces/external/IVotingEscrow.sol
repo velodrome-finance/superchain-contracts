@@ -20,4 +20,11 @@ interface IVotingEscrow is IERC721 {
     /// @param _tokenId .
     /// @return Voting power
     function balanceOfNFT(uint256 _tokenId) external view returns (uint256);
+
+    /// @notice Set Managed NFT state. Inactive NFTs cannot be deposited into.
+    /// @param _mTokenId managed nft state to set
+    /// @param _state true => inactive, false => active
+    function setManagedState(uint256 _mTokenId, bool _state) external;
+
+    function deactivated(uint256 _mTokenId) external view returns (bool);
 }

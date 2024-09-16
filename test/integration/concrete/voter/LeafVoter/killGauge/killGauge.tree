@@ -1,7 +1,7 @@
 KillGaugeIntegrationConcreteTest
-├── When caller is not emergency council
-│   └── It should revert with NotEmergencyCouncil
-└── When caller is emergency council
+├── When caller is not the module set on the bridge
+│   └── It should revert with NotAuthorized
+└── When caller is the module set on the bridge
     ├── When address is not a live gauge
     │   └── It should revert with GaugeAlreadyKilled
     └── When address is a live gauge

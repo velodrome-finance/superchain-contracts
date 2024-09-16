@@ -122,7 +122,6 @@ abstract contract DeployBaseFixture is DeployFixture {
                     type(LeafVoter).creationCode,
                     abi.encode(
                         address(0), // factory registry
-                        _params.adminPlaceholder, // emergency council
                         address(messageBridge) // message bridge
                     )
                 )

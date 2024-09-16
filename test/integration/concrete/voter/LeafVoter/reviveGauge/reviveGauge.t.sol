@@ -4,19 +4,19 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../LeafVoter.t.sol";
 
 contract ReviveGaugeIntegrationConcreteTest is LeafVoterTest {
-    function test_WhenCallerIsNotEmergencyCouncil() external {
-        // It should revert with NotEmergencyCouncil
-        vm.expectRevert(ILeafVoter.NotEmergencyCouncil.selector);
+    function test_WhenCallerIsNotTheModuleSetOnTheBridge() external {
+        // It should revert with NotAuthorized
+        vm.expectRevert(ILeafVoter.NotAuthorized.selector);
         vm.prank(users.charlie);
         leafVoter.reviveGauge(address(leafGauge));
     }
 
-    modifier whenCallerIsEmergencyCouncil() {
-        vm.startPrank(leafVoter.emergencyCouncil());
+    modifier whenCallerIsTheModuleSetOnTheBridge() {
+        vm.startPrank(address(leafMessageModule));
         _;
     }
 
-    function test_WhenAddressGivenIsNotAGauge() external whenCallerIsEmergencyCouncil {
+    function test_WhenAddressGivenIsNotAGauge() external whenCallerIsTheModuleSetOnTheBridge {
         // It should revert with NotAGauge
         vm.expectRevert(ILeafVoter.NotAGauge.selector);
         leafVoter.reviveGauge(address(leafPool));
@@ -26,7 +26,7 @@ contract ReviveGaugeIntegrationConcreteTest is LeafVoterTest {
         _;
     }
 
-    function test_WhenGaugeIsAlive() external whenCallerIsEmergencyCouncil whenAddressGivenIsAGauge {
+    function test_WhenGaugeIsAlive() external whenCallerIsTheModuleSetOnTheBridge whenAddressGivenIsAGauge {
         // It should revert with GaugeAlreadyRevived
         vm.expectRevert(ILeafVoter.GaugeAlreadyRevived.selector);
         leafVoter.reviveGauge(address(leafGauge));
@@ -39,7 +39,7 @@ contract ReviveGaugeIntegrationConcreteTest is LeafVoterTest {
 
     function test_WhenWhitelistCountOfGaugeTokensIsEqualTo0()
         external
-        whenCallerIsEmergencyCouncil
+        whenCallerIsTheModuleSetOnTheBridge
         whenAddressGivenIsAGauge
         whenGaugeIsNotAlive
     {
@@ -49,17 +49,9 @@ contract ReviveGaugeIntegrationConcreteTest is LeafVoterTest {
         // It should emit a {WhitelistToken} event
         // It should emit a {GaugeRevived} event
         vm.expectEmit(address(leafVoter));
-        emit ILeafVoter.WhitelistToken({
-            whitelister: address(leafVoter.emergencyCouncil()),
-            token: address(token0),
-            _bool: true
-        });
+        emit ILeafVoter.WhitelistToken({whitelister: address(leafMessageModule), token: address(token0), _bool: true});
         vm.expectEmit(address(leafVoter));
-        emit ILeafVoter.WhitelistToken({
-            whitelister: address(leafVoter.emergencyCouncil()),
-            token: address(token1),
-            _bool: true
-        });
+        emit ILeafVoter.WhitelistToken({whitelister: address(leafMessageModule), token: address(token1), _bool: true});
         vm.expectEmit(address(leafVoter));
         emit ILeafVoter.GaugeRevived({gauge: address(leafGauge)});
         leafVoter.reviveGauge(address(leafGauge));
@@ -73,7 +65,7 @@ contract ReviveGaugeIntegrationConcreteTest is LeafVoterTest {
 
     function test_WhenWhitelistCountOfGaugeTokensIsGreaterThan0()
         external
-        whenCallerIsEmergencyCouncil
+        whenCallerIsTheModuleSetOnTheBridge
         whenAddressGivenIsAGauge
         whenGaugeIsNotAlive
     {
@@ -88,20 +80,12 @@ contract ReviveGaugeIntegrationConcreteTest is LeafVoterTest {
         // It should emit a {WhitelistToken} event
         // It should emit a {GaugeRevived} event
         vm.expectEmit(address(leafVoter));
-        emit ILeafVoter.WhitelistToken({
-            whitelister: address(leafVoter.emergencyCouncil()),
-            token: address(token0),
-            _bool: true
-        });
+        emit ILeafVoter.WhitelistToken({whitelister: address(leafMessageModule), token: address(token0), _bool: true});
         vm.expectEmit(address(leafVoter));
-        emit ILeafVoter.WhitelistToken({
-            whitelister: address(leafVoter.emergencyCouncil()),
-            token: address(token1),
-            _bool: true
-        });
+        emit ILeafVoter.WhitelistToken({whitelister: address(leafMessageModule), token: address(token1), _bool: true});
         vm.expectEmit(address(leafVoter));
         emit ILeafVoter.GaugeRevived({gauge: address(leafGauge)});
-        vm.startPrank(leafVoter.emergencyCouncil());
+        vm.startPrank(address(leafMessageModule));
         leafVoter.reviveGauge(address(leafGauge));
 
         assertTrue(leafVoter.isAlive(address(leafGauge)));

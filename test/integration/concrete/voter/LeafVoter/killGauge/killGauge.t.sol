@@ -4,19 +4,19 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../LeafVoter.t.sol";
 
 contract KillGaugeIntegrationConcreteTest is LeafVoterTest {
-    function test_WhenCallerIsNotEmergencyCouncil() external {
-        // It should revert with NotEmergencyCouncil
-        vm.expectRevert(ILeafVoter.NotEmergencyCouncil.selector);
+    function test_WhenCallerIsNotTheModuleSetOnTheBridge() external {
+        // It should revert with NotAuthorized
+        vm.expectRevert(ILeafVoter.NotAuthorized.selector);
         vm.prank(users.charlie);
         leafVoter.killGauge(address(leafGauge));
     }
 
-    modifier whenCallerIsEmergencyCouncil() {
-        vm.startPrank(leafVoter.emergencyCouncil());
+    modifier whenCallerIsTheModuleSetOnTheBridge() {
+        vm.startPrank(address(leafMessageModule));
         _;
     }
 
-    function test_WhenAddressIsNotALiveGauge() external whenCallerIsEmergencyCouncil {
+    function test_WhenAddressIsNotALiveGauge() external whenCallerIsTheModuleSetOnTheBridge {
         // It should revert with GaugeAlreadyKilled
         vm.expectRevert(ILeafVoter.GaugeAlreadyKilled.selector);
         leafVoter.killGauge(address(leafPool));
@@ -28,7 +28,7 @@ contract KillGaugeIntegrationConcreteTest is LeafVoterTest {
 
     function test_WhenWhitelistCountOfGaugeTokensIsEqualTo1()
         external
-        whenCallerIsEmergencyCouncil
+        whenCallerIsTheModuleSetOnTheBridge
         whenAddressIsALiveGauge
     {
         // It should set isAlive for gauge to false
@@ -37,17 +37,9 @@ contract KillGaugeIntegrationConcreteTest is LeafVoterTest {
         // It should emit a {WhitelistToken} event
         // It should emit a {GaugeKilled} event
         vm.expectEmit(address(leafVoter));
-        emit ILeafVoter.WhitelistToken({
-            whitelister: address(leafVoter.emergencyCouncil()),
-            token: address(token0),
-            _bool: false
-        });
+        emit ILeafVoter.WhitelistToken({whitelister: address(leafMessageModule), token: address(token0), _bool: false});
         vm.expectEmit(address(leafVoter));
-        emit ILeafVoter.WhitelistToken({
-            whitelister: address(leafVoter.emergencyCouncil()),
-            token: address(token1),
-            _bool: false
-        });
+        emit ILeafVoter.WhitelistToken({whitelister: address(leafMessageModule), token: address(token1), _bool: false});
         vm.expectEmit(address(leafVoter));
         emit ILeafVoter.GaugeKilled({gauge: address(leafGauge)});
         leafVoter.killGauge(address(leafGauge));
@@ -61,7 +53,7 @@ contract KillGaugeIntegrationConcreteTest is LeafVoterTest {
 
     function test_WhenWhitelistCountOfGaugeTokensIsGreaterThan1()
         external
-        whenCallerIsEmergencyCouncil
+        whenCallerIsTheModuleSetOnTheBridge
         whenAddressIsALiveGauge
     {
         // create new gauge with same tokens to increase whitelistTokenCount
@@ -75,19 +67,11 @@ contract KillGaugeIntegrationConcreteTest is LeafVoterTest {
         // It should emit a {WhitelistToken} event
         // It should emit a {GaugeKilled} event
         vm.expectEmit(address(leafVoter));
-        emit ILeafVoter.WhitelistToken({
-            whitelister: address(leafVoter.emergencyCouncil()),
-            token: address(token0),
-            _bool: false
-        });
+        emit ILeafVoter.WhitelistToken({whitelister: address(leafMessageModule), token: address(token0), _bool: false});
         vm.expectEmit(address(leafVoter));
-        emit ILeafVoter.WhitelistToken({
-            whitelister: address(leafVoter.emergencyCouncil()),
-            token: address(token1),
-            _bool: false
-        });
+        emit ILeafVoter.WhitelistToken({whitelister: address(leafMessageModule), token: address(token1), _bool: false});
         vm.expectEmit(address(leafVoter));
-        vm.startPrank(leafVoter.emergencyCouncil());
+        vm.startPrank(address(leafMessageModule));
         emit ILeafVoter.GaugeKilled({gauge: address(leafGauge)});
         leafVoter.killGauge(address(leafGauge));
 

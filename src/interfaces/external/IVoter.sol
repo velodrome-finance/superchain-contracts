@@ -4,6 +4,25 @@ pragma solidity ^0.8.0;
 import {IFactoryRegistry} from "src/interfaces/external/IFactoryRegistry.sol";
 
 interface IVoter {
+    error GaugeAlreadyKilled();
+    error GaugeAlreadyRevived();
+    error NotEmergencyCouncil();
+    error ZeroAddress();
+
+    event GaugeKilled(address indexed gauge);
+    event GaugeRevived(address indexed gauge);
+
+    /// @dev Gauge => Amount claimable
+    function claimable(address gauge) external view returns (uint256);
+
+    /// @notice Address of Minter.sol
+    function minter() external view returns (address);
+
+    /// @notice Set new emergency council.
+    /// @dev Throws if not called by emergency council.
+    /// @param _emergencyCouncil .
+    function setEmergencyCouncil(address _emergencyCouncil) external;
+
     function vote(uint256 _tokenId, address[] calldata _poolVote, uint256[] calldata _weights) external;
 
     function gauges(address _pool) external view returns (address);
@@ -23,6 +42,12 @@ interface IVoter {
     function isAlive(address _gauge) external view returns (bool);
 
     function killGauge(address _gauge) external;
+
+    /// @notice Revives a killed gauge. Gauge will can receive emissions and deposits again.
+    /// @dev Throws if not called by emergency council.
+    ///      Throws if gauge is not killed.
+    /// @param _gauge .
+    function reviveGauge(address _gauge) external;
 
     function isWhitelistedToken(address _token) external view returns (bool);
 

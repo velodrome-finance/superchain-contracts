@@ -24,8 +24,6 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
     address public immutable factoryRegistry;
     /// @inheritdoc ILeafVoter
     address public immutable bridge;
-    /// @inheritdoc ILeafVoter
-    address public emergencyCouncil;
 
     /// @dev All pools viable for incentives
     address[] public pools;
@@ -46,9 +44,8 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
     /// @dev Set of Whitelisted Tokens
     EnumerableSet.AddressSet private _whitelistedTokens;
 
-    constructor(address _factoryRegistry, address _emergencyCouncil, address _bridge) {
+    constructor(address _factoryRegistry, address _bridge) {
         factoryRegistry = _factoryRegistry;
-        emergencyCouncil = _emergencyCouncil;
         bridge = _bridge;
     }
 
@@ -121,7 +118,7 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
 
     /// @inheritdoc ILeafVoter
     function killGauge(address _gauge) external {
-        if (msg.sender != emergencyCouncil) revert NotEmergencyCouncil();
+        if (msg.sender != ILeafMessageBridge(bridge).module()) revert NotAuthorized();
         if (!isAlive[_gauge]) revert GaugeAlreadyKilled();
 
         isAlive[_gauge] = false;
@@ -133,7 +130,7 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
 
     /// @inheritdoc ILeafVoter
     function reviveGauge(address _gauge) external {
-        if (msg.sender != emergencyCouncil) revert NotEmergencyCouncil();
+        if (msg.sender != ILeafMessageBridge(bridge).module()) revert NotAuthorized();
         if (!isGauge[_gauge]) revert NotAGauge();
         if (isAlive[_gauge]) revert GaugeAlreadyRevived();
 
@@ -150,14 +147,6 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
         for (uint256 i = 0; i < _length; i++) {
             ILeafGauge(_gauges[i]).getReward(msg.sender);
         }
-    }
-
-    /// @inheritdoc ILeafVoter
-    function setEmergencyCouncil(address _council) public {
-        if (msg.sender != emergencyCouncil) revert NotEmergencyCouncil();
-        if (_council == address(0)) revert ZeroAddress();
-        emergencyCouncil = _council;
-        emit SetEmergencyCouncil({emergencyCouncil: _council});
     }
 
     /// @notice Sets the whitelist state of a given token

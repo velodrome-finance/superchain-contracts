@@ -10,6 +10,8 @@ import {XERC20Lockbox} from "src/xerc20/XERC20Lockbox.sol";
 import {RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
 import {RootHLMessageModule} from "src/mainnet/bridge/hyperlane/RootHLMessageModule.sol";
 
+import {EmergencyCouncil} from "src/mainnet/emergencyCouncil/EmergencyCouncil.sol";
+
 import {IRootGaugeFactory, RootGaugeFactory} from "src/mainnet/gauges/RootGaugeFactory.sol";
 
 abstract contract DeployRootMessageFixture is DeployFixture {
@@ -19,7 +21,9 @@ abstract contract DeployRootMessageFixture is DeployFixture {
         address weth;
         address tokenAdmin;
         address voter;
+        address votingEscrow;
         address bridgeOwner;
+        address emergencyCouncilOwner;
         address velo;
         address mailbox;
         string outputFilename;
@@ -33,6 +37,8 @@ abstract contract DeployRootMessageFixture is DeployFixture {
     RootHLMessageModule public messageModule;
 
     RootGaugeFactory public gaugeFactory;
+
+    EmergencyCouncil public emergencyCouncil;
 
     RootDeploymentParameters internal _params;
 
@@ -115,6 +121,11 @@ abstract contract DeployRootMessageFixture is DeployFixture {
                 )
             })
         );
+        emergencyCouncil = new EmergencyCouncil({
+            _owner: _params.emergencyCouncilOwner,
+            _voter: _params.voter,
+            _bridge: address(messageBridge)
+        });
     }
 
     function params() external view returns (RootDeploymentParameters memory) {

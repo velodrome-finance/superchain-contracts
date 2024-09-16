@@ -6,6 +6,7 @@ import {DeployRootMessage} from "script/deployParameters/optimism/DeployRootMess
 import {IRootGaugeFactory, RootGaugeFactory} from "src/mainnet/gauges/RootGaugeFactory.sol";
 import {IRootMessageBridge, RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
 import {IMessageSender, RootHLMessageModule} from "src/mainnet/bridge/hyperlane/RootHLMessageModule.sol";
+import {EmergencyCouncil} from "src/mainnet/emergencyCouncil/EmergencyCouncil.sol";
 
 contract OptimismDeployRootMessageTest is BaseFixture {
     using stdStorage for StdStorage;
@@ -19,6 +20,8 @@ contract OptimismDeployRootMessageTest is BaseFixture {
 
     RootMessageBridge public rootMessageBridge;
     RootHLMessageModule public rootMessageModule;
+
+    EmergencyCouncil public emergencyCouncil;
 
     RootGaugeFactory public rootGaugeFactory;
 
@@ -46,6 +49,8 @@ contract OptimismDeployRootMessageTest is BaseFixture {
         rootMessageBridge = deploy.messageBridge();
         rootMessageModule = deploy.messageModule();
 
+        emergencyCouncil = deploy.emergencyCouncil();
+
         params = deploy.params();
 
         assertNotEq(address(rootGaugeFactory), address(0));
@@ -56,6 +61,8 @@ contract OptimismDeployRootMessageTest is BaseFixture {
 
         assertNotEq(address(rootMessageBridge), address(0));
         assertNotEq(address(rootMessageModule), address(0));
+
+        assertNotEq(address(emergencyCouncil), address(0));
 
         assertEq(address(rootXFactory.createx()), address(cx));
         assertEq(rootXFactory.owner(), params.tokenAdmin);
@@ -81,6 +88,10 @@ contract OptimismDeployRootMessageTest is BaseFixture {
 
         assertEq(rootMessageModule.bridge(), address(rootMessageBridge));
         assertEq(rootMessageModule.mailbox(), params.mailbox);
+
+        assertEq(emergencyCouncil.voter(), params.voter);
+        assertEq(emergencyCouncil.votingEscrow(), params.votingEscrow);
+        assertEq(emergencyCouncil.bridge(), address(rootMessageBridge));
 
         assertEq(rootGaugeFactory.voter(), params.voter);
         assertEq(rootGaugeFactory.xerc20(), address(rootXVelo));

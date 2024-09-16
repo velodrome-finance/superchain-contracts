@@ -11,14 +11,13 @@ abstract contract LeafVoterTest is BaseForkFixture {
         address bribePool = leafPoolFactory.getPool({tokenA: address(token0), tokenB: address(weth), stable: false});
         address bribeGauge = leafVoter.gauges(bribePool);
         // Disable Bribe Gauge to keep the same `whitelistTokenCount` in both tokens
-        vm.prank(leafVoter.emergencyCouncil());
+        vm.prank(address(leafMessageModule));
         leafVoter.killGauge(bribeGauge);
     }
 
     function test_InitialState() public view {
         assertEq(leafVoter.factoryRegistry(), address(leafMockFactoryRegistry));
         assertEq(leafVoter.bridge(), address(leafMessageBridge));
-        assertEq(leafVoter.emergencyCouncil(), users.owner);
         assertTrue(leafVoter.isAlive(address(leafGauge)));
         assertEq(leafVoter.whitelistTokenCount(address(token0)), 1);
         assertEq(leafVoter.whitelistTokenCount(address(token1)), 1);

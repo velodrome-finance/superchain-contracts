@@ -6,20 +6,20 @@ import "../LeafVoter.t.sol";
 contract ReviveGaugeIntegrationFuzzTest is LeafVoterTest {
     using stdStorage for StdStorage;
 
-    function testFuzz_WhenCallerIsNotEmergencyCouncil(address _caller) external {
-        vm.assume(_caller != leafVoter.emergencyCouncil());
-        // It should revert with NotEmergencyCouncil
-        vm.expectRevert(ILeafVoter.NotEmergencyCouncil.selector);
+    function testFuzz_WhenCallerIsTheModuleSetOnTheBridge(address _caller) external {
+        vm.assume(_caller != address(leafMessageModule));
+        // It should revert with NotAuthorized
+        vm.expectRevert(ILeafVoter.NotAuthorized.selector);
         vm.prank(_caller);
         leafVoter.reviveGauge(address(leafGauge));
     }
 
-    modifier whenCallerIsEmergencyCouncil() {
-        vm.startPrank(leafVoter.emergencyCouncil());
+    modifier whenCallerIsTheModuleSetOnTheBridge() {
+        vm.startPrank(address(leafMessageModule));
         _;
     }
 
-    function testFuzz_WhenAddressGivenIsNotAGauge(address _gauge) external whenCallerIsEmergencyCouncil {
+    function testFuzz_WhenAddressGivenIsNotAGauge(address _gauge) external whenCallerIsTheModuleSetOnTheBridge {
         vm.assume(_gauge != address(leafGauge) && _gauge != address(bribeGauge));
         // It should revert with NotAGauge
         vm.expectRevert(ILeafVoter.NotAGauge.selector);
@@ -37,7 +37,7 @@ contract ReviveGaugeIntegrationFuzzTest is LeafVoterTest {
 
     function testFuzz_WhenWhitelistCountOfGaugeTokensIsGreaterThan0(uint256 _whitelistCount0, uint256 _whitelistCount1)
         external
-        whenCallerIsEmergencyCouncil
+        whenCallerIsTheModuleSetOnTheBridge
         whenAddressGivenIsAGauge
         whenGaugeIsNotAlive
     {
@@ -61,20 +61,16 @@ contract ReviveGaugeIntegrationFuzzTest is LeafVoterTest {
         // It should emit a {WhitelistToken} event
         // It should emit a {GaugeRevived} event
         vm.expectEmit(address(leafVoter));
-        emit ILeafVoter.WhitelistToken({
-            whitelister: address(leafVoter.emergencyCouncil()),
-            token: address(token0),
-            _bool: true
-        });
+        emit ILeafVoter.WhitelistToken({whitelister: address(leafMessageModule), token: address(token0), _bool: true});
         vm.expectEmit(address(leafVoter));
         emit ILeafVoter.WhitelistToken({
-            whitelister: address(leafVoter.emergencyCouncil()),
+            whitelister: address(address(leafMessageModule)),
             token: address(token1),
             _bool: true
         });
         vm.expectEmit(address(leafVoter));
         emit ILeafVoter.GaugeRevived({gauge: address(leafGauge)});
-        vm.startPrank(leafVoter.emergencyCouncil());
+        vm.startPrank(address(leafMessageModule));
         leafVoter.reviveGauge(address(leafGauge));
 
         assertTrue(leafVoter.isAlive(address(leafGauge)));

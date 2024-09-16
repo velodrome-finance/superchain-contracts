@@ -82,6 +82,12 @@ contract LeafHLMessageModule is ILeafHLMessageModule {
             ILeafMessageBridge(bridge).mint({_recipient: address(this), _amount: amount});
             IERC20(xerc20).safeIncreaseAllowance({spender: gauge, value: amount});
             ILeafGauge(gauge).notifyRewardAmount({amount: amount});
+        } else if (command == Commands.KILL_GAUGE) {
+            address gauge = abi.decode(messageWithoutCommand, (address));
+            ILeafVoter(voter).killGauge({_gauge: gauge});
+        } else if (command == Commands.REVIVE_GAUGE) {
+            address gauge = abi.decode(messageWithoutCommand, (address));
+            ILeafVoter(voter).reviveGauge({_gauge: gauge});
         } else {
             revert InvalidCommand();
         }

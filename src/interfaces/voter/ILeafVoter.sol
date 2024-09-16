@@ -7,7 +7,6 @@ interface ILeafVoter {
     error NotAuthorized();
     error GaugeAlreadyKilled();
     error GaugeAlreadyRevived();
-    error NotEmergencyCouncil();
 
     event GaugeCreated(
         address indexed poolFactory,
@@ -21,7 +20,6 @@ interface ILeafVoter {
     );
     event GaugeKilled(address indexed gauge);
     event GaugeRevived(address indexed gauge);
-    event SetEmergencyCouncil(address indexed emergencyCouncil);
     event WhitelistToken(address indexed whitelister, address indexed token, bool indexed _bool);
 
     /// @notice Factory registry for valid pool / gauge / rewards factories
@@ -29,9 +27,6 @@ interface ILeafVoter {
 
     /// @notice Address of bridge contract used to forward x-chain messages
     function bridge() external view returns (address);
-
-    /// @notice credibly neutral party similar to Curve's Emergency DAO
-    function emergencyCouncil() external view returns (address);
 
     /// @dev Pool => Gauge
     function gauges(address _pool) external view returns (address);
@@ -88,13 +83,13 @@ interface ILeafVoter {
 
     /// @notice Kills a gauge. The gauge will not receive any new emissions and cannot be deposited into.
     ///         Can still withdraw from gauge.
-    /// @dev Throws if not called by emergency council.
+    /// @dev Only callable by Message Bridge
     ///      Throws if gauge already killed.
     /// @param _gauge .
     function killGauge(address _gauge) external;
 
     /// @notice Revives a killed gauge. Gauge will can receive emissions and deposits again.
-    /// @dev Throws if not called by emergency council.
+    /// @dev Only callable by Message Bridge
     ///      Throws if gauge is not killed.
     /// @param _gauge .
     function reviveGauge(address _gauge) external;
@@ -102,9 +97,4 @@ interface ILeafVoter {
     /// @notice Claim emissions from gauges.
     /// @param _gauges Array of gauges to collect emissions from.
     function claimRewards(address[] memory _gauges) external;
-
-    /// @notice Set new emergency council.
-    /// @dev Throws if not called by emergency council.
-    /// @param _council New emergency council to be set
-    function setEmergencyCouncil(address _council) external;
 }

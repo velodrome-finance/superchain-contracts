@@ -7,6 +7,7 @@ import {IVotingEscrow} from "src/interfaces/external/IVotingEscrow.sol";
 
 contract MockVotingEscrow is IVotingEscrow, ERC721 {
     uint256 public tokenId;
+    mapping(uint256 => bool) public override deactivated;
 
     constructor() ERC721("veNFT", "veNFT") {}
 
@@ -22,5 +23,9 @@ contract MockVotingEscrow is IVotingEscrow, ERC721 {
 
     function balanceOfNFT(uint256) public pure returns (uint256) {
         revert("Not implemented");
+    }
+
+    function setManagedState(uint256 _mTokenId, bool _state) external override {
+        deactivated[_mTokenId] = _state;
     }
 }

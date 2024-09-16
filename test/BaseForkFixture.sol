@@ -49,6 +49,8 @@ import {FeesVotingReward} from "src/rewards/FeesVotingReward.sol";
 import {BribeVotingReward} from "src/rewards/BribeVotingReward.sol";
 import {IReward} from "src/interfaces/rewards/IReward.sol";
 
+import {IEmergencyCouncil, EmergencyCouncil} from "src/mainnet/emergencyCouncil/EmergencyCouncil.sol";
+
 import {CreateX} from "test/mocks/CreateX.sol";
 import {TestERC20} from "test/mocks/TestERC20.sol";
 import {Mailbox, MultichainMockMailbox} from "test/mocks/MultichainMockMailbox.sol";
@@ -82,6 +84,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
     TokenBridge public rootTokenBridge;
     RootMessageBridge public rootMessageBridge;
     RootHLMessageModule public rootMessageModule;
+
+    EmergencyCouncil public emergencyCouncil;
 
     // root-only contracts
     XERC20Lockbox public rootLockbox;
@@ -311,6 +315,12 @@ abstract contract BaseForkFixture is Test, TestConstants {
             })
         );
 
+        emergencyCouncil =
+            new EmergencyCouncil({_owner: users.owner, _voter: address(mockVoter), _bridge: address(rootMessageBridge)});
+        vm.startPrank(mockVoter.emergencyCouncil());
+        mockVoter.setEmergencyCouncil(address(emergencyCouncil));
+        vm.stopPrank();
+
         vm.startPrank(Ownable(address(mockFactoryRegistry)).owner());
         mockFactoryRegistry.approve({
             poolFactory: address(rootPoolFactory),
@@ -335,6 +345,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
         vm.label({account: address(rootMessageBridge), newLabel: "Message Bridge"});
         vm.label({account: address(rootMessageModule), newLabel: "Message Module"});
         vm.label({account: address(rootVotingRewardsFactory), newLabel: "Voting Rewards Factory"});
+
+        vm.label({account: address(emergencyCouncil), newLabel: "Emergency Council"});
     }
 
     function setUpLeafChain() public virtual {
@@ -412,7 +424,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
                     type(LeafVoter).creationCode,
                     abi.encode(
                         address(leafMockFactoryRegistry), // mock factory registry
-                        users.owner, // emergency council
                         address(leafMessageBridge) // message bridge
                     )
                 )

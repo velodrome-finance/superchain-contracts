@@ -28,9 +28,11 @@ contract MockVoter is IVoter {
 
     IERC20 internal immutable rewardToken;
     IFactoryRegistry public immutable factoryRegistry;
-    address public immutable emergencyCouncil;
+    address public emergencyCouncil;
     address public immutable ve;
     address public immutable governor;
+    address public immutable minter;
+    mapping(address => uint256) public claimable;
 
     constructor(address _rewardToken, address _factoryRegistry, address _ve, address _governor) {
         rewardToken = IERC20(_rewardToken);
@@ -38,6 +40,12 @@ contract MockVoter is IVoter {
         emergencyCouncil = msg.sender;
         ve = _ve;
         governor = _governor;
+    }
+
+    function setEmergencyCouncil(address _council) public {
+        if (msg.sender != emergencyCouncil) revert NotEmergencyCouncil();
+        if (_council == address(0)) revert ZeroAddress();
+        emergencyCouncil = _council;
     }
 
     function claimFees(address[] memory, address[][] memory, uint256) external override {}
@@ -91,6 +99,10 @@ contract MockVoter is IVoter {
 
     function killGauge(address gauge) external override {
         isAlive[gauge] = false;
+    }
+
+    function reviveGauge(address gauge) external override {
+        isAlive[gauge] = true;
     }
 
     function vote(uint256 _tokenId, address[] calldata _poolVote, uint256[] calldata _weights) external override {}

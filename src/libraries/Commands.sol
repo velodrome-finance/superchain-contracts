@@ -8,4 +8,6 @@ library Commands {
     uint256 public constant GET_INCENTIVES = 0x03;
     uint256 public constant GET_FEES = 0x04;
     uint256 public constant NOTIFY = 0x05;
+    uint256 public constant KILL_GAUGE = 0x06;
+    uint256 public constant REVIVE_GAUGE = 0x07;
 }
