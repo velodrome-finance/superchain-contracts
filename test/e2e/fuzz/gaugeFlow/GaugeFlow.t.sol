@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "test/BaseE2EForkFixture.sol";
 
-contract GaugeFlowTest is BaseE2EForkFixture {
+contract GaugeFlowE2EFuzzTest is BaseE2EForkFixture {
     uint256 constant MAX_TIME = 4 * 365 * 86400;
     uint256 constant PRECISION = 10 ** 18;
 
@@ -52,7 +52,7 @@ contract GaugeFlowTest is BaseE2EForkFixture {
         rootStartTime = block.timestamp;
     }
 
-    function test_GaugeFlow(uint256 timeskip1, uint256 timeskip2, uint256 timeskip3, uint256 timeskip4)
+    function testFuzz_GaugeFlow(uint256 timeskip1, uint256 timeskip2, uint256 timeskip3, uint256 timeskip4)
         public
         syncForkTimestamps
     {
@@ -68,7 +68,8 @@ contract GaugeFlowTest is BaseE2EForkFixture {
         // using stable = true to avoid collision with existing pool
         rootPool =
             RootPool(rootPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
-        vm.prank(mockVoter.governor());
+        _depositGas({_user: users.alice, _amount: MESSAGE_FEE});
+        vm.prank({msgSender: mockVoter.governor(), txOrigin: users.alice});
         rootGauge = RootGauge(mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(rootPool)}));
         rootFVR = RootFeesVotingReward(mockVoter.gaugeToFees(address(rootGauge)));
         rootIVR = RootBribeVotingReward(mockVoter.gaugeToBribe(address(rootGauge)));
@@ -120,7 +121,8 @@ contract GaugeFlowTest is BaseE2EForkFixture {
         weights[0] = 7500;
         weights[1] = 2500;
 
-        vm.prank(users.alice);
+        _depositGas({_user: users.alice, _amount: MESSAGE_FEE});
+        vm.prank({msgSender: users.alice, txOrigin: users.alice});
         mockVoter.vote(aliceLock, pools, weights);
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage(); // Process Vote on Leaf Chain
@@ -143,6 +145,8 @@ contract GaugeFlowTest is BaseE2EForkFixture {
         address[] memory gauges = new address[](2);
         gauges[0] = address(rootGauge);
         gauges[1] = address(v2Gauge);
+        _depositGas({_user: users.alice, _amount: MESSAGE_FEE});
+        vm.prank({msgSender: users.alice, txOrigin: users.alice});
         mockVoter.distribute(gauges);
 
         // No accrued Emissions as these are lagged by 1 week
@@ -244,6 +248,8 @@ contract GaugeFlowTest is BaseE2EForkFixture {
         checkEmissions(users.alice, address(v2Gauge), expectedEmissions);
 
         // Distribute to Gauges
+        _depositGas({_user: users.alice, _amount: MESSAGE_FEE});
+        vm.prank({msgSender: users.alice, txOrigin: users.alice});
         mockVoter.distribute(gauges);
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage(); // Process pending Distribute on Leaf Chain
@@ -319,7 +325,8 @@ contract GaugeFlowTest is BaseE2EForkFixture {
 
         // Bob Votes in same Pools
         vm.selectFork({forkId: rootId});
-        vm.prank(users.bob);
+        _depositGas({_user: users.bob, _amount: MESSAGE_FEE});
+        vm.prank({msgSender: users.bob, txOrigin: users.bob});
         mockVoter.vote(bobLock, pools, weights);
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage(); // Process Vote on Leaf Chain
@@ -406,11 +413,13 @@ contract GaugeFlowTest is BaseE2EForkFixture {
         checkEmissions(users.bob, address(leafGauge), leafXVelo.balanceOf(users.bob) + expectedEmissions);
 
         // Skip in time for Delayed Distribute
-        timeskip4 = bound(timeskip4, 0, 1 hours);
-        skipTime(timeskip4);
+        timeskip3 = bound(timeskip3, 0, 1 hours);
+        skipTime(timeskip3);
 
         // Distribute to Gauges
         vm.selectFork({forkId: rootId});
+        _depositGas({_user: users.alice, _amount: MESSAGE_FEE});
+        vm.prank({msgSender: users.alice, txOrigin: users.alice});
         mockVoter.distribute(gauges);
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage(); // Process pending Distribute on Leaf Chain
@@ -488,11 +497,11 @@ contract GaugeFlowTest is BaseE2EForkFixture {
         });
 
         // Timeskip and check accrued Rewards
-        timeskip3 = bound(timeskip3, 0, WEEK - timeskip4);
-        skipTime(timeskip3);
+        timeskip4 = bound(timeskip4, 0, WEEK - timeskip3);
+        skipTime(timeskip4);
 
         // Check Alice & Bob emissions on Root
-        ratePerToken = (v2Gauge.rewardRate() * timeskip3 * PRECISION) / v2Gauge.totalSupply();
+        ratePerToken = (v2Gauge.rewardRate() * timeskip4 * PRECISION) / v2Gauge.totalSupply();
 
         expectedEmissions = (ratePerToken * v2Gauge.balanceOf(users.alice)) / PRECISION;
         checkEmissions(users.alice, address(v2Gauge), rootRewardToken.balanceOf(users.alice) + expectedEmissions);
@@ -501,7 +510,7 @@ contract GaugeFlowTest is BaseE2EForkFixture {
 
         // Check Alice & Bob emissions on Leaf
         vm.selectFork({forkId: leafId});
-        ratePerToken = (leafGauge.rewardRate() * timeskip3 * PRECISION) / leafGauge.totalSupply();
+        ratePerToken = (leafGauge.rewardRate() * timeskip4 * PRECISION) / leafGauge.totalSupply();
 
         expectedEmissions = (ratePerToken * leafGauge.balanceOf(users.alice)) / PRECISION;
         checkEmissions(users.alice, address(leafGauge), leafXVelo.balanceOf(users.alice) + expectedEmissions);
@@ -614,7 +623,8 @@ contract GaugeFlowTest is BaseE2EForkFixture {
         address[] memory tokens = new address[](2);
         tokens[0] = _tokenA;
         tokens[1] = _tokenB;
-        vm.startPrank(owner);
+        _depositGas({_user: owner, _amount: MESSAGE_FEE * 2});
+        vm.startPrank({msgSender: owner, txOrigin: owner});
         rootIVR.getReward(_tokenId, tokens);
         rootFVR.getReward(_tokenId, tokens);
         vm.stopPrank();
@@ -672,6 +682,13 @@ contract GaugeFlowTest is BaseE2EForkFixture {
 
         rewardsLastEpoch = IReward(_fvr).tokenRewardsPerEpoch(_tokenB, epochStart - WEEK);
         expectedBalanceB = expectedBalanceB + rewardsLastEpoch * balance / IReward(_fvr).totalSupply();
+    }
+
+    /// @dev Helper function to seed User with WETH to pay for gas in x-chain transactions
+    function _depositGas(address _user, uint256 _amount) internal {
+        deal({token: address(weth), to: _user, give: _amount});
+        vm.prank(_user);
+        weth.approve({spender: address(rootMessageBridge), value: _amount});
     }
 
     /// @dev Helper function to stake existing liquidity into Gauge
