@@ -3,6 +3,8 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "test/BaseFixture.sol";
 import {DeployRootMessage} from "script/deployParameters/optimism/DeployRootMessage.s.sol";
+import {RootPool} from "src/mainnet/pools/RootPool.sol";
+import {RootPoolFactory} from "src/mainnet/pools/RootPoolFactory.sol";
 import {IRootGaugeFactory, RootGaugeFactory} from "src/mainnet/gauges/RootGaugeFactory.sol";
 import {IRootMessageBridge, RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
 import {IMessageSender, RootHLMessageModule} from "src/mainnet/bridge/hyperlane/RootHLMessageModule.sol";
@@ -19,6 +21,8 @@ contract OptimismDeployRootMessageTest is BaseFixture {
     XERC20 public rootXVelo;
     XERC20Lockbox public rootLockbox;
 
+    RootPool public rootPoolImplementation;
+    RootPoolFactory public rootPoolFactory;
     RootMessageBridge public rootMessageBridge;
     RootHLMessageModule public rootMessageModule;
 
@@ -42,6 +46,8 @@ contract OptimismDeployRootMessageTest is BaseFixture {
     function testRun() public {
         deploy.run();
 
+        rootPoolImplementation = deploy.poolImplementation();
+        rootPoolFactory = deploy.poolFactory();
         rootGaugeFactory = deploy.gaugeFactory();
         rootVotingRewardsFactory = deploy.votingRewardsFactory();
 
@@ -86,7 +92,7 @@ contract OptimismDeployRootMessageTest is BaseFixture {
         assertEq(rootMessageBridge.owner(), params.bridgeOwner);
         assertEq(rootMessageBridge.xerc20(), address(rootXVelo));
         assertEq(rootMessageBridge.voter(), params.voter);
-        assertEq(rootMessageBridge.gaugeFactory(), address(rootGaugeFactory));
+        assertEq(rootMessageBridge.factoryRegistry(), params.factoryRegistry);
         assertEq(rootMessageBridge.module(), address(rootMessageModule));
 
         assertEq(rootMessageModule.bridge(), address(rootMessageBridge));
@@ -98,10 +104,14 @@ contract OptimismDeployRootMessageTest is BaseFixture {
 
         assertEq(rootVotingRewardsFactory.bridge(), address(rootMessageBridge));
 
+        assertEq(rootPoolFactory.implementation(), address(rootPoolImplementation));
+        assertEq(rootPoolFactory.bridge(), address(rootMessageBridge));
+
         assertEq(rootGaugeFactory.voter(), params.voter);
         assertEq(rootGaugeFactory.xerc20(), address(rootXVelo));
         assertEq(rootGaugeFactory.lockbox(), address(rootLockbox));
         assertEq(rootGaugeFactory.messageBridge(), address(rootMessageBridge));
+        assertEq(rootGaugeFactory.poolFactory(), address(rootPoolFactory));
         assertEq(rootGaugeFactory.votingRewardsFactory(), address(rootVotingRewardsFactory));
     }
 }

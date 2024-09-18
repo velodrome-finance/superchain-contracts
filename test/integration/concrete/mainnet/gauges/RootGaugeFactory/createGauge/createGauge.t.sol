@@ -8,8 +8,9 @@ contract CreateGaugeIntegrationConcreteTest is RootGaugeFactoryTest {
         super.setUp();
 
         // we use stable = true to avoid collision with existing pool
-        rootPool =
-            RootPool(rootPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
+        rootPool = RootPool(
+            rootPoolFactory.createPool({chainid: leaf, tokenA: address(token0), tokenB: address(token1), stable: true})
+        );
 
         // use users.alice as tx.origin
         deal({token: address(weth), to: users.alice, give: MESSAGE_FEE});

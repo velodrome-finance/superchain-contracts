@@ -14,4 +14,6 @@ struct Users {
     address payable charlie;
     // User, used as deployer
     address payable deployer;
+    // User, used as leaf deployer for create x contracts
+    address payable deployer2;
 }

@@ -155,11 +155,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
         setUpRootChain();
         setUpLeafChain();
         setUpPostCommon();
-        vm.mockCall({
-            callee: address(rootMailbox),
-            data: abi.encode(bytes4(keccak256("quoteDispatch(uint32,bytes32,bytes)"))),
-            returnData: abi.encode(MESSAGE_FEE)
-        });
 
         vm.selectFork({forkId: rootId});
     }
@@ -204,8 +199,27 @@ abstract contract BaseForkFixture is Test, TestConstants {
 
         // deploy root contracts
         vm.startPrank(users.deployer);
+        TestERC20 tokenA = new TestERC20("Test Token A", "TTA", 18);
+        TestERC20 tokenB = new TestERC20("Test Token B", "TTB", 6); // mimic USDC
+        (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+        assertEq(token1.decimals(), 6);
+
+        rootMessageBridge = RootMessageBridge(
+            payable(CreateXLibrary.computeCreate3Address({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}))
+        );
         rootPoolImplementation = new RootPool();
-        rootPoolFactory = new RootPoolFactory({_implementation: address(rootPoolImplementation), _chainId: leaf});
+        rootPoolFactory = RootPoolFactory(
+            cx.deployCreate3({
+                salt: CreateXLibrary.calculateSalt({_entropy: POOL_FACTORY_ENTROPY, _deployer: users.deployer}),
+                initCode: abi.encodePacked(
+                    type(RootPoolFactory).creationCode,
+                    abi.encode(
+                        address(rootPoolImplementation), // root pool implementation
+                        address(rootMessageBridge) // message bridge
+                    )
+                )
+            })
+        );
         rootRouter = Router(
             payable(
                 cx.deployCreate3({
@@ -255,7 +269,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
                             address(rootXVelo), // xerc20 address
                             address(mockVoter), // mock root voter
                             address(rootMessageModule), // message module
-                            address(rootGaugeFactory), // root gauge factory
                             address(weth) // weth contract
                         )
                     )
@@ -311,6 +324,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
                         address(rootXVelo), // xerc20 address
                         address(rootLockbox), // lockbox address
                         address(rootMessageBridge), // message bridge address
+                        address(rootPoolFactory), // pool factory address
                         address(rootVotingRewardsFactory) // voting rewards factory
                     )
                 )
@@ -355,16 +369,19 @@ abstract contract BaseForkFixture is Test, TestConstants {
         vm.selectFork({forkId: leafId});
 
         // deploy leaf mocks
-        // use deployer here to ensure addresses are different from the root mocks
+        // use deployer2 here to ensure addresses are different from the root mocks
         // this helps with labeling
         vm.startPrank(users.deployer);
-        leafMailbox = new MultichainMockMailbox(leaf);
-        leafIsm = new TestIsm();
-        leafMockFactoryRegistry = new MockFactoryRegistry();
-
         TestERC20 tokenA = new TestERC20("Test Token A", "TTA", 18);
         TestERC20 tokenB = new TestERC20("Test Token B", "TTB", 6); // mimic USDC
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+        assertEq(token1.decimals(), 6);
+        vm.stopPrank();
+
+        vm.startPrank(users.deployer2);
+        leafMailbox = new MultichainMockMailbox(leaf);
+        leafIsm = new TestIsm();
+        leafMockFactoryRegistry = new MockFactoryRegistry();
         vm.stopPrank();
 
         vm.startPrank(users.deployer);
@@ -519,6 +536,18 @@ abstract contract BaseForkFixture is Test, TestConstants {
     // Any set up required to link the contracts across the two chains
     function setUpPostCommon() public virtual {
         vm.selectFork({forkId: rootId});
+        // mock calls to dispatch
+        vm.mockCall({
+            callee: address(rootMailbox),
+            data: abi.encode(bytes4(keccak256("quoteDispatch(uint32,bytes32,bytes)"))),
+            returnData: abi.encode(MESSAGE_FEE)
+        });
+
+        // fund alice for gauge creation below
+        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE * 2});
+        vm.startPrank(users.alice);
+        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
+
         rootMailbox.addRemoteMailbox(leaf, leafMailbox);
         rootMailbox.setDomainForkId({_domain: leaf, _forkId: leafId});
 
@@ -526,15 +555,17 @@ abstract contract BaseForkFixture is Test, TestConstants {
         vm.startPrank(users.owner);
         rootMessageBridge.registerChain({_chainid: leaf});
 
-        rootPool =
-            RootPool(rootPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: false}));
-        vm.startPrank(mockVoter.governor());
+        rootPool = RootPool(
+            rootPoolFactory.createPool({chainid: leaf, tokenA: address(token0), tokenB: address(token1), stable: false})
+        );
+        vm.startPrank({msgSender: mockVoter.governor(), txOrigin: users.alice});
         rootGauge = RootGauge(mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(rootPool)}));
         rootFVR = RootFeesVotingReward(mockVoter.gaugeToFees(address(rootGauge)));
         rootIVR = RootBribeVotingReward(mockVoter.gaugeToBribe(address(rootGauge)));
 
         // create pool & gauge to whitelist WETH as bribe token
-        address bribePool = rootPoolFactory.createPool({tokenA: address(token0), tokenB: address(weth), stable: false});
+        address bribePool =
+            rootPoolFactory.createPool({chainid: leaf, tokenA: address(token0), tokenB: address(weth), stable: false});
         mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(bribePool)});
         vm.stopPrank();
 
@@ -557,7 +588,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
             alice: createUser("Alice"),
             bob: createUser("Bob"),
             charlie: createUser("Charlie"),
-            deployer: createUser("Deployer")
+            deployer: createUser("Deployer"),
+            deployer2: createUser("Deployer2")
         });
     }
 

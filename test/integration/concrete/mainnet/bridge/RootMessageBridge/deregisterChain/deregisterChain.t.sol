@@ -19,7 +19,6 @@ contract DeregisterChainIntegrationConcreteTest is RootMessageBridgeTest {
                             address(rootXVelo), // xerc20 address
                             address(mockVoter), // mock root voter
                             address(rootMessageModule), // message module
-                            address(rootGaugeFactory), // root gauge factory
                             address(weth) // root weth
                         )
                     )

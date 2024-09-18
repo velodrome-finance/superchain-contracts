@@ -5,7 +5,7 @@ interface IRootPool {
     error AlreadyInitialized();
 
     /// @notice Chain Id this pool links to
-    function chainId() external view returns (uint256);
+    function chainid() external view returns (uint256);
 
     /// @notice Token 0 of the pool
     function token0() external view returns (address);
@@ -20,9 +20,9 @@ interface IRootPool {
     function stable() external view returns (bool);
 
     /// @notice Initialize function for this pool (used by clones)
-    /// @param _chainId Chain Id this pool links to
+    /// @param _chainid Chain Id this pool links to
     /// @param _token0 token0 of the pool
     /// @param _token1 token1 of the pool
     /// @param _stable Whether the pool is stable or volatile: true for stable, false for volatile
-    function initialize(uint256 _chainId, address _token0, address _token1, bool _stable) external;
+    function initialize(uint256 _chainid, address _token0, address _token1, bool _stable) external;
 }

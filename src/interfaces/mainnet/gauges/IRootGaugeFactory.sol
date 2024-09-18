@@ -16,7 +16,10 @@ interface IRootGaugeFactory {
     /// @notice Address of bridge contract used to forward x-chain messages
     function messageBridge() external view returns (address);
 
-    /// @notice Voting Rewards Factory contract address
+    /// @notice Pool factory associated with this gauge factory
+    function poolFactory() external view returns (address);
+
+    /// @notice Voting rewards factory contract address
     function votingRewardsFactory() external view returns (address);
 
     /// @notice Creates a new root gauge

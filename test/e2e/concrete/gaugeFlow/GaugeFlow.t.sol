@@ -63,8 +63,9 @@ contract GaugeFlowE2EConcreteTest is BaseE2EForkFixture {
 
         // Create Root Pool & Gauge
         // using stable = true to avoid collision with existing pool
-        rootPool =
-            RootPool(rootPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
+        rootPool = RootPool(
+            rootPoolFactory.createPool({chainid: leaf, tokenA: address(token0), tokenB: address(token1), stable: true})
+        );
         _depositGas({_user: users.alice, _amount: MESSAGE_FEE});
         vm.prank({msgSender: mockVoter.governor(), txOrigin: users.alice});
         rootGauge = RootGauge(mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(rootPool)}));

@@ -14,17 +14,12 @@ contract LeafMessageBridge is ILeafMessageBridge, Ownable {
     /// @inheritdoc ILeafMessageBridge
     address public immutable voter;
     /// @inheritdoc ILeafMessageBridge
-    address public immutable poolFactory;
-    /// @inheritdoc ILeafMessageBridge
     address public module;
 
-    constructor(address _owner, address _xerc20, address _voter, address _module, address _poolFactory)
-        Ownable(_owner)
-    {
+    constructor(address _owner, address _xerc20, address _voter, address _module) Ownable(_owner) {
         xerc20 = _xerc20;
         voter = _voter;
         module = _module;
-        poolFactory = _poolFactory;
     }
 
     /// @inheritdoc ILeafMessageBridge

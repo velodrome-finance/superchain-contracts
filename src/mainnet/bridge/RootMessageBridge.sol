@@ -4,6 +4,7 @@ pragma solidity >=0.8.19 <0.9.0;
 import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
 import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import {IFactoryRegistry} from "../../interfaces/external/IFactoryRegistry.sol";
 import {IRootMessageBridge} from "../../interfaces/mainnet/bridge/IRootMessageBridge.sol";
 import {IMessageSender} from "../../interfaces/mainnet/bridge/IMessageSender.sol";
 import {IVoter} from "../../interfaces/external/IVoter.sol";
@@ -24,19 +25,19 @@ contract RootMessageBridge is IRootMessageBridge, ChainRegistry {
     /// @inheritdoc IRootMessageBridge
     address public immutable voter;
     /// @inheritdoc IRootMessageBridge
-    address public immutable gaugeFactory;
+    address public immutable factoryRegistry;
     /// @inheritdoc IRootMessageBridge
     address public immutable weth;
     /// @inheritdoc IRootMessageBridge
     address public module;
 
-    constructor(address _owner, address _xerc20, address _voter, address _module, address _gaugeFactory, address _weth)
+    constructor(address _owner, address _xerc20, address _voter, address _module, address _weth)
         ChainRegistry(_owner)
     {
         xerc20 = _xerc20;
         voter = _voter;
         module = _module;
-        gaugeFactory = _gaugeFactory;
+        factoryRegistry = IVoter(_voter).factoryRegistry();
         weth = _weth;
     }
 
@@ -63,6 +64,8 @@ contract RootMessageBridge is IRootMessageBridge, ChainRegistry {
             (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
             if (msg.sender != IVoter(voter).gaugeToFees(gauge)) revert NotAuthorized(Commands.WITHDRAW);
         } else if (command == Commands.CREATE_GAUGE) {
+            (address factory,) = abi.decode(messageWithoutCommand, (address, bytes));
+            (, address gaugeFactory) = IFactoryRegistry(factoryRegistry).factoriesToPoolFactory(factory);
             if (msg.sender != gaugeFactory) revert NotAuthorized(Commands.CREATE_GAUGE);
         } else if (command == Commands.GET_INCENTIVES) {
             (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));

@@ -155,10 +155,11 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         whenTheCommandIsCreateGauge
     {
         // It should revert with NotAuthorized
+        uint24 _poolParam = 1;
         bytes memory payload = abi.encode(
-            address(token0), address(token1), true, address(rootVotingRewardsFactory), address(rootGaugeFactory)
+            address(rootVotingRewardsFactory), address(rootGaugeFactory), address(token0), address(token1), _poolParam
         );
-        bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
+        bytes memory message = abi.encode(Commands.CREATE_GAUGE, abi.encode(address(rootPoolFactory), payload));
 
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.CREATE_GAUGE));
@@ -167,10 +168,11 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
     function test_WhenTheCallerIsRootGaugeFactory() external whenTheChainIdIsRegistered whenTheCommandIsCreateGauge {
         // It dispatches the create gauge message to the message module
+        uint24 _poolParam = 1;
         bytes memory payload = abi.encode(
-            address(token0), address(token1), true, address(rootVotingRewardsFactory), address(rootGaugeFactory)
+            address(rootVotingRewardsFactory), address(rootGaugeFactory), address(token0), address(token1), _poolParam
         );
-        bytes memory message = abi.encode(Commands.CREATE_GAUGE, payload);
+        bytes memory message = abi.encode(Commands.CREATE_GAUGE, abi.encode(address(rootPoolFactory), payload));
 
         vm.prank({msgSender: address(rootGaugeFactory), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});

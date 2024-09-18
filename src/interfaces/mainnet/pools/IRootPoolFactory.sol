@@ -2,19 +2,21 @@
 pragma solidity ^0.8.0;
 
 interface IRootPoolFactory {
+    error NotRegistered();
     error SameAddress();
-    error ZeroAddress();
     error PoolAlreadyExists();
+    error ZeroAddress();
 
     event PoolCreated(
         address indexed token0, address indexed token1, bool indexed stable, address pool, uint256 length
     );
 
-    /// @notice Chain Id this pool factory links to
-    function chainId() external view returns (uint256);
-
     /// @notice Pool implementation used by this factory
     function implementation() external view returns (address);
+
+    /// @notice Address of the bridge contract
+    /// @dev Used as a registry of chains
+    function bridge() external view returns (address);
 
     /// @notice Return a single pool created by this factory
     /// @return Address of pool
@@ -28,11 +30,12 @@ interface IRootPoolFactory {
     function allPoolsLength() external view returns (uint256);
 
     /// @notice Return address of pool created by this factory
+    /// @param chainid Chain ID associated with pool
     /// @param tokenA Token A
     /// @param tokenB Token B
     /// @param stable Boolean indicating if pool is stable, true if stable, false if volatile
     /// @return Address of pool
-    function getPool(address tokenA, address tokenB, bool stable) external view returns (address);
+    function getPool(uint256 chainid, address tokenA, address tokenB, bool stable) external view returns (address);
 
     /// @notice Always returns false as these pools are not real pools
     /// @dev Guarantees gauges attached to pools must be created by the governor
@@ -44,9 +47,10 @@ interface IRootPoolFactory {
 
     /// @notice Create a pool given two tokens
     /// @dev Token order does not matter
+    /// @param chainid Chain ID associated with pool
     /// @param tokenA Token A
     /// @param tokenB Token B
     /// @param stable Boolean indicating if pool is stable, true if stable, false if volatile
     /// @return Address of pool
-    function createPool(address tokenA, address tokenB, bool stable) external returns (address);
+    function createPool(uint256 chainid, address tokenA, address tokenB, bool stable) external returns (address);
 }

@@ -7,6 +7,8 @@ import {XERC20Factory} from "src/xerc20/XERC20Factory.sol";
 import {IXERC20, XERC20} from "src/xerc20/XERC20.sol";
 import {XERC20Lockbox} from "src/xerc20/XERC20Lockbox.sol";
 
+import {RootPool} from "src/mainnet/pools/RootPool.sol";
+import {RootPoolFactory} from "src/mainnet/pools/RootPoolFactory.sol";
 import {RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
 import {RootHLMessageModule} from "src/mainnet/bridge/hyperlane/RootHLMessageModule.sol";
 
@@ -20,12 +22,13 @@ abstract contract DeployRootMessageFixture is DeployFixture {
 
     struct RootDeploymentParameters {
         address weth;
-        address tokenAdmin;
         address voter;
         address votingEscrow;
+        address velo;
+        address factoryRegistry;
+        address tokenAdmin;
         address bridgeOwner;
         address emergencyCouncilOwner;
-        address velo;
         address mailbox;
         string outputFilename;
     }
@@ -37,6 +40,8 @@ abstract contract DeployRootMessageFixture is DeployFixture {
     RootMessageBridge public messageBridge;
     RootHLMessageModule public messageModule;
 
+    RootPool public poolImplementation;
+    RootPoolFactory public poolFactory;
     RootGaugeFactory public gaugeFactory;
     RootVotingRewardsFactory public votingRewardsFactory;
 
@@ -50,6 +55,23 @@ abstract contract DeployRootMessageFixture is DeployFixture {
     /// @dev Override if deploying extensions
     function deploy() internal virtual override {
         address _deployer = deployer;
+
+        messageBridge = RootMessageBridge(
+            payable(CreateXLibrary.computeCreate3Address({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: _deployer}))
+        );
+        poolImplementation = new RootPool();
+        poolFactory = RootPoolFactory(
+            cx.deployCreate3({
+                salt: POOL_FACTORY_ENTROPY.calculateSalt({_deployer: _deployer}),
+                initCode: abi.encodePacked(
+                    type(RootPoolFactory).creationCode,
+                    abi.encode(
+                        address(poolImplementation), // root pool implementation
+                        address(messageBridge) // message bridge
+                    )
+                )
+            })
+        );
 
         xerc20Factory = XERC20Factory(
             cx.deployCreate3({
@@ -132,6 +154,7 @@ abstract contract DeployRootMessageFixture is DeployFixture {
                         xVelo, // xerc20 address
                         address(lockbox), // lockbox address
                         address(messageBridge), // message bridge address
+                        address(poolFactory), // pool factory address
                         address(votingRewardsFactory)
                     )
                 )

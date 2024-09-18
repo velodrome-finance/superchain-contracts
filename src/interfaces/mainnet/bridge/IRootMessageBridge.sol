@@ -20,9 +20,8 @@ interface IRootMessageBridge {
     /// @dev Used to verify the sender of a message
     function voter() external view returns (address);
 
-    /// @notice Returns the address of the Gauge Factory associated with Bridge
-    /// @dev Gauge Factory maintains the same address across all Chains
-    function gaugeFactory() external view returns (address);
+    /// @notice Returns the address of the factory registry contract
+    function factoryRegistry() external view returns (address);
 
     /// @notice Returns the address of the WETH contract
     function weth() external view returns (address);

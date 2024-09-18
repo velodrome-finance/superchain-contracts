@@ -35,4 +35,9 @@ abstract contract ChainRegistry is IChainRegistry, Ownable {
     function chainids() external view returns (uint256[] memory) {
         return _chainids.values();
     }
+
+    /// @inheritdoc IChainRegistry
+    function contains(uint256 _chainid) external view returns (bool) {
+        return _chainids.contains(_chainid);
+    }
 }

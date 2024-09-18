@@ -6,11 +6,11 @@ import "test/BaseForkFixture.sol";
 abstract contract RootMessageBridgeTest is BaseForkFixture {
     function test_InitialState() public {
         vm.selectFork({forkId: rootId});
-        assertEq(rootMessageBridge.module(), address(rootMessageModule));
         assertEq(rootMessageBridge.owner(), users.owner);
         assertEq(rootMessageBridge.xerc20(), address(rootXVelo));
         assertEq(rootMessageBridge.voter(), address(mockVoter));
-        assertEq(rootMessageBridge.gaugeFactory(), address(rootGaugeFactory));
+        assertEq(rootMessageBridge.factoryRegistry(), address(mockFactoryRegistry));
+        assertEq(rootMessageBridge.module(), address(rootMessageModule));
         assertEq(rootMessageBridge.weth(), address(weth));
     }
 }

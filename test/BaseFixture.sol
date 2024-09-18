@@ -178,7 +178,8 @@ abstract contract BaseFixture is Test, TestConstants {
             alice: createUser("Alice"),
             bob: createUser("Bob"),
             charlie: createUser("Charlie"),
-            deployer: createUser("Deployer")
+            deployer: createUser("Deployer"),
+            deployer2: createUser("Deployer2")
         });
     }
 

@@ -12,11 +12,12 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         rootMessageModule.sendMessage({_chainid: leaf, _message: abi.encode(users.charlie, abi.encode(1))});
     }
 
-    function test_WhenTheCallerIsBridge(uint256 ethAmount, uint256 amount) external {
+    function test_WhenTheCallerIsBridge(uint256 amount) external {
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
         // It calls receiveMessage on the recipient contract of the same address with the payload
         uint256 tokenId = 1;
+        uint256 ethAmount = TOKEN_1;
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});

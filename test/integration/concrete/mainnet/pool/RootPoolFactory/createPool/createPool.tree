@@ -1,0 +1,17 @@
+CreatePoolIntegrationConcreteTest
+├── When chain id is not registered
+│   └── It reverts with {NotRegistered}
+└── When chain id is registered
+    ├── When token A is the same as token B
+    │   └── It reverts with {SameAddress}
+    └── When token A is not the same as token B
+        ├── When token0 is the zero address
+        │   └── It reverts with {ZeroAddress}
+        └── When token0 is not the zero address
+            ├── When the pool already exists
+            │   └── It reverts with {PoolAlreadyExists}
+            └── When the pool does not exist
+                ├── It creates the pool using Create2
+                ├── It populates the getPool mapping in both directions
+                ├── It adds the pool to the list of all pools
+                └── It emits {PoolCreated}

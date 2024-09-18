@@ -3,7 +3,6 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
-
 import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin5/contracts/token/ERC20/IERC20.sol";
 
@@ -61,13 +60,14 @@ contract LeafHLMessageModule is ILeafHLMessageModule {
             address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: gauge});
             IReward(ivr)._withdraw({_payload: payload});
         } else if (command == Commands.CREATE_GAUGE) {
-            (address token0, address token1, bool stable, address votingRewardsFactory, address gaugeFactory) =
-                abi.decode(messageWithoutCommand, (address, address, bool, address, address));
-            address poolFactory = ILeafMessageBridge(bridge).poolFactory();
+            (address poolFactory, bytes memory payload) = abi.decode(messageWithoutCommand, (address, bytes));
+            (address votingRewardsFactory, address gaugeFactory, address token0, address token1, uint24 _poolParam) =
+                abi.decode(payload, (address, address, address, address, uint24));
 
-            address pool = IPoolFactory(poolFactory).getPool({tokenA: token0, tokenB: token1, stable: stable});
+            address pool = IPoolFactory(poolFactory).getPool({tokenA: token0, tokenB: token1, fee: _poolParam});
+
             if (pool == address(0)) {
-                pool = IPoolFactory(poolFactory).createPool({tokenA: token0, tokenB: token1, stable: stable});
+                pool = IPoolFactory(poolFactory).createPool({tokenA: token0, tokenB: token1, fee: _poolParam});
             }
             ILeafVoter(voter).createGauge({
                 _poolFactory: poolFactory,

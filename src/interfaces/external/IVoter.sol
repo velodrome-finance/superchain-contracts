@@ -33,7 +33,7 @@ interface IVoter {
 
     function createGauge(address _poolFactory, address _pool) external returns (address);
 
-    function factoryRegistry() external view returns (IFactoryRegistry);
+    function factoryRegistry() external view returns (address);
 
     /// @dev Utility to distribute to gauges of pools in array.
     /// @param _gauges Array of gauges to distribute to.

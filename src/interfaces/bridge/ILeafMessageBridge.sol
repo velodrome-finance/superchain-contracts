@@ -17,10 +17,6 @@ interface ILeafMessageBridge {
     /// @dev Used to verify the sender of a message
     function voter() external view returns (address);
 
-    /// @notice Returns the address of the Pool Factory associated with Bridge
-    /// @dev Pool Factory maintains the same address across all Leaf Chains but differs on the Root Chain
-    function poolFactory() external view returns (address);
-
     /// @notice Sets the address of the module contract that is allowed to send messages x-chain
     /// @dev Module handles x-chain messages
     /// @param _module The address of the new module contract

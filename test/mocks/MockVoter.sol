@@ -27,16 +27,17 @@ contract MockVoter is IVoter {
     mapping(address => bool) public isWhitelistedToken;
 
     IERC20 internal immutable rewardToken;
-    IFactoryRegistry public immutable factoryRegistry;
-    address public emergencyCouncil;
+    address public immutable factoryRegistry;
     address public immutable ve;
     address public immutable governor;
     address public immutable minter;
     mapping(address => uint256) public claimable;
 
+    address public emergencyCouncil;
+
     constructor(address _rewardToken, address _factoryRegistry, address _ve, address _governor) {
         rewardToken = IERC20(_rewardToken);
-        factoryRegistry = IFactoryRegistry(_factoryRegistry);
+        factoryRegistry = _factoryRegistry;
         emergencyCouncil = msg.sender;
         ve = _ve;
         governor = _governor;
@@ -67,8 +68,9 @@ contract MockVoter is IVoter {
     }
 
     function createGauge(address _poolFactory, address _pool) external override returns (address) {
-        require(factoryRegistry.isPoolFactoryApproved(_poolFactory));
-        (address votingRewardsFactory, address gaugeFactory) = factoryRegistry.factoriesToPoolFactory(_poolFactory);
+        require(IFactoryRegistry(factoryRegistry).isPoolFactoryApproved(_poolFactory));
+        (address votingRewardsFactory, address gaugeFactory) =
+            IFactoryRegistry(factoryRegistry).factoriesToPoolFactory(_poolFactory);
 
         /// @dev mimic flow in real voter, note that feesVotingReward and bribeVotingReward are unused mocks
         address[] memory rewards = new address[](2);

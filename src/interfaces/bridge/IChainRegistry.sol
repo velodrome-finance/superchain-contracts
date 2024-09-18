@@ -13,6 +13,11 @@ interface IChainRegistry {
     /// @return An array of all registered chain ids
     function chainids() external view returns (uint256[] memory);
 
+    /// @notice Checks if a chain is registered
+    /// @param _chainid The chain id to check
+    /// @return True if the chain is registered, false otherwise
+    function contains(uint256 _chainid) external view returns (bool);
+
     /// @notice Registers a new chain
     /// @dev Only callable by the owner, allows messages to the registered chain
     /// @param _chainid The chain id to register
