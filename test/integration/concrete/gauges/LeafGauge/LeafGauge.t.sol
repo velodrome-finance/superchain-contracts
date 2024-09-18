@@ -12,7 +12,6 @@ contract LeafGaugeTest is BaseForkFixture {
         vm.selectFork({forkId: leafId});
         skipToNextEpoch(0); // warp to start of next epoch
         deal(address(leafXVelo), address(leafMessageModule), TOKEN_1);
-        deal(address(leafXVelo), leafGaugeFactory.notifyAdmin(), TOKEN_1);
         _addLiquidityToPool(users.alice, address(leafRouter), address(token0), address(token1), false, TOKEN_1, USDC_1);
     }
 
@@ -518,6 +517,8 @@ contract LeafGaugeTest is BaseForkFixture {
     }
 
     function testNotifyRewardsWithoutClaimAfterClaimingFees() public {
+        deal(address(leafXVelo), address(leafMessageModule), TOKEN_1 * 2);
+
         uint256 reward = TOKEN_1;
         vm.startPrank(address(leafMessageModule));
         leafXVelo.approve(address(leafGauge), reward);
@@ -533,8 +534,7 @@ contract LeafGaugeTest is BaseForkFixture {
 
         skipTime(1 days);
 
-        address notifyAdmin = leafGaugeFactory.notifyAdmin();
-        vm.startPrank(notifyAdmin);
+        vm.startPrank(address(leafMessageModule));
         leafXVelo.approve(address(leafGauge), reward);
         vm.expectCall(LeafGauge(leafGauge).stakingToken(), abi.encodeCall(IPool.claimFees, ()), 0);
         leafGauge.notifyRewardWithoutClaim(reward);

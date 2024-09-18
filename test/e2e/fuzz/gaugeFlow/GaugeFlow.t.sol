@@ -594,16 +594,6 @@ contract GaugeFlowE2EFuzzTest is BaseE2EForkFixture {
         });
     }
 
-    modifier syncForkTimestamps() {
-        uint256 fork = vm.activeFork();
-        vm.selectFork({forkId: rootId});
-        vm.warp({newTimestamp: rootStartTime});
-        vm.selectFork({forkId: leafId});
-        vm.warp({newTimestamp: leafStartTime});
-        vm.selectFork({forkId: fork});
-        _;
-    }
-
     function checkEmissions(address user, address gauge, uint256 expectedBalance) internal {
         vm.startPrank(user);
         ILeafGauge(gauge).getReward(user);

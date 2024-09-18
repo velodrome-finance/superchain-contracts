@@ -3,6 +3,10 @@ pragma solidity ^0.8.0;
 
 interface IRootGaugeFactory {
     error NotVoter();
+    error NotAuthorized();
+    error ZeroAddress();
+
+    event SetNotifyAdmin(address indexed notifyAdmin);
 
     /// @notice Voter contract address
     function voter() external view returns (address);
@@ -21,6 +25,13 @@ interface IRootGaugeFactory {
 
     /// @notice Voting rewards factory contract address
     function votingRewardsFactory() external view returns (address);
+
+    /// @notice Administrator that can call `notifyRewardWithoutClaim` on gauges
+    function notifyAdmin() external view returns (address);
+
+    /// @notice Set notifyAdmin value on root gauge factory
+    /// @param _admin New administrator that will be able to call `notifyRewardWithoutClaim` on gauges.
+    function setNotifyAdmin(address _admin) external;
 
     /// @notice Creates a new root gauge
     /// @param _pool Address of the pool contract

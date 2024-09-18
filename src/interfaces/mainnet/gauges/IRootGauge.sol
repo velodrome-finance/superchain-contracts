@@ -5,8 +5,12 @@ interface IRootGauge {
     error NotVoter();
     error ZeroAmount();
     error ZeroRewardRate();
+    error NotAuthorized();
 
     event NotifyReward(address indexed _sender, uint256 _amount);
+
+    /// @notice Root gauge factory that created this gauge
+    function gaugeFactory() external view returns (address);
 
     /// @notice Reward token supported by this gauge
     function rewardToken() external view returns (address);
@@ -31,4 +35,7 @@ interface IRootGauge {
 
     /// @notice Used by voter to deposit rewards to the gauge
     function notifyRewardAmount(uint256 _amount) external;
+
+    /// @notice Used by notify admin to deposit rewards to the gauge without distributing fees
+    function notifyRewardWithoutClaim(uint256 _amount) external;
 }

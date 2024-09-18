@@ -14,6 +14,5 @@ abstract contract LeafGaugeFactoryTest is BaseForkFixture {
         assertEq(leafGaugeFactory.voter(), address(leafVoter));
         assertEq(leafGaugeFactory.xerc20(), address(rootXVelo));
         assertEq(leafGaugeFactory.bridge(), address(leafMessageBridge));
-        assertEq(leafGaugeFactory.notifyAdmin(), users.owner);
     }
 }

@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "../RootGauge.t.sol";
 
-contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
+contract NotifyRewardWithoutClaimIntegrationConcreteTest is RootGaugeTest {
     function setUp() public override {
         super.setUp();
 
@@ -13,23 +13,23 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
     }
 
-    function test_WhenTheCallerIsNotVoter() external {
-        // It should revert with NotVoter
+    function test_WhenTheCallerIsNotNotifyAdmin() external {
+        // It should revert with NotAuthorized
         vm.prank(users.charlie);
-        vm.expectRevert(IRootGauge.NotVoter.selector);
-        rootGauge.notifyRewardAmount({_amount: 0});
+        vm.expectRevert(IRootGauge.NotAuthorized.selector);
+        rootGauge.notifyRewardWithoutClaim({_amount: 0});
     }
 
-    modifier whenTheCallerIsVoter() {
-        vm.prank(address(mockVoter));
+    modifier whenTheCallerIsNotifyAdmin() {
+        vm.prank(users.owner);
         _;
     }
 
-    function test_WhenTheAmountIsSmallerThanTheTimeInAWeek() external whenTheCallerIsVoter {
+    function test_WhenTheAmountIsSmallerThanTheTimeInAWeek() external whenTheCallerIsNotifyAdmin {
         // It should revert with ZeroRewardRate
         uint256 amount = WEEK - 1;
         vm.expectRevert(IRootGauge.ZeroRewardRate.selector);
-        rootGauge.notifyRewardAmount({_amount: amount});
+        rootGauge.notifyRewardWithoutClaim({_amount: amount});
     }
 
     modifier whenTheAmountIsGreaterThanOrEqualToTheTimeInAWeek() {
@@ -38,7 +38,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
 
     function test_WhenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish()
         external
-        whenTheCallerIsVoter
+        whenTheCallerIsNotifyAdmin
         whenTheAmountIsGreaterThanOrEqualToTheTimeInAWeek
     {
         // It should wrap the tokens to the XERC20 token
@@ -53,18 +53,18 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         uint256 amount = TOKEN_1 * 1_000;
         setLimits({_rootMintingLimit: amount, _leafMintingLimit: amount});
 
-        deal({token: address(rootRewardToken), to: address(mockVoter), give: amount});
-        vm.prank(address(mockVoter));
+        deal({token: address(rootRewardToken), to: users.owner, give: amount});
+        vm.prank(users.owner);
         rootRewardToken.approve({spender: address(rootGauge), value: amount});
 
         assertEq(rootGauge.rewardToken(), address(rootRewardToken));
 
-        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
+        vm.prank({msgSender: users.owner, txOrigin: users.alice});
         vm.expectEmit(address(rootGauge));
-        emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: amount});
-        rootGauge.notifyRewardAmount({_amount: amount});
+        emit IRootGauge.NotifyReward({_sender: users.owner, _amount: amount});
+        rootGauge.notifyRewardWithoutClaim({_amount: amount});
 
-        assertEq(rootRewardToken.balanceOf(address(mockVoter)), 0);
+        assertEq(rootRewardToken.balanceOf(users.owner), 0);
         assertEq(rootRewardToken.balanceOf(address(rootGauge)), 0);
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
@@ -83,7 +83,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
 
     function test_WhenTheCurrentTimestampIsLessThanPeriodFinish()
         external
-        whenTheCallerIsVoter
+        whenTheCallerIsNotifyAdmin
         whenTheAmountIsGreaterThanOrEqualToTheTimeInAWeek
     {
         // It should wrap the tokens to the XERC20 token
@@ -102,25 +102,25 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         uint256 amount = TOKEN_1 * 1_000;
         setLimits({_rootMintingLimit: amount * 2, _leafMintingLimit: amount * 2});
 
-        deal({token: address(rootRewardToken), to: address(mockVoter), give: amount * 2});
-        vm.prank(address(mockVoter));
+        deal({token: address(rootRewardToken), to: users.owner, give: amount * 2});
+        vm.prank(users.owner);
         rootRewardToken.approve({spender: address(rootGauge), value: amount * 2});
 
         // inital deposit of partial amount
-        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
-        rootGauge.notifyRewardAmount({_amount: amount});
+        vm.prank({msgSender: users.owner, txOrigin: users.alice});
+        rootGauge.notifyRewardWithoutClaim({_amount: amount});
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage();
 
         skipTime(WEEK / 7 * 5);
 
         vm.selectFork({forkId: rootId});
-        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
+        vm.prank({msgSender: users.owner, txOrigin: users.alice});
         vm.expectEmit(address(rootGauge));
-        emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: amount});
-        rootGauge.notifyRewardAmount({_amount: amount});
+        emit IRootGauge.NotifyReward({_sender: users.owner, _amount: amount});
+        rootGauge.notifyRewardWithoutClaim({_amount: amount});
 
-        assertEq(rootRewardToken.balanceOf(address(mockVoter)), 0);
+        assertEq(rootRewardToken.balanceOf(users.owner), 0);
         assertEq(rootRewardToken.balanceOf(address(rootGauge)), 0);
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 

@@ -32,5 +32,10 @@ SendMessageIntegrationConcreteTest
     │   │   └── It should revert with NotValidGauge
     │   └── When the caller is an alive gauge 
     │       └── It dispatches the notify message to the message module
+    ├── When the command is notify without claim
+    │   ├── When caller is not an alive gauge
+    │   │   └── It should revert with NotValidGauge
+    │   └── When caller is an alive gauge
+    │       └── It dispatches the notify without claim message to the message module
     └── When the command is not any expected command
         └── It should revert with {InvalidCommand}

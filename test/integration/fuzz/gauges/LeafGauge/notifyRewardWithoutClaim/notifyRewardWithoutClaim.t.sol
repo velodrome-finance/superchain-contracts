@@ -4,35 +4,31 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../LeafGauge.t.sol";
 
 contract NotifyRewardWithoutClaimIntegrationFuzzTest is LeafGaugeTest {
-    address public notifyAdmin;
-
     function setUp() public virtual override {
         super.setUp();
-
-        notifyAdmin = leafGaugeFactory.notifyAdmin();
     }
 
-    function testFuzz_WhenTheCallerIsNotNotifyAdmin(address _caller) external {
-        // It should revert with NotAuthorized
-        vm.assume(_caller != notifyAdmin);
+    function testFuzz_WhenTheCallerIsNotTheModule(address _caller) external {
+        // It should revert with NotModule
+        vm.assume(_caller != address(leafMessageModule));
 
         vm.prank(_caller);
-        vm.expectRevert(ILeafGauge.NotAuthorized.selector);
+        vm.expectRevert(ILeafGauge.NotModule.selector);
         leafGauge.notifyRewardWithoutClaim({_amount: TOKEN_1 * 1000});
     }
 
-    modifier whenTheCallerIsNotifyAdmin() {
-        vm.startPrank(notifyAdmin);
+    modifier whenTheCallerIsTheModule() {
+        vm.startPrank(address(leafMessageModule));
         _;
     }
 
     function testFuzz_WhenTheAmountIsGreaterThanZeroAndSmallerThanTheTimeUntilTheNextTimestamp(uint256 _amount)
         external
-        whenTheCallerIsNotifyAdmin
+        whenTheCallerIsTheModule
     {
         // It should revert with ZeroRewardRate
         _amount = bound(_amount, 1, WEEK - 1);
-        deal({token: address(leafXVelo), to: notifyAdmin, give: _amount});
+        deal({token: address(leafXVelo), to: address(leafMessageModule), give: _amount});
         leafXVelo.approve({spender: address(leafGauge), value: _amount});
 
         vm.expectRevert(ILeafGauge.ZeroRewardRate.selector);
@@ -45,7 +41,7 @@ contract NotifyRewardWithoutClaimIntegrationFuzzTest is LeafGaugeTest {
 
     function testFuzz_WhenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish(uint256 _amount)
         external
-        whenTheCallerIsNotifyAdmin
+        whenTheCallerIsTheModule
         whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeUntilTheNextTimestamp
     {
         // It should update rewardPerTokenStored
@@ -56,14 +52,14 @@ contract NotifyRewardWithoutClaimIntegrationFuzzTest is LeafGaugeTest {
         // It should update the period finish timestamp
         // It should emit a {NotifyReward} event
         _amount = bound(_amount, WEEK, MAX_TOKENS);
-        deal({token: address(leafXVelo), to: notifyAdmin, give: _amount});
+        deal({token: address(leafXVelo), to: address(leafMessageModule), give: _amount});
         leafXVelo.approve({spender: address(leafGauge), value: _amount});
 
         vm.expectEmit(address(leafGauge));
-        emit ILeafGauge.NotifyReward({_sender: notifyAdmin, _amount: _amount});
+        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: _amount});
         leafGauge.notifyRewardWithoutClaim({_amount: _amount});
 
-        assertEq(leafXVelo.balanceOf(notifyAdmin), 0);
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), _amount);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);
@@ -75,7 +71,7 @@ contract NotifyRewardWithoutClaimIntegrationFuzzTest is LeafGaugeTest {
 
     function testFuzz_WhenTheCurrentTimestampIsLessThanPeriodFinish(uint256 _amount, uint256 _timeskip)
         external
-        whenTheCallerIsNotifyAdmin
+        whenTheCallerIsTheModule
         whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeUntilTheNextTimestamp
     {
         // It should update rewardPerTokenStored
@@ -90,20 +86,20 @@ contract NotifyRewardWithoutClaimIntegrationFuzzTest is LeafGaugeTest {
         _amount = bound(_amount, WEEK - _timeskip, MAX_TOKENS);
 
         // inital deposit of partial amount
-        deal({token: address(leafXVelo), to: notifyAdmin, give: initialAmount});
+        deal({token: address(leafXVelo), to: address(leafMessageModule), give: initialAmount});
         leafXVelo.approve({spender: address(leafGauge), value: initialAmount});
         leafGauge.notifyRewardWithoutClaim({_amount: initialAmount});
 
         skipTime(_timeskip);
 
-        deal({token: address(leafXVelo), to: notifyAdmin, give: _amount});
+        deal({token: address(leafXVelo), to: address(leafMessageModule), give: _amount});
         leafXVelo.approve({spender: address(leafGauge), value: _amount});
 
         vm.expectEmit(address(leafGauge));
-        emit ILeafGauge.NotifyReward({_sender: notifyAdmin, _amount: _amount});
+        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: _amount});
         leafGauge.notifyRewardWithoutClaim({_amount: _amount});
 
-        assertEq(leafXVelo.balanceOf(notifyAdmin), 0);
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), _amount + initialAmount);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);

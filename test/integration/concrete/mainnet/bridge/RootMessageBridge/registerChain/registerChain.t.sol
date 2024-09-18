@@ -4,34 +4,11 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../RootMessageBridge.t.sol";
 
 contract RegisterChainIntegrationConcreteTest is RootMessageBridgeTest {
-    function setUp() public override {
-        super.setUp();
-
-        // deploy fresh instance
-        rootMessageBridge = RootMessageBridge(
-            payable(
-                cx.deployCreate3({
-                    salt: CreateXLibrary.calculateSalt({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
-                    initCode: abi.encodePacked(
-                        type(RootMessageBridge).creationCode,
-                        abi.encode(
-                            users.owner, // message bridge owner
-                            address(rootXVelo), // xerc20 address
-                            address(mockVoter), // mock root voter
-                            address(rootMessageModule), // message module
-                            address(weth) // root weth
-                        )
-                    )
-                })
-            )
-        );
-    }
-
     function test_WhenTheCallerIsNotTheOwner() external {
         // It reverts with {OwnableUnauthorizedAccount}
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.charlie));
-        rootMessageBridge.registerChain({_chainid: 10});
+        newRootMessageBridge.registerChain({_chainid: 10});
     }
 
     modifier whenTheCallerIsTheOwner() {
@@ -44,7 +21,7 @@ contract RegisterChainIntegrationConcreteTest is RootMessageBridgeTest {
         uint256 chainid = block.chainid;
 
         vm.expectRevert(IChainRegistry.InvalidChain.selector);
-        rootMessageBridge.registerChain({_chainid: chainid});
+        newRootMessageBridge.registerChain({_chainid: chainid});
     }
 
     modifier whenTheChainIsNotTheCurrentChain() {
@@ -54,10 +31,10 @@ contract RegisterChainIntegrationConcreteTest is RootMessageBridgeTest {
     function test_WhenTheChainIsAlreadyRegistered() external whenTheCallerIsTheOwner whenTheChainIsNotTheCurrentChain {
         // It reverts with {AlreadyRegistered}
         uint256 chainid = 100;
-        rootMessageBridge.registerChain({_chainid: chainid});
+        newRootMessageBridge.registerChain({_chainid: chainid});
 
         vm.expectRevert(IChainRegistry.AlreadyRegistered.selector);
-        rootMessageBridge.registerChain({_chainid: chainid});
+        newRootMessageBridge.registerChain({_chainid: chainid});
     }
 
     function test_WhenTheChainIsNotAlreadyRegistered()
@@ -69,11 +46,11 @@ contract RegisterChainIntegrationConcreteTest is RootMessageBridgeTest {
         // It emits the {ChainRegistered} event
         uint256 chainid = 100;
 
-        vm.expectEmit(address(rootMessageBridge));
+        vm.expectEmit(address(newRootMessageBridge));
         emit IChainRegistry.ChainRegistered({_chainid: chainid});
-        rootMessageBridge.registerChain({_chainid: chainid});
+        newRootMessageBridge.registerChain({_chainid: chainid});
 
-        uint256[] memory chainids = rootMessageBridge.chainids();
+        uint256[] memory chainids = newRootMessageBridge.chainids();
         assertEq(chainids.length, 1);
         assertEq(chainids[0], chainid);
     }

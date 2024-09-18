@@ -1,7 +1,7 @@
-NotifyRewardAmountIntegrationConcreteTest
-├── When the caller is not voter
-│   └── It should revert with NotVoter
-└── When the caller is voter
+NotifyRewardWithoutClaimIntegrationConcreteTest
+├── When the caller is not notify admin
+│   └── It should revert with NotAuthorized
+└── When the caller is notify admin
     ├── When the amount is smaller than the time in a week
     │   └── It should revert with ZeroRewardRate
     └── When the amount is greater than or equal to the time in a week

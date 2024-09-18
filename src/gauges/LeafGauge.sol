@@ -202,7 +202,7 @@ contract LeafGauge is ILeafGauge, ReentrancyGuard {
 
     /// @inheritdoc ILeafGauge
     function notifyRewardWithoutClaim(uint256 _amount) external nonReentrant {
-        if (msg.sender != ILeafGaugeFactory(gaugeFactory).notifyAdmin()) revert NotAuthorized();
+        if (msg.sender != ILeafMessageBridge(bridge).module()) revert NotModule();
         if (_amount == 0) revert ZeroAmount();
         _notifyRewardAmount(_amount);
     }

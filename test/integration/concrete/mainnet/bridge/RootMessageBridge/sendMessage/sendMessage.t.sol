@@ -15,6 +15,11 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         deal({token: address(weth), to: users.alice, give: MESSAGE_FEE});
         vm.prank(users.alice);
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
+
+        // use users.alice as tx.origin
+        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE});
+        vm.prank(users.alice);
+        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
     }
 
     function test_WhenTheChainIdIsNotRegistered() external {
@@ -373,6 +378,58 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         vm.prank(address(rootGauge));
         leafXVelo.approve(address(rootMessageBridge), amount);
         vm.prank({msgSender: address(rootGauge), txOrigin: users.alice});
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
+
+        assertEq(weth.balanceOf(users.alice), 0);
+
+        vm.selectFork({forkId: leafId});
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), 0);
+
+        leafMailbox.processNextInboundMessage();
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
+
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
+        assertEq(leafGauge.rewardPerTokenStored(), 0);
+        assertEq(leafGauge.rewardRate(), amount / timeUntilNext);
+        assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), amount / timeUntilNext);
+        assertEq(leafGauge.lastUpdateTime(), block.timestamp);
+        assertEq(leafGauge.periodFinish(), block.timestamp + timeUntilNext);
+    }
+
+    modifier whenTheCommandIsNotifyWithoutClaim() {
+        command = Commands.NOTIFY_WITHOUT_CLAIM;
+        _;
+    }
+
+    function test_WhenCallerIsNotAnAliveGauge()
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsNotifyWithoutClaim
+    {
+        // It should revert with NotValidGauge
+        uint256 amount = TOKEN_1 * 1000;
+        bytes memory payload = abi.encode(address(leafGauge), amount);
+        bytes memory message = abi.encode(command, payload);
+
+        vm.prank(users.charlie);
+        vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotValidGauge.selector));
+        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
+    }
+
+    function test_WhenCallerIsAnAliveGauge() external whenTheChainIdIsRegistered whenTheCommandIsNotifyWithoutClaim {
+        // It dispatches the notify without claim message to the message module
+        uint256 amount = TOKEN_1 * 1000;
+        deal(address(leafXVelo), address(rootGauge), amount);
+
+        setLimits({_rootMintingLimit: amount, _leafMintingLimit: amount});
+
+        bytes memory payload = abi.encode(address(leafGauge), amount);
+        bytes memory message = abi.encode(command, payload);
+
+        vm.startPrank({msgSender: address(rootGauge), txOrigin: users.alice});
+        leafXVelo.approve(address(rootMessageBridge), amount);
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
 
         assertEq(weth.balanceOf(users.alice), 0);

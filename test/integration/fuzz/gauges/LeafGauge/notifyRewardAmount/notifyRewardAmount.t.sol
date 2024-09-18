@@ -4,7 +4,7 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../LeafGauge.t.sol";
 
 contract NotifyRewardAmountIntegrationFuzzTest is LeafGaugeTest {
-    function testFuzz_WhenTheCallerIsNotBridge(address _caller) external {
+    function testFuzz_WhenTheCallerIsNotModule(address _caller) external {
         // It should revert with NotModule
         vm.assume(_caller != address(leafMessageModule));
 

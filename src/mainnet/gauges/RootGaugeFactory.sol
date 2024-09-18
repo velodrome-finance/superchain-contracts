@@ -27,6 +27,8 @@ contract RootGaugeFactory is IRootGaugeFactory {
     address public immutable poolFactory;
     /// @inheritdoc IRootGaugeFactory
     address public immutable votingRewardsFactory;
+    /// @inheritdoc IRootGaugeFactory
+    address public notifyAdmin;
 
     constructor(
         address _voter,
@@ -34,7 +36,8 @@ contract RootGaugeFactory is IRootGaugeFactory {
         address _lockbox,
         address _messageBridge,
         address _poolFactory,
-        address _votingRewardsFactory
+        address _votingRewardsFactory,
+        address _notifyAdmin
     ) {
         voter = _voter;
         xerc20 = _xerc20;
@@ -42,6 +45,15 @@ contract RootGaugeFactory is IRootGaugeFactory {
         messageBridge = _messageBridge;
         poolFactory = _poolFactory;
         votingRewardsFactory = _votingRewardsFactory;
+        notifyAdmin = _notifyAdmin;
+    }
+
+    /// @inheritdoc IRootGaugeFactory
+    function setNotifyAdmin(address _admin) external {
+        if (notifyAdmin != msg.sender) revert NotAuthorized();
+        if (_admin == address(0)) revert ZeroAddress();
+        notifyAdmin = _admin;
+        emit SetNotifyAdmin({notifyAdmin: _admin});
     }
 
     /// @inheritdoc IRootGaugeFactory
@@ -62,6 +74,7 @@ contract RootGaugeFactory is IRootGaugeFactory {
             initCode: abi.encodePacked(
                 type(RootGauge).creationCode,
                 abi.encode(
+                    address(this), // gauge factory
                     _rewardToken, // reward token
                     xerc20, // xerc20 corresponding to reward token
                     lockbox, // lockbox to convert reward token to xerc20

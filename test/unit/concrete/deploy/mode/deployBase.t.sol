@@ -39,6 +39,7 @@ contract ModeDeployBaseTest is BaseFixture {
         ModePool poolImplementation = ModePool(address(deploy.poolImplementation()));
         ModePoolFactory poolFactory = ModePoolFactory(address(deploy.poolFactory()));
         ModeRouter router = ModeRouter(payable(address(deploy.router())));
+
         leafGaugeFactory = deploy.gaugeFactory();
         leafVotingRewardsFactory = deploy.votingRewardsFactory();
         leafVoter = deploy.voter();
@@ -85,7 +86,6 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(leafGaugeFactory.voter(), address(leafVoter));
         assertEq(leafGaugeFactory.xerc20(), address(leafXVelo));
         assertEq(leafGaugeFactory.bridge(), address(leafMessageBridge));
-        assertEq(leafGaugeFactory.notifyAdmin(), params.adminPlaceholder);
 
         assertEq(leafVotingRewardsFactory.voter(), address(leafVoter));
         assertEq(leafVotingRewardsFactory.bridge(), address(leafMessageBridge));

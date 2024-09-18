@@ -113,5 +113,6 @@ contract OptimismDeployRootMessageTest is BaseFixture {
         assertEq(rootGaugeFactory.messageBridge(), address(rootMessageBridge));
         assertEq(rootGaugeFactory.poolFactory(), address(rootPoolFactory));
         assertEq(rootGaugeFactory.votingRewardsFactory(), address(rootVotingRewardsFactory));
+        assertEq(rootGaugeFactory.notifyAdmin(), params.notifyAdmin);
     }
 }

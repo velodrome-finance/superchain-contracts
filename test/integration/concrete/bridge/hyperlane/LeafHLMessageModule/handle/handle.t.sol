@@ -290,6 +290,33 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
     }
 
+    function test_WhenTheCommandIsNotifyWithoutClaim()
+        external
+        whenTheCallerIsMailbox
+        whenTheOriginIsRoot
+        whenTheSenderIsModule
+    {
+        // It decodes the gauge address and the amount from the message
+        // It calls mint on the bridge
+        // It approves the gauge to spend amount of xerc20
+        // It calls notify reward without claim on the decoded gauge
+        // It emits the {ReceivedMessage} event
+
+        uint256 amount = TOKEN_1 * 1000;
+        bytes memory payload = abi.encode(address(leafGauge), amount);
+        bytes memory message = abi.encode(Commands.NOTIFY_WITHOUT_CLAIM, payload);
+
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), 0);
+
+        vm.expectEmit(address(leafMessageModule));
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
+    }
+
     function test_WhenTheCommandIsInvalid() external whenTheCallerIsMailbox whenTheOriginIsRoot whenTheSenderIsModule {
         // It reverts with {InvalidCommand}
         uint256 amount = TOKEN_1 * 1000;

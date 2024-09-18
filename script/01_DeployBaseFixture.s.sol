@@ -145,9 +145,7 @@ abstract contract DeployBaseFixture is DeployFixture {
                         _params.adminPlaceholder, // message bridge owner
                         address(xVelo), // xerc20 address
                         address(voter), // leaf voter
-                        address(messageModule), // message module
-                        address(poolFactory), // leaf pool factory
-                        address(gaugeFactory) // gauge factory
+                        address(messageModule) // message module
                     )
                 )
             })

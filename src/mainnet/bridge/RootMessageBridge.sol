@@ -77,6 +77,10 @@ contract RootMessageBridge is IRootMessageBridge, ChainRegistry {
             if (!IVoter(voter).isAlive(msg.sender)) revert NotValidGauge();
             (, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
             IXERC20(xerc20).burn({_user: msg.sender, _amount: amount});
+        } else if (command == Commands.NOTIFY_WITHOUT_CLAIM) {
+            if (!IVoter(voter).isAlive(msg.sender)) revert NotValidGauge();
+            (, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
+            IXERC20(xerc20).burn({_user: msg.sender, _amount: amount});
         } else if (command == Commands.KILL_GAUGE) {
             if (msg.sender != IVoter(voter).emergencyCouncil()) revert NotAuthorized(Commands.KILL_GAUGE);
         } else if (command == Commands.REVIVE_GAUGE) {

@@ -32,6 +32,7 @@ import {IPool, Pool} from "src/pools/Pool.sol";
 import {IRouter, Router} from "src/Router.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {ITokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
+import {ITokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
 import {ILeafMessageBridge, LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
 import {IRootMessageBridge, RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
 import {IHLHandler} from "src/interfaces/bridge/hyperlane/IHLHandler.sol";
@@ -325,7 +326,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
                         address(rootLockbox), // lockbox address
                         address(rootMessageBridge), // message bridge address
                         address(rootPoolFactory), // pool factory address
-                        address(rootVotingRewardsFactory) // voting rewards factory
+                        address(rootVotingRewardsFactory), // voting rewards factory
+                        users.owner // notify admin
                     )
                 )
             })
@@ -462,8 +464,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
                         users.owner, // message bridge owner
                         address(leafXVelo), // xerc20 address
                         address(leafVoter), // leaf voter
-                        address(leafMessageModule), // message module
-                        address(leafPoolFactory) // leaf pool factory
+                        address(leafMessageModule) // message module
                     )
                 )
             })
@@ -504,8 +505,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
                     abi.encode(
                         address(leafVoter), // voter address
                         address(leafXVelo), // xerc20 address
-                        address(leafMessageBridge), // bridge address
-                        users.owner // notifyAdmin address
+                        address(leafMessageBridge) // bridge address
                     )
                 )
             })
@@ -653,5 +653,15 @@ abstract contract BaseForkFixture is Test, TestConstants {
     function skipToNextEpoch(uint256 _offset) public {
         uint256 timeToNextEpoch = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
         skipTime(timeToNextEpoch + _offset);
+    }
+
+    modifier syncForkTimestamps() {
+        uint256 fork = vm.activeFork();
+        vm.selectFork({forkId: rootId});
+        vm.warp({newTimestamp: rootStartTime});
+        vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
+        vm.selectFork({forkId: fork});
+        _;
     }
 }

@@ -72,7 +72,6 @@ contract BobDeployBaseTest is BaseFixture {
         assertEq(leafGaugeFactory.voter(), address(leafVoter));
         assertEq(leafGaugeFactory.xerc20(), address(leafXVelo));
         assertEq(leafGaugeFactory.bridge(), address(leafMessageBridge));
-        assertEq(leafGaugeFactory.notifyAdmin(), params.adminPlaceholder);
 
         assertEq(leafVotingRewardsFactory.voter(), address(leafVoter));
         assertEq(leafVotingRewardsFactory.bridge(), address(leafMessageBridge));

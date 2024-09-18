@@ -29,6 +29,7 @@ abstract contract DeployRootMessageFixture is DeployFixture {
         address tokenAdmin;
         address bridgeOwner;
         address emergencyCouncilOwner;
+        address notifyAdmin;
         address mailbox;
         string outputFilename;
     }
@@ -155,7 +156,8 @@ abstract contract DeployRootMessageFixture is DeployFixture {
                         address(lockbox), // lockbox address
                         address(messageBridge), // message bridge address
                         address(poolFactory), // pool factory address
-                        address(votingRewardsFactory)
+                        address(votingRewardsFactory), // voting rewards factory address
+                        _params.notifyAdmin // notify admin
                     )
                 )
             })
@@ -182,6 +184,7 @@ abstract contract DeployRootMessageFixture is DeployFixture {
         console2.log("messageModule: ", address(messageModule));
 
         console2.log("gaugeFactory: ", address(gaugeFactory));
+        console2.log("emergencyCouncil: ", address(emergencyCouncil));
     }
 
     function logOutput() internal override {
@@ -197,5 +200,6 @@ abstract contract DeployRootMessageFixture is DeployFixture {
         vm.writeJson(vm.serializeAddress("", "messageModule: ", address(messageModule)), path);
 
         vm.writeJson(vm.serializeAddress("", "gaugeFactory: ", address(gaugeFactory)), path);
+        vm.writeJson(vm.serializeAddress("", "emergencyCouncil: ", address(emergencyCouncil)), path);
     }
 }

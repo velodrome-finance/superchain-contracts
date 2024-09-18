@@ -4,34 +4,31 @@ pragma solidity >=0.8.19 <0.9.0;
 import "test/BaseForkFixture.sol";
 
 contract NotifyRewardWithoutClaimIntegrationConcreteTest is BaseForkFixture {
-    address public notifyAdmin;
-
     function setUp() public virtual override {
         super.setUp();
 
         vm.selectFork({forkId: leafId});
 
         uint256 amount = TOKEN_1 * 1000;
-        notifyAdmin = leafGaugeFactory.notifyAdmin();
-        deal({token: address(leafXVelo), to: notifyAdmin, give: amount});
+        deal({token: address(leafXVelo), to: address(leafMessageModule), give: amount});
 
-        vm.prank(notifyAdmin);
+        vm.prank(address(leafMessageModule));
         leafXVelo.approve({spender: address(leafGauge), value: amount});
     }
 
-    function test_WhenTheCallerIsNotNotifyAdmin() external {
-        // It should revert with NotAuthorized
+    function test_WhenTheCallerIsNotTheModule() external {
+        // It should revert with NotModule
         vm.prank(users.charlie);
-        vm.expectRevert(ILeafGauge.NotAuthorized.selector);
+        vm.expectRevert(ILeafGauge.NotModule.selector);
         leafGauge.notifyRewardWithoutClaim({_amount: TOKEN_1 * 1000});
     }
 
-    modifier whenTheCallerIsNotifyAdmin() {
-        vm.startPrank(notifyAdmin);
+    modifier whenTheCallerIsTheModule() {
+        vm.startPrank(address(leafMessageModule));
         _;
     }
 
-    function test_WhenTheAmountIsZero() external whenTheCallerIsNotifyAdmin {
+    function test_WhenTheAmountIsZero() external whenTheCallerIsTheModule {
         // It should revert with ZeroAmount
         vm.expectRevert(ILeafGauge.ZeroAmount.selector);
         leafGauge.notifyRewardWithoutClaim({_amount: 0});
@@ -39,7 +36,7 @@ contract NotifyRewardWithoutClaimIntegrationConcreteTest is BaseForkFixture {
 
     function test_WhenTheAmountIsGreaterThanZeroAndSmallerThanTheTimeUntilTheNextTimestamp()
         external
-        whenTheCallerIsNotifyAdmin
+        whenTheCallerIsTheModule
     {
         // It should revert with ZeroRewardRate
         vm.expectRevert(ILeafGauge.ZeroRewardRate.selector);
@@ -52,7 +49,7 @@ contract NotifyRewardWithoutClaimIntegrationConcreteTest is BaseForkFixture {
 
     function test_WhenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish()
         external
-        whenTheCallerIsNotifyAdmin
+        whenTheCallerIsTheModule
         whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeUntilTheNextTimestamp
     {
         // It should update rewardPerTokenStored
@@ -64,10 +61,10 @@ contract NotifyRewardWithoutClaimIntegrationConcreteTest is BaseForkFixture {
         // It should emit a {NotifyReward} event
         uint256 amount = TOKEN_1 * 1000;
         vm.expectEmit(address(leafGauge));
-        emit ILeafGauge.NotifyReward({_sender: notifyAdmin, _amount: amount});
+        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: amount});
         leafGauge.notifyRewardWithoutClaim({_amount: amount});
 
-        assertEq(leafXVelo.balanceOf(notifyAdmin), 0);
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);
@@ -79,7 +76,7 @@ contract NotifyRewardWithoutClaimIntegrationConcreteTest is BaseForkFixture {
 
     function test_WhenTheCurrentTimestampIsLessThanPeriodFinish()
         external
-        whenTheCallerIsNotifyAdmin
+        whenTheCallerIsTheModule
         whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeUntilTheNextTimestamp
     {
         // It should update rewardPerTokenStored
@@ -90,7 +87,7 @@ contract NotifyRewardWithoutClaimIntegrationConcreteTest is BaseForkFixture {
         // It should update the period finish timestamp
         // It should emit a {NotifyReward} event
         uint256 amount = TOKEN_1 * 1000;
-        deal({token: address(leafXVelo), to: notifyAdmin, give: amount * 2});
+        deal({token: address(leafXVelo), to: address(leafMessageModule), give: amount * 2});
         leafXVelo.approve({spender: address(leafGauge), value: amount * 2});
 
         // inital deposit of partial amount
@@ -99,10 +96,10 @@ contract NotifyRewardWithoutClaimIntegrationConcreteTest is BaseForkFixture {
         skipTime(WEEK / 7 * 5);
 
         vm.expectEmit(address(leafGauge));
-        emit ILeafGauge.NotifyReward({_sender: notifyAdmin, _amount: amount});
+        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: amount});
         leafGauge.notifyRewardWithoutClaim({_amount: amount});
 
-        assertEq(leafXVelo.balanceOf(notifyAdmin), 0);
+        assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount * 2);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);

@@ -14,6 +14,7 @@ contract DeployRootMessage is DeployRootMessageFixture {
             tokenAdmin: 0x0000000000000000000000000000000000000001,
             bridgeOwner: 0x0000000000000000000000000000000000000001,
             emergencyCouncilOwner: 0x0000000000000000000000000000000000000001,
+            notifyAdmin: 0x0000000000000000000000000000000000000001,
             mailbox: 0xd4C1905BB1D26BC93DAC913e13CaCC278CdCC80D,
             outputFilename: "optimism.json"
         });

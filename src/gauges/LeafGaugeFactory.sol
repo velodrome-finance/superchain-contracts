@@ -4,6 +4,7 @@ pragma solidity >=0.8.19 <0.9.0;
 import {CreateXLibrary} from "../libraries/CreateXLibrary.sol";
 import {ILeafGaugeFactory} from "../interfaces/gauges/ILeafGaugeFactory.sol";
 import {IPool} from "../interfaces/pools/IPool.sol";
+import {IPool} from "../interfaces/pools/IPool.sol";
 import {LeafGauge} from "./LeafGauge.sol";
 
 /// @notice Factory that creates leaf gauges on the superchain
@@ -16,22 +17,11 @@ contract LeafGaugeFactory is ILeafGaugeFactory {
     address public immutable xerc20;
     /// @inheritdoc ILeafGaugeFactory
     address public immutable bridge;
-    /// @inheritdoc ILeafGaugeFactory
-    address public notifyAdmin;
 
-    constructor(address _voter, address _xerc20, address _bridge, address _notifyAdmin) {
+    constructor(address _voter, address _xerc20, address _bridge) {
         voter = _voter;
         xerc20 = _xerc20;
         bridge = _bridge;
-        notifyAdmin = _notifyAdmin;
-    }
-
-    /// @inheritdoc ILeafGaugeFactory
-    function setNotifyAdmin(address _admin) external {
-        if (notifyAdmin != msg.sender) revert NotAuthorized();
-        if (_admin == address(0)) revert ZeroAddress();
-        notifyAdmin = _admin;
-        emit SetNotifyAdmin({notifyAdmin: _admin});
     }
 
     /// @inheritdoc ILeafGaugeFactory
