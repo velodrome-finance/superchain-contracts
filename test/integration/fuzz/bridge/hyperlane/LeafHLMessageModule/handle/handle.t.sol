@@ -11,7 +11,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         super.setUp();
         vm.selectFork({forkId: leafId});
 
-        setLimits({_rootMintingLimit: MAX_TOKENS, _leafMintingLimit: MAX_TOKENS});
+        setLimits({_rootBufferCap: MAX_BUFFER_CAP, _leafBufferCap: MAX_BUFFER_CAP});
     }
 
     function test_WhenCallerIsNotMailbox(address _caller) external {
@@ -126,7 +126,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         // It emits the {ReceivedMessage} event
         uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
 
-        amount = bound(amount, timeUntilNext, MAX_TOKENS);
+        amount = bound(amount, timeUntilNext, MAX_BUFFER_CAP / 2);
         bytes memory payload = abi.encode(address(leafGauge), amount);
         bytes memory message = abi.encode(Commands.NOTIFY, payload);
 
@@ -159,7 +159,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         // It emits the {ReceivedMessage} event
         uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
 
-        amount = bound(amount, timeUntilNext, MAX_TOKENS);
+        amount = bound(amount, timeUntilNext, MAX_BUFFER_CAP / 2);
         bytes memory payload = abi.encode(address(leafGauge), amount);
         bytes memory message = abi.encode(Commands.NOTIFY_WITHOUT_CLAIM, payload);
 

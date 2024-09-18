@@ -44,7 +44,7 @@ contract GaugeFlowE2EConcreteTest is BaseE2EForkFixture {
         bobLock = mockEscrow.createLock(amount, MAX_TIME);
         vm.stopPrank();
 
-        setLimits({_rootMintingLimit: TOKEN_1 * 1_000_000, _leafMintingLimit: TOKEN_1 * 1_000_000});
+        setLimits({_rootBufferCap: TOKEN_1 * 1_000_000, _leafBufferCap: TOKEN_1 * 1_000_000});
 
         vm.selectFork({forkId: leafId});
         leafStartTime = block.timestamp;

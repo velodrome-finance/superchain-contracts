@@ -1,50 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4 <0.9.0;
 
+import "../../xerc20/MintLimits.sol";
+
+import {RateLimitMidPoint} from "../../libraries/rateLimits/RateLimitMidpointCommonLibrary.sol";
+
 interface IXERC20 {
     /// @notice Emits when a limit is set
-    /// @param _mintingLimit The updated minting limit we are setting to the bridge
-    /// @param _burningLimit The updated burning limit we are setting to the bridge
     /// @param _bridge The address of the bridge we are setting the limit to
-    event BridgeLimitsSet(uint256 _mintingLimit, uint256 _burningLimit, address indexed _bridge);
-
-    /// @notice Reverts when a user with too low of a limit tries to call mint/burn
-    error IXERC20_NotHighEnoughLimits();
-
-    /// @notice Reverts when limits are too high
-    error IXERC20_LimitsTooHigh();
-
-    /// @notice Contains the full minting and burning data for a particular bridge
-    /// @param minterParams The minting parameters for the bridge
-    /// @param burnerParams The burning parameters for the bridge
-    struct Bridge {
-        BridgeParameters minterParams;
-        BridgeParameters burnerParams;
-    }
-
-    /// @notice Contains the mint or burn parameters for a bridge
-    /// @param timestamp The timestamp of the last mint/burn
-    /// @param ratePerSecond The rate per second of the bridge
-    /// @param maxLimit The max limit of the bridge
-    /// @param currentLimit The current limit of the bridge
-    struct BridgeParameters {
-        uint256 timestamp;
-        uint256 ratePerSecond;
-        uint256 maxLimit;
-        uint256 currentLimit;
-    }
+    /// @param _bufferCap The updated buffer cap for the bridge
+    event BridgeLimitsSet(address indexed _bridge, uint256 _bufferCap);
 
     /// @notice The address of the lockbox contract
     function lockbox() external view returns (address);
 
-    /// @notice Maps bridge address to bridge configurations
-    /// @param _bridge The bridge we are viewing the configurations of
-    /// @return _minterParams The minting parameters of the bridge
-    /// @return _burnerParams The burning parameters of the bridge
-    function bridges(address _bridge)
-        external
-        view
-        returns (BridgeParameters memory _minterParams, BridgeParameters memory _burnerParams);
+    /// @notice Maps bridge address to bridge rate limits
+    /// @param _bridge The bridge we are viewing the limits of
+    /// @return _rateLimit The limits of the bridge
+    function rateLimits(address _bridge) external view returns (RateLimitMidPoint memory _rateLimit);
 
     /// @notice Returns the max limit of a bridge
     /// @param _bridge The bridge we are viewing the limits of
@@ -78,10 +51,25 @@ interface IXERC20 {
     /// @param _amount The amount of tokens being burned
     function burn(address _user, uint256 _amount) external;
 
-    /// @notice Updates the limits of any bridge
-    /// @dev Can only be called by the owner
-    /// @param _mintingLimit The updated minting limit we are setting to the bridge
-    /// @param _burningLimit The updated burning limit we are setting to the bridge
-    /// @param _bridge The address of the bridge we are setting the limits to
-    function setLimits(address _bridge, uint256 _mintingLimit, uint256 _burningLimit) external;
+    /// @notice Conform to the xERC20 setLimits interface
+    /// @dev Can only be called if the bridge already has a buffer cap
+    /// @param _bridge The bridge we are setting the limits of
+    /// @param _newBufferCap The new buffer cap, uint112 max for unlimited
+    function setBufferCap(address _bridge, uint256 _newBufferCap) external;
+
+    /// @notice Sets rate limit per second for a bridge
+    /// @dev Can only be called if the bridge already has a buffer cap
+    /// @param _bridge The bridge we are setting the limits of
+    /// @param _newRateLimitPerSecond The new rate limit per second
+    function setRateLimitPerSecond(address _bridge, uint128 _newRateLimitPerSecond) external;
+
+    /// @notice Adds a new bridge to the currently active bridges
+    /// @param _newBridge The bridge to add
+    function addBridge(MintLimits.RateLimitMidPointInfo memory _newBridge) external;
+
+    /// @notice Removes a bridge from the currently active bridges
+    /// deleting its buffer stored, buffer cap, mid point and last
+    /// buffer used time
+    /// @param _bridge The bridge to remove
+    function removeBridge(address _bridge) external;
 }

@@ -6,7 +6,7 @@ SendTokenIntegrationConcreteTest
     │   └── It should revert with {NotRegistered}
     └── When the requested chain is a registered chain
         ├── When the requested amount is higher than the current burning limit of caller
-        │   └── It should revert with IXERC20_NotHighEnoughLimits
+        │   └── It should revert with "RateLimited: buffer cap overflow"
         └── When the amount is less than or equal to the current burning limit of caller
             ├── When the amount is larger than the balance of caller
             │   └── It should revert with ERC20InsufficientBalance

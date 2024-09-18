@@ -31,7 +31,8 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         leafIVR.notifyRewardAmount(address(weth), TOKEN_1);
         vm.stopPrank();
 
-        setLimits({_rootMintingLimit: TOKEN_1 * 1000, _leafMintingLimit: TOKEN_1 * 1000});
+        uint256 amountToBridge = TOKEN_1 * 1000;
+        setLimits({_rootBufferCap: amountToBridge * 2, _leafBufferCap: amountToBridge * 2});
     }
 
     function test_WhenTheCallerIsNotMailbox() external {

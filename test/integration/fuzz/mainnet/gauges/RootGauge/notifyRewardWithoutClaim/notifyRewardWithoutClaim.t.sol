@@ -63,8 +63,9 @@ contract NotifyRewardWithoutClaimIntegrationFuzzTest is RootGaugeTest {
         // It should emit a {NotifyReward} event
         vm.warp({newTimestamp: leafStartTime});
 
-        _amount = bound(_amount, WEEK, MAX_TOKENS);
-        setLimits({_rootMintingLimit: _amount, _leafMintingLimit: _amount});
+        _amount = bound(_amount, WEEK, MAX_BUFFER_CAP / 2);
+        uint256 bufferCap = Math.max(_amount * 2, rootXVelo.minBufferCap() + 1);
+        setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
 
         deal({token: address(rootRewardToken), to: notifyAdmin, give: _amount});
         vm.prank(notifyAdmin);
@@ -120,8 +121,9 @@ contract NotifyRewardWithoutClaimIntegrationFuzzTest is RootGaugeTest {
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
 
         _timeskip = bound(_timeskip, 1, WEEK - 1);
-        _amount = bound(_amount, WEEK, MAX_TOKENS);
-        setLimits({_rootMintingLimit: _amount * 2, _leafMintingLimit: _amount * 2});
+        _amount = bound(_amount, WEEK, MAX_BUFFER_CAP / 4);
+        uint256 bufferCap = Math.max(_amount * 4, rootXVelo.minBufferCap() + 1);
+        setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
         vm.warp({newTimestamp: leafStartTime});
 
         deal({token: address(rootRewardToken), to: notifyAdmin, give: _amount * 2});

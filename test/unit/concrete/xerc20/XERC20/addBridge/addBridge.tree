@@ -1,0 +1,22 @@
+AddBridgeUnitConcreteTest
+├── When caller is not Owner
+│   └── It should revert with OwnableUnauthorizedAccount
+└── When caller is Owner
+    ├── When rate limit per second is greater than max rate per second
+    │   └── It should revert with "MintLimits: rateLimitPerSecond too high"
+    └── When rate limit per second is smaller than or equal to max rate per second
+        ├── When bridge is address zero
+        │   └── It should revert with "MintLimits: invalid bridge address"
+        └── When bridge is not address zero
+            ├── When there is rate limit for given bridge
+            │   └── It should revert with "MintLimits: rate limit already exists"
+            └── When there is no rate limit for given bridge
+                ├── When buffer cap is smaller than or equal to min buffer cap
+                │   └── It should revert with "MintLimits: buffer cap below min"
+                └── When buffer cap is greater than min buffer cap
+                    ├── It should set a new buffer cap for the bridge
+                    ├── It should set last buffer used time to the current timestamp
+                    ├── It should set buffer stored to half of buffer cap for the bridge
+                    ├── It should set midpoint to half of buffer cap for the bridge
+                    ├── It should set a new rate limit per second for the bridge
+                    └── It should emit a {ConfigurationChanged} event

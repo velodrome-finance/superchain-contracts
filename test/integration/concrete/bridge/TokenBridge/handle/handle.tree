@@ -6,7 +6,7 @@ HandleIntegrationConcreteTest
     │   └── It should revert with NotBridge
     └── When the sender is bridge 
         ├── When the requested amount is higher than the current minting limit
-        │   └── It should revert with IXERC20_NotHighEnoughLimits
+        │   └── It should revert with "RateLimited: rate limit hit"
         └── When the requested amount is less than or equal to the current minting limit
             ├── It should mint tokens to the destination contract
             └── It should emit {ReceivedMessage} event

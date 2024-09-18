@@ -4,6 +4,8 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../XERC20.t.sol";
 
 contract BurnUnitFuzzTest is XERC20Test {
+    using SafeCast for uint256;
+
     function setUp() public override {
         super.setUp();
 
@@ -11,32 +13,45 @@ contract BurnUnitFuzzTest is XERC20Test {
     }
 
     function testFuzz_WhenTheRequestedAmountIsHigherThanTheCurrentBurningLimitOfCaller(
-        uint256 _mintLimit,
-        uint256 _burnLimit
+        uint112 _bufferCap,
+        uint256 _amountToMint,
+        uint256 _amountToBurn
     ) external {
-        // It should revert with IXERC20_NotHighEnoughLimits
+        // It should revert with "RateLimited: buffer cap overflow"
 
-        // require: _mintLimit > _burnLimit
-        _burnLimit = bound(_burnLimit, 1, MAX_TOKENS - 1);
-        _mintLimit = bound(_mintLimit, _burnLimit + 1, MAX_TOKENS);
-        uint256 _mintAmount = _mintLimit;
-        uint256 _burnAmount = _mintLimit;
+        _bufferCap = bound(_bufferCap, xVelo.minBufferCap() + 1, MAX_BUFFER_CAP).toUint112();
+        uint256 midPoint = _bufferCap / 2;
+        uint256 rps = Math.min(midPoint / DAY, xVelo.maxRateLimitPerSecond());
 
-        xVelo.setLimits({_bridge: bridge, _mintingLimit: _mintLimit, _burningLimit: _burnLimit});
+        // require: _amountToBurn > burn limit after mint
+        _amountToMint = bound(_amountToMint, 0, midPoint);
+        // increment by 2 to account for rounding
+        _amountToBurn = bound(_amountToBurn, midPoint + _amountToMint + 2, MAX_TOKENS);
+        xVelo.addBridge(
+            MintLimits.RateLimitMidPointInfo({
+                bridge: bridge,
+                bufferCap: _bufferCap,
+                rateLimitPerSecond: rps.toUint128()
+            })
+        );
 
-        vm.startPrank(bridge);
-        xVelo.mint(users.alice, _mintAmount);
+        if (_amountToMint > 0) {
+            vm.startPrank(bridge);
+            xVelo.mint(users.alice, _amountToMint);
+        }
 
+        deal(address(xVelo), users.alice, _amountToBurn);
         vm.startPrank(users.alice);
-        xVelo.approve(bridge, _burnAmount);
+        xVelo.approve(bridge, _amountToBurn);
 
         vm.startPrank(bridge);
-        vm.expectRevert(IXERC20.IXERC20_NotHighEnoughLimits.selector);
-        xVelo.burn(bridge, _burnAmount);
+        vm.expectRevert("RateLimited: buffer cap overflow");
+        xVelo.burn(users.alice, _amountToBurn);
     }
 
     function testFuzz_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(
-        uint256 _burnLimit,
+        uint112 _bufferCap,
+        uint256 _amountToMint,
         uint256 _amountToBurn
     ) external {
         // It burns the requested amount of tokens
@@ -44,17 +59,27 @@ contract BurnUnitFuzzTest is XERC20Test {
         // It decreases the allowance of the caller by the requested amount
         // It should emit a {Transfer} event
 
-        // require: _amountToBurn <= _burnLimit
-        _burnLimit = bound(_burnLimit, 1, MAX_TOKENS);
-        _amountToBurn = bound(_amountToBurn, 1, _burnLimit);
+        _bufferCap = bound(_bufferCap, xVelo.minBufferCap() + 1, MAX_BUFFER_CAP).toUint112();
+        uint256 midPoint = _bufferCap / 2;
+        uint256 rps = Math.min(midPoint / DAY, xVelo.maxRateLimitPerSecond());
 
-        uint256 mintingLimit = _amountToBurn;
-        uint256 amountToMint = _amountToBurn;
-        xVelo.setLimits({_bridge: bridge, _mintingLimit: mintingLimit, _burningLimit: _burnLimit});
+        // require: _amountToBurn <= burn limit after mint
+        _amountToMint = bound(_amountToMint, 0, midPoint);
+        _amountToBurn = bound(_amountToBurn, 1, midPoint + _amountToMint);
+        xVelo.addBridge(
+            MintLimits.RateLimitMidPointInfo({
+                bridge: bridge,
+                bufferCap: _bufferCap,
+                rateLimitPerSecond: rps.toUint128()
+            })
+        );
 
-        vm.startPrank(bridge);
-        xVelo.mint(users.alice, amountToMint);
+        if (_amountToMint > 0) {
+            vm.startPrank(bridge);
+            xVelo.mint(users.alice, _amountToMint);
+        }
 
+        deal(address(xVelo), users.alice, _amountToBurn);
         vm.startPrank(users.alice);
         xVelo.approve(bridge, _amountToBurn);
 
@@ -63,20 +88,23 @@ contract BurnUnitFuzzTest is XERC20Test {
         vm.startPrank(bridge);
         xVelo.burn(users.alice, _amountToBurn);
 
-        (IXERC20.BridgeParameters memory bpm, IXERC20.BridgeParameters memory bpb) = xVelo.bridges(bridge);
-        assertEq(xVelo.balanceOf(bridge), 0);
-        assertEq(xVelo.allowance(bridge, address(xVelo)), 0);
-        assertEq(bpm.maxLimit, mintingLimit);
-        assertEq(bpm.currentLimit, mintingLimit - amountToMint);
-        assertEq(bpm.ratePerSecond, mintingLimit / DAY);
-        assertEq(bpm.timestamp, block.timestamp);
-        assertEq(bpb.maxLimit, _burnLimit);
-        assertEq(bpb.currentLimit, _burnLimit - _amountToBurn);
-        assertEq(bpb.ratePerSecond, _burnLimit / DAY);
-        assertEq(bpb.timestamp, block.timestamp);
-        assertEq(xVelo.mintingCurrentLimitOf(bridge), mintingLimit - amountToMint);
-        assertEq(xVelo.mintingMaxLimitOf(bridge), mintingLimit);
-        assertEq(xVelo.burningCurrentLimitOf(bridge), _burnLimit - _amountToBurn);
-        assertEq(xVelo.burningMaxLimitOf(bridge), _burnLimit);
+        RateLimitMidPoint memory limit = xVelo.rateLimits(bridge);
+        assertEq(xVelo.balanceOf(users.alice), 0);
+        assertEq(limit.rateLimitPerSecond, rps);
+        assertEq(limit.bufferCap, _bufferCap);
+        assertEq(limit.lastBufferUsedTime, block.timestamp);
+        assertEq(limit.midPoint, _bufferCap / 2);
+        assertEq(limit.bufferStored, limit.midPoint + _amountToBurn - _amountToMint);
+
+        // calculate updated limits based on mint & burn amounts
+        uint256 delta = _amountToBurn > _amountToMint ? _amountToBurn - _amountToMint : _amountToMint - _amountToBurn;
+        (uint256 mintLimit, uint256 burnLimit) = _amountToBurn > _amountToMint
+            ? (limit.midPoint + delta, limit.midPoint - delta)
+            : (limit.midPoint - delta, limit.midPoint + delta);
+
+        assertApproxEqAbs(xVelo.mintingCurrentLimitOf(bridge), mintLimit, 1);
+        assertEq(xVelo.mintingMaxLimitOf(bridge), _bufferCap);
+        assertApproxEqAbs(xVelo.burningCurrentLimitOf(bridge), burnLimit, 1);
+        assertEq(xVelo.burningMaxLimitOf(bridge), _bufferCap);
     }
 }

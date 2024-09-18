@@ -1,0 +1,14 @@
+SetRateLimitPerSecondCapUnitConcreteTest
+├── When caller is not Owner
+│   └── It should revert with OwnableUnauthorizedAccount
+└── When caller is Owner
+    ├── When new rate per second is greater than max rate per second
+    │   └── It should revert with "MintLimits: rateLimitPerSecond too high"
+    └── When new rate per second is smaller than or equal to max rate per second
+        ├── When there is no rate limit for given bridge
+        │   └── It should revert with "MintLimits: non-existent rate limit"
+        └── When there is rate limit for given bridge
+            ├── It should set last buffer used timestamp to current timestamp
+            ├── It should update buffer stored
+            ├── It should set new rate limit per second
+            └── It should emit a {ConfigurationChanged} event

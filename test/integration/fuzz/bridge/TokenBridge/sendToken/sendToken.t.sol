@@ -17,39 +17,35 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
     }
 
     function testFuzz_WhenTheRequestedAmountIsHigherThanTheCurrentBurningLimitOfCaller(
-        uint256 _burningLimit,
+        uint256 _bufferCap,
         uint256 _amount
     ) external whenTheRequestedAmountIsNotZero whenTheRequestedChainIsARegisteredChain {
-        // It should revert with IXERC20_NotHighEnoughLimits
-        _burningLimit = bound(_burningLimit, WEEK, type(uint256).max / 2 - 1);
-        amount = bound(_amount, _burningLimit + 1, type(uint256).max / 2);
+        // It should revert with "RateLimited: buffer cap overflow"
+        _bufferCap = bound(_bufferCap, rootXVelo.minBufferCap() + 1, MAX_BUFFER_CAP);
+        amount = bound(_amount, _bufferCap / 2 + 2, type(uint256).max / 2); // increment by 2 to account for rounding
 
         deal({token: address(rootXVelo), to: address(rootGauge), give: amount});
-        setLimits({_rootMintingLimit: 0, _leafMintingLimit: _burningLimit});
+        setLimits({_rootBufferCap: _bufferCap, _leafBufferCap: _bufferCap});
 
         vm.startPrank(address(rootGauge));
         rootXVelo.approve({spender: address(rootTokenBridge), value: amount});
 
-        vm.expectRevert(IXERC20.IXERC20_NotHighEnoughLimits.selector);
+        vm.expectRevert("RateLimited: buffer cap overflow");
         rootTokenBridge.sendToken({_amount: amount, _chainid: leaf});
     }
 
-    modifier whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(uint256 _burningLimit, uint256 _amount) {
-        _burningLimit = bound(_burningLimit, WEEK, type(uint256).max / 2);
-        amount = bound(_amount, WEEK, _burningLimit);
-        setLimits({_rootMintingLimit: 0, _leafMintingLimit: _burningLimit});
+    modifier whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(uint256 _bufferCap, uint256 _amount) {
+        _bufferCap = bound(_bufferCap, rootXVelo.minBufferCap() + 1, MAX_BUFFER_CAP);
+        amount = bound(_amount, WEEK, _bufferCap / 2);
+        setLimits({_rootBufferCap: _bufferCap, _leafBufferCap: _bufferCap});
         _;
     }
 
-    function testFuzz_WhenTheAmountIsLargerThanTheBalanceOfCaller(
-        uint256 _burningLimit,
-        uint256 _amount,
-        uint256 _balance
-    )
+    function testFuzz_WhenTheAmountIsLargerThanTheBalanceOfCaller(uint256 _bufferCap, uint256 _amount, uint256 _balance)
         external
         whenTheRequestedAmountIsNotZero
         whenTheRequestedChainIsARegisteredChain
-        whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(_burningLimit, _amount)
+        whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(_bufferCap, _amount)
     {
         // It should revert with ERC20InsufficientBalance
         _balance = bound(_balance, 0, amount - 1);
@@ -65,14 +61,14 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
     }
 
     function testFuzz_WhenTheAmountIsLessThanOrEqualToTheBalanceOfCaller(
-        uint256 _burningLimit,
+        uint256 _bufferCap,
         uint256 _amount,
         uint256 _balance
     )
         external
         whenTheRequestedAmountIsNotZero
         whenTheRequestedChainIsARegisteredChain
-        whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(_burningLimit, _amount)
+        whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(_bufferCap, _amount)
     {
         // It burns the caller's tokens
         // It mints the tokens to the caller at the destination

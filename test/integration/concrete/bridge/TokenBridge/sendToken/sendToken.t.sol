@@ -38,19 +38,19 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         whenTheRequestedAmountIsNotZero
         whenTheRequestedChainIsARegisteredChain
     {
-        // It should revert with IXERC20_NotHighEnoughLimits
+        // It should revert with "RateLimited: buffer cap overflow"
         amount = 1;
         deal({token: address(rootXVelo), to: address(rootGauge), give: amount});
 
         vm.startPrank(address(rootGauge));
         rootXVelo.approve({spender: address(rootTokenBridge), value: amount});
 
-        vm.expectRevert(IXERC20.IXERC20_NotHighEnoughLimits.selector);
+        vm.expectRevert("RateLimited: buffer cap overflow");
         rootTokenBridge.sendToken({_amount: amount, _chainid: leaf});
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller() {
-        setLimits({_rootMintingLimit: 0, _leafMintingLimit: amount});
+        setLimits({_rootBufferCap: amount * 2, _leafBufferCap: amount * 2});
         _;
     }
 

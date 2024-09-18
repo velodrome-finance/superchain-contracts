@@ -9,12 +9,15 @@ import {IWETH} from "src/interfaces/external/IWETH.sol";
 
 import {Test, stdStorage, StdStorage} from "forge-std/Test.sol";
 import {Clones} from "@openzeppelin5/contracts/proxy/Clones.sol";
+import {Math} from "@openzeppelin5/contracts/utils/math/Math.sol";
 import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 import {IERC20, IERC20Errors} from "@openzeppelin5/contracts/token/ERC20/ERC20.sol";
 import {TestIsm} from "@hyperlane/core/contracts/test/TestIsm.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
+import {SafeCast} from "@openzeppelin5/contracts/utils/math/SafeCast.sol";
 
 import {CreateXLibrary} from "src/libraries/CreateXLibrary.sol";
+import {MintLimits} from "src/xerc20/MintLimits.sol";
 import {Commands} from "src/libraries/Commands.sol";
 
 import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
@@ -62,6 +65,8 @@ import {TestConstants} from "test/utils/TestConstants.sol";
 import {Users} from "test/utils/Users.sol";
 
 abstract contract BaseForkFixture is Test, TestConstants {
+    using SafeCast for uint256;
+
     // anything prefixed with root is deployed on the root chain
     // anything prefixed with leaf is deployed on the leaf chain
     // in the context of velodrome superchain, the root chain will always be optimism (chainid=10)
@@ -603,34 +608,51 @@ abstract contract BaseForkFixture is Test, TestConstants {
         deployCodeTo("test/mocks/CreateX.sol", address(cx));
     }
 
-    /// @dev Helper function that sets root minting limit & leaf burning limit
-    /// @dev and leaf minting limit & root burning limit
-    function setLimits(uint256 _rootMintingLimit, uint256 _leafMintingLimit) internal {
+    /// @dev Helper function that adds root & leaf bridge limits
+    function setLimits(uint256 _rootBufferCap, uint256 _leafBufferCap) internal {
         vm.stopPrank();
         uint256 activeFork = vm.activeFork();
+
         vm.startPrank(users.owner);
         vm.selectFork({forkId: rootId});
-        rootXVelo.setLimits({
-            _bridge: address(rootTokenBridge),
-            _mintingLimit: _rootMintingLimit,
-            _burningLimit: _leafMintingLimit
-        });
-        rootXVelo.setLimits({
-            _bridge: address(rootMessageBridge),
-            _mintingLimit: _rootMintingLimit,
-            _burningLimit: _leafMintingLimit
-        });
+
+        uint112 rootBufferCap = _rootBufferCap.toUint112();
+        // replenish limits in 1 day, avoid max rate limit per second
+        uint128 rps = Math.min((rootBufferCap / 2) / DAY, rootXVelo.maxRateLimitPerSecond()).toUint128();
+        rootXVelo.addBridge(
+            MintLimits.RateLimitMidPointInfo({
+                bufferCap: rootBufferCap,
+                bridge: address(rootTokenBridge),
+                rateLimitPerSecond: rps
+            })
+        );
+        rootXVelo.addBridge(
+            MintLimits.RateLimitMidPointInfo({
+                bufferCap: rootBufferCap,
+                bridge: address(rootMessageBridge),
+                rateLimitPerSecond: rps
+            })
+        );
+
         vm.selectFork({forkId: leafId});
-        leafXVelo.setLimits({
-            _bridge: address(leafTokenBridge),
-            _mintingLimit: _leafMintingLimit,
-            _burningLimit: _rootMintingLimit
-        });
-        leafXVelo.setLimits({
-            _bridge: address(leafMessageBridge),
-            _mintingLimit: _leafMintingLimit,
-            _burningLimit: _rootMintingLimit
-        });
+        uint112 leafBufferCap = _leafBufferCap.toUint112();
+        // replenish limits in 1 day, avoid max rate limit per second
+        rps = Math.min((leafBufferCap / 2) / DAY, leafXVelo.maxRateLimitPerSecond()).toUint128();
+        leafXVelo.addBridge(
+            MintLimits.RateLimitMidPointInfo({
+                bufferCap: leafBufferCap,
+                bridge: address(leafTokenBridge),
+                rateLimitPerSecond: rps
+            })
+        );
+        leafXVelo.addBridge(
+            MintLimits.RateLimitMidPointInfo({
+                bufferCap: leafBufferCap,
+                bridge: address(leafMessageBridge),
+                rateLimitPerSecond: rps
+            })
+        );
+
         vm.selectFork({forkId: activeFork});
         vm.stopPrank();
     }

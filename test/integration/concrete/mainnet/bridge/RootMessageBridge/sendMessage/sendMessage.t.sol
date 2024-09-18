@@ -370,7 +370,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         uint256 amount = TOKEN_1 * 1000;
         deal(address(leafXVelo), address(rootGauge), amount);
 
-        setLimits({_rootMintingLimit: amount, _leafMintingLimit: amount});
+        setLimits({_rootBufferCap: amount * 2, _leafBufferCap: amount * 2});
 
         bytes memory payload = abi.encode(address(leafGauge), amount);
         bytes memory message = abi.encode(command, payload);
@@ -423,7 +423,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         uint256 amount = TOKEN_1 * 1000;
         deal(address(leafXVelo), address(rootGauge), amount);
 
-        setLimits({_rootMintingLimit: amount, _leafMintingLimit: amount});
+        setLimits({_rootBufferCap: amount * 2, _leafBufferCap: amount * 2});
 
         bytes memory payload = abi.encode(address(leafGauge), amount);
         bytes memory message = abi.encode(command, payload);

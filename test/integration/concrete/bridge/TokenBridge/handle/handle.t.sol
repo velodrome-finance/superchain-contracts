@@ -4,6 +4,8 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../TokenBridge.t.sol";
 
 contract HandleIntegrationConcreteTest is TokenBridgeTest {
+    using SafeCast for uint256;
+
     bytes32 sender = TypeCasts.addressToBytes32(users.charlie);
 
     function setUp() public override {
@@ -39,24 +41,31 @@ contract HandleIntegrationConcreteTest is TokenBridgeTest {
         whenTheCallerIsMailbox
         whenTheSenderIsBridge
     {
-        // It should revert with IXERC20_NotHighEnoughLimits
+        // It should revert with "RateLimited: rate limit hit"
         uint256 amount = TOKEN_1;
 
         vm.deal(address(leafMailbox), TOKEN_1);
 
         bytes memory _message = abi.encode(address(leafGauge), amount);
 
-        vm.expectRevert(IXERC20.IXERC20_NotHighEnoughLimits.selector);
+        vm.expectRevert("RateLimited: rate limit hit");
         leafTokenBridge.handle{value: TOKEN_1 / 2}({_origin: root, _sender: sender, _message: _message});
     }
 
     function test_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentMintingLimit() external whenTheSenderIsBridge {
         // It should mint tokens to the destination contract
         // It should emit {ReceivedMessage} event
-        uint256 amount = TOKEN_1;
+        uint256 amount = TOKEN_1 * 1000;
+        uint256 bufferCap = amount * 2;
 
         vm.prank(users.owner);
-        leafXVelo.setLimits({_bridge: address(leafTokenBridge), _mintingLimit: amount, _burningLimit: 0});
+        leafXVelo.addBridge(
+            MintLimits.RateLimitMidPointInfo({
+                bridge: address(leafTokenBridge),
+                bufferCap: bufferCap.toUint112(),
+                rateLimitPerSecond: (bufferCap / DAY).toUint128()
+            })
+        );
 
         vm.deal(address(leafMailbox), TOKEN_1);
 

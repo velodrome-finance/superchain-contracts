@@ -4,6 +4,8 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../TokenBridge.t.sol";
 
 contract HandleIntegrationFuzzTest is TokenBridgeTest {
+    using SafeCast for uint256;
+
     bytes32 sender;
 
     function setUp() public override {
@@ -11,7 +13,7 @@ contract HandleIntegrationFuzzTest is TokenBridgeTest {
         vm.selectFork({forkId: leafId});
     }
 
-    function test_WhenTheCallerIsNotMailbox(address _caller) external {
+    function testFuzz_WhenTheCallerIsNotMailbox(address _caller) external {
         // It should revert with NotMailbox
         vm.assume(_caller != address(leafMailbox));
 
@@ -29,7 +31,7 @@ contract HandleIntegrationFuzzTest is TokenBridgeTest {
         _;
     }
 
-    function test_WhenTheSenderIsNotBridge(address _sender) external whenTheCallerIsMailbox {
+    function testFuzz_WhenTheSenderIsNotBridge(address _sender) external whenTheCallerIsMailbox {
         // It should revert with NotBridge
         vm.assume(_sender != address(leafTokenBridge));
         sender = TypeCasts.addressToBytes32(_sender);
@@ -42,34 +44,52 @@ contract HandleIntegrationFuzzTest is TokenBridgeTest {
         _;
     }
 
-    function test_WhenTheRequestedAmountIsHigherThanTheCurrentMintingLimit(uint256 _mintingLimit, uint256 _amount)
+    function testFuzz_WhenTheRequestedAmountIsHigherThanTheCurrentMintingLimit(uint112 _bufferCap, uint256 _amount)
         external
         whenTheCallerIsMailbox
         whenTheSenderIsBridge
     {
-        // It should revert with IXERC20_NotHighEnoughLimits
-        _mintingLimit = bound(_mintingLimit, WEEK, type(uint256).max / 2);
-        _amount = bound(_amount, _mintingLimit + 1, type(uint256).max);
+        // It should revert with "RateLimited: rate limit hit"
+        _bufferCap = bound(_bufferCap, rootXVelo.minBufferCap() + 1, MAX_BUFFER_CAP).toUint112();
+        _amount = bound(_amount, _bufferCap / 2 + 1, type(uint256).max / 2);
+        uint128 rateLimitPerSecond = Math.min((_bufferCap / 2) / DAY, leafXVelo.maxRateLimitPerSecond()).toUint128();
+
+        vm.startPrank(users.owner);
+        leafXVelo.addBridge(
+            MintLimits.RateLimitMidPointInfo({
+                bridge: address(leafTokenBridge),
+                bufferCap: _bufferCap,
+                rateLimitPerSecond: rateLimitPerSecond
+            })
+        );
 
         vm.deal(address(leafMailbox), TOKEN_1);
 
         bytes memory _message = abi.encode(address(leafGauge), _amount);
 
-        vm.expectRevert(IXERC20.IXERC20_NotHighEnoughLimits.selector);
+        vm.startPrank(address(leafMailbox));
+        vm.expectRevert("RateLimited: rate limit hit");
         leafTokenBridge.handle{value: TOKEN_1 / 2}({_origin: root, _sender: sender, _message: _message});
     }
 
-    function test_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentMintingLimit(
-        uint256 _mintingLimit,
+    function testFuzz_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentMintingLimit(
+        uint112 _bufferCap,
         uint256 _amount
     ) external whenTheSenderIsBridge {
         // It should mint tokens to the destination bridge
         // It should emit {ReceivedMessage} event
-        _mintingLimit = bound(_mintingLimit, WEEK, type(uint256).max / 2);
-        _amount = bound(_amount, WEEK, _mintingLimit);
+        _bufferCap = bound(_bufferCap, rootXVelo.minBufferCap() + 1, MAX_BUFFER_CAP).toUint112();
+        _amount = bound(_amount, WEEK, _bufferCap / 2);
+        uint128 rateLimitPerSecond = Math.min((_bufferCap / 2) / DAY, leafXVelo.maxRateLimitPerSecond()).toUint128();
 
         vm.prank(users.owner);
-        leafXVelo.setLimits({_bridge: address(leafTokenBridge), _mintingLimit: _mintingLimit, _burningLimit: 0});
+        leafXVelo.addBridge(
+            MintLimits.RateLimitMidPointInfo({
+                bridge: address(leafTokenBridge),
+                bufferCap: _bufferCap,
+                rateLimitPerSecond: rateLimitPerSecond
+            })
+        );
 
         vm.deal(address(leafMailbox), TOKEN_1 / 2);
 

@@ -51,7 +51,8 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         // It should update the period finish timestamp
         // It should emit a {NotifyReward} event
         uint256 amount = TOKEN_1 * 1_000;
-        setLimits({_rootMintingLimit: amount, _leafMintingLimit: amount});
+        uint256 bufferCap = amount * 2;
+        setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
 
         deal({token: address(rootRewardToken), to: address(mockVoter), give: amount});
         vm.prank(address(mockVoter));
@@ -100,7 +101,8 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
 
         uint256 amount = TOKEN_1 * 1_000;
-        setLimits({_rootMintingLimit: amount * 2, _leafMintingLimit: amount * 2});
+        uint256 bufferCap = amount * 2;
+        setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
 
         deal({token: address(rootRewardToken), to: address(mockVoter), give: amount * 2});
         vm.prank(address(mockVoter));

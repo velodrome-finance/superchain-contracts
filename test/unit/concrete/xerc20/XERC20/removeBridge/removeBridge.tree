@@ -1,0 +1,9 @@
+RemoveBridgeUnitConcreteTest
+├── When caller is not Owner
+│   └── It should revert with OwnableUnauthorizedAccount
+└── When caller is Owner
+    ├── When there is no rate limit for given bridge
+    │   └── It should revert with "MintLimits: cannot remove non-existent rate limit"
+    └── When there is rate limit for given bridge
+        ├── It should delete rate limits for the bridge
+        └── It should emit a {ConfigurationChanged} event

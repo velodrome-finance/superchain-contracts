@@ -1,0 +1,27 @@
+SetBufferCapUnitConcreteTest
+├── When caller is not Owner
+│   └── It should revert with OwnableUnauthorizedAccount
+└── When caller is Owner
+    ├── When new buffer cap is zero
+    │   └── It should revert with "MintLimits: bufferCap cannot be 0"
+    └── When new buffer cap is not zero
+        ├── When there is no rate limit for given bridge
+        │   └── It should revert with "MintLimits: non-existent rate limit"
+        └── When there is rate limit for given bridge
+            ├── When buffer cap is smaller than or equal to min buffer cap
+            │   └── It should revert with "MintLimits: buffer cap below min"
+            └── When buffer cap is greater than min buffer cap
+                ├── When updated buffer stored is greater than new buffer cap
+                │   ├── It should set last buffer used timestamp to current timestamp
+                │   ├── It should set new buffer cap
+                │   ├── It should set bufferStored to new buffer cap
+                │   ├── It should set midpoint to half of new buffer cap
+                │   ├── It should emit a {ConfigurationChanged} event
+                │   └── It should emit a {BridgeLimitsSet} event
+                └── When updated buffer stored is smaller than or equal to new buffer cap
+                    ├── It should set last buffer used timestamp to current timestamp
+                    ├── It should update bufferStored
+                    ├── It should set new buffer cap
+                    ├── It should set midpoint to half of new buffer cap
+                    ├── It should emit a {ConfigurationChanged} event
+                    └── It should emit a {BridgeLimitsSet} event

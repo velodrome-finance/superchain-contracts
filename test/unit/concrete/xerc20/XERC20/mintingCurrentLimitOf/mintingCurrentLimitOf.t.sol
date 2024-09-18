@@ -4,83 +4,116 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../XERC20.t.sol";
 
 contract MintingCurrentLimitOfUnitConcreteTest is XERC20Test {
-    uint256 public constant mintingLimit = 10_000 * TOKEN_1;
+    using SafeCast for uint256;
+
+    uint256 public constant bufferCap = 20_000 * TOKEN_1;
     uint256 public constant usedLimit = 6_000 * TOKEN_1;
+    uint256 public constant midPoint = bufferCap / 2;
+    /// @dev limits replenish in a day
+    uint256 public constant rps = midPoint / DAY;
 
     function setUp() public override {
         super.setUp();
 
         vm.prank(users.owner);
-        xVelo.setLimits({_bridge: bridge, _mintingLimit: mintingLimit, _burningLimit: 0});
+        xVelo.addBridge(
+            MintLimits.RateLimitMidPointInfo({
+                bridge: bridge,
+                bufferCap: bufferCap.toUint112(),
+                rateLimitPerSecond: rps.toUint128()
+            })
+        );
     }
 
-    function test_WhenCurrentLimitOfBridgeIsEqualToItsMaxLimit() external view {
-        (IXERC20.BridgeParameters memory bpm,) = xVelo.bridges(bridge);
-        assertEq(bpm.maxLimit, bpm.currentLimit);
-
-        // It should return the max limit
-        assertEq(xVelo.mintingCurrentLimitOf(bridge), mintingLimit);
-    }
-
-    modifier whenCurrentLimitOfBridgeIsDifferentFromItsMaxLimit() {
+    modifier whenBufferStoredIsSmallerThanMidpoint() {
         vm.prank(bridge);
-        xVelo.mint(bridge, usedLimit);
-
-        (IXERC20.BridgeParameters memory bpm,) = xVelo.bridges(bridge);
-        assertNotEq(bpm.maxLimit, bpm.currentLimit);
+        xVelo.mint(bridge, usedLimit); // mint to decrease buffer stored
+        assertLt(xVelo.rateLimits(bridge).bufferStored, midPoint);
         _;
     }
 
-    function test_WhenBlockTimestampIsGreaterThanOrEqualToEndOfLastUpdateDuration()
+    function test_WhenSumOfBufferStoredAndAccruedLimitsIsSmallerThanMidpoint()
         external
-        whenCurrentLimitOfBridgeIsDifferentFromItsMaxLimit
+        whenBufferStoredIsSmallerThanMidpoint
     {
-        skip(DAY); // Skip duration period for limits to replenish
+        // It should return sum of buffer stored and accrued limits
+        uint256 timeskip = DAY / 2;
+        skip(timeskip);
 
-        // It should return the max limit
-        assertEq(xVelo.mintingCurrentLimitOf(bridge), mintingLimit);
+        uint256 accruedLimits = timeskip * rps;
+        uint256 currentBufferAmount = xVelo.rateLimits(bridge).bufferStored + accruedLimits;
+        assertLt(currentBufferAmount, midPoint);
+        assertEq(xVelo.mintingCurrentLimitOf(bridge), currentBufferAmount);
     }
 
-    modifier whenBlockTimestampIsSmallerThanEndOfLastUpdateDuration() {
-        (IXERC20.BridgeParameters memory bpm,) = xVelo.bridges(bridge);
-        uint256 endOfLastUpdate = bpm.timestamp + DAY;
-        assertLt(block.timestamp, endOfLastUpdate);
+    function test_WhenSumOfBufferStoredAndAccruedLimitsIsGreaterThanOrEqualToMidpoint()
+        external
+        whenBufferStoredIsSmallerThanMidpoint
+    {
+        // It should return midpoint
+        uint256 timeskip = DAY * 2;
+        skip(timeskip);
+
+        uint256 accruedLimits = timeskip * rps;
+        assertGe(xVelo.rateLimits(bridge).bufferStored + accruedLimits, midPoint);
+        assertEq(xVelo.mintingCurrentLimitOf(bridge), midPoint);
+    }
+
+    modifier whenBufferStoredIsGreaterThanMidpoint() {
+        deal(address(xVelo), bridge, usedLimit);
+        vm.prank(bridge);
+        xVelo.burn(bridge, usedLimit); // burn to increase buffer stored
+        assertGt(xVelo.rateLimits(bridge).bufferStored, midPoint);
         _;
     }
 
-    function test_WhenCalculatedLimitIsGreaterThanMaxLimit()
-        external
-        whenCurrentLimitOfBridgeIsDifferentFromItsMaxLimit
-        whenBlockTimestampIsSmallerThanEndOfLastUpdateDuration
-    {
-        (IXERC20.BridgeParameters memory bpm,) = xVelo.bridges(bridge);
-        // Calculate seconds required to vest the limit such that `calculatedLimit > bpm.maxLimit`
-        uint256 timeToSkip = (usedLimit / bpm.ratePerSecond) + 1;
-        skip(timeToSkip);
+    function test_WhenAccruedLimitsAreGreaterThanBufferStored() external whenBufferStoredIsGreaterThanMidpoint {
+        // It should return midpoint
+        uint256 timeskip = DAY * 2;
+        skip(timeskip);
 
-        uint256 timePassed = block.timestamp - bpm.timestamp;
-        uint256 calculatedLimit = bpm.currentLimit + (timePassed * bpm.ratePerSecond);
-        assertGt(calculatedLimit, bpm.maxLimit);
-
-        // It should return the max limit
-        assertEq(xVelo.mintingCurrentLimitOf(bridge), mintingLimit);
+        uint256 accruedLimits = timeskip * rps;
+        assertGt(accruedLimits, xVelo.rateLimits(bridge).bufferStored);
+        assertEq(xVelo.mintingCurrentLimitOf(bridge), midPoint);
     }
 
-    function test_WhenCalculatedLimitIsSmallerThanOrEqualToMaxLimit()
+    modifier whenAccruedLimitsAreSmallerThanOrEqualToBufferStored() {
+        _;
+    }
+
+    function test_WhenTheDifferenceBetweenBufferStoredAndAccruedLimitsIsSmallerThanMidpoint()
         external
-        whenCurrentLimitOfBridgeIsDifferentFromItsMaxLimit
-        whenBlockTimestampIsSmallerThanEndOfLastUpdateDuration
+        whenBufferStoredIsGreaterThanMidpoint
+        whenAccruedLimitsAreSmallerThanOrEqualToBufferStored
     {
-        (IXERC20.BridgeParameters memory bpm,) = xVelo.bridges(bridge);
-        // Calculate seconds required to vest the limit such that `calculatedLimit == bpm.maxLimit`
-        uint256 maxSkip = usedLimit / bpm.ratePerSecond;
-        skip(maxSkip / 2);
+        // It should return midpoint
+        uint256 timeskip = DAY * 2 / 3;
+        skip(timeskip);
 
-        uint256 timePassed = block.timestamp - bpm.timestamp;
-        uint256 calculatedLimit = bpm.currentLimit + (timePassed * bpm.ratePerSecond);
-        assertLe(calculatedLimit, bpm.maxLimit);
+        uint256 accruedLimits = timeskip * rps;
+        assertLt(xVelo.rateLimits(bridge).bufferStored - accruedLimits, midPoint);
+        assertEq(xVelo.mintingCurrentLimitOf(bridge), midPoint);
+    }
 
-        // It should return the linearly vested calculated limit
-        assertEq(xVelo.mintingCurrentLimitOf(bridge), calculatedLimit);
+    function test_WhenTheDifferenceBetweenBufferStoredAndAccruedLimitsIsGreaterThanOrEqualToMidpoint()
+        external
+        whenBufferStoredIsGreaterThanMidpoint
+        whenAccruedLimitsAreSmallerThanOrEqualToBufferStored
+    {
+        // It should return the difference between buffer stored and accrued limits
+        uint256 timeskip = DAY / 2;
+        skip(timeskip);
+
+        uint256 accruedLimits = timeskip * rps;
+        uint256 currentBufferAmount = xVelo.rateLimits(bridge).bufferStored - accruedLimits;
+        assertGe(currentBufferAmount, midPoint);
+        assertEq(xVelo.mintingCurrentLimitOf(bridge), currentBufferAmount);
+    }
+
+    function test_WhenBufferStoredIsEqualToMidpoint() external view {
+        // It should return buffer stored
+        uint256 bufferStored = xVelo.rateLimits(bridge).bufferStored;
+        assertEq(bufferStored, midPoint);
+        assertEq(xVelo.mintingCurrentLimitOf(bridge), bufferStored);
     }
 }
