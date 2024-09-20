@@ -6,7 +6,7 @@ import "../RootGaugeFactory.t.sol";
 contract SetNotifyAdminIntegrationFuzzTest is RootGaugeFactoryTest {
     function testFuzz_WhenCallerIsNotTheNotifyAdmin(address _caller) external {
         vm.assume(_caller != rootGaugeFactory.notifyAdmin());
-        // It should revert with NotAuthorized
+        // It should revert with {NotAuthorized}
         vm.prank(_caller);
         vm.expectRevert(IRootGaugeFactory.NotAuthorized.selector);
         rootGaugeFactory.setNotifyAdmin({_admin: _caller});

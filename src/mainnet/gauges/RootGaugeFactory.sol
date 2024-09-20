@@ -29,6 +29,12 @@ contract RootGaugeFactory is IRootGaugeFactory {
     address public immutable votingRewardsFactory;
     /// @inheritdoc IRootGaugeFactory
     address public notifyAdmin;
+    /// @inheritdoc IRootGaugeFactory
+    address public emissionAdmin;
+    /// @inheritdoc IRootGaugeFactory
+    uint256 public defaultCap;
+    /// @notice Emission cap for each gauge
+    mapping(address => uint256) internal _emissionCaps;
 
     constructor(
         address _voter,
@@ -37,7 +43,9 @@ contract RootGaugeFactory is IRootGaugeFactory {
         address _messageBridge,
         address _poolFactory,
         address _votingRewardsFactory,
-        address _notifyAdmin
+        address _notifyAdmin,
+        address _emissionAdmin,
+        uint256 _defaultCap
     ) {
         voter = _voter;
         xerc20 = _xerc20;
@@ -46,6 +54,14 @@ contract RootGaugeFactory is IRootGaugeFactory {
         poolFactory = _poolFactory;
         votingRewardsFactory = _votingRewardsFactory;
         notifyAdmin = _notifyAdmin;
+        emissionAdmin = _emissionAdmin;
+        defaultCap = _defaultCap;
+    }
+
+    /// @inheritdoc IRootGaugeFactory
+    function emissionCaps(address _gauge) external view returns (uint256) {
+        uint256 emissionCap = _emissionCaps[_gauge];
+        return emissionCap == 0 ? defaultCap : emissionCap;
     }
 
     /// @inheritdoc IRootGaugeFactory
@@ -79,6 +95,7 @@ contract RootGaugeFactory is IRootGaugeFactory {
                     xerc20, // xerc20 corresponding to reward token
                     lockbox, // lockbox to convert reward token to xerc20
                     messageBridge, // message bridge to communicate x-chain
+                    voter, // voter
                     _chainid // chain id associated with gauge
                 )
             )
@@ -93,5 +110,29 @@ contract RootGaugeFactory is IRootGaugeFactory {
         bytes memory payload = abi.encode(votingRewardsFactory, address(this), _token0, _token1, _poolParam);
         bytes memory message = abi.encode(Commands.CREATE_GAUGE, abi.encode(poolFactory, payload));
         IRootMessageBridge(messageBridge).sendMessage({_chainid: _chainid, _message: message});
+    }
+
+    /// @inheritdoc IRootGaugeFactory
+    function setEmissionAdmin(address _admin) external {
+        if (msg.sender != emissionAdmin) revert NotAuthorized();
+        if (_admin == address(0)) revert ZeroAddress();
+        emissionAdmin = _admin;
+        emit SetEmissionAdmin({_emissionAdmin: _admin});
+    }
+
+    /// @inheritdoc IRootGaugeFactory
+    function setEmissionCap(address _gauge, uint256 _emissionCap) external {
+        if (msg.sender != emissionAdmin) revert NotAuthorized();
+        if (_gauge == address(0)) revert ZeroAddress();
+        _emissionCaps[_gauge] = _emissionCap;
+        emit SetEmissionCap({_gauge: _gauge, _newEmissionCap: _emissionCap});
+    }
+
+    /// @inheritdoc IRootGaugeFactory
+    function setDefaultCap(uint256 _defaultCap) external {
+        if (msg.sender != emissionAdmin) revert NotAuthorized();
+        if (_defaultCap == 0) revert ZeroDefaultCap();
+        defaultCap = _defaultCap;
+        emit SetDefaultCap({_newDefaultCap: _defaultCap});
     }
 }

@@ -30,6 +30,8 @@ abstract contract DeployRootMessageFixture is DeployFixture {
         address bridgeOwner;
         address emergencyCouncilOwner;
         address notifyAdmin;
+        address emissionAdmin;
+        uint256 defaultCap;
         address mailbox;
         string outputFilename;
     }
@@ -156,7 +158,9 @@ abstract contract DeployRootMessageFixture is DeployFixture {
                         address(messageBridge), // message bridge address
                         address(poolFactory), // pool factory address
                         address(votingRewardsFactory), // voting rewards factory address
-                        _params.notifyAdmin // notify admin
+                        _params.notifyAdmin, // notify admin
+                        _params.emissionAdmin, // emission admin
+                        _params.defaultCap // default cap
                     )
                 )
             })

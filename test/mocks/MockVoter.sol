@@ -35,12 +35,13 @@ contract MockVoter is IVoter {
 
     address public emergencyCouncil;
 
-    constructor(address _rewardToken, address _factoryRegistry, address _ve, address _governor) {
+    constructor(address _rewardToken, address _factoryRegistry, address _ve, address _governor, address _minter) {
         rewardToken = IERC20(_rewardToken);
         factoryRegistry = _factoryRegistry;
         emergencyCouncil = msg.sender;
         ve = _ve;
         governor = _governor;
+        minter = _minter;
     }
 
     function setEmergencyCouncil(address _council) public {

@@ -2,11 +2,15 @@
 pragma solidity ^0.8.0;
 
 interface IRootGaugeFactory {
-    error NotVoter();
+    error ZeroDefaultCap();
     error NotAuthorized();
     error ZeroAddress();
+    error NotVoter();
 
     event SetNotifyAdmin(address indexed notifyAdmin);
+    event SetEmissionAdmin(address indexed _emissionAdmin);
+    event SetDefaultCap(uint256 indexed _newDefaultCap);
+    event SetEmissionCap(address indexed _gauge, uint256 _newEmissionCap);
 
     /// @notice Voter contract address
     function voter() external view returns (address);
@@ -29,9 +33,16 @@ interface IRootGaugeFactory {
     /// @notice Administrator that can call `notifyRewardWithoutClaim` on gauges
     function notifyAdmin() external view returns (address);
 
-    /// @notice Set notifyAdmin value on root gauge factory
-    /// @param _admin New administrator that will be able to call `notifyRewardWithoutClaim` on gauges.
-    function setNotifyAdmin(address _admin) external;
+    /// @notice Administrator that can manage emission caps
+    function emissionAdmin() external view returns (address);
+
+    /// @notice Default emission cap set on Gauges
+    function defaultCap() external view returns (uint256);
+
+    /// @notice Returns the emission cap of a Gauge
+    /// @param _gauge The gauge we are viewing the emission cap of
+    /// @return The emission cap of the gauge
+    function emissionCaps(address _gauge) external view returns (uint256);
 
     /// @notice Creates a new root gauge
     /// @param _pool Address of the pool contract
@@ -40,4 +51,21 @@ interface IRootGaugeFactory {
     function createGauge(address, address _pool, address, address _rewardToken, bool)
         external
         returns (address gauge);
+
+    /// @notice Set notifyAdmin value on root gauge factory
+    /// @param _admin New administrator that will be able to call `notifyRewardWithoutClaim` on gauges.
+    function setNotifyAdmin(address _admin) external;
+
+    /// @notice Set emissionAdmin value on root gauge factory
+    /// @param _admin New administrator that will be able to manage emission caps
+    function setEmissionAdmin(address _admin) external;
+
+    /// @notice Sets the emission cap for a Gauge
+    /// @param _gauge Address of the gauge contract
+    /// @param _emissionCap The emission cap to be set
+    function setEmissionCap(address _gauge, uint256 _emissionCap) external;
+
+    /// @notice Sets the default emission cap for gauges
+    /// @param _defaultCap The default emission cap to be set
+    function setDefaultCap(uint256 _defaultCap) external;
 }

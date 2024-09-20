@@ -27,8 +27,20 @@ interface IRootGauge {
     /// @notice Bridge contract used to communicate x-chain
     function bridge() external view returns (address);
 
+    /// @notice Minter contract used to mint emissions
+    function minter() external view returns (address);
+
     /// @notice Chain id associated with this pool / gauge
     function chainid() external view returns (uint256);
+
+    /// @notice Denominator for emission calculations (as basis points)
+    function MAX_BPS() external view returns (uint256);
+
+    /// @notice Decay rate of emissions as percentage of `MAX_BPS`
+    function WEEKLY_DECAY() external view returns (uint256);
+
+    /// @notice Timestamp of the epoch when tail emissions will start
+    function TAIL_START_TIMESTAMP() external view returns (uint256);
 
     /// @notice Helper used by Voter
     function left() external view returns (uint256);

@@ -1,0 +1,9 @@
+SetDefaultCapIntegrationConcreteTest
+├── When caller is not the emission admin
+│   └── It should revert with {NotAuthorized}
+└── When caller is the emission admin
+    ├── When default cap is zero
+    │   └── It should revert with {ZeroDefaultCap}
+    └── When default cap is not zero
+        ├── It should set the new default cap for gauges
+        └── It should emit a {SetDefaultCap} event

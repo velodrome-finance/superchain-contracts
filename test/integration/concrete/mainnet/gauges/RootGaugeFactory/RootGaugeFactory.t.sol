@@ -11,5 +11,8 @@ contract RootGaugeFactoryTest is BaseForkFixture {
         assertEq(rootGaugeFactory.messageBridge(), address(rootMessageBridge));
         assertEq(rootGaugeFactory.votingRewardsFactory(), address(rootVotingRewardsFactory));
         assertEq(rootGaugeFactory.notifyAdmin(), users.owner);
+        assertEq(rootGaugeFactory.emissionAdmin(), users.owner);
+        assertEq(rootGaugeFactory.defaultCap(), 100);
+        assertEq(rootGaugeFactory.emissionCaps({_gauge: address(rootGauge)}), 100);
     }
 }

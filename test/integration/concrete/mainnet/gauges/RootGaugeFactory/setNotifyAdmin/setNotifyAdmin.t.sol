@@ -5,7 +5,7 @@ import "../RootGaugeFactory.t.sol";
 
 contract SetNotifyAdminIntegrationConcreteTest is RootGaugeFactoryTest {
     function test_WhenCallerIsNotTheNotifyAdmin() external {
-        // It should revert with NotAuthorized
+        // It should revert with {NotAuthorized}
         vm.prank(users.charlie);
         vm.expectRevert(IRootGaugeFactory.NotAuthorized.selector);
         rootGaugeFactory.setNotifyAdmin({_admin: users.charlie});
@@ -17,7 +17,7 @@ contract SetNotifyAdminIntegrationConcreteTest is RootGaugeFactoryTest {
     }
 
     function test_WhenAdminIsTheZeroAddress() external whenCallerIsTheNotifyAdmin {
-        // It should revert with ZeroAddress
+        // It should revert with {ZeroAddress}
         vm.expectRevert(IRootGaugeFactory.ZeroAddress.selector);
         rootGaugeFactory.setNotifyAdmin({_admin: address(0)});
     }

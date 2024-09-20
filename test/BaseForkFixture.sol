@@ -3,6 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "forge-std/console2.sol";
 import {IVoter} from "src/interfaces/external/IVoter.sol";
+import {IMinter} from "src/interfaces/external/IMinter.sol";
 import {IVotingEscrow} from "src/interfaces/external/IVotingEscrow.sol";
 import {IFactoryRegistry} from "src/interfaces/external/IFactoryRegistry.sol";
 import {IWETH} from "src/interfaces/external/IWETH.sol";
@@ -104,6 +105,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
     RootGauge public rootGauge;
     RootFeesVotingReward public rootFVR;
     RootBribeVotingReward public rootIVR;
+    IMinter public minter;
 
     // root-only mocks
     IERC20 public rootRewardToken;
@@ -183,18 +185,23 @@ abstract contract BaseForkFixture is Test, TestConstants {
     }
 
     function deployRootDependencies() public virtual {
+        string memory path = string(abi.encodePacked(vm.projectRoot(), "/test/e2e/addresses.json"));
+        string memory addresses = vm.readFile(path);
+
         // deploy root mocks
         vm.startPrank(users.owner);
         rootMailbox = new MultichainMockMailbox(root);
         rootIsm = new TestIsm();
         rootRewardToken = new TestERC20("Reward Token", "RWRD", 18);
+        minter = IMinter(vm.parseJsonAddress(addresses, ".Minter"));
         mockFactoryRegistry = new MockFactoryRegistry();
         mockEscrow = new MockVotingEscrow();
         mockVoter = new MockVoter({
             _rewardToken: address(rootRewardToken),
             _factoryRegistry: address(mockFactoryRegistry),
             _ve: address(mockEscrow),
-            _governor: users.owner
+            _governor: users.owner,
+            _minter: address(minter)
         });
         vm.stopPrank();
     }
@@ -332,7 +339,9 @@ abstract contract BaseForkFixture is Test, TestConstants {
                         address(rootMessageBridge), // message bridge address
                         address(rootPoolFactory), // pool factory address
                         address(rootVotingRewardsFactory), // voting rewards factory
-                        users.owner // notify admin
+                        users.owner, // notify admin
+                        users.owner, // emission admin
+                        100 // 1% default cap
                     )
                 )
             })

@@ -1,0 +1,9 @@
+SetEmissionCapIntegrationConcreteTest
+├── When caller is not the emission admin
+│   └── It should revert with {NotAuthorized}
+└── When caller is the emission admin
+    ├── When gauge is the zero address
+    │   └── It should revert with {ZeroAddress}
+    └── When gauge is not the zero address
+        ├── It should set the new emission cap for the gauge
+        └── It should emit a {SetEmissionCap} event
