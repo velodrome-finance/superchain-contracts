@@ -108,7 +108,6 @@ abstract contract DeployRootMessageFixture is DeployFixture {
                             address(xVelo), // xerc20 address
                             _params.voter, // root voter
                             address(messageModule), // message module
-                            address(gaugeFactory), // gauge factory
                             _params.weth // weth address
                         )
                     )
