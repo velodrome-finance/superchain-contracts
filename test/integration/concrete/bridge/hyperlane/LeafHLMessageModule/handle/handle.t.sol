@@ -69,7 +69,34 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         _;
     }
 
-    function test_WhenTheCommandIsDeposit() external whenTheCallerIsMailbox whenTheOriginIsRoot whenTheSenderIsModule {
+    function test_WhenTheReceivingNonceIsNotTheExpectedNonce()
+        external
+        whenTheCallerIsMailbox
+        whenTheOriginIsRoot
+        whenTheSenderIsModule
+    {
+        // It should revert with InvalidNonce
+        uint256 amount = TOKEN_1 * 1000;
+        uint256 tokenId = 1;
+        bytes memory payload = abi.encode(amount, tokenId);
+        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
+        bytes memory wrappedMessage = abi.encode(type(uint256).max, message);
+
+        vm.expectRevert(ILeafHLMessageModule.InvalidNonce.selector);
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+    }
+
+    modifier whenTheReceivingNonceIsTheExpectedNonce() {
+        _;
+    }
+
+    function test_WhenTheCommandIsDeposit()
+        external
+        whenTheCallerIsMailbox
+        whenTheOriginIsRoot
+        whenTheSenderIsModule
+        whenTheReceivingNonceIsTheExpectedNonce
+    {
         // It decodes the gauge address from the message
         // It calls deposit on the fee rewards contract corresponding to the gauge with the payload
         // It calls deposit on the incentive rewards contract corresponding to the gauge with the payload
@@ -78,15 +105,17 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
+        bytes memory wrappedMessage = abi.encode(2, message);
 
         vm.expectEmit(address(leafMessageModule));
-        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(wrappedMessage)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
 
         assertEq(leafFVR.totalSupply(), amount);
         assertEq(leafFVR.balanceOf(tokenId), amount);
         assertEq(leafIVR.totalSupply(), amount);
         assertEq(leafIVR.balanceOf(tokenId), amount);
+        assertEq(leafMessageModule.receivingNonce(), 3);
     }
 
     function test_WhenTheCommandIsWithdraw()
@@ -94,6 +123,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
         whenTheSenderIsModule
+        whenTheReceivingNonceIsTheExpectedNonce
     {
         // It decodes the gauge address from the message
         // It calls withdraw on the fee rewards contract corresponding to the gauge with the payload
@@ -103,23 +133,26 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
+        bytes memory wrappedMessage = abi.encode(2, message);
 
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
         assertEq(leafFVR.totalSupply(), amount);
         assertEq(leafFVR.balanceOf(tokenId), amount);
         assertEq(leafIVR.totalSupply(), amount);
         assertEq(leafIVR.balanceOf(tokenId), amount);
 
         message = abi.encode(Commands.WITHDRAW, abi.encode(address(leafGauge), payload));
+        wrappedMessage = abi.encode(3, message);
 
         vm.expectEmit(address(leafMessageModule));
-        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(wrappedMessage)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
 
         assertEq(leafFVR.totalSupply(), 0);
         assertEq(leafFVR.balanceOf(tokenId), 0);
         assertEq(leafIVR.totalSupply(), 0);
         assertEq(leafIVR.balanceOf(tokenId), 0);
+        assertEq(leafMessageModule.receivingNonce(), 4);
     }
 
     function test_WhenTheCommandIsGetIncentives()
@@ -127,12 +160,11 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
         whenTheSenderIsModule
+        whenTheReceivingNonceIsTheExpectedNonce
     {
         // It decodes the gauge address from the message
         // It calls get reward on the incentive rewards contract corresponding to the gauge with the payload
         // It emits the {ReceivedMessage} event
-
-        // Deposit into Incentives Reward contract and Skip to next epoch to accrue rewards
         uint256 tokenId = 1;
         bytes memory depositPayload = abi.encode(TOKEN_1, tokenId);
         vm.stopPrank();
@@ -148,26 +180,32 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         tokens[2] = address(weth);
         bytes memory payload = abi.encode(users.alice, tokenId, tokens);
         bytes memory message = abi.encode(Commands.GET_INCENTIVES, abi.encode(address(leafGauge), payload));
+        bytes memory wrappedMessage = abi.encode(2, message);
 
         assertEq(token0.balanceOf(users.alice), 0);
         assertEq(token1.balanceOf(users.alice), 0);
         assertEq(weth.balanceOf(users.alice), 0);
 
         vm.startPrank(address(leafMailbox));
-        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(wrappedMessage)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
 
         assertEq(token0.balanceOf(users.alice), TOKEN_1);
         assertEq(token1.balanceOf(users.alice), TOKEN_1);
         assertEq(weth.balanceOf(users.alice), TOKEN_1);
+        assertEq(leafMessageModule.receivingNonce(), 3);
     }
 
-    function test_WhenTheCommandIsGetFees() external whenTheCallerIsMailbox whenTheOriginIsRoot whenTheSenderIsModule {
+    function test_WhenTheCommandIsGetFees()
+        external
+        whenTheCallerIsMailbox
+        whenTheOriginIsRoot
+        whenTheSenderIsModule
+        whenTheReceivingNonceIsTheExpectedNonce
+    {
         // It decodes the gauge address from the message
         // It calls get reward on the fee rewards contract corresponding to the gauge with the payload
         // It emits the {ReceivedMessage} event
-
-        // Deposit into Fees Reward contract and Skip to next epoch to accrue rewards
         uint256 tokenId = 1;
         bytes memory depositPayload = abi.encode(TOKEN_1, tokenId);
         vm.stopPrank();
@@ -182,16 +220,18 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         tokens[1] = address(token1);
         bytes memory payload = abi.encode(users.alice, tokenId, tokens);
         bytes memory message = abi.encode(Commands.GET_FEES, abi.encode(address(leafGauge), payload));
+        bytes memory wrappedMessage = abi.encode(2, message);
 
         assertEq(token0.balanceOf(users.alice), 0);
         assertEq(token1.balanceOf(users.alice), 0);
 
         vm.startPrank(address(leafMailbox));
-        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(wrappedMessage)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
 
         assertEq(token0.balanceOf(users.alice), TOKEN_1);
         assertEq(token1.balanceOf(users.alice), TOKEN_1);
+        assertEq(leafMessageModule.receivingNonce(), 3);
     }
 
     modifier whenTheCommandIsCreateGauge() {
@@ -203,9 +243,10 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
         whenTheSenderIsModule
+        whenTheReceivingNonceIsTheExpectedNonce
         whenTheCommandIsCreateGauge
     {
-        // It decodes the configuration from the message
+        // It decodes the pool configuration from the message
         // It calls createPool on pool factory with decoded config
         // It calls createGauge on gauge factory for new pool
         // It emits the {ReceivedMessage} event
@@ -221,10 +262,11 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
             address(leafVotingRewardsFactory), address(leafGaugeFactory), address(token0), address(token1), _poolParam
         );
         bytes memory message = abi.encode(Commands.CREATE_GAUGE, abi.encode(address(leafPoolFactory), payload));
+        bytes memory wrappedMessage = abi.encode(2, message);
 
         vm.expectEmit(address(leafMessageModule));
-        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(wrappedMessage)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
 
         assertTrue(leafPoolFactory.isPool(pool));
         leafGauge = LeafGauge(leafVoter.gauges(pool));
@@ -234,6 +276,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
         assertEq(leafGauge.bridge(), address(leafMessageBridge));
         assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
+        assertEq(leafMessageModule.receivingNonce(), 3);
     }
 
     function test_WhenThereIsAPoolForNewGauge()
@@ -241,13 +284,12 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
         whenTheSenderIsModule
+        whenTheReceivingNonceIsTheExpectedNonce
         whenTheCommandIsCreateGauge
     {
         // It decodes the pool configuration from the message
         // It calls createGauge on gauge factory for pool with given config
         // It emits the {ReceivedMessage} event
-
-        // using stable = true to avoid collision with existing pool
         uint24 _poolParam = 1;
         leafPool = Pool(leafPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), fee: _poolParam}));
 
@@ -255,10 +297,11 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
             address(leafVotingRewardsFactory), address(leafGaugeFactory), address(token0), address(token1), _poolParam
         );
         bytes memory message = abi.encode(Commands.CREATE_GAUGE, abi.encode(address(leafPoolFactory), payload));
+        bytes memory wrappedMessage = abi.encode(2, message);
 
         vm.expectEmit(address(leafMessageModule));
-        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(wrappedMessage)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
 
         leafGauge = LeafGauge(leafVoter.gauges(address(leafPool)));
 
@@ -267,28 +310,41 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
         assertEq(leafGauge.bridge(), address(leafMessageBridge));
         assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
+        assertEq(leafMessageModule.receivingNonce(), 3);
     }
 
-    function test_WhenTheCommandIsNotify() external whenTheCallerIsMailbox whenTheOriginIsRoot whenTheSenderIsModule {
+    function test_WhenTheCommandIsNotify()
+        external
+        whenTheCallerIsMailbox
+        whenTheOriginIsRoot
+        whenTheSenderIsModule
+        whenTheReceivingNonceIsTheExpectedNonce
+    {
         // It decodes the gauge address and the amount from the message
         // It calls mint on the bridge
         // It approves the gauge to spend amount of xerc20
         // It calls notify reward amount on the decoded gauge
         // It emits the {ReceivedMessage} event
-
         uint256 amount = TOKEN_1 * 1000;
         bytes memory payload = abi.encode(address(leafGauge), amount);
         bytes memory message = abi.encode(Commands.NOTIFY, payload);
+        bytes memory wrappedMessage = abi.encode(2, message);
 
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), 0);
 
         vm.expectEmit(address(leafMessageModule));
-        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(wrappedMessage)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
 
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
+        assertEq(leafGauge.rewardPerTokenStored(), 0);
+        assertEq(leafGauge.rewardRate(), amount / WEEK);
+        assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), amount / WEEK);
+        assertEq(leafGauge.lastUpdateTime(), block.timestamp);
+        assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
+        assertEq(leafMessageModule.receivingNonce(), 3);
     }
 
     function test_WhenTheCommandIsNotifyWithoutClaim()
@@ -296,36 +352,50 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
         whenTheSenderIsModule
+        whenTheReceivingNonceIsTheExpectedNonce
     {
         // It decodes the gauge address and the amount from the message
         // It calls mint on the bridge
         // It approves the gauge to spend amount of xerc20
         // It calls notify reward without claim on the decoded gauge
         // It emits the {ReceivedMessage} event
-
         uint256 amount = TOKEN_1 * 1000;
         bytes memory payload = abi.encode(address(leafGauge), amount);
         bytes memory message = abi.encode(Commands.NOTIFY_WITHOUT_CLAIM, payload);
+        bytes memory wrappedMessage = abi.encode(2, message);
 
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), 0);
 
         vm.expectEmit(address(leafMessageModule));
-        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(wrappedMessage)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
 
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
+        assertEq(leafGauge.rewardPerTokenStored(), 0);
+        assertEq(leafGauge.rewardRate(), amount / WEEK);
+        assertEq(leafGauge.rewardRateByEpoch(rootStartTime), amount / WEEK);
+        assertEq(leafGauge.lastUpdateTime(), block.timestamp);
+        assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
+        assertEq(leafMessageModule.receivingNonce(), 3);
     }
 
-    function test_WhenTheCommandIsInvalid() external whenTheCallerIsMailbox whenTheOriginIsRoot whenTheSenderIsModule {
+    function test_WhenTheCommandIsInvalid()
+        external
+        whenTheCallerIsMailbox
+        whenTheOriginIsRoot
+        whenTheSenderIsModule
+        whenTheReceivingNonceIsTheExpectedNonce
+    {
         // It reverts with {InvalidCommand}
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(type(uint256).max, abi.encode(address(leafGauge), payload));
+        bytes memory wrappedMessage = abi.encode(2, message);
 
         vm.expectRevert(ILeafHLMessageModule.InvalidCommand.selector);
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
     }
 }

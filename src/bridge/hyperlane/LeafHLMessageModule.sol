@@ -30,6 +30,8 @@ contract LeafHLMessageModule is ILeafHLMessageModule {
     address public immutable mailbox;
     /// @inheritdoc ILeafHLMessageModule
     IInterchainSecurityModule public immutable securityModule;
+    /// @inheritdoc ILeafHLMessageModule
+    uint256 public receivingNonce;
 
     constructor(address _bridge, address _mailbox, address _ism) {
         bridge = _bridge;
@@ -44,8 +46,11 @@ contract LeafHLMessageModule is ILeafHLMessageModule {
         if (msg.sender != mailbox) revert NotMailbox();
         if (_origin != 10) revert NotRoot();
         if (TypeCasts.bytes32ToAddress(_sender) != address(this)) revert NotModule();
+        (uint256 nonce, bytes memory unwrappedMessage) = abi.decode(_message, (uint256, bytes));
+        if (nonce != receivingNonce) revert InvalidNonce();
+        receivingNonce += 1;
 
-        (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
+        (uint256 command, bytes memory messageWithoutCommand) = abi.decode(unwrappedMessage, (uint256, bytes));
 
         if (command == Commands.DEPOSIT) {
             (address gauge, bytes memory payload) = abi.decode(messageWithoutCommand, (address, bytes));

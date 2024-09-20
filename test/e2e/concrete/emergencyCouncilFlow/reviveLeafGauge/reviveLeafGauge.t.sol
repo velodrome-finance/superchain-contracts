@@ -33,6 +33,8 @@ contract ReviveLeafGaugeE2ETest is EmergencyCouncilE2ETest {
 
         bytes memory payload = abi.encode(leafGauge);
         bytes memory message = abi.encode(Commands.REVIVE_GAUGE, payload);
+        bytes memory wrappedMessage = abi.encode(2, message);
+
         stdstore.target(address(mockVoter)).sig("isAlive(address)").with_key(address(leafGauge)).checked_write(false);
         vm.expectEmit(address(mockVoter));
         emit IVoter.GaugeRevived({gauge: address(leafGauge)});
@@ -41,7 +43,7 @@ contract ReviveLeafGaugeE2ETest is EmergencyCouncilE2ETest {
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: MESSAGE_FEE,
-            _message: string(message)
+            _message: string(wrappedMessage)
         });
         emergencyCouncil.reviveLeafGauge(leaf, address(leafGauge));
 

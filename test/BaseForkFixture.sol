@@ -574,6 +574,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
         mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(bribePool)});
         vm.stopPrank();
 
+        assertEq(rootMessageModule.sendingNonce(), 2);
+
         vm.selectFork({forkId: leafId});
         // set up leaf pool & gauge by processing pending `createGauge` message in mailbox
         leafMailbox.processNextInboundMessage();
@@ -584,6 +586,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
 
         // set up pool & gauge for bribe token on leaf by processing pending `createGauge` message in mailbox
         leafMailbox.processNextInboundMessage();
+
+        assertEq(leafMessageModule.receivingNonce(), 2);
     }
 
     function createUsers() internal {

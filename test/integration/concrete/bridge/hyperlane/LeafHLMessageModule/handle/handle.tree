@@ -8,45 +8,48 @@ HandleIntegrationConcreteTest
         ├── When the sender is not module
         │   └── It should revert with NotModule
         └── When the sender is module
-            ├── When the command is deposit
-            │   ├── It decodes the gauge address from the message
-            │   ├── It calls deposit on the fee rewards contract corresponding to the gauge with the payload
-            │   ├── It calls deposit on the incentive rewards contract corresponding to the gauge with the payload
-            │   └── It emits the {ReceivedMessage} event
-            ├── When the command is withdraw
-            │   ├── It decodes the gauge address from the message
-            │   ├── It calls withdraw on the fee rewards contract corresponding to the gauge with the payload
-            │   ├── It calls withdraw on the incentive rewards contract corresponding to the gauge with the payload
-            │   └── It emits the {ReceivedMessage} event
-            ├── When the command is get incentives
-            │   ├── It decodes the gauge address from the message
-            │   ├── It calls get reward on the incentive rewards contract corresponding to the gauge with the payload
-            │   └── It emits the {ReceivedMessage} event
-            ├── When the command is get fees
-            │   ├── It decodes the gauge address from the message
-            │   ├── It calls get reward on the fee rewards contract corresponding to the gauge with the payload
-            │   └── It emits the {ReceivedMessage} event
-            ├── When the command is createGauge
-            │   ├── When there is no pool for new gauge
-            │   │   ├── It decodes the pool configuration from the message
-            │   │   ├── It calls createPool on pool factory with decoded config
-            │   │   ├── It calls createGauge on gauge factory for new pool
-            │   │   └── It emits the {ReceivedMessage} event
-            │   └── When there is a pool for new gauge
-            │       ├── It decodes the pool configuration from the message
-            │       ├── It calls createGauge on gauge factory for pool with given config
-            │       └── It emits the {ReceivedMessage} event
-            ├── When the command is notify
-            │   ├── It decodes the gauge address and the amount from the message
-            │   ├── It calls mint on the bridge
-            │   ├── It approves the gauge to spend amount of xerc20
-            │   ├── It calls notify reward amount on the decoded gauge 
-            │   └── It emits the {ReceivedMessage} event
-            ├── When the command is notify without claim
-            │   ├── It decodes the gauge address and the amount from the message
-            │   ├── It calls mint on the bridge
-            │   ├── It approves the gauge to spend amount of xerc20
-            │   ├── It calls notify reward without claim on the decoded gauge
-            │   └── It emits the {ReceivedMessage} event
-            └── When the command is invalid
-                └── It reverts with {InvalidCommand}
+            ├── When the receiving nonce is not the expected nonce
+            │   └── It should revert with InvalidNonce
+            └── When the receiving nonce is the expected nonce
+                ├── When the command is deposit
+                │   ├── It decodes the gauge address from the message
+                │   ├── It calls deposit on the fee rewards contract corresponding to the gauge with the payload
+                │   ├── It calls deposit on the incentive rewards contract corresponding to the gauge with the payload
+                │   └── It emits the {ReceivedMessage} event
+                ├── When the command is withdraw
+                │   ├── It decodes the gauge address from the message
+                │   ├── It calls withdraw on the fee rewards contract corresponding to the gauge with the payload
+                │   ├── It calls withdraw on the incentive rewards contract corresponding to the gauge with the payload
+                │   └── It emits the {ReceivedMessage} event
+                ├── When the command is get incentives
+                │   ├── It decodes the gauge address from the message
+                │   ├── It calls get reward on the incentive rewards contract corresponding to the gauge with the payload
+                │   └── It emits the {ReceivedMessage} event
+                ├── When the command is get fees
+                │   ├── It decodes the gauge address from the message
+                │   ├── It calls get reward on the fee rewards contract corresponding to the gauge with the payload
+                │   └── It emits the {ReceivedMessage} event
+                ├── When the command is createGauge
+                │   ├── When there is no pool for new gauge
+                │   │   ├── It decodes the pool configuration from the message
+                │   │   ├── It calls createPool on pool factory with decoded config
+                │   │   ├── It calls createGauge on gauge factory for new pool
+                │   │   └── It emits the {ReceivedMessage} event
+                │   └── When there is a pool for new gauge
+                │       ├── It decodes the pool configuration from the message
+                │       ├── It calls createGauge on gauge factory for pool with given config
+                │       └── It emits the {ReceivedMessage} event
+                ├── When the command is notify
+                │   ├── It decodes the gauge address and the amount from the message
+                │   ├── It calls mint on the bridge
+                │   ├── It approves the gauge to spend amount of xerc20
+                │   ├── It calls notify reward amount on the decoded gauge 
+                │   └── It emits the {ReceivedMessage} event
+                ├── When the command is notify without claim
+                │   ├── It decodes the gauge address and the amount from the message
+                │   ├── It calls mint on the bridge
+                │   ├── It approves the gauge to spend amount of xerc20
+                │   ├── It calls notify reward without claim on the decoded gauge
+                │   └── It emits the {ReceivedMessage} event
+                └── When the command is invalid
+                    └── It reverts with {InvalidCommand}

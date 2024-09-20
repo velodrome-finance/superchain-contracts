@@ -52,6 +52,7 @@ contract KillLeafGaugeE2ETest is EmergencyCouncilE2ETest {
 
         bytes memory payload = abi.encode(leafGauge);
         bytes memory message = abi.encode(Commands.KILL_GAUGE, payload);
+        bytes memory wrappedMessage = abi.encode(2, message);
 
         vm.expectEmit(address(mockVoter));
         emit IVoter.GaugeKilled({gauge: address(leafGauge)});
@@ -60,7 +61,7 @@ contract KillLeafGaugeE2ETest is EmergencyCouncilE2ETest {
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: MESSAGE_FEE,
-            _message: string(message)
+            _message: string(wrappedMessage)
         });
         emergencyCouncil.killLeafGauge(leaf, address(leafGauge));
 
@@ -90,6 +91,7 @@ contract KillLeafGaugeE2ETest is EmergencyCouncilE2ETest {
         uint256 balanceOfVoterBefore = rootRewardToken.balanceOf(address(mockVoter));
         bytes memory payload = abi.encode(leafGauge);
         bytes memory message = abi.encode(Commands.KILL_GAUGE, payload);
+        bytes memory wrappedMessage = abi.encode(2, message);
 
         vm.expectEmit(address(mockVoter));
         emit IVoter.GaugeKilled({gauge: address(leafGauge)});
@@ -98,7 +100,7 @@ contract KillLeafGaugeE2ETest is EmergencyCouncilE2ETest {
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: MESSAGE_FEE,
-            _message: string(message)
+            _message: string(wrappedMessage)
         });
         emergencyCouncil.killLeafGauge(leaf, address(leafGauge));
 

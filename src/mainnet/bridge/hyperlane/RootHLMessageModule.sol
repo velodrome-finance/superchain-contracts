@@ -15,6 +15,8 @@ contract RootHLMessageModule is IRootHLMessageModule {
     address public immutable bridge;
     /// @inheritdoc IRootHLMessageModule
     address public immutable mailbox;
+    /// @inheritdoc IRootHLMessageModule
+    uint256 public sendingNonce;
 
     constructor(address _bridge, address _mailbox) {
         bridge = _bridge;
@@ -34,17 +36,19 @@ contract RootHLMessageModule is IRootHLMessageModule {
     function sendMessage(uint256 _chainid, bytes calldata _message) external payable override {
         if (msg.sender != bridge) revert NotBridge();
         uint32 domain = uint32(_chainid);
+        bytes memory message = abi.encode(sendingNonce, _message);
         Mailbox(mailbox).dispatch{value: msg.value}({
             _destinationDomain: domain,
             _recipientAddress: TypeCasts.addressToBytes32(address(this)),
-            _messageBody: _message
+            _messageBody: message
         });
+        sendingNonce += 1;
 
         emit SentMessage({
             _destination: domain,
             _recipient: TypeCasts.addressToBytes32(address(this)),
             _value: msg.value,
-            _message: string(_message)
+            _message: string(message)
         });
     }
 }

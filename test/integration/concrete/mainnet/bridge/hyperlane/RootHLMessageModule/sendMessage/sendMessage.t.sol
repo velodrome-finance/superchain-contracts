@@ -20,6 +20,7 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
+        bytes memory wrappedMessage = abi.encode(2, message);
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
 
         vm.prank(address(rootMessageBridge));
@@ -28,11 +29,11 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
-            _message: string(message)
+            _message: string(wrappedMessage)
         });
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
 
-        assertEq(address(rootMessageModule).balance, 0);
+        assertEq(rootMessageModule.sendingNonce(), 3);
 
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage();

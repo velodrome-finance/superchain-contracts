@@ -9,4 +9,7 @@ interface IRootHLMessageModule is IMessageSender {
 
     /// @notice Returns the address of the mailbox contract that is used to bridge by this contract
     function mailbox() external view returns (address);
+
+    /// @notice Returns the nonce of the next message to be sent
+    function sendingNonce() external view returns (uint256);
 }

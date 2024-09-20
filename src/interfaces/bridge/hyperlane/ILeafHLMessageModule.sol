@@ -7,6 +7,7 @@ import {IHLHandler} from "./IHLHandler.sol";
 
 interface ILeafHLMessageModule is IHLHandler {
     error InvalidCommand();
+    error InvalidNonce();
     error NotModule();
 
     /// @notice Returns the address of the bridge contract that this module is associated with
@@ -23,4 +24,7 @@ interface ILeafHLMessageModule is IHLHandler {
 
     /// @notice Returns the address of the security module contract used by the bridge
     function securityModule() external view returns (IInterchainSecurityModule);
+
+    /// @notice Returns the nonce of the next message to be received
+    function receivingNonce() external view returns (uint256);
 }
