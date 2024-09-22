@@ -4,6 +4,8 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../LeafHLMessageModule.t.sol";
 
 contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
+    using stdStorage for StdStorage;
+
     uint32 origin;
     bytes32 sender = TypeCasts.addressToBytes32(users.charlie);
 
@@ -65,7 +67,6 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
-        bytes memory wrappedMessage = abi.encode(_nonce, message);
 
         vm.expectRevert(ILeafHLMessageModule.InvalidNonce.selector);
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
@@ -86,20 +87,21 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         // It calls deposit on the fee rewards contract corresponding to the gauge with the payload
         // It calls deposit on the incentive rewards contract corresponding to the gauge with the payload
         // It emits the {ReceivedMessage} event
+        stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
+
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
-        bytes memory wrappedMessage = abi.encode(2, message);
+        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(1_000, abi.encode(address(leafGauge), payload)));
 
         vm.expectEmit(address(leafMessageModule));
-        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(wrappedMessage)});
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
 
         assertEq(leafFVR.totalSupply(), amount);
         assertEq(leafFVR.balanceOf(tokenId), amount);
         assertEq(leafIVR.totalSupply(), amount);
         assertEq(leafIVR.balanceOf(tokenId), amount);
-        assertEq(leafMessageModule.receivingNonce(), 3);
+        assertEq(leafMessageModule.receivingNonce(), 1_001);
     }
 
     function testFuzz_WhenTheCommandIsWithdraw(uint256 amount)
@@ -113,29 +115,29 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         // It calls withdraw on the fee rewards contract corresponding to the gauge with the payload
         // It calls withdraw on the incentive rewards contract corresponding to the gauge with the payload
         // It emits the {ReceivedMessage} event
+        stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
+
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
-        bytes memory wrappedMessage = abi.encode(2, message);
+        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(1_000, abi.encode(address(leafGauge), payload)));
 
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
         assertEq(leafFVR.totalSupply(), amount);
         assertEq(leafFVR.balanceOf(tokenId), amount);
         assertEq(leafIVR.totalSupply(), amount);
         assertEq(leafIVR.balanceOf(tokenId), amount);
 
-        message = abi.encode(Commands.WITHDRAW, abi.encode(address(leafGauge), payload));
-        wrappedMessage = abi.encode(3, message);
+        message = abi.encode(Commands.WITHDRAW, abi.encode(1_001, abi.encode(address(leafGauge), payload)));
 
         vm.expectEmit(address(leafMessageModule));
-        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(wrappedMessage)});
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
 
         assertEq(leafFVR.totalSupply(), 0);
         assertEq(leafFVR.balanceOf(tokenId), 0);
         assertEq(leafIVR.totalSupply(), 0);
         assertEq(leafIVR.balanceOf(tokenId), 0);
-        assertEq(leafMessageModule.receivingNonce(), 4);
+        assertEq(leafMessageModule.receivingNonce(), 1_002);
     }
 
     function testFuzz_WhenTheCommandIsNotify(uint256 amount)
@@ -150,19 +152,20 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         // It approves the gauge to spend amount of xerc20
         // It calls notify reward amount on the decoded gauge
         // It emits the {ReceivedMessage} event
+        stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
+
         uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
 
         amount = bound(amount, timeUntilNext, MAX_BUFFER_CAP / 2);
         bytes memory payload = abi.encode(address(leafGauge), amount);
         bytes memory message = abi.encode(Commands.NOTIFY, payload);
-        bytes memory wrappedMessage = abi.encode(2, message);
 
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), 0);
 
         vm.expectEmit(address(leafMessageModule));
-        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(wrappedMessage)});
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
 
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
@@ -171,7 +174,7 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), amount / WEEK);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
         assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
-        assertEq(leafMessageModule.receivingNonce(), 3);
+        assertEq(leafMessageModule.receivingNonce(), 1_000);
     }
 
     function testFuzz_WhenTheCommandIsNotifyWithoutClaim(uint256 amount)
@@ -186,19 +189,20 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         // It approves the gauge to spend amount of xerc20
         // It calls notify reward without claim on the decoded gauge
         // It emits the {ReceivedMessage} event
+        stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
+
         uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
 
         amount = bound(amount, timeUntilNext, MAX_BUFFER_CAP / 2);
         bytes memory payload = abi.encode(address(leafGauge), amount);
         bytes memory message = abi.encode(Commands.NOTIFY_WITHOUT_CLAIM, payload);
-        bytes memory wrappedMessage = abi.encode(2, message);
 
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), 0);
 
         vm.expectEmit(address(leafMessageModule));
-        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(wrappedMessage)});
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
 
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
@@ -207,7 +211,7 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         assertEq(leafGauge.rewardRateByEpoch(rootStartTime), amount / WEEK);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
         assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
-        assertEq(leafMessageModule.receivingNonce(), 3);
+        assertEq(leafMessageModule.receivingNonce(), 1_000);
     }
 
     function testFuzz_WhenTheCommandIsInvalid(uint256 amount)
@@ -221,9 +225,8 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(type(uint256).max, abi.encode(address(leafGauge), payload));
-        bytes memory wrappedMessage = abi.encode(2, message);
 
         vm.expectRevert(ILeafHLMessageModule.InvalidCommand.selector);
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: wrappedMessage});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
     }
 }

@@ -11,6 +11,6 @@ abstract contract LeafHLMessageModuleTest is BaseForkFixture {
         assertEq(leafMessageModule.mailbox(), address(leafMailbox));
         assertEq(leafMessageModule.voter(), address(leafVoter));
         assertEq(address(leafMessageModule.securityModule()), address(leafIsm));
-        assertEq(address(leafMessageModule).balance, 0);
+        assertEq(leafMessageModule.receivingNonce(), 0);
     }
 }

@@ -8,6 +8,6 @@ abstract contract RootHLMessageModuleTest is BaseForkFixture {
         vm.selectFork({forkId: rootId});
         assertEq(rootMessageModule.bridge(), address(rootMessageBridge));
         assertEq(rootMessageModule.mailbox(), address(rootMailbox));
-        assertEq(address(rootMessageModule).balance, 0);
+        assertEq(rootMessageModule.sendingNonce(), 0);
     }
 }

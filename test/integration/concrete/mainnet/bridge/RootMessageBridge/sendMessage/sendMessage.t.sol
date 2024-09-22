@@ -15,11 +15,6 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         deal({token: address(weth), to: users.alice, give: MESSAGE_FEE});
         vm.prank(users.alice);
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
-
-        // use users.alice as tx.origin
-        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE});
-        vm.prank(users.alice);
-        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
     }
 
     function test_WhenTheChainIdIsNotRegistered() external {

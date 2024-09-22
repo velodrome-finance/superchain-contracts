@@ -7,6 +7,7 @@ import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 import {
     IRootHLMessageModule, IMessageSender
 } from "../../../interfaces/mainnet/bridge/hyperlane/IRootHLMessageModule.sol";
+import {Commands} from "../../../libraries/Commands.sol";
 
 /// @title Hyperlane Token Bridge
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
@@ -33,22 +34,28 @@ contract RootHLMessageModule is IRootHLMessageModule {
     }
 
     /// @inheritdoc IMessageSender
-    function sendMessage(uint256 _chainid, bytes calldata _message) external payable override {
+    function sendMessage(uint256 _chainid, bytes memory _message) external payable override {
         if (msg.sender != bridge) revert NotBridge();
         uint32 domain = uint32(_chainid);
-        bytes memory message = abi.encode(sendingNonce, _message);
+
+        (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
+        if (command <= Commands.GET_FEES) {
+            _message = abi.encode(sendingNonce, messageWithoutCommand);
+            _message = abi.encode(command, _message);
+            sendingNonce += 1;
+        }
+
         Mailbox(mailbox).dispatch{value: msg.value}({
             _destinationDomain: domain,
             _recipientAddress: TypeCasts.addressToBytes32(address(this)),
-            _messageBody: message
+            _messageBody: _message
         });
-        sendingNonce += 1;
 
         emit SentMessage({
             _destination: domain,
             _recipient: TypeCasts.addressToBytes32(address(this)),
             _value: msg.value,
-            _message: string(message)
+            _message: string(_message)
         });
     }
 }
