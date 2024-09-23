@@ -2,6 +2,9 @@
 pragma solidity ^0.8.0;
 
 interface IMinter {
+    /// @notice Address of token issued by Minter
+    function velo() external view returns (address);
+
     /// @notice Starting weekly emission of 15M VELO (VELO has 18 decimals)
     function weekly() external view returns (uint256);
 

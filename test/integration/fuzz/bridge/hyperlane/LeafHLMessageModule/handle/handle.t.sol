@@ -66,7 +66,7 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(999, abi.encode(address(leafGauge), payload)));
 
         vm.expectRevert(ILeafHLMessageModule.InvalidNonce.selector);
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});

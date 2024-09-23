@@ -8,7 +8,6 @@ import {IRootGauge} from "../../interfaces/mainnet/gauges/IRootGauge.sol";
 import {IXERC20Lockbox} from "../../interfaces/xerc20/IXERC20Lockbox.sol";
 import {IRootMessageBridge} from "../../interfaces/mainnet/bridge/IRootMessageBridge.sol";
 import {IRootGaugeFactory} from "../../interfaces/mainnet/gauges/IRootGaugeFactory.sol";
-import {IMinter} from "../..//interfaces/external/IMinter.sol";
 import {IVoter} from "../..//interfaces/external/IVoter.sol";
 
 import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
@@ -34,13 +33,6 @@ contract RootGauge is IRootGauge {
     address public immutable minter;
     /// @inheritdoc IRootGauge
     uint256 public immutable chainid;
-
-    /// @inheritdoc IRootGauge
-    uint256 public constant MAX_BPS = 10_000;
-    /// @inheritdoc IRootGauge
-    uint256 public constant WEEKLY_DECAY = 9_900;
-    /// @inheritdoc IRootGauge
-    uint256 public constant TAIL_START_TIMESTAMP = 1743638400;
 
     constructor(
         address _gaugeFactory,
@@ -74,7 +66,7 @@ contract RootGauge is IRootGauge {
     function notifyRewardAmount(uint256 _amount) external {
         if (msg.sender != voter) revert NotVoter();
 
-        uint256 maxAmount = _calculateMaxEmissions();
+        uint256 maxAmount = IRootGaugeFactory(gaugeFactory).calculateMaxEmissions({_gauge: address(this)});
         /// @dev If emission cap is exceeded, transfer excess emissions back to Minter
         if (_amount > maxAmount) {
             IERC20(rewardToken).transferFrom(msg.sender, minter, _amount - maxAmount);
@@ -105,24 +97,5 @@ contract RootGauge is IRootGauge {
         IRootMessageBridge(bridge).sendMessage({_chainid: uint32(chainid), _message: message});
 
         emit NotifyReward({_sender: msg.sender, _amount: _amount});
-    }
-
-    /// @notice Calculates max amount of emissions that can be deposited into gauge
-    /// @dev    Max Amount is calculated based on total weekly emissions and `emissionCap` set on gauge
-    function _calculateMaxEmissions() internal view returns (uint256) {
-        uint256 weeklyEmissions;
-        if (IMinter(minter).activePeriod() < TAIL_START_TIMESTAMP) {
-            /// @dev Calculate weekly emissions before decay
-            weeklyEmissions = (IMinter(minter).weekly() * MAX_BPS) / WEEKLY_DECAY;
-        } else {
-            /// @dev Calculate tail emissions
-            /// Tail emissions are slightly inflated since `totalSupply` includes this week's emissions
-            /// The difference is negligible as weekly emissions are a small percentage of `totalSupply`
-            uint256 totalSupply = IERC20(rewardToken).totalSupply();
-            weeklyEmissions = (totalSupply * IMinter(minter).tailEmissionRate()) / MAX_BPS;
-        }
-
-        uint256 maxRate = IRootGaugeFactory(gaugeFactory).emissionCaps({_gauge: address(this)});
-        return (weeklyEmissions * maxRate) / MAX_BPS;
     }
 }

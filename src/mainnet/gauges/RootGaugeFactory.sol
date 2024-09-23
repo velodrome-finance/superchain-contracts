@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
+import {IERC20} from "@openzeppelin5/contracts/token/ERC20/IERC20.sol";
+
 import {IRootGaugeFactory} from "../../interfaces/mainnet/gauges/IRootGaugeFactory.sol";
-import {IRootPool} from "../../interfaces/mainnet/pools/IRootPool.sol";
 import {IRootBribeVotingReward} from "../../interfaces/mainnet/rewards/IRootBribeVotingReward.sol";
 import {IRootFeesVotingReward} from "../../interfaces/mainnet/rewards/IRootFeesVotingReward.sol";
 import {IRootMessageBridge} from "../../interfaces/mainnet/bridge/IRootMessageBridge.sol";
+import {IRootPool} from "../../interfaces/mainnet/pools/IRootPool.sol";
+import {IMinter} from "../..//interfaces/external/IMinter.sol";
+import {IVoter} from "../..//interfaces/external/IVoter.sol";
 
 import {CreateXLibrary} from "../../libraries/CreateXLibrary.sol";
 import {Commands} from "../../libraries/Commands.sol";
@@ -28,13 +32,28 @@ contract RootGaugeFactory is IRootGaugeFactory {
     /// @inheritdoc IRootGaugeFactory
     address public immutable votingRewardsFactory;
     /// @inheritdoc IRootGaugeFactory
+    address public immutable rewardToken;
+    /// @inheritdoc IRootGaugeFactory
+    address public immutable minter;
+    /// @inheritdoc IRootGaugeFactory
     address public notifyAdmin;
     /// @inheritdoc IRootGaugeFactory
     address public emissionAdmin;
     /// @inheritdoc IRootGaugeFactory
     uint256 public defaultCap;
+    /// @inheritdoc IRootGaugeFactory
+    uint256 public weeklyEmissions;
+    /// @inheritdoc IRootGaugeFactory
+    uint256 public activePeriod;
     /// @notice Emission cap for each gauge
     mapping(address => uint256) internal _emissionCaps;
+
+    /// @inheritdoc IRootGaugeFactory
+    uint256 public constant MAX_BPS = 10_000;
+    /// @inheritdoc IRootGaugeFactory
+    uint256 public constant WEEKLY_DECAY = 9_900;
+    /// @inheritdoc IRootGaugeFactory
+    uint256 public constant TAIL_START_TIMESTAMP = 1743638400;
 
     constructor(
         address _voter,
@@ -56,10 +75,12 @@ contract RootGaugeFactory is IRootGaugeFactory {
         notifyAdmin = _notifyAdmin;
         emissionAdmin = _emissionAdmin;
         defaultCap = _defaultCap;
+        minter = IVoter(_voter).minter();
+        rewardToken = IMinter(minter).velo();
     }
 
     /// @inheritdoc IRootGaugeFactory
-    function emissionCaps(address _gauge) external view returns (uint256) {
+    function emissionCaps(address _gauge) public view returns (uint256) {
         uint256 emissionCap = _emissionCaps[_gauge];
         return emissionCap == 0 ? defaultCap : emissionCap;
     }
@@ -110,6 +131,32 @@ contract RootGaugeFactory is IRootGaugeFactory {
         bytes memory payload = abi.encode(votingRewardsFactory, address(this), _token0, _token1, _poolParam);
         bytes memory message = abi.encode(Commands.CREATE_GAUGE, abi.encode(poolFactory, payload));
         IRootMessageBridge(messageBridge).sendMessage({_chainid: _chainid, _message: message});
+    }
+
+    /// @inheritdoc IRootGaugeFactory
+    function calculateMaxEmissions(address _gauge) external returns (uint256) {
+        uint256 _activePeriod = IMinter(minter).activePeriod();
+        uint256 maxRate = emissionCaps({_gauge: _gauge});
+
+        if (activePeriod != _activePeriod) {
+            uint256 _weeklyEmissions;
+            if (_activePeriod < TAIL_START_TIMESTAMP) {
+                /// @dev Calculate weekly emissions before decay
+                _weeklyEmissions = (IMinter(minter).weekly() * MAX_BPS) / WEEKLY_DECAY;
+            } else {
+                /// @dev Calculate tail emissions
+                /// Tail emissions are slightly inflated since `totalSupply` includes this week's emissions
+                /// The difference is negligible as weekly emissions are a small percentage of `totalSupply`
+                uint256 totalSupply = IERC20(rewardToken).totalSupply();
+                _weeklyEmissions = (totalSupply * IMinter(minter).tailEmissionRate()) / MAX_BPS;
+            }
+
+            activePeriod = _activePeriod;
+            weeklyEmissions = _weeklyEmissions;
+            return (_weeklyEmissions * maxRate) / MAX_BPS;
+        } else {
+            return (weeklyEmissions * maxRate) / MAX_BPS;
+        }
     }
 
     /// @inheritdoc IRootGaugeFactory

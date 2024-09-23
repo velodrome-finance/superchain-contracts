@@ -12,8 +12,8 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
     function setUp() public override {
         super.setUp();
 
-        WEEKLY_DECAY = rootGauge.WEEKLY_DECAY();
-        TAIL_START_TIMESTAMP = rootGauge.TAIL_START_TIMESTAMP();
+        WEEKLY_DECAY = rootGaugeFactory.WEEKLY_DECAY();
+        TAIL_START_TIMESTAMP = rootGaugeFactory.TAIL_START_TIMESTAMP();
 
         // use users.alice as tx.origin
         deal({token: address(weth), to: users.alice, give: MESSAGE_FEE});
@@ -43,8 +43,9 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         /// @dev `weekly` on first week of tail emissions is approximately 5_950_167 tokens
         stdstore.target(address(minter)).sig("weekly()").checked_write(5_950_167 * TOKEN_1);
         /// @dev Overwrite `totalSupply` to be identical to VELO supply at fork timestamp
-        stdstore.target(address(rootRewardToken)).sig("totalSupply()").checked_write(1_750_000_000 * TOKEN_1);
-        stdstore.target(address(minter)).sig("activePeriod()").checked_write(rootGauge.TAIL_START_TIMESTAMP());
+        uint256 totalSupply = IERC20(minter.velo()).totalSupply();
+        stdstore.target(address(rootRewardToken)).sig("totalSupply()").checked_write(totalSupply);
+        stdstore.target(address(minter)).sig("activePeriod()").checked_write(rootGaugeFactory.TAIL_START_TIMESTAMP());
         _;
     }
 
@@ -69,7 +70,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         // It should update the last update timestamp
         // It should update the period finish timestamp
         // It should emit a {NotifyReward} event
-        uint256 weeklyEmissions = (rootRewardToken.totalSupply() * IMinter(minter).tailEmissionRate()) / MAX_BPS;
+        uint256 weeklyEmissions = (rootRewardToken.totalSupply() * minter.tailEmissionRate()) / MAX_BPS;
         uint256 maxEmissionRate = rootGaugeFactory.emissionCaps(address(rootGauge));
         uint256 maxAmount = maxEmissionRate * weeklyEmissions / MAX_BPS;
         uint256 amount = maxAmount + TOKEN_1;
@@ -125,7 +126,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         // It should update the last update timestamp
         // It should update the period finish timestamp
         // It should emit a {NotifyReward} event
-        uint256 weeklyEmissions = (rootRewardToken.totalSupply() * IMinter(minter).tailEmissionRate()) / MAX_BPS;
+        uint256 weeklyEmissions = (rootRewardToken.totalSupply() * minter.tailEmissionRate()) / MAX_BPS;
         uint256 maxEmissionRate = rootGaugeFactory.emissionCaps(address(rootGauge));
         uint256 maxAmount = maxEmissionRate * weeklyEmissions / MAX_BPS;
         uint256 amount = maxAmount + TOKEN_1;

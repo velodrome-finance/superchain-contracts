@@ -30,6 +30,12 @@ interface IRootGaugeFactory {
     /// @notice Voting rewards factory contract address
     function votingRewardsFactory() external view returns (address);
 
+    /// @notice Reward token supported by this factory
+    function rewardToken() external view returns (address);
+
+    /// @notice Minter contract used to mint emissions
+    function minter() external view returns (address);
+
     /// @notice Administrator that can call `notifyRewardWithoutClaim` on gauges
     function notifyAdmin() external view returns (address);
 
@@ -39,10 +45,25 @@ interface IRootGaugeFactory {
     /// @notice Default emission cap set on Gauges
     function defaultCap() external view returns (uint256);
 
+    /// @notice Value of Weekly Emissions for given Epoch
+    function weeklyEmissions() external view returns (uint256);
+
+    /// @notice Timestamp of start of epoch that `calculateMaxEmissions()` was last called in
+    function activePeriod() external view returns (uint256);
+
     /// @notice Returns the emission cap of a Gauge
     /// @param _gauge The gauge we are viewing the emission cap of
     /// @return The emission cap of the gauge
     function emissionCaps(address _gauge) external view returns (uint256);
+
+    /// @notice Denominator for emission calculations (as basis points)
+    function MAX_BPS() external view returns (uint256);
+
+    /// @notice Decay rate of emissions as percentage of `MAX_BPS`
+    function WEEKLY_DECAY() external view returns (uint256);
+
+    /// @notice Timestamp of the epoch when tail emissions will start
+    function TAIL_START_TIMESTAMP() external view returns (uint256);
 
     /// @notice Creates a new root gauge
     /// @param _pool Address of the pool contract
@@ -51,6 +72,11 @@ interface IRootGaugeFactory {
     function createGauge(address, address _pool, address, address _rewardToken, bool)
         external
         returns (address gauge);
+
+    /// @notice Calculates max amount of emissions that can be deposited into a gauge
+    /// @dev    Max Amount is calculated based on total weekly emissions and `emissionCap` set on gauge
+    /// @param _gauge Address of the gauge contract
+    function calculateMaxEmissions(address _gauge) external returns (uint256);
 
     /// @notice Set notifyAdmin value on root gauge factory
     /// @param _admin New administrator that will be able to call `notifyRewardWithoutClaim` on gauges.
