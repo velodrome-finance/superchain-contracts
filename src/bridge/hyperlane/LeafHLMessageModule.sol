@@ -14,6 +14,7 @@ import {ILeafVoter} from "../../interfaces/voter/ILeafVoter.sol";
 import {IReward} from "../../interfaces/rewards/IReward.sol";
 
 import {Commands} from "../../libraries/Commands.sol";
+import {IXERC20} from "../../interfaces/xerc20/IXERC20.sol";
 
 /// @title Hyperlane Token Bridge
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
@@ -93,12 +94,12 @@ contract LeafHLMessageModule is ILeafHLMessageModule {
             });
         } else if (command == Commands.NOTIFY) {
             (address gauge, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
-            ILeafMessageBridge(bridge).mint({_recipient: address(this), _amount: amount});
+            IXERC20(xerc20).mint({_user: address(this), _amount: amount});
             IERC20(xerc20).safeIncreaseAllowance({spender: gauge, value: amount});
             ILeafGauge(gauge).notifyRewardAmount({amount: amount});
         } else if (command == Commands.NOTIFY_WITHOUT_CLAIM) {
             (address gauge, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
-            ILeafMessageBridge(bridge).mint({_recipient: address(this), _amount: amount});
+            IXERC20(xerc20).mint({_user: address(this), _amount: amount});
             IERC20(xerc20).safeIncreaseAllowance({spender: gauge, value: amount});
             ILeafGauge(gauge).notifyRewardWithoutClaim({amount: amount});
         } else if (command == Commands.KILL_GAUGE) {

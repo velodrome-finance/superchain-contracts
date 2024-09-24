@@ -5,7 +5,7 @@ import {Clones} from "@openzeppelin5/contracts/proxy/Clones.sol";
 
 import {IRootPoolFactory} from "../../interfaces/mainnet/pools/IRootPoolFactory.sol";
 import {IRootPool} from "../../interfaces/mainnet/pools/IRootPool.sol";
-import {IChainRegistry} from "../../interfaces/bridge/IChainRegistry.sol";
+import {ICrossChainRegistry} from "../../interfaces/bridge/ICrossChainRegistry.sol";
 
 /// @notice Factory for creating RootPools
 contract RootPoolFactory is IRootPoolFactory {
@@ -56,7 +56,9 @@ contract RootPoolFactory is IRootPoolFactory {
 
     /// @inheritdoc IRootPoolFactory
     function createPool(uint256 chainid, address tokenA, address tokenB, bool stable) external returns (address pool) {
-        if (!IChainRegistry(bridge).contains({_chainid: chainid})) revert NotRegistered();
+        if (!ICrossChainRegistry(bridge).containsChain({_chainid: chainid})) {
+            revert ICrossChainRegistry.ChainNotRegistered();
+        }
         if (tokenA == tokenB) revert SameAddress();
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         if (token0 == address(0)) revert ZeroAddress();

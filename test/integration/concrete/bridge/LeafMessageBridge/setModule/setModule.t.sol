@@ -8,18 +8,18 @@ contract SetModuleIntegrationConcreteTest is LeafMessageBridgeTest {
         // It reverts with {OwnableUnauthorizedAccount}
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.charlie));
-        rootMessageBridge.setModule({_module: users.charlie});
+        leafMessageBridge.setModule({_module: users.charlie});
     }
 
     modifier whenCallerIsOwner() {
-        vm.startPrank(users.owner);
         _;
     }
 
     function test_WhenModuleIsZeroAddress() external whenCallerIsOwner {
         // It reverts with {ZeroAddress}
+        vm.prank(users.owner);
         vm.expectRevert(ILeafMessageBridge.ZeroAddress.selector);
-        rootMessageBridge.setModule({_module: address(0)});
+        leafMessageBridge.setModule({_module: address(0)});
     }
 
     function test_WhenModuleIsNotZeroAddress() external whenCallerIsOwner {
@@ -27,16 +27,17 @@ contract SetModuleIntegrationConcreteTest is LeafMessageBridgeTest {
         // It emits {SetModule}
         address module = address(
             new LeafHLMessageModule({
-                _bridge: address(rootMessageBridge),
+                _bridge: address(leafMessageBridge),
                 _mailbox: address(rootMailbox),
                 _ism: address(rootIsm)
             })
         );
 
-        vm.expectEmit(address(rootMessageBridge));
+        vm.prank(users.owner);
+        vm.expectEmit(address(leafMessageBridge));
         emit ILeafMessageBridge.SetModule({_sender: users.owner, _module: module});
-        rootMessageBridge.setModule({_module: module});
+        leafMessageBridge.setModule({_module: module});
 
-        assertEq(rootMessageBridge.module(), module);
+        assertEq(leafMessageBridge.module(), module);
     }
 }

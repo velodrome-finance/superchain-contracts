@@ -7,6 +7,8 @@ import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 import {
     IRootHLMessageModule, IMessageSender
 } from "../../../interfaces/mainnet/bridge/hyperlane/IRootHLMessageModule.sol";
+import {IRootMessageBridge} from "../../../interfaces/mainnet/bridge/IRootMessageBridge.sol";
+import {IXERC20} from "../../../interfaces/xerc20/IXERC20.sol";
 import {Commands} from "../../../libraries/Commands.sol";
 
 /// @title Hyperlane Token Bridge
@@ -15,12 +17,15 @@ contract RootHLMessageModule is IRootHLMessageModule {
     /// @inheritdoc IRootHLMessageModule
     address public immutable bridge;
     /// @inheritdoc IRootHLMessageModule
+    address public immutable xerc20;
+    /// @inheritdoc IRootHLMessageModule
     address public immutable mailbox;
     /// @inheritdoc IRootHLMessageModule
     uint256 public sendingNonce;
 
     constructor(address _bridge, address _mailbox) {
         bridge = _bridge;
+        xerc20 = IRootMessageBridge(_bridge).xerc20();
         mailbox = _mailbox;
     }
 
@@ -43,6 +48,12 @@ contract RootHLMessageModule is IRootHLMessageModule {
             _message = abi.encode(sendingNonce, messageWithoutCommand);
             _message = abi.encode(command, _message);
             sendingNonce += 1;
+        } else if (command == Commands.NOTIFY) {
+            (, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
+            IXERC20(xerc20).burn({_user: address(this), _amount: amount});
+        } else if (command == Commands.NOTIFY_WITHOUT_CLAIM) {
+            (, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
+            IXERC20(xerc20).burn({_user: address(this), _amount: amount});
         }
 
         Mailbox(mailbox).dispatch{value: msg.value}({

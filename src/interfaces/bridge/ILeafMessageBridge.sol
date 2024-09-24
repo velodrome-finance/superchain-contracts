@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 interface ILeafMessageBridge {
-    error NotModule();
     error ZeroAddress();
 
     event SetModule(address indexed _sender, address indexed _module);
@@ -21,9 +20,4 @@ interface ILeafMessageBridge {
     /// @dev Module handles x-chain messages
     /// @param _module The address of the new module contract
     function setModule(address _module) external;
-
-    /// @notice Mints xERC20 tokens to a user
-    /// @param _recipient The address of the recipient to mint tokens to
-    /// @param _amount The amount of xERC20 tokens to mint
-    function mint(address _recipient, uint256 _amount) external;
 }

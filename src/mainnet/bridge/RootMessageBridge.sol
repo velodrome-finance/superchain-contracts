@@ -3,22 +3,25 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
 import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "@openzeppelin5/contracts/token/ERC20/IERC20.sol";
 
 import {IFactoryRegistry} from "../../interfaces/external/IFactoryRegistry.sol";
 import {IRootMessageBridge} from "../../interfaces/mainnet/bridge/IRootMessageBridge.sol";
 import {IMessageSender} from "../../interfaces/mainnet/bridge/IMessageSender.sol";
 import {IVoter} from "../../interfaces/external/IVoter.sol";
-import {IXERC20} from "../../interfaces/xerc20/IXERC20.sol";
 import {IWETH} from "../../interfaces/external/IWETH.sol";
 
-import {ChainRegistry} from "../../bridge/ChainRegistry.sol";
+import {CrossChainRegistry} from "../../bridge/CrossChainRegistry.sol";
 import {Commands} from "../../libraries/Commands.sol";
 
 /// @title Root Message Bridge Contract
 /// @notice General purpose message bridge contract
-contract RootMessageBridge is IRootMessageBridge, ChainRegistry {
+/// @dev For notify reward amount, tokens will always be forwarded to the module
+/// @dev The module can then use any mechanism available to it to send the tokens cross chain
+contract RootMessageBridge is IRootMessageBridge, CrossChainRegistry {
     using EnumerableSet for EnumerableSet.UintSet;
     using SafeERC20 for IWETH;
+    using SafeERC20 for IERC20;
 
     /// @inheritdoc IRootMessageBridge
     address public immutable xerc20;
@@ -28,15 +31,10 @@ contract RootMessageBridge is IRootMessageBridge, ChainRegistry {
     address public immutable factoryRegistry;
     /// @inheritdoc IRootMessageBridge
     address public immutable weth;
-    /// @inheritdoc IRootMessageBridge
-    address public module;
 
-    constructor(address _owner, address _xerc20, address _voter, address _module, address _weth)
-        ChainRegistry(_owner)
-    {
+    constructor(address _owner, address _xerc20, address _voter, address _weth) CrossChainRegistry(_owner) {
         xerc20 = _xerc20;
         voter = _voter;
-        module = _module;
         factoryRegistry = IVoter(_voter).factoryRegistry();
         weth = _weth;
     }
@@ -46,15 +44,9 @@ contract RootMessageBridge is IRootMessageBridge, ChainRegistry {
     }
 
     /// @inheritdoc IRootMessageBridge
-    function setModule(address _module) external onlyOwner {
-        if (_module == address(0)) revert ZeroAddress();
-        module = _module;
-        emit SetModule({_sender: msg.sender, _module: _module});
-    }
-
-    /// @inheritdoc IRootMessageBridge
     function sendMessage(uint256 _chainid, bytes calldata _message) external {
-        if (!_chainids.contains({value: _chainid})) revert NotRegistered();
+        if (!_chainids.contains({value: _chainid})) revert ChainNotRegistered();
+        address module = chains[_chainid];
 
         (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
         if (command == Commands.DEPOSIT) {
@@ -76,11 +68,11 @@ contract RootMessageBridge is IRootMessageBridge, ChainRegistry {
         } else if (command == Commands.NOTIFY) {
             if (!IVoter(voter).isAlive(msg.sender)) revert NotValidGauge();
             (, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
-            IXERC20(xerc20).burn({_user: msg.sender, _amount: amount});
+            IERC20(xerc20).safeTransferFrom({from: msg.sender, to: module, value: amount});
         } else if (command == Commands.NOTIFY_WITHOUT_CLAIM) {
             if (!IVoter(voter).isAlive(msg.sender)) revert NotValidGauge();
             (, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
-            IXERC20(xerc20).burn({_user: msg.sender, _amount: amount});
+            IERC20(xerc20).safeTransferFrom({from: msg.sender, to: module, value: amount});
         } else if (command == Commands.KILL_GAUGE) {
             if (msg.sender != IVoter(voter).emergencyCouncil()) revert NotAuthorized(Commands.KILL_GAUGE);
         } else if (command == Commands.REVIVE_GAUGE) {

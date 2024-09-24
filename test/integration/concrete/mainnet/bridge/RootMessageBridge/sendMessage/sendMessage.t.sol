@@ -17,21 +17,36 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
     }
 
+    function test_InitialState() public override {
+        vm.selectFork({forkId: rootId});
+        assertEq(rootMessageBridge.owner(), users.owner);
+        assertEq(rootMessageBridge.xerc20(), address(rootXVelo));
+        assertEq(rootMessageBridge.voter(), address(mockVoter));
+        assertEq(rootMessageBridge.factoryRegistry(), address(mockFactoryRegistry));
+        assertEq(rootMessageBridge.weth(), address(weth));
+        // chain was deregistered in set up, but module was added in base fork fixture
+        uint256[] memory chainids = rootMessageBridge.chainids();
+        assertEq(chainids.length, 0);
+        address[] memory modules = rootMessageBridge.modules();
+        assertEq(modules.length, 1);
+        assertEq(modules[0], address(rootMessageModule));
+    }
+
     function test_WhenTheChainIdIsNotRegistered() external {
-        // It should revert with {NotRegistered}
+        // It should revert with {ChainNotRegistered}
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory payload = abi.encode(amount, tokenId);
         bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
 
         vm.prank(users.charlie);
-        vm.expectRevert(IChainRegistry.NotRegistered.selector);
+        vm.expectRevert(ICrossChainRegistry.ChainNotRegistered.selector);
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
     modifier whenTheChainIdIsRegistered() {
         vm.prank(users.owner);
-        rootMessageBridge.registerChain({_chainid: leaf});
+        rootMessageBridge.registerChain({_chainid: leaf, _module: address(leafMessageModule)});
         _;
     }
 

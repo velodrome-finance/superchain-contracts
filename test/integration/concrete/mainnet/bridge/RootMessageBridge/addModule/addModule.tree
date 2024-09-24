@@ -1,0 +1,9 @@
+AddModuleIntegrationConcreteTest
+├── When the caller is not owner
+│   └── It reverts with {OwnableUnauthorizedAccount}
+└── When the caller is owner
+    ├── When the module is already added to the registry
+    │   └── It reverts with {ModuleAlreadyAdded}
+    └── When the module is not added to the registry
+        ├── It adds the module
+        └── It emits the event {ModuleAdded}

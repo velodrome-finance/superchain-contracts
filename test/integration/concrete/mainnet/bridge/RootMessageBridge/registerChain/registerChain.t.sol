@@ -4,54 +4,80 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../RootMessageBridge.t.sol";
 
 contract RegisterChainIntegrationConcreteTest is RootMessageBridgeTest {
-    function test_WhenTheCallerIsNotTheOwner() external {
+    function setUp() public virtual override {
+        super.setUp();
+        rootMessageBridge = new RootMessageBridge({
+            _owner: users.owner,
+            _xerc20: address(rootXVelo),
+            _voter: address(mockVoter),
+            _weth: address(weth)
+        });
+        rootMessageModule =
+            new RootHLMessageModule({_bridge: address(rootMessageBridge), _mailbox: address(rootMailbox)});
+    }
+
+    function test_WhenTheCallerIsNotOwner() external {
         // It reverts with {OwnableUnauthorizedAccount}
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.charlie));
-        newRootMessageBridge.registerChain({_chainid: 10});
+        rootMessageBridge.registerChain({_chainid: 10, _module: users.charlie});
     }
 
-    modifier whenTheCallerIsTheOwner() {
+    modifier whenTheCallerIsOwner() {
         vm.startPrank(users.owner);
         _;
     }
 
-    function test_WhenTheChainIsTheCurrentChain() external whenTheCallerIsTheOwner {
-        // It reverts with {InvalidChain}
-        uint256 chainid = block.chainid;
-
-        vm.expectRevert(IChainRegistry.InvalidChain.selector);
-        newRootMessageBridge.registerChain({_chainid: chainid});
+    function test_WhenTheChainIdIs10() external whenTheCallerIsOwner {
+        // It reverts with {InvalidChainId}
+        vm.expectRevert(ICrossChainRegistry.InvalidChainId.selector);
+        rootMessageBridge.registerChain({_chainid: 10, _module: users.charlie});
     }
 
-    modifier whenTheChainIsNotTheCurrentChain() {
+    modifier whenTheChainIdIsNot10() {
         _;
     }
 
-    function test_WhenTheChainIsAlreadyRegistered() external whenTheCallerIsTheOwner whenTheChainIsNotTheCurrentChain {
-        // It reverts with {AlreadyRegistered}
-        uint256 chainid = 100;
-        newRootMessageBridge.registerChain({_chainid: chainid});
-
-        vm.expectRevert(IChainRegistry.AlreadyRegistered.selector);
-        newRootMessageBridge.registerChain({_chainid: chainid});
+    function test_WhenTheModuleIsNotAddedToTheRegistry() external whenTheCallerIsOwner whenTheChainIdIsNot10 {
+        // It reverts with {ModuleNotAdded}
+        vm.expectRevert(ICrossChainRegistry.ModuleNotAdded.selector);
+        rootMessageBridge.registerChain({_chainid: leaf, _module: users.owner});
     }
 
-    function test_WhenTheChainIsNotAlreadyRegistered()
+    modifier whenTheModuleIsAddedToTheRegistry() {
+        rootMessageBridge.addModule(address(rootMessageModule));
+        _;
+    }
+
+    function test_WhenTheChainIsAlreadyRegistered()
         external
-        whenTheCallerIsTheOwner
-        whenTheChainIsNotTheCurrentChain
+        whenTheCallerIsOwner
+        whenTheChainIdIsNot10
+        whenTheModuleIsAddedToTheRegistry
     {
-        // It registers the chain id
-        // It emits the {ChainRegistered} event
-        uint256 chainid = 100;
+        // It reverts with {ChainAlreadyAdded}
+        rootMessageBridge.registerChain({_chainid: leaf, _module: address(rootMessageModule)});
 
-        vm.expectEmit(address(newRootMessageBridge));
-        emit IChainRegistry.ChainRegistered({_chainid: chainid});
-        newRootMessageBridge.registerChain({_chainid: chainid});
+        vm.expectRevert(ICrossChainRegistry.ChainAlreadyAdded.selector);
+        rootMessageBridge.registerChain({_chainid: leaf, _module: address(rootMessageModule)});
+    }
 
-        uint256[] memory chainids = newRootMessageBridge.chainids();
+    function test_WhenTheChainIsNotRegistered()
+        external
+        whenTheCallerIsOwner
+        whenTheChainIdIsNot10
+        whenTheModuleIsAddedToTheRegistry
+    {
+        // It sets the module for the chain id
+        // It adds the chain ids to the registry
+        // It emits the event {ChainRegistered}
+        vm.expectEmit(address(rootMessageBridge));
+        emit ICrossChainRegistry.ChainRegistered({_chainid: leaf, _module: address(rootMessageModule)});
+        rootMessageBridge.registerChain({_chainid: leaf, _module: address(rootMessageModule)});
+
+        uint256[] memory chainids = rootMessageBridge.chainids();
         assertEq(chainids.length, 1);
-        assertEq(chainids[0], chainid);
+        assertEq(chainids[0], leaf);
+        assertEq(rootMessageBridge.chains(leaf), address(rootMessageModule));
     }
 }

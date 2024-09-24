@@ -4,39 +4,67 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../RootMessageBridge.t.sol";
 
 contract SetModuleIntegrationConcreteTest is RootMessageBridgeTest {
-    function test_WhenCallerIsNotOwner() external {
+    function setUp() public virtual override {
+        super.setUp();
+        rootMessageBridge = new RootMessageBridge({
+            _owner: users.owner,
+            _xerc20: address(rootXVelo),
+            _voter: address(mockVoter),
+            _weth: address(weth)
+        });
+        rootMessageModule =
+            new RootHLMessageModule({_bridge: address(rootMessageBridge), _mailbox: address(rootMailbox)});
+    }
+
+    function test_WhenTheCallerIsNotOwner() external {
         // It reverts with {OwnableUnauthorizedAccount}
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.charlie));
-        rootMessageBridge.setModule({_module: users.charlie});
+        rootMessageBridge.setModule({_chainid: 1, _module: users.charlie});
     }
 
-    modifier whenCallerIsOwner() {
-        vm.startPrank(users.owner);
+    modifier whenTheCallerIsOwner() {
         _;
     }
 
-    function test_WhenModuleIsZeroAddress() external whenCallerIsOwner {
-        // It reverts with {ZeroAddress}
-        vm.expectRevert(ILeafMessageBridge.ZeroAddress.selector);
-        rootMessageBridge.setModule({_module: address(0)});
+    function test_WhenTheModuleIsNotAddedToTheRegistry() external whenTheCallerIsOwner {
+        // It reverts with {ModuleNotAdded}
+        vm.startPrank(users.owner);
+        vm.expectRevert(ICrossChainRegistry.ModuleNotAdded.selector);
+        rootMessageBridge.setModule({_chainid: 1, _module: users.owner});
     }
 
-    function test_WhenModuleIsNotZeroAddress() external whenCallerIsOwner {
-        // It sets new module
-        // It emits {SetModule}
-        address module = address(
-            new LeafHLMessageModule({
-                _bridge: address(rootMessageBridge),
-                _mailbox: address(rootMailbox),
-                _ism: address(rootIsm)
-            })
-        );
+    modifier whenTheModuleIsAddedToTheRegistry() {
+        vm.prank(users.owner);
+        rootMessageBridge.addModule({_module: address(rootMessageModule)});
+        _;
+    }
+
+    function test_WhenTheChainIsNotRegistered() external whenTheCallerIsOwner whenTheModuleIsAddedToTheRegistry {
+        // It reverts with {ChainNotRegistered}
+        vm.startPrank(users.owner);
+        vm.expectRevert(ICrossChainRegistry.ChainNotRegistered.selector);
+        rootMessageBridge.setModule({_chainid: 1, _module: address(rootMessageModule)});
+    }
+
+    function test_WhenTheChainIsRegistered() external whenTheCallerIsOwner whenTheModuleIsAddedToTheRegistry {
+        // It sets the module
+        // It emits the event {ModuleSet}
+        vm.startPrank(users.owner);
+        rootMessageBridge.addModule({_module: address(1)});
+        rootMessageBridge.registerChain({_chainid: 1, _module: address(1)});
 
         vm.expectEmit(address(rootMessageBridge));
-        emit ILeafMessageBridge.SetModule({_sender: users.owner, _module: module});
-        rootMessageBridge.setModule({_module: module});
+        emit ICrossChainRegistry.ModuleSet({_chainid: 1, _module: address(rootMessageModule)});
+        rootMessageBridge.setModule({_chainid: 1, _module: address(rootMessageModule)});
 
-        assertEq(rootMessageBridge.module(), module);
+        uint256[] memory chains = rootMessageBridge.chainids();
+        assertEq(chains.length, 1);
+        assertEq(chains[0], 1);
+        address[] memory modules = rootMessageBridge.modules();
+        assertEq(modules.length, 2);
+        assertEq(modules[0], address(rootMessageModule));
+        assertEq(modules[1], address(1));
+        assertEq(rootMessageBridge.chains(1), address(rootMessageModule));
     }
 }

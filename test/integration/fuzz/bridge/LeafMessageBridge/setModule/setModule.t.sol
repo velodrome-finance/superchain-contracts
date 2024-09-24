@@ -10,7 +10,7 @@ contract SetModuleIntegrationFuzzTest is LeafMessageBridgeTest {
 
         vm.prank(_caller);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, _caller));
-        rootMessageBridge.setModule({_module: _caller});
+        leafMessageBridge.setModule({_module: _caller});
     }
 
     modifier whenCallerIsOwner() {
@@ -23,10 +23,10 @@ contract SetModuleIntegrationFuzzTest is LeafMessageBridgeTest {
         // It emits {SetModule}
         vm.assume(_module != address(0));
 
-        vm.expectEmit(address(rootMessageBridge));
+        vm.expectEmit(address(leafMessageBridge));
         emit ILeafMessageBridge.SetModule({_sender: users.owner, _module: _module});
-        rootMessageBridge.setModule({_module: _module});
+        leafMessageBridge.setModule({_module: _module});
 
-        assertEq(rootMessageBridge.module(), _module);
+        assertEq(leafMessageBridge.module(), _module);
     }
 }

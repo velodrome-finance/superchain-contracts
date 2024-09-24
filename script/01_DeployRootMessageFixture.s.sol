@@ -109,7 +109,6 @@ abstract contract DeployRootMessageFixture is DeployFixture {
                             _params.bridgeOwner, // message bridge owner
                             address(xVelo), // xerc20 address
                             _params.voter, // root voter
-                            address(messageModule), // message module
                             _params.weth // weth address
                         )
                     )

@@ -94,7 +94,6 @@ contract OptimismDeployRootMessageTest is BaseFixture {
         assertEq(rootMessageBridge.voter(), params.voter);
         assertEq(rootMessageBridge.factoryRegistry(), params.factoryRegistry);
         assertEq(rootMessageBridge.weth(), params.weth);
-        assertEq(rootMessageBridge.module(), address(rootMessageModule));
 
         assertEq(rootMessageModule.bridge(), address(rootMessageBridge));
         assertEq(rootMessageModule.mailbox(), params.mailbox);

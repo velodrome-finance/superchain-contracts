@@ -1,12 +1,16 @@
 RegisterChainIntegrationConcreteTest
-├── When the caller is not the owner
+├── When the caller is not owner
 │   └── It reverts with {OwnableUnauthorizedAccount}
-└── When the caller is the owner
-    ├── When the chain is the current chain
-    │   └── It reverts with {InvalidChain}
-    └── When the chain is not the current chain
-        ├── When the chain is already registered
-        │   └── It reverts with {AlreadyRegistered}
-        └── When the chain is not already registered
-            ├── It registers the chain id
-            └── It emits the {ChainRegistered} event
+└── When the caller is owner
+    ├── When the chain id is 10
+    │   └── It reverts with {InvalidChainId}
+    └── When the chain id is not 10
+        ├── When the module is not added to the registry
+        │   └── It reverts with {ModuleNotAdded}
+        └── When the module is added to the registry
+            ├── When the chain is already registered
+            │   └── It reverts with {ChainAlreadyAdded}
+            └── When the chain is not registered
+                ├── It sets the module for the chain id
+                ├── It adds the chain ids to the registry
+                └── It emits the event {ChainRegistered}

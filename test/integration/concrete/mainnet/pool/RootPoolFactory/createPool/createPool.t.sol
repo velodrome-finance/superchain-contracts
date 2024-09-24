@@ -17,14 +17,14 @@ contract CreatePoolIntegrationConcreteTest is RootPoolFactoryTest {
     }
 
     function test_WhenChainIdIsNotRegistered() external {
-        // It reverts with {NotRegistered}
-        vm.expectRevert(IRootPoolFactory.NotRegistered.selector);
+        // It reverts with {ChainNotRegistered}
+        vm.expectRevert(ICrossChainRegistry.ChainNotRegistered.selector);
         rootPoolFactory.createPool({chainid: _chainid, tokenA: address(tokenA), tokenB: address(tokenB), stable: true});
     }
 
     modifier whenChainIdIsRegistered() {
         vm.prank(users.owner);
-        rootMessageBridge.registerChain({_chainid: _chainid});
+        rootMessageBridge.registerChain({_chainid: _chainid, _module: address(rootMessageModule)});
         _;
     }
 

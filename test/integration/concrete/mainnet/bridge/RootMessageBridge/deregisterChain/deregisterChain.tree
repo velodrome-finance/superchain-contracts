@@ -3,7 +3,8 @@ DeregisterChainIntegrationConcreteTest
 │   └── It reverts with {OwnableUnauthorizedAccount}
 └── When the caller is the owner
     ├── When the chain is not registered
-    │   └── It reverts with {NotRegistered}
+    │   └── It reverts with {ChainNotRegistered}
     └── When the chain is registered
+        ├── It removes the module from the chain id
         ├── It deregisters the chain id
         └── It emits the {ChainRegistered} event

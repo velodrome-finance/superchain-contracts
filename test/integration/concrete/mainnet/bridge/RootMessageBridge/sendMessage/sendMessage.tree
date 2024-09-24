@@ -1,6 +1,6 @@
 SendMessageIntegrationConcreteTest
 ├── When the chain id is not registered
-│   └── It should revert with {NotRegistered}
+│   └── It should revert with {ChainNotRegistered}
 └── When the chain id is registered
     ├── When the command is deposit
     │   ├── When the caller is not a fee contract registered on the voter

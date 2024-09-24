@@ -19,14 +19,14 @@ abstract contract ChainRegistry is IChainRegistry, Ownable {
     /// @inheritdoc IChainRegistry
     function registerChain(uint256 _chainid) external onlyOwner {
         if (_chainid == block.chainid) revert InvalidChain();
-        if (_chainids.contains(_chainid)) revert AlreadyRegistered();
+        if (_chainids.contains({value: _chainid})) revert AlreadyRegistered();
         _chainids.add({value: _chainid});
         emit ChainRegistered({_chainid: _chainid});
     }
 
     /// @inheritdoc IChainRegistry
     function deregisterChain(uint256 _chainid) external onlyOwner {
-        if (!_chainids.contains(_chainid)) revert NotRegistered();
+        if (!_chainids.contains({value: _chainid})) revert NotRegistered();
         _chainids.remove({value: _chainid});
         emit ChainDeregistered({_chainid: _chainid});
     }
@@ -38,6 +38,6 @@ abstract contract ChainRegistry is IChainRegistry, Ownable {
 
     /// @inheritdoc IChainRegistry
     function contains(uint256 _chainid) external view returns (bool) {
-        return _chainids.contains(_chainid);
+        return _chainids.contains({value: _chainid});
     }
 }

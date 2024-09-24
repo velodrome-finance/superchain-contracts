@@ -43,6 +43,7 @@ import {IHLHandler} from "src/interfaces/bridge/hyperlane/IHLHandler.sol";
 import {ILeafHLMessageModule, LeafHLMessageModule} from "src/bridge/hyperlane/LeafHLMessageModule.sol";
 import {IVotingRewardsFactory, VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
 import {IChainRegistry} from "src/interfaces/bridge/IChainRegistry.sol";
+import {ICrossChainRegistry} from "src/interfaces/bridge/ICrossChainRegistry.sol";
 
 import {IMessageSender, RootHLMessageModule} from "src/mainnet/bridge/hyperlane/RootHLMessageModule.sol";
 
@@ -281,7 +282,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
                             users.owner, // message bridge owner
                             address(rootXVelo), // xerc20 address
                             address(mockVoter), // mock root voter
-                            address(rootMessageModule), // message module
                             address(weth) // weth contract
                         )
                     )
@@ -567,7 +567,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
 
         // set up root pool & gauge
         vm.startPrank(users.owner);
-        rootMessageBridge.registerChain({_chainid: leaf});
+        rootMessageBridge.addModule({_module: address(rootMessageModule)});
+        rootMessageBridge.registerChain({_chainid: leaf, _module: address(rootMessageModule)});
 
         rootPool = RootPool(
             rootPoolFactory.createPool({chainid: leaf, tokenA: address(token0), tokenB: address(token1), stable: false})
@@ -638,7 +639,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootXVelo.addBridge(
             MintLimits.RateLimitMidPointInfo({
                 bufferCap: rootBufferCap,
-                bridge: address(rootMessageBridge),
+                bridge: address(rootMessageModule),
                 rateLimitPerSecond: rps
             })
         );
@@ -657,7 +658,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
         leafXVelo.addBridge(
             MintLimits.RateLimitMidPointInfo({
                 bufferCap: leafBufferCap,
-                bridge: address(leafMessageBridge),
+                bridge: address(leafMessageModule),
                 rateLimitPerSecond: rps
             })
         );
