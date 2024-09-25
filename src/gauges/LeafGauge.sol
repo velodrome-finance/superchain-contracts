@@ -8,7 +8,6 @@ import {ReentrancyGuard} from "@openzeppelin5/contracts/utils/ReentrancyGuard.so
 
 import {IReward} from "../interfaces/rewards/IReward.sol";
 import {ILeafGauge} from "../interfaces/gauges/ILeafGauge.sol";
-import {ILeafGaugeFactory} from "../interfaces/gauges/ILeafGaugeFactory.sol";
 import {IPool} from "../interfaces/pools/IPool.sol";
 import {ILeafVoter} from "../interfaces/voter/ILeafVoter.sol";
 import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
@@ -30,8 +29,6 @@ contract LeafGauge is ILeafGauge, ReentrancyGuard {
     address public immutable voter;
     /// @inheritdoc ILeafGauge
     address public immutable bridge;
-    /// @inheritdoc ILeafGauge
-    address public immutable gaugeFactory;
 
     /// @inheritdoc ILeafGauge
     bool public immutable isPool;
@@ -70,7 +67,6 @@ contract LeafGauge is ILeafGauge, ReentrancyGuard {
         address _rewardToken,
         address _voter,
         address _bridge,
-        address _gaugeFactory,
         bool _isPool
     ) {
         stakingToken = _stakingToken;
@@ -78,7 +74,6 @@ contract LeafGauge is ILeafGauge, ReentrancyGuard {
         rewardToken = _rewardToken;
         voter = _voter;
         bridge = _bridge;
-        gaugeFactory = _gaugeFactory;
         isPool = _isPool;
     }
 

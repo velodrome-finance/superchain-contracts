@@ -280,7 +280,6 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         assertNotEq(leafGauge.feesVotingReward(), address(0));
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
         assertEq(leafGauge.bridge(), address(leafMessageBridge));
-        assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
         assertEq(leafMessageModule.receivingNonce(), 1_000);
     }
 
@@ -315,7 +314,6 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         assertNotEq(leafGauge.feesVotingReward(), address(0));
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
         assertEq(leafGauge.bridge(), address(leafMessageBridge));
-        assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
         assertEq(leafMessageModule.receivingNonce(), 1_000);
     }
 

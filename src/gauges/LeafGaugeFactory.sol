@@ -40,7 +40,6 @@ contract LeafGaugeFactory is ILeafGaugeFactory {
                     xerc20, // xerc20 corresponding to reward token
                     voter, // superchain voter contract
                     bridge, // bridge to communicate x-chain
-                    address(this), // gauge factory
                     isPool
                 )
             )

@@ -206,7 +206,6 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         assertNotEq(leafGauge.feesVotingReward(), address(0));
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
         assertEq(leafGauge.bridge(), address(leafMessageBridge));
-        assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
     }
 
     modifier whenTheCommandIsGetIncentives() {

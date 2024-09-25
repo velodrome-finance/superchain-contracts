@@ -21,7 +21,6 @@ contract LeafGaugeTest is BaseForkFixture {
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
         assertEq(leafGauge.voter(), address(leafVoter));
         assertEq(leafGauge.bridge(), address(leafMessageBridge));
-        assertEq(leafGauge.gaugeFactory(), address(leafGaugeFactory));
         assertTrue(leafGauge.isPool());
     }
 
