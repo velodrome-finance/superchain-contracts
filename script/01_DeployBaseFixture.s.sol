@@ -219,21 +219,21 @@ abstract contract DeployBaseFixture is DeployFixture {
     }
 
     function logParams() internal view override {
-        console2.log("poolImplementation: ", address(poolImplementation));
-        console2.log("poolFactory: ", address(poolFactory));
-        console2.log("gaugeFactory: ", address(gaugeFactory));
-        console2.log("votingRewardsFactory: ", address(votingRewardsFactory));
-        console2.log("voter: ", address(voter));
+        console.log("poolImplementation: ", address(poolImplementation));
+        console.log("poolFactory: ", address(poolFactory));
+        console.log("gaugeFactory: ", address(gaugeFactory));
+        console.log("votingRewardsFactory: ", address(votingRewardsFactory));
+        console.log("voter: ", address(voter));
 
-        console2.log("xerc20Factory: ", address(xerc20Factory));
-        console2.log("xVelo: ", address(xVelo));
+        console.log("xerc20Factory: ", address(xerc20Factory));
+        console.log("xVelo: ", address(xVelo));
 
-        console2.log("tokenBridge: ", address(tokenBridge));
-        console2.log("messageBridge: ", address(messageBridge));
-        console2.log("messageModule: ", address(messageModule));
+        console.log("tokenBridge: ", address(tokenBridge));
+        console.log("messageBridge: ", address(messageBridge));
+        console.log("messageModule: ", address(messageModule));
 
-        console2.log("ism: ", address(ism));
-        console2.log("router: ", address(router));
+        console.log("ism: ", address(ism));
+        console.log("router: ", address(router));
     }
 
     function logOutput() internal override {

@@ -178,15 +178,15 @@ abstract contract DeployRootMessageFixture is DeployFixture {
     }
 
     function logParams() internal view override {
-        console2.log("xerc20Factory: ", address(xerc20Factory));
-        console2.log("xVelo: ", address(xVelo));
-        console2.log("lockbox: ", address(lockbox));
+        console.log("xerc20Factory: ", address(xerc20Factory));
+        console.log("xVelo: ", address(xVelo));
+        console.log("lockbox: ", address(lockbox));
 
-        console2.log("messageBridge: ", address(messageBridge));
-        console2.log("messageModule: ", address(messageModule));
+        console.log("messageBridge: ", address(messageBridge));
+        console.log("messageModule: ", address(messageModule));
 
-        console2.log("gaugeFactory: ", address(gaugeFactory));
-        console2.log("emergencyCouncil: ", address(emergencyCouncil));
+        console.log("gaugeFactory: ", address(gaugeFactory));
+        console.log("emergencyCouncil: ", address(emergencyCouncil));
     }
 
     function logOutput() internal override {

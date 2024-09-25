@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "forge-std/StdJson.sol";
 import "forge-std/Script.sol";
-import "forge-std/console2.sol";
+import "forge-std/console.sol";
 
 import {ICreateX} from "createX/ICreateX.sol";
 

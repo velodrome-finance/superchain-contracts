@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "forge-std/console2.sol";
+import "forge-std/console.sol";
 import {IVoter} from "src/interfaces/external/IVoter.sol";
 import {IMinter} from "src/interfaces/external/IMinter.sol";
 import {IVotingEscrow} from "src/interfaces/external/IVotingEscrow.sol";

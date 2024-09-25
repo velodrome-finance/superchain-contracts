@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {VmSafe} from "forge-std/Vm.sol";
 import "forge-std/Test.sol";
-import "forge-std/console2.sol";
+import "forge-std/console.sol";
 import {IERC20Metadata, IERC20} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
 import {SafeCast} from "@openzeppelin5/contracts/utils/math/SafeCast.sol";
