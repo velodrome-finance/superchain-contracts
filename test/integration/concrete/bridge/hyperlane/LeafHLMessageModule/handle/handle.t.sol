@@ -183,8 +183,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         tokens[1] = address(token1);
         tokens[2] = address(weth);
         bytes memory payload = abi.encode(users.alice, tokenId, tokens);
-        bytes memory message =
-            abi.encode(Commands.GET_INCENTIVES, abi.encode(1_000, abi.encode(address(leafGauge), payload)));
+        bytes memory message = abi.encode(Commands.GET_INCENTIVES, abi.encode(address(leafGauge), payload));
 
         assertEq(token0.balanceOf(users.alice), 0);
         assertEq(token1.balanceOf(users.alice), 0);
@@ -197,7 +196,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         assertEq(token0.balanceOf(users.alice), TOKEN_1);
         assertEq(token1.balanceOf(users.alice), TOKEN_1);
         assertEq(weth.balanceOf(users.alice), TOKEN_1);
-        assertEq(leafMessageModule.receivingNonce(), 1_001);
+        assertEq(leafMessageModule.receivingNonce(), 1_000);
     }
 
     function test_WhenTheCommandIsGetFees()
@@ -225,7 +224,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         tokens[0] = address(token0);
         tokens[1] = address(token1);
         bytes memory payload = abi.encode(users.alice, tokenId, tokens);
-        bytes memory message = abi.encode(Commands.GET_FEES, abi.encode(1_000, abi.encode(address(leafGauge), payload)));
+        bytes memory message = abi.encode(Commands.GET_FEES, abi.encode(address(leafGauge), payload));
 
         assertEq(token0.balanceOf(users.alice), 0);
         assertEq(token1.balanceOf(users.alice), 0);
@@ -236,7 +235,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
 
         assertEq(token0.balanceOf(users.alice), TOKEN_1);
         assertEq(token1.balanceOf(users.alice), TOKEN_1);
-        assertEq(leafMessageModule.receivingNonce(), 1_001);
+        assertEq(leafMessageModule.receivingNonce(), 1_000);
     }
 
     modifier whenTheCommandIsCreateGauge() {

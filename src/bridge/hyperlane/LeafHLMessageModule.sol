@@ -49,7 +49,7 @@ contract LeafHLMessageModule is ILeafHLMessageModule {
         if (TypeCasts.bytes32ToAddress(_sender) != address(this)) revert NotModule();
 
         (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
-        if (command <= Commands.GET_FEES) {
+        if (command <= Commands.WITHDRAW) {
             uint256 nonce;
             (nonce, messageWithoutCommand) = abi.decode(messageWithoutCommand, (uint256, bytes));
             if (nonce != receivingNonce) revert InvalidNonce();

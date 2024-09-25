@@ -44,7 +44,7 @@ contract RootHLMessageModule is IRootHLMessageModule {
         uint32 domain = uint32(_chainid);
 
         (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
-        if (command <= Commands.GET_FEES) {
+        if (command <= Commands.WITHDRAW) {
             _message = abi.encode(sendingNonce, messageWithoutCommand);
             _message = abi.encode(command, _message);
             sendingNonce += 1;
