@@ -9,7 +9,7 @@ import {IPostDispatchHook} from "@hyperlane/core/contracts/interfaces/hooks/IPos
 import {TestIsm} from "@hyperlane/core/contracts/test/TestIsm.sol";
 import {TestPostDispatchHook} from "@hyperlane/core/contracts/test/TestPostDispatchHook.sol";
 
-import {Test} from "forge-std/Test.sol";
+import {Test} from "forge-std/src/Test.sol";
 
 contract MultichainMockMailbox is Mailbox, Test {
     using Message for bytes;

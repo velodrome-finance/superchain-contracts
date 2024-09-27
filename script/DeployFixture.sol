@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "forge-std/StdJson.sol";
-import "forge-std/Script.sol";
-import "forge-std/console.sol";
+import "forge-std/src/StdJson.sol";
+import "forge-std/src/Script.sol";
+import "forge-std/src/console.sol";
 
 import {ICreateX} from "createX/ICreateX.sol";
 
