@@ -19,7 +19,8 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         // It emits the {SentMessage} event
         // It calls receiveMessage on the recipient contract of the same address with the payload
         vm.selectFork({forkId: rootId});
-        stdstore.target(address(rootMessageModule)).sig("sendingNonce()").checked_write(1_000);
+        stdstore.target(address(rootMessageModule)).sig(rootMessageModule.sendingNonce.selector).with_key(leaf)
+            .checked_write(1_000);
         vm.selectFork({forkId: leafId});
         stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
 
@@ -43,7 +44,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         });
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
 
-        assertEq(rootMessageModule.sendingNonce(), 1_001);
+        assertEq(rootMessageModule.sendingNonce(leaf), 1_001);
 
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage();

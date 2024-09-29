@@ -21,7 +21,7 @@ contract RootHLMessageModule is IRootHLMessageModule {
     /// @inheritdoc IRootHLMessageModule
     address public immutable mailbox;
     /// @inheritdoc IRootHLMessageModule
-    uint256 public sendingNonce;
+    mapping(uint256 => uint256) public sendingNonce;
 
     constructor(address _bridge, address _mailbox) {
         bridge = _bridge;
@@ -45,9 +45,9 @@ contract RootHLMessageModule is IRootHLMessageModule {
 
         (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
         if (command <= Commands.WITHDRAW) {
-            _message = abi.encode(sendingNonce, messageWithoutCommand);
+            _message = abi.encode(sendingNonce[_chainid], messageWithoutCommand);
             _message = abi.encode(command, _message);
-            sendingNonce += 1;
+            sendingNonce[_chainid] += 1;
         } else if (command == Commands.NOTIFY) {
             (, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
             IXERC20(xerc20).burn({_user: address(this), _amount: amount});

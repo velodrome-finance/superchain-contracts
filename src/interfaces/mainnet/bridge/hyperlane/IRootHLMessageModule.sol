@@ -14,5 +14,6 @@ interface IRootHLMessageModule is IMessageSender {
     function mailbox() external view returns (address);
 
     /// @notice Returns the nonce of the next message to be sent
-    function sendingNonce() external view returns (uint256);
+    /// @param _chainid The chain id of the destination chain
+    function sendingNonce(uint256 _chainid) external view returns (uint256);
 }
