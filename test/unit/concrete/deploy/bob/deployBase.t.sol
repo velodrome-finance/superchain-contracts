@@ -11,6 +11,8 @@ contract BobDeployBaseTest is BaseFixture {
     DeployBase.DeploymentParameters public params;
 
     function setUp() public override {
+        vm.createSelectFork({urlOrAlias: "bob", blockNumber: 1323496});
+
         deploy = new DeployBase();
         // this runs automatically when you run the script, but must be called manually in the test
         deploy.setUp();
@@ -18,8 +20,6 @@ contract BobDeployBaseTest is BaseFixture {
         createUsers();
         stdstore.target(address(deploy)).sig("deployer()").checked_write(users.owner);
         stdstore.target(address(deploy)).sig("isTest()").checked_write(true);
-
-        deployCreateX();
     }
 
     function testRun() public {
@@ -27,7 +27,6 @@ contract BobDeployBaseTest is BaseFixture {
 
         poolImplementation = deploy.poolImplementation();
         poolFactory = deploy.poolFactory();
-
         leafGaugeFactory = deploy.gaugeFactory();
         leafVotingRewardsFactory = deploy.votingRewardsFactory();
         leafVoter = deploy.voter();
@@ -91,12 +90,12 @@ contract BobDeployBaseTest is BaseFixture {
         assertEq(leafXVelo.owner(), params.tokenAdmin);
         assertEq(leafXVelo.lockbox(), address(0));
 
-        assertEq(leafTokenBridge.owner(), params.tokenAdmin);
+        assertEq(leafTokenBridge.owner(), params.bridgeOwner);
         assertEq(leafTokenBridge.xerc20(), address(leafXVelo));
         assertEq(leafTokenBridge.mailbox(), params.mailbox);
         assertEq(address(leafTokenBridge.securityModule()), address(leafIsm));
 
-        assertEq(leafMessageBridge.owner(), params.adminPlaceholder);
+        assertEq(leafMessageBridge.owner(), params.bridgeOwner);
         assertEq(leafMessageBridge.xerc20(), address(leafXVelo));
         assertEq(leafMessageBridge.voter(), address(leafVoter));
         assertEq(leafMessageBridge.module(), address(leafMessageModule));

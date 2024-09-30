@@ -9,14 +9,15 @@ contract RootGaugeFactoryTest is BaseForkFixture {
         assertEq(rootGaugeFactory.xerc20(), address(rootXVelo));
         assertEq(rootGaugeFactory.lockbox(), address(rootLockbox));
         assertEq(rootGaugeFactory.messageBridge(), address(rootMessageBridge));
+        assertEq(rootGaugeFactory.poolFactory(), address(rootPoolFactory));
         assertEq(rootGaugeFactory.votingRewardsFactory(), address(rootVotingRewardsFactory));
-        assertEq(rootGauge.rewardToken(), address(rootRewardToken));
-        assertEq(rootGauge.minter(), address(minter));
+        assertEq(rootGaugeFactory.rewardToken(), minter.velo());
+        assertEq(rootGaugeFactory.minter(), address(minter));
         assertEq(rootGaugeFactory.notifyAdmin(), users.owner);
         assertEq(rootGaugeFactory.emissionAdmin(), users.owner);
+        assertEq(rootGaugeFactory.defaultCap(), 100);
         assertEq(rootGaugeFactory.weeklyEmissions(), 0);
         assertEq(rootGaugeFactory.activePeriod(), 0);
-        assertEq(rootGaugeFactory.defaultCap(), 100);
         assertEq(rootGaugeFactory.emissionCaps({_gauge: address(rootGauge)}), 100);
     }
 }

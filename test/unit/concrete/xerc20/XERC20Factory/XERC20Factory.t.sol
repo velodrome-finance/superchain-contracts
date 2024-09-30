@@ -12,5 +12,6 @@ abstract contract XERC20FactoryTest is BaseFixture {
 
     function test_InitialState() public view {
         assertEq(address(xFactory.createx()), 0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
+        assertEq(xFactory.owner(), users.owner);
     }
 }

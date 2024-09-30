@@ -5,17 +5,19 @@ import "./DeployFixture.sol";
 
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
 
-import {IVotingRewardsFactory, VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
-import {ILeafMessageBridge, LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
-import {ILeafHLMessageModule, LeafHLMessageModule} from "src/bridge/hyperlane/LeafHLMessageModule.sol";
-import {ILeafGaugeFactory, LeafGaugeFactory} from "src/gauges/LeafGaugeFactory.sol";
-import {ITokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
-import {ILeafVoter, LeafVoter} from "src/voter/LeafVoter.sol";
-import {XERC20Factory} from "src/xerc20/XERC20Factory.sol";
+import {VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
+import {LeafGaugeFactory} from "src/gauges/LeafGaugeFactory.sol";
 import {PoolFactory} from "src/pools/PoolFactory.sol";
-import {IXERC20, XERC20} from "src/xerc20/XERC20.sol";
 import {Pool} from "src/pools/Pool.sol";
 import {Router} from "src/Router.sol";
+
+import {XERC20Factory} from "src/xerc20/XERC20Factory.sol";
+import {XERC20} from "src/xerc20/XERC20.sol";
+
+import {LeafHLMessageModule} from "src/bridge/hyperlane/LeafHLMessageModule.sol";
+import {LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
+import {TokenBridge} from "src/bridge/TokenBridge.sol";
+import {LeafVoter} from "src/voter/LeafVoter.sol";
 
 abstract contract DeployBaseFixture is DeployFixture {
     using CreateXLibrary for bytes11;
@@ -25,11 +27,9 @@ abstract contract DeployBaseFixture is DeployFixture {
         address poolAdmin;
         address pauser;
         address feeManager;
-        address whitelistAdmin;
         address tokenAdmin;
-        address adminPlaceholder;
+        address bridgeOwner;
         address mailbox;
-        address[] whitelistedTokens;
         string outputFilename;
     }
 
@@ -133,16 +133,13 @@ abstract contract DeployBaseFixture is DeployFixture {
         messageModule = LeafHLMessageModule(
             CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: _deployer})
         );
-        gaugeFactory = LeafGaugeFactory(
-            CreateXLibrary.computeCreate3Address({_entropy: GAUGE_FACTORY_ENTROPY, _deployer: _deployer})
-        );
         messageBridge = LeafMessageBridge(
             cx.deployCreate3({
                 salt: MESSAGE_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(LeafMessageBridge).creationCode,
                     abi.encode(
-                        _params.adminPlaceholder, // message bridge owner
+                        _params.bridgeOwner, // message bridge owner
                         address(xVelo), // xerc20 address
                         address(voter), // leaf voter
                         address(messageModule) // message module
@@ -173,7 +170,7 @@ abstract contract DeployBaseFixture is DeployFixture {
                 initCode: abi.encodePacked(
                     type(TokenBridge).creationCode,
                     abi.encode(
-                        _params.adminPlaceholder, // bridge owner
+                        _params.bridgeOwner, // bridge owner
                         address(xVelo), // xerc20 address
                         _params.mailbox, // mailbox
                         address(ism) // security module
@@ -191,8 +188,7 @@ abstract contract DeployBaseFixture is DeployFixture {
                     abi.encode(
                         address(voter), // voter address
                         address(xVelo), // xerc20 address
-                        address(messageBridge), // bridge address
-                        _params.adminPlaceholder // notifyAdmin address
+                        address(messageBridge) // bridge address
                     )
                 )
             })
@@ -243,7 +239,6 @@ abstract contract DeployBaseFixture is DeployFixture {
         /// @dev This might overwrite an existing output file
         vm.writeJson(vm.serializeAddress("", "poolImplementation", address(poolImplementation)), path);
         vm.writeJson(vm.serializeAddress("", "poolFactory", address(poolFactory)), path);
-
         vm.writeJson(vm.serializeAddress("", "gaugeFactory: ", address(gaugeFactory)), path);
         vm.writeJson(vm.serializeAddress("", "votingRewardsFactory: ", address(votingRewardsFactory)), path);
         vm.writeJson(vm.serializeAddress("", "voter: ", address(voter)), path);
@@ -255,7 +250,7 @@ abstract contract DeployBaseFixture is DeployFixture {
         vm.writeJson(vm.serializeAddress("", "messageBridge: ", address(messageBridge)), path);
         vm.writeJson(vm.serializeAddress("", "messageModule: ", address(messageModule)), path);
 
-        vm.writeJson(vm.serializeAddress("", "ism: ", address(ism)), path);
         vm.writeJson(vm.serializeAddress("", "router: ", address(router)), path);
+        vm.writeJson(vm.serializeAddress("", "ism: ", address(ism)), path);
     }
 }

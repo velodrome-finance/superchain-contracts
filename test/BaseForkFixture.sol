@@ -39,7 +39,6 @@ import {IPool, Pool} from "src/pools/Pool.sol";
 import {IRouter, Router} from "src/Router.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {ITokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
-import {ITokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
 import {ILeafMessageBridge, LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
 import {IRootMessageBridge, RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
 import {IHLHandler} from "src/interfaces/bridge/hyperlane/IHLHandler.sol";
@@ -91,7 +90,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
     // root superchain contracts
     XERC20Factory public rootXFactory;
     XERC20 public rootXVelo;
-    Router public rootRouter;
     TokenBridge public rootTokenBridge;
     RootMessageBridge public rootMessageBridge;
     RootHLMessageModule public rootMessageModule;
@@ -224,7 +222,12 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootMessageBridge = RootMessageBridge(
             payable(CreateXLibrary.computeCreate3Address({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}))
         );
-        rootPoolImplementation = new RootPool();
+        rootPoolImplementation = RootPool(
+            cx.deployCreate3({
+                salt: CreateXLibrary.calculateSalt({_entropy: POOL_ENTROPY, _deployer: users.deployer}),
+                initCode: abi.encodePacked(type(RootPool).creationCode)
+            })
+        );
         rootPoolFactory = RootPoolFactory(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: POOL_FACTORY_ENTROPY, _deployer: users.deployer}),
@@ -236,20 +239,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
                     )
                 )
             })
-        );
-        rootRouter = Router(
-            payable(
-                cx.deployCreate3({
-                    salt: CreateXLibrary.calculateSalt({_entropy: ROUTER_ENTROPY, _deployer: users.deployer}),
-                    initCode: abi.encodePacked(
-                        type(Router).creationCode,
-                        abi.encode(
-                            address(rootPoolFactory), // pool factory
-                            address(weth) // weth contract
-                        )
-                    )
-                })
-            )
         );
 
         rootXFactory = XERC20Factory(
@@ -269,12 +258,6 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootXVelo = XERC20(_xVelo);
         rootLockbox = XERC20Lockbox(_lockbox);
 
-        rootMessageModule = RootHLMessageModule(
-            CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer})
-        );
-        rootGaugeFactory = RootGaugeFactory(
-            CreateXLibrary.computeCreate3Address({_entropy: GAUGE_FACTORY_ENTROPY, _deployer: users.deployer})
-        );
         rootMessageBridge = RootMessageBridge(
             payable(
                 cx.deployCreate3({

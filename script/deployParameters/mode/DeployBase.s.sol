@@ -2,10 +2,9 @@
 pragma solidity ^0.8.15;
 
 import "../../01_DeployBaseFixture.s.sol";
+import {ModeRouter} from "src/extensions/ModeRouter.sol";
 import {ModePool} from "src/pools/extensions/ModePool.sol";
 import {ModePoolFactory} from "src/pools/extensions/ModePoolFactory.sol";
-import {ModeRouter} from "src/extensions/ModeRouter.sol";
-import {XERC20Factory} from "src/xerc20/XERC20Factory.sol";
 
 contract DeployBase is DeployBaseFixture {
     using CreateXLibrary for bytes11;
@@ -16,35 +15,16 @@ contract DeployBase is DeployBaseFixture {
     }
 
     ModeDeploymentParameters internal _modeParams;
-    address[] public whitelistedTokens = new address[](15);
 
     function setUp() public override {
-        whitelistedTokens.push(0x4200000000000000000000000000000000000006);
-        whitelistedTokens.push(0xDfc7C877a950e49D2610114102175A06C2e3167a);
-        whitelistedTokens.push(0x59889b7021243dB5B1e065385F918316cD90D46c);
-        whitelistedTokens.push(0x4186BFC76E2E237523CBC30FD220FE055156b41F);
-        whitelistedTokens.push(0xe7903B1F75C534Dd8159b313d92cDCfbC62cB3Cd);
-        whitelistedTokens.push(0x2416092f143378750bb29b79eD961ab195CcEea5);
-        whitelistedTokens.push(0x80137510979822322193FC997d400D5A6C747bf7);
-        whitelistedTokens.push(0xd988097fb8612cc24eeC14542bC03424c656005f);
-        whitelistedTokens.push(0xf0F161fDA2712DB8b566946122a5af183995e2eD);
-        whitelistedTokens.push(0x04C0599Ae5A44757c0af6F9eC3b93da8976c150A);
-        whitelistedTokens.push(0xcDd475325D6F564d27247D1DddBb0DAc6fA0a5CF);
-        whitelistedTokens.push(0x9e5AAC1Ba1a2e6aEd6b32689DFcF62A509Ca96f3);
-        whitelistedTokens.push(0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb);
-        whitelistedTokens.push(0xE7798f023fC62146e8Aa1b36Da45fb70855a77Ea);
-        whitelistedTokens.push(0x18470019bF0E94611f15852F7e93cf5D65BC34CA);
-
         _params = DeployBaseFixture.DeploymentParameters({
             weth: 0x4200000000000000000000000000000000000006,
             poolAdmin: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
             pauser: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
             feeManager: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
-            whitelistAdmin: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
             tokenAdmin: 0x0000000000000000000000000000000000000001,
-            adminPlaceholder: 0x0000000000000000000000000000000000000001,
+            bridgeOwner: 0x0000000000000000000000000000000000000001,
             mailbox: 0x2f2aFaE1139Ce54feFC03593FeE8AB2aDF4a85A7,
-            whitelistedTokens: whitelistedTokens,
             outputFilename: "mode.json"
         });
         _modeParams = ModeDeploymentParameters({
@@ -113,6 +93,7 @@ contract DeployBase is DeployBaseFixture {
             })
         );
         checkAddress({_entropy: XERC20_FACTORY_ENTROPY, _output: address(xerc20Factory)});
+
         messageBridge = LeafMessageBridge(
             CreateXLibrary.computeCreate3Address({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: _deployer})
         );
@@ -134,21 +115,16 @@ contract DeployBase is DeployBaseFixture {
         messageModule = LeafHLMessageModule(
             CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: _deployer})
         );
-        gaugeFactory = LeafGaugeFactory(
-            CreateXLibrary.computeCreate3Address({_entropy: GAUGE_FACTORY_ENTROPY, _deployer: _deployer})
-        );
         messageBridge = LeafMessageBridge(
             cx.deployCreate3({
                 salt: MESSAGE_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(LeafMessageBridge).creationCode,
                     abi.encode(
-                        _params.adminPlaceholder, // message bridge owner
+                        _params.bridgeOwner, // message bridge owner
                         address(xVelo), // xerc20 address
                         address(voter), // leaf voter
-                        address(messageModule), // message module
-                        address(poolFactory), // leaf pool factory
-                        address(gaugeFactory) // gauge factory
+                        address(messageModule) // message module
                     )
                 )
             })
@@ -176,7 +152,7 @@ contract DeployBase is DeployBaseFixture {
                 initCode: abi.encodePacked(
                     type(TokenBridge).creationCode,
                     abi.encode(
-                        _params.adminPlaceholder, // bridge owner
+                        _params.bridgeOwner, // bridge owner
                         address(xVelo), // xerc20 address
                         _params.mailbox, // mailbox
                         address(ism) // security module
@@ -194,8 +170,7 @@ contract DeployBase is DeployBaseFixture {
                     abi.encode(
                         address(voter), // voter address
                         address(xVelo), // xerc20 address
-                        address(messageBridge), // bridge address
-                        _params.adminPlaceholder // notifyAdmin address
+                        address(messageBridge) // bridge address
                     )
                 )
             })

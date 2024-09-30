@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
+import "test/BaseFixture.sol";
 import {DeployBase} from "script/deployParameters/mode/DeployBase.s.sol";
+
 import {ModePoolFactory} from "src/pools/extensions/ModePoolFactory.sol";
 import {ModePool} from "src/pools/extensions/ModePool.sol";
 import {ModeRouter} from "src/extensions/ModeRouter.sol";
-
-import "test/BaseFixture.sol";
-import {FeeSharing} from "test/mocks/mode/FeeSharing.sol";
 
 contract ModeDeployBaseTest is BaseFixture {
     using stdStorage for StdStorage;
@@ -16,9 +15,8 @@ contract ModeDeployBaseTest is BaseFixture {
     DeployBase.DeploymentParameters public params;
     DeployBase.ModeDeploymentParameters public modeParams;
 
-    FeeSharing public fs;
-
     function setUp() public override {
+        vm.createSelectFork({urlOrAlias: "mode", blockNumber: 11032400});
         deploy = new DeployBase();
         // this runs automatically when you run the script, but must be called manually in the test
         deploy.setUp();
@@ -26,11 +24,6 @@ contract ModeDeployBaseTest is BaseFixture {
         createUsers();
         stdstore.target(address(deploy)).sig("deployer()").checked_write(users.owner);
         stdstore.target(address(deploy)).sig("isTest()").checked_write(true);
-
-        fs = new FeeSharing();
-        vm.etch(0x8680CEaBcb9b56913c519c069Add6Bc3494B7020, address(fs).code);
-
-        deployCreateX();
     }
 
     function testRun() public {
@@ -38,7 +31,7 @@ contract ModeDeployBaseTest is BaseFixture {
 
         ModePool poolImplementation = ModePool(address(deploy.poolImplementation()));
         ModePoolFactory poolFactory = ModePoolFactory(address(deploy.poolFactory()));
-        ModeRouter router = ModeRouter(payable(address(deploy.router())));
+        ModeRouter router = ModeRouter(payable(deploy.router()));
 
         leafGaugeFactory = deploy.gaugeFactory();
         leafVotingRewardsFactory = deploy.votingRewardsFactory();
@@ -81,7 +74,7 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(poolFactory.stableFee(), 5);
         assertEq(poolFactory.volatileFee(), 30);
         assertEq(poolFactory.sfs(), modeParams.sfs);
-        assertEq(poolFactory.tokenId(), 0);
+        assertEq(poolFactory.tokenId(), 553);
 
         assertEq(leafGaugeFactory.voter(), address(leafVoter));
         assertEq(leafGaugeFactory.xerc20(), address(leafXVelo));
@@ -110,7 +103,7 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(leafTokenBridge.mailbox(), params.mailbox);
         assertEq(address(leafTokenBridge.securityModule()), address(leafIsm));
 
-        assertEq(leafMessageBridge.owner(), params.adminPlaceholder);
+        assertEq(leafMessageBridge.owner(), params.bridgeOwner);
         assertEq(leafMessageBridge.xerc20(), address(leafXVelo));
         assertEq(leafMessageBridge.voter(), address(leafVoter));
         assertEq(leafMessageBridge.module(), address(leafMessageModule));
@@ -124,6 +117,6 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(router.factory(), address(poolFactory));
         assertEq(router.poolImplementation(), address(poolImplementation));
         assertEq(address(router.weth()), params.weth);
-        assertNotEq(router.tokenId(), 0);
+        assertEq(router.tokenId(), 554);
     }
 }

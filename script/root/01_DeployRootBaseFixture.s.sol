@@ -1,31 +1,31 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "./DeployFixture.sol";
+import "../DeployFixture.sol";
 
-import {XERC20Factory} from "src/xerc20/XERC20Factory.sol";
-import {IXERC20, XERC20} from "src/xerc20/XERC20.sol";
-import {XERC20Lockbox} from "src/xerc20/XERC20Lockbox.sol";
+import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
 
-import {RootPool} from "src/mainnet/pools/RootPool.sol";
+import {RootVotingRewardsFactory} from "src/mainnet/rewards/RootVotingRewardsFactory.sol";
+import {RootGaugeFactory} from "src/mainnet/gauges/RootGaugeFactory.sol";
 import {RootPoolFactory} from "src/mainnet/pools/RootPoolFactory.sol";
-import {RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
-import {RootHLMessageModule} from "src/mainnet/bridge/hyperlane/RootHLMessageModule.sol";
+import {RootPool} from "src/mainnet/pools/RootPool.sol";
+
+import {XERC20Lockbox} from "src/xerc20/XERC20Lockbox.sol";
+import {XERC20Factory} from "src/xerc20/XERC20Factory.sol";
+import {XERC20} from "src/xerc20/XERC20.sol";
 
 import {EmergencyCouncil} from "src/mainnet/emergencyCouncil/EmergencyCouncil.sol";
+import {RootHLMessageModule} from "src/mainnet/bridge/hyperlane/RootHLMessageModule.sol";
+import {RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
+import {TokenBridge} from "src/bridge/TokenBridge.sol";
 
-import {IRootGaugeFactory, RootGaugeFactory} from "src/mainnet/gauges/RootGaugeFactory.sol";
-import {IRootVotingRewardsFactory, RootVotingRewardsFactory} from "src/mainnet/rewards/RootVotingRewardsFactory.sol";
-
-abstract contract DeployRootMessageFixture is DeployFixture {
+abstract contract DeployRootBaseFixture is DeployFixture {
     using CreateXLibrary for bytes11;
 
     struct RootDeploymentParameters {
         address weth;
         address voter;
-        address votingEscrow;
         address velo;
-        address factoryRegistry;
         address tokenAdmin;
         address bridgeOwner;
         address emergencyCouncilOwner;
@@ -36,20 +36,21 @@ abstract contract DeployRootMessageFixture is DeployFixture {
         string outputFilename;
     }
 
-    XERC20Factory public xerc20Factory;
-    XERC20 public xVelo;
-    XERC20Lockbox public lockbox;
-
-    RootMessageBridge public messageBridge;
-    RootHLMessageModule public messageModule;
-
     RootPool public poolImplementation;
     RootPoolFactory public poolFactory;
     RootGaugeFactory public gaugeFactory;
     RootVotingRewardsFactory public votingRewardsFactory;
 
+    XERC20Factory public xerc20Factory;
+    XERC20 public xVelo;
+    XERC20Lockbox public lockbox;
+
+    TokenBridge public tokenBridge;
+    RootMessageBridge public messageBridge;
+    RootHLMessageModule public messageModule;
     EmergencyCouncil public emergencyCouncil;
 
+    IInterchainSecurityModule public ism;
     RootDeploymentParameters internal _params;
 
     /// @dev Used by tests to disable logging of output
@@ -62,7 +63,12 @@ abstract contract DeployRootMessageFixture is DeployFixture {
         messageBridge = RootMessageBridge(
             payable(CreateXLibrary.computeCreate3Address({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: _deployer}))
         );
-        poolImplementation = new RootPool();
+        poolImplementation = RootPool(
+            cx.deployCreate3({
+                salt: POOL_ENTROPY.calculateSalt({_deployer: _deployer}),
+                initCode: abi.encodePacked(type(RootPool).creationCode)
+            })
+        );
         poolFactory = RootPoolFactory(
             cx.deployCreate3({
                 salt: POOL_FACTORY_ENTROPY.calculateSalt({_deployer: _deployer}),
@@ -75,6 +81,7 @@ abstract contract DeployRootMessageFixture is DeployFixture {
                 )
             })
         );
+        checkAddress({_entropy: POOL_FACTORY_ENTROPY, _output: address(poolFactory)});
 
         xerc20Factory = XERC20Factory(
             cx.deployCreate3({
@@ -88,17 +95,12 @@ abstract contract DeployRootMessageFixture is DeployFixture {
                 )
             })
         );
+        checkAddress({_entropy: XERC20_FACTORY_ENTROPY, _output: address(xerc20Factory)});
+
         (address _xVelo, address _lockbox) = xerc20Factory.deployXERC20WithLockbox({_erc20: _params.velo});
         xVelo = XERC20(_xVelo);
         lockbox = XERC20Lockbox(_lockbox);
 
-        messageModule = RootHLMessageModule(
-            CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: _deployer})
-        );
-
-        gaugeFactory = RootGaugeFactory(
-            CreateXLibrary.computeCreate3Address({_entropy: GAUGE_FACTORY_ENTROPY, _deployer: _deployer})
-        );
         messageBridge = RootMessageBridge(
             payable(
                 cx.deployCreate3({
@@ -124,13 +126,28 @@ abstract contract DeployRootMessageFixture is DeployFixture {
                     type(RootHLMessageModule).creationCode,
                     abi.encode(
                         address(messageBridge), // root message bridge
-                        _params.mailbox, // root mailbox
-                        address(0) // root security module
+                        _params.mailbox // root mailbox
                     )
                 )
             })
         );
         checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _output: address(messageModule)});
+
+        tokenBridge = TokenBridge(
+            cx.deployCreate3({
+                salt: TOKEN_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
+                initCode: abi.encodePacked(
+                    type(TokenBridge).creationCode,
+                    abi.encode(
+                        _params.bridgeOwner, // bridge owner
+                        address(xVelo), // xerc20 address
+                        _params.mailbox, // mailbox
+                        address(ism) // security module
+                    )
+                )
+            })
+        );
+        checkAddress({_entropy: TOKEN_BRIDGE_ENTROPY, _output: address(tokenBridge)});
 
         votingRewardsFactory = RootVotingRewardsFactory(
             cx.deployCreate3({
@@ -152,7 +169,7 @@ abstract contract DeployRootMessageFixture is DeployFixture {
                     type(RootGaugeFactory).creationCode,
                     abi.encode(
                         _params.voter, // voter address
-                        xVelo, // xerc20 address
+                        address(xVelo), // xerc20 address
                         address(lockbox), // lockbox address
                         address(messageBridge), // message bridge address
                         address(poolFactory), // pool factory address
@@ -178,30 +195,41 @@ abstract contract DeployRootMessageFixture is DeployFixture {
     }
 
     function logParams() internal view override {
+        console.log("poolImplementation: ", address(poolImplementation));
+        console.log("poolFactory: ", address(poolFactory));
+        console.log("gaugeFactory: ", address(gaugeFactory));
+        console.log("votingRewardsFactory: ", address(votingRewardsFactory));
+
         console.log("xerc20Factory: ", address(xerc20Factory));
         console.log("xVelo: ", address(xVelo));
         console.log("lockbox: ", address(lockbox));
 
+        console.log("tokenBridge: ", address(tokenBridge));
         console.log("messageBridge: ", address(messageBridge));
         console.log("messageModule: ", address(messageModule));
 
-        console.log("gaugeFactory: ", address(gaugeFactory));
         console.log("emergencyCouncil: ", address(emergencyCouncil));
+        console.log("ism: ", address(ism));
     }
 
     function logOutput() internal override {
         if (isTest) return;
         string memory root = vm.projectRoot();
         string memory path = string(abi.encodePacked(root, "/deployment-addresses/", _params.outputFilename));
+        vm.writeJson(vm.serializeAddress("", "poolImplementation: ", address(poolImplementation)), path);
+        vm.writeJson(vm.serializeAddress("", "poolFactory: ", address(poolFactory)), path);
+        vm.writeJson(vm.serializeAddress("", "gaugeFactory: ", address(gaugeFactory)), path);
+        vm.writeJson(vm.serializeAddress("", "votingRewardsFactory: ", address(votingRewardsFactory)), path);
 
         vm.writeJson(vm.serializeAddress("", "xerc20Factory: ", address(xerc20Factory)), path);
         vm.writeJson(vm.serializeAddress("", "xVelo: ", address(xVelo)), path);
         vm.writeJson(vm.serializeAddress("", "lockbox: ", address(lockbox)), path);
 
+        vm.writeJson(vm.serializeAddress("", "tokenBridge: ", address(tokenBridge)), path);
         vm.writeJson(vm.serializeAddress("", "messageBridge: ", address(messageBridge)), path);
         vm.writeJson(vm.serializeAddress("", "messageModule: ", address(messageModule)), path);
 
-        vm.writeJson(vm.serializeAddress("", "gaugeFactory: ", address(gaugeFactory)), path);
         vm.writeJson(vm.serializeAddress("", "emergencyCouncil: ", address(emergencyCouncil)), path);
+        vm.writeJson(vm.serializeAddress("", "ism: ", address(ism)), path);
     }
 }

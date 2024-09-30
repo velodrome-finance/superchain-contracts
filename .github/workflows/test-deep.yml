@@ -52,5 +52,6 @@ jobs:
         id: test
         env: 
           OPTIMISM_RPC_URL: ${{ secrets.OPTIMISM_RPC_URL }}
+          BOB_RPC_URL: ${{ secrets.BOB_RPC_URL }}
           MODE_RPC_URL: ${{ secrets.MODE_RPC_URL }}
           PRIVATE_KEY_DEPLOY: ${{ secrets.PRIVATE_KEY_DEPLOY }}
