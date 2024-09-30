@@ -17,10 +17,12 @@ import {IERC20, IERC20Errors} from "@openzeppelin5/contracts/token/ERC20/ERC20.s
 import {TestIsm} from "@hyperlane/core/contracts/test/TestIsm.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 import {SafeCast} from "@openzeppelin5/contracts/utils/math/SafeCast.sol";
+import {StandardHookMetadata} from "@hyperlane/core/contracts/hooks/libs/StandardHookMetadata.sol";
 
 import {CreateXLibrary} from "src/libraries/CreateXLibrary.sol";
 import {MintLimits} from "src/xerc20/MintLimits.sol";
 import {Commands} from "src/libraries/Commands.sol";
+import {GasLimits} from "src/libraries/GasLimits.sol";
 
 import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
 import {XERC20Factory} from "src/xerc20/XERC20Factory.sol";

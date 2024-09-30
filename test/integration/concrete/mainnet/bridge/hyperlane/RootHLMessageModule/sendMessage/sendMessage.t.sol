@@ -5,6 +5,7 @@ import "../RootHLMessageModule.t.sol";
 
 contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
     using stdStorage for StdStorage;
+    using GasLimits for uint256;
 
     function test_WhenTheCallerIsNotBridge() external {
         // It reverts with NotBridge
@@ -33,13 +34,21 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
             abi.encode(Commands.DEPOSIT, abi.encode(1_000, abi.encode(address(leafGauge), payload)));
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
 
-        vm.prank(address(rootMessageBridge));
+        vm.prank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
-            _message: string(expectedMessage)
+            _message: string(expectedMessage),
+            _metadata: string(
+                StandardHookMetadata.formatMetadata({
+                    _msgValue: ethAmount,
+                    _gasLimit: Commands.DEPOSIT.gasLimit(),
+                    _refundAddress: users.alice,
+                    _customMetadata: ""
+                })
+            )
         });
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
 

@@ -5,6 +5,7 @@ import "../RootHLMessageModule.t.sol";
 
 contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
     using stdStorage for StdStorage;
+    using GasLimits for uint256;
 
     function testFuzz_WhenTheCallerIsNotBridge(address _caller) external {
         // It reverts with NotBridge
@@ -34,13 +35,21 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
 
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
 
-        vm.prank(address(rootMessageBridge));
+        vm.prank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
-            _message: string(expectedMessage)
+            _message: string(expectedMessage),
+            _metadata: string(
+                StandardHookMetadata.formatMetadata({
+                    _msgValue: ethAmount,
+                    _gasLimit: Commands.DEPOSIT.gasLimit(),
+                    _refundAddress: users.alice,
+                    _customMetadata: ""
+                })
+            )
         });
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
 
