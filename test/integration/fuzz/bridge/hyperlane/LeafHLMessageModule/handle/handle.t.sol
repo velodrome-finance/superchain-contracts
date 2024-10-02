@@ -145,7 +145,6 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
         whenTheSenderIsModule
-        whenTheReceivingNonceIsTheExpectedNonce
     {
         // It decodes the gauge address and the amount from the message
         // It calls mint on the bridge
@@ -182,7 +181,6 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
         whenTheSenderIsModule
-        whenTheReceivingNonceIsTheExpectedNonce
     {
         // It decodes the gauge address and the amount from the message
         // It calls mint on the bridge
@@ -219,7 +217,6 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
         whenTheSenderIsModule
-        whenTheReceivingNonceIsTheExpectedNonce
     {
         // It reverts with {InvalidCommand}
         uint256 tokenId = 1;

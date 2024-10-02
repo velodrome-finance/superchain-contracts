@@ -2,6 +2,13 @@ SendMessageIntegrationConcreteTest
 ├── When the caller is not bridge
 │   └── It reverts with NotBridge
 └── When the caller is bridge
-    ├── It dispatches the message to the mailbox
-    ├── It emits the {SentMessage} event
-    └── It calls receiveMessage on the recipient contract of the same address with the payload
+    ├── When the command is deposit
+    │   ├── It dispatches the message to the mailbox
+    │   ├── It emits the {SentMessage} event
+    │   ├── It should update sendingNonce
+    │   └── It calls receiveMessage on the recipient contract of the same address with the payload
+    └── When the command is createGauge
+        ├── It dispatches the message to the mailbox
+        ├── It emits the {SentMessage} event
+        ├── It shouldn't update sendingNonce
+        └── It calls receiveMessage on the recipient contract of the same address with the payload

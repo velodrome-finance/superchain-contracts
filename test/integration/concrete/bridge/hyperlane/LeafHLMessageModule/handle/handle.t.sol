@@ -162,7 +162,6 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
         whenTheSenderIsModule
-        whenTheReceivingNonceIsTheExpectedNonce
     {
         // It decodes the gauge address from the message
         // It calls get reward on the incentive rewards contract corresponding to the gauge with the payload
@@ -199,13 +198,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         assertEq(leafMessageModule.receivingNonce(), 1_000);
     }
 
-    function test_WhenTheCommandIsGetFees()
-        external
-        whenTheCallerIsMailbox
-        whenTheOriginIsRoot
-        whenTheSenderIsModule
-        whenTheReceivingNonceIsTheExpectedNonce
-    {
+    function test_WhenTheCommandIsGetFees() external whenTheCallerIsMailbox whenTheOriginIsRoot whenTheSenderIsModule {
         // It decodes the gauge address from the message
         // It calls get reward on the fee rewards contract corresponding to the gauge with the payload
         // It emits the {ReceivedMessage} event
@@ -247,7 +240,6 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
         whenTheSenderIsModule
-        whenTheReceivingNonceIsTheExpectedNonce
         whenTheCommandIsCreateGauge
     {
         // It decodes the pool configuration from the message
@@ -288,7 +280,6 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
         whenTheSenderIsModule
-        whenTheReceivingNonceIsTheExpectedNonce
         whenTheCommandIsCreateGauge
     {
         // It decodes the pool configuration from the message
@@ -317,13 +308,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         assertEq(leafMessageModule.receivingNonce(), 1_000);
     }
 
-    function test_WhenTheCommandIsNotify()
-        external
-        whenTheCallerIsMailbox
-        whenTheOriginIsRoot
-        whenTheSenderIsModule
-        whenTheReceivingNonceIsTheExpectedNonce
-    {
+    function test_WhenTheCommandIsNotify() external whenTheCallerIsMailbox whenTheOriginIsRoot whenTheSenderIsModule {
         // It decodes the gauge address and the amount from the message
         // It calls mint on the bridge
         // It approves the gauge to spend amount of xerc20
@@ -357,7 +342,6 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
         whenTheSenderIsModule
-        whenTheReceivingNonceIsTheExpectedNonce
     {
         // It decodes the gauge address and the amount from the message
         // It calls mint on the bridge
@@ -387,13 +371,70 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         assertEq(leafMessageModule.receivingNonce(), 1_000);
     }
 
-    function test_WhenTheCommandIsInvalid()
+    function test_WhenTheCommandIsKillGauge()
         external
         whenTheCallerIsMailbox
         whenTheOriginIsRoot
         whenTheSenderIsModule
-        whenTheReceivingNonceIsTheExpectedNonce
     {
+        // It decodes the gauge address
+        // It calls mint on the bridge
+        // It calls killGauge on voter
+        // It emits the {ReceivedMessage} event
+        stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
+
+        bytes memory payload = abi.encode(address(leafGauge));
+        bytes memory message = abi.encode(Commands.KILL_GAUGE, payload);
+        vm.expectEmit(address(leafMessageModule));
+
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+
+        assertFalse(leafVoter.isAlive(address(leafGauge)));
+        // because of bribePool token0 is still whitelisted
+        assertTrue(leafVoter.isWhitelistedToken(address(token0)));
+        assertFalse(leafVoter.isWhitelistedToken(address(token1)));
+        assertEq(leafVoter.whitelistTokenCount(address(token0)), 1);
+        assertEq(leafVoter.whitelistTokenCount(address(token1)), 0);
+        assertEq(leafMessageModule.receivingNonce(), 1_000);
+    }
+
+    function test_WhenTheCommandIsReviveGauge()
+        external
+        whenTheCallerIsMailbox
+        whenTheOriginIsRoot
+        whenTheSenderIsModule
+    {
+        // It decodes the gauge address
+        // It calls mint on the bridge
+        // It calls reviveGauge on voter
+        // It emits the {ReceivedMessage} event
+
+        // kill gauge by hand
+        vm.stopPrank();
+        vm.prank(address(leafMessageModule));
+        leafVoter.killGauge(address(leafGauge));
+        vm.startPrank(address(leafMailbox));
+
+        stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
+
+        bytes memory payload = abi.encode(address(leafGauge));
+        bytes memory message = abi.encode(Commands.REVIVE_GAUGE, payload);
+        vm.expectEmit(address(leafMessageModule));
+
+        emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
+        leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
+
+        assertTrue(leafVoter.isAlive(address(leafGauge)));
+        assertTrue(leafVoter.isWhitelistedToken(address(token0)));
+        assertTrue(leafVoter.isWhitelistedToken(address(token1)));
+        // because of bribePool token0 whitelistTokenCount is 2
+        assertEq(leafVoter.whitelistTokenCount(address(token0)), 2);
+        assertEq(leafVoter.whitelistTokenCount(address(token1)), 1);
+        assertEq(leafMessageModule.receivingNonce(), 1_000);
+    }
+
+    function test_WhenTheCommandIsInvalid() external whenTheCallerIsMailbox whenTheOriginIsRoot whenTheSenderIsModule {
         // It reverts with {InvalidCommand}
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
