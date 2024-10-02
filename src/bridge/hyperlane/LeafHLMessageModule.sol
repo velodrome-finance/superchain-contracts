@@ -12,13 +12,13 @@ import {IPoolFactory} from "../../interfaces/pools/IPoolFactory.sol";
 import {ILeafGauge} from "../../interfaces/gauges/ILeafGauge.sol";
 import {ILeafVoter} from "../../interfaces/voter/ILeafVoter.sol";
 import {IReward} from "../../interfaces/rewards/IReward.sol";
-
 import {Commands} from "../../libraries/Commands.sol";
 import {IXERC20} from "../../interfaces/xerc20/IXERC20.sol";
+import {ISpecifiesInterchainSecurityModule} from "../../interfaces/external/ISpecifiesInterchainSecurityModule.sol";
 
 /// @title Hyperlane Token Bridge
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
-contract LeafHLMessageModule is ILeafHLMessageModule {
+contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecurityModule {
     using SafeERC20 for IERC20;
 
     /// @inheritdoc ILeafHLMessageModule
@@ -40,6 +40,10 @@ contract LeafHLMessageModule is ILeafHLMessageModule {
         voter = ILeafMessageBridge(_bridge).voter();
         mailbox = _mailbox;
         securityModule = IInterchainSecurityModule(_ism);
+    }
+
+    function interchainSecurityModule() external view returns (IInterchainSecurityModule) {
+        return securityModule;
     }
 
     /// @inheritdoc IHLHandler

@@ -3,19 +3,20 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
+import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
+import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
+import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 
 import {IHLHandler} from "../interfaces/bridge/hyperlane/IHLHandler.sol";
 import {ITokenBridge} from "../interfaces/bridge/ITokenBridge.sol";
 import {IXERC20} from "../interfaces/xerc20/IXERC20.sol";
-import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
-import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
-import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
+import {ISpecifiesInterchainSecurityModule} from "../interfaces/external/ISpecifiesInterchainSecurityModule.sol";
 
 import {ChainRegistry} from "./ChainRegistry.sol";
 
 /// @title Token Bridge Contract
 /// @notice General Purpose Token Bridge
-contract TokenBridge is ITokenBridge, IHLHandler, ChainRegistry {
+contract TokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterchainSecurityModule, ChainRegistry {
     using EnumerableSet for EnumerableSet.UintSet;
 
     /// @inheritdoc ITokenBridge
@@ -29,6 +30,10 @@ contract TokenBridge is ITokenBridge, IHLHandler, ChainRegistry {
         xerc20 = _xerc20;
         mailbox = _mailbox;
         securityModule = IInterchainSecurityModule(_ism);
+    }
+
+    function interchainSecurityModule() external view returns (IInterchainSecurityModule) {
+        return securityModule;
     }
 
     /// @inheritdoc ITokenBridge

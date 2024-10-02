@@ -52,8 +52,6 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest, Gas
         leafIVR.notifyRewardAmount(address(tokenB), TOKEN_1);
         vm.stopPrank();
 
-        /// @dev Use check mode to revert if snapshots are mismatched
-        check = true;
         origin = 10;
         uint256 amountToBridge = TOKEN_1 * 1000;
         setLimits({_rootBufferCap: amountToBridge * 2, _leafBufferCap: amountToBridge * 2});
@@ -135,9 +133,6 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest, Gas
     }
 
     function testGas_CreateGauge() public {
-        /// @dev Disable snapshot checks for this test
-        check = false;
-
         address pool = Clones.predictDeterministicAddress({
             deployer: address(leafPoolFactory),
             implementation: leafPoolFactory.implementation(),

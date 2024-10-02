@@ -46,7 +46,7 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          FOUNDRY_NO_MATCH_TEST=DISABLE forge test --isolate --mt testGas -vvv
+          FORGE_SNAPSHOT_CHECK=true FOUNDRY_NO_MATCH_TEST=DISABLE forge test --isolate --mt testGas -vvv
         id: test
         env: 
           OPTIMISM_RPC_URL: ${{ secrets.OPTIMISM_RPC_URL }}
