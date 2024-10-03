@@ -5,7 +5,6 @@ import "../EmergencyCouncilE2E.t.sol";
 
 contract ReviveLeafGaugeE2ETest is EmergencyCouncilE2ETest {
     using stdStorage for StdStorage;
-    using GasLimits for uint256;
 
     function test_WhenCallerIsNotOwner() external {
         // It should revert with OwnableUnauthorizedAccount
@@ -43,15 +42,7 @@ contract ReviveLeafGaugeE2ETest is EmergencyCouncilE2ETest {
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: MESSAGE_FEE,
-            _message: string(message),
-            _metadata: string(
-                StandardHookMetadata.formatMetadata({
-                    _msgValue: MESSAGE_FEE,
-                    _gasLimit: Commands.REVIVE_GAUGE.gasLimit(),
-                    _refundAddress: users.owner,
-                    _customMetadata: ""
-                })
-            )
+            _message: string(message)
         });
         emergencyCouncil.reviveLeafGauge(leaf, address(leafGauge));
 

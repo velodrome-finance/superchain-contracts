@@ -3,7 +3,6 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
-import {StandardHookMetadata} from "@hyperlane/core/contracts/hooks/libs/StandardHookMetadata.sol";
 
 import {
     IRootHLMessageModule, IMessageSender
@@ -11,13 +10,10 @@ import {
 import {IRootMessageBridge} from "../../../interfaces/mainnet/bridge/IRootMessageBridge.sol";
 import {IXERC20} from "../../../interfaces/xerc20/IXERC20.sol";
 import {Commands} from "../../../libraries/Commands.sol";
-import {GasLimits} from "../../../libraries/GasLimits.sol";
 
 /// @title Hyperlane Token Bridge
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
 contract RootHLMessageModule is IRootHLMessageModule {
-    using GasLimits for uint256;
-
     /// @inheritdoc IRootHLMessageModule
     address public immutable bridge;
     /// @inheritdoc IRootHLMessageModule
@@ -60,29 +56,17 @@ contract RootHLMessageModule is IRootHLMessageModule {
             IXERC20(xerc20).burn({_user: address(this), _amount: amount});
         }
 
-        bytes memory _metadata = _generateGasMetadata({_command: command});
         Mailbox(mailbox).dispatch{value: msg.value}({
-            destinationDomain: domain,
-            recipientAddress: TypeCasts.addressToBytes32(address(this)),
-            messageBody: _message,
-            hookMetadata: _metadata
+            _destinationDomain: domain,
+            _recipientAddress: TypeCasts.addressToBytes32(address(this)),
+            _messageBody: _message
         });
 
         emit SentMessage({
             _destination: domain,
             _recipient: TypeCasts.addressToBytes32(address(this)),
             _value: msg.value,
-            _message: string(_message),
-            _metadata: string(_metadata)
-        });
-    }
-
-    function _generateGasMetadata(uint256 _command) internal view returns (bytes memory) {
-        return StandardHookMetadata.formatMetadata({
-            _msgValue: msg.value,
-            _gasLimit: _command.gasLimit(),
-            _refundAddress: tx.origin,
-            _customMetadata: ""
+            _message: string(_message)
         });
     }
 }

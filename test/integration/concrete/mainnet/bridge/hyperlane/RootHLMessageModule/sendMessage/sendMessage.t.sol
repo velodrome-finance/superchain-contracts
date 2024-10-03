@@ -5,7 +5,6 @@ import "../RootHLMessageModule.t.sol";
 
 contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
     using stdStorage for StdStorage;
-    using GasLimits for uint256;
 
     function test_WhenTheCallerIsNotBridge() external {
         // It reverts with NotBridge
@@ -45,15 +44,7 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
-            _message: string(expectedMessage),
-            _metadata: string(
-                StandardHookMetadata.formatMetadata({
-                    _msgValue: ethAmount,
-                    _gasLimit: Commands.DEPOSIT.gasLimit(),
-                    _refundAddress: users.alice,
-                    _customMetadata: ""
-                })
-            )
+            _message: string(expectedMessage)
         });
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
 
@@ -98,15 +89,7 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
-            _message: string(message),
-            _metadata: string(
-                StandardHookMetadata.formatMetadata({
-                    _msgValue: ethAmount,
-                    _gasLimit: Commands.CREATE_GAUGE.gasLimit(),
-                    _refundAddress: users.alice,
-                    _customMetadata: ""
-                })
-            )
+            _message: string(message)
         });
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
 
