@@ -50,4 +50,18 @@ contract WithdrawIntegrationConcreteTest is RootFeesVotingRewardTest {
         assertEq(leafIVR.totalSupply(), 0);
         assertEq(leafIVR.balanceOf(tokenId), 0);
     }
+
+    function testGas_WhenCallerIsVoter() external {
+        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE * 2});
+        vm.prank(users.alice);
+        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
+
+        uint256 amount = TOKEN_1 * 1000;
+        uint256 tokenId = 1;
+
+        vm.selectFork({forkId: rootId});
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
+        rootFVR._withdraw({_amount: amount, _tokenId: tokenId});
+        snapLastCall("RootFeesVotingReward_withdraw");
+    }
 }

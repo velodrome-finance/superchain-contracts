@@ -22,4 +22,15 @@ contract DepositUnitConcreteTest is XERC20LockboxTest {
         assertEq(rewardToken.balanceOf(address(lockbox)), amount);
         assertEq(xVelo.balanceOf(users.alice), amount);
     }
+
+    function testGas_GivenAnyAmount() external {
+        uint256 amount = TOKEN_1 * 100_000;
+        deal(address(rewardToken), users.alice, amount);
+
+        vm.startPrank(users.alice);
+        rewardToken.approve(address(lockbox), amount);
+
+        lockbox.deposit(amount);
+        snapLastCall("XERC20Lockbox_deposit");
+    }
 }

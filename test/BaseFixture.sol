@@ -4,6 +4,7 @@ pragma solidity >=0.8.19 <0.9.0;
 import {VmSafe} from "forge-std/src/Vm.sol";
 import "forge-std/src/Test.sol";
 import "forge-std/src/console.sol";
+import {GasSnapshot} from "forge-gas-snapshot/GasSnapshot.sol";
 import {IERC20Metadata, IERC20} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
 import {SafeCast} from "@openzeppelin5/contracts/utils/math/SafeCast.sol";
@@ -37,7 +38,7 @@ import {MockWETH} from "test/mocks/MockWETH.sol";
 import {TestERC20} from "test/mocks/TestERC20.sol";
 import {CreateX} from "test/mocks/CreateX.sol";
 
-abstract contract BaseFixture is Test, TestConstants {
+abstract contract BaseFixture is Test, TestConstants, GasSnapshot {
     using SafeERC20 for TestERC20;
 
     Pool public poolImplementation;

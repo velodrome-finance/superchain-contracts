@@ -39,4 +39,17 @@ contract DepositIntegrationConcreteTest is RootFeesVotingRewardTest {
         assertEq(leafIVR.totalSupply(), amount);
         assertEq(leafIVR.balanceOf(tokenId), amount);
     }
+
+    function testGas_WhenCallerIsVoter() external {
+        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE});
+        vm.prank(users.alice);
+        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
+
+        uint256 amount = TOKEN_1 * 1000;
+        uint256 tokenId = 1;
+
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
+        rootFVR._deposit({_amount: amount, _tokenId: tokenId});
+        snapLastCall("RootFeesVotingReward_deposit");
+    }
 }

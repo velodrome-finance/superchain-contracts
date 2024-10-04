@@ -112,4 +112,15 @@ contract GetRewardIntegrationConcreteTest is RootBribeVotingRewardTest {
         assertEq(token1.balanceOf(users.alice), TOKEN_1);
         assertEq(weth.balanceOf(users.alice), TOKEN_1);
     }
+
+    function testGas_WhenCallerIsApprovedOrOwnerOfTokenId() external {
+        address[] memory tokens = new address[](3);
+        tokens[0] = address(token0);
+        tokens[1] = address(token1);
+        tokens[2] = address(weth);
+
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
+        rootIVR.getReward({_tokenId: tokenId, _tokens: tokens});
+        snapLastCall("RootBribeVotingReward_getReward");
+    }
 }

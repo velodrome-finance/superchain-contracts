@@ -110,4 +110,20 @@ contract AddBridgeUnitConcreteTest is XERC20Test {
         assertEq(limit.midPoint, bufferCap / 2);
         assertEq(limit.rateLimitPerSecond, rps);
     }
+
+    function testGas_WhenBufferCapIsGreaterThanMinBufferCap()
+        external
+        whenCallerIsOwner
+        whenRateLimitPerSecondIsSmallerThanOrEqualToMaxRatePerSecond
+        whenBridgeIsNotAddressZero
+        whenThereIsNoRateLimitForGivenBridge
+    {
+        uint128 rps = xVelo.maxRateLimitPerSecond();
+        uint112 bufferCap = xVelo.minBufferCap() + 1;
+
+        xVelo.addBridge(
+            MintLimits.RateLimitMidPointInfo({bridge: bridge, bufferCap: bufferCap, rateLimitPerSecond: rps})
+        );
+        snapLastCall("XERC20_addBridge");
+    }
 }

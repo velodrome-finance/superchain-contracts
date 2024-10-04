@@ -17,4 +17,14 @@ contract CreateRewardsIntegrationConcreteTest is RootVotingRewardsFactoryTest {
         assertGt(fvr.code.length, 0);
         assertGt(ivr.code.length, 0);
     }
+
+    function testGas_WhenTheCallerIsAnyone() external {
+        address[] memory rewards = new address[](2);
+        rewards[0] = address(token0);
+        rewards[1] = address(token1);
+
+        vm.prank(address(mockVoter));
+        (address fvr, address ivr) = rootVotingRewardsFactory.createRewards(address(0), rewards);
+        snapLastCall("RootVotingRewardsFactory_createRewards");
+    }
 }

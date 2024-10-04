@@ -74,4 +74,22 @@ contract SetRateLimitPerSecondCapUnitConcreteTest is XERC20Test {
         assertEq(limit.bufferStored, bufferCap / 2);
         assertEq(limit.rateLimitPerSecond, rps);
     }
+
+    function testGas_WhenThereIsRateLimitForGivenBridge()
+        external
+        whenCallerIsOwner
+        whenNewRatePerSecondIsSmallerThanOrEqualToMaxRatePerSecond
+    {
+        uint256 mintAmount = TOKEN_1 * 1000;
+        uint128 rps = (mintAmount / DAY).toUint112();
+        uint112 bufferCap = (TOKEN_1 * 10_000).toUint112();
+        xVelo.addBridge(
+            MintLimits.RateLimitMidPointInfo({bridge: bridge, bufferCap: bufferCap, rateLimitPerSecond: rps})
+        );
+
+        rps = rps / 2;
+        vm.startPrank(users.owner);
+        xVelo.setRateLimitPerSecond({_bridge: bridge, _newRateLimitPerSecond: rps});
+        snapLastCall("XERC20_setRateLimitPerSecond");
+    }
 }

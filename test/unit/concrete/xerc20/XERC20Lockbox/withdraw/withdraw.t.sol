@@ -26,4 +26,18 @@ contract WithdrawUnitConcreteTest is XERC20LockboxTest {
         assertEq(rewardToken.balanceOf(address(lockbox)), 0);
         assertEq(xVelo.balanceOf(users.alice), 0);
     }
+
+    function testGas_GivenAnyAmount() external {
+        uint256 amount = TOKEN_1 * 100_000;
+        deal(address(rewardToken), users.alice, amount);
+
+        vm.startPrank(users.alice);
+        rewardToken.approve(address(lockbox), amount);
+
+        lockbox.deposit(amount);
+
+        xVelo.approve(address(lockbox), amount);
+        lockbox.withdraw(amount);
+        snapLastCall("XERC20Lockbox_withdraw");
+    }
 }

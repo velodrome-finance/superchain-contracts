@@ -102,4 +102,14 @@ contract GetRewardIntegrationConcreteTest is RootFeesVotingRewardTest {
         assertEq(token0.balanceOf(users.alice), TOKEN_1);
         assertEq(token1.balanceOf(users.alice), TOKEN_1);
     }
+
+    function testGas_WhenCallerIsApprovedOrOwnerOfTokenId() external {
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(token0);
+        tokens[1] = address(token1);
+
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
+        rootFVR.getReward({_tokenId: tokenId, _tokens: tokens});
+        snapLastCall("RootFeesVotingReward_getReward");
+    }
 }

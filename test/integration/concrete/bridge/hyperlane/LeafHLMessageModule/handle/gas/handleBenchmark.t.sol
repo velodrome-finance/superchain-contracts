@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "../../LeafHLMessageModule.t.sol";
 
-contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest, GasSnapshot {
+contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
     uint32 public origin;
     bytes32 public sender;
     TestERC20 public tokenA;

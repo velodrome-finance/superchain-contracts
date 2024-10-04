@@ -68,4 +68,9 @@ contract DeployXERC20WithLockboxUnitConcreteTest is XERC20FactoryTest {
         assertEq(address(XERC20Lockbox(lockbox).XERC20()), address(expectedTokenAddress));
         assertEq(address(XERC20Lockbox(lockbox).ERC20()), address(rewardToken));
     }
+
+    function testGas_GivenChainIdIs10() external givenXERC20NotYetDeployed {
+        xFactory.deployXERC20WithLockbox({_erc20: address(rewardToken)});
+        snapLastCall("XERC20Factory_deployXERC20WithLockbox");
+    }
 }

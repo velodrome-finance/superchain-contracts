@@ -52,4 +52,13 @@ contract DeregisterChainIntegrationConcreteTest is RootMessageBridgeTest {
         assertEq(chainids.length, 0);
         assertEq(rootMessageBridge.chains(chainid), address(0));
     }
+
+    function testGas_WhenTheChainIsRegistered() external whenTheCallerIsTheOwner {
+        uint256 chainid = 100;
+        rootMessageBridge.addModule({_module: address(rootMessageModule)});
+        rootMessageBridge.registerChain({_chainid: chainid, _module: address(rootMessageModule)});
+
+        rootMessageBridge.deregisterChain({_chainid: chainid});
+        snapLastCall("RootMessageBridge_deregisterChain");
+    }
 }

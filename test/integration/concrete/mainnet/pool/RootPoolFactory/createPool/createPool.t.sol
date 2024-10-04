@@ -98,4 +98,14 @@ contract CreatePoolIntegrationConcreteTest is RootPoolFactoryTest {
         );
         assertEq(rootPoolFactory.allPools(2), pool);
     }
+
+    function testGas_WhenThePoolDoesNotExist()
+        external
+        whenChainIdIsRegistered
+        whenTokenAIsNotTheSameAsTokenB
+        whenToken0IsNotTheZeroAddress
+    {
+        rootPoolFactory.createPool({chainid: _chainid, tokenA: address(tokenA), tokenB: address(tokenB), stable: true});
+        snapLastCall("RootPoolFactory_createPool");
+    }
 }

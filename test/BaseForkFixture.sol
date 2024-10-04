@@ -66,7 +66,7 @@ import {IFactoryRegistry, MockFactoryRegistry} from "test/mocks/MockFactoryRegis
 import {TestConstants} from "test/utils/TestConstants.sol";
 import {Users} from "test/utils/Users.sol";
 
-abstract contract BaseForkFixture is Test, TestConstants {
+abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
     using SafeCast for uint256;
 
     // anything prefixed with root is deployed on the root chain

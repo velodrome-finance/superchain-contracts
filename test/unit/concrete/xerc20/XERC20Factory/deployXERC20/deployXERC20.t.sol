@@ -55,4 +55,10 @@ contract DeployXERC20UnitConcreteTest is XERC20FactoryTest {
         assertEq(Ownable(xerc20).owner(), users.owner);
         assertEq(XERC20(xerc20).lockbox(), address(0));
     }
+
+    function testGas_GivenChainIdIsNot10() external givenXERC20NotYetDeployed {
+        vm.chainId(31337);
+        xFactory.deployXERC20();
+        snapLastCall("XERC20Factory_deployXERC20");
+    }
 }

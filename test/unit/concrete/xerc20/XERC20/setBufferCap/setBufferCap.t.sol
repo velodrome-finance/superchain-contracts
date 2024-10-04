@@ -127,4 +127,18 @@ contract SetBufferCapUnitConcreteTest is XERC20Test {
         assertEq(limit.midPoint, bufferCap / 2);
         assertEq(limit.bufferStored, oldBufferCap / 2);
     }
+
+    function testGas_WhenUpdatedBufferStoredIsGreaterThanNewBufferCap()
+        external
+        whenCallerIsOwner
+        whenNewBufferCapIsNotZero
+        whenThereIsRateLimitForGivenBridge
+        whenBufferCapIsGreaterThanMinBufferCap
+    {
+        uint112 bufferCap = xVelo.minBufferCap() + 1;
+
+        vm.startPrank(users.owner);
+        xVelo.setBufferCap({_bridge: bridge, _newBufferCap: bufferCap});
+        snapLastCall("XERC20_setBufferCap");
+    }
 }

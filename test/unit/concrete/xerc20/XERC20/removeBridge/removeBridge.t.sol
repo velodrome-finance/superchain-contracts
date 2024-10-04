@@ -43,4 +43,15 @@ contract RemoveBridgeUnitConcreteTest is XERC20Test {
         assertEq(limit.midPoint, 0);
         assertEq(limit.rateLimitPerSecond, 0);
     }
+
+    function testGas_WhenThereIsRateLimitForGivenBridge() external whenCallerIsOwner {
+        uint128 rps = xVelo.maxRateLimitPerSecond();
+        uint112 bufferCap = xVelo.minBufferCap() + 1;
+        xVelo.addBridge(
+            MintLimits.RateLimitMidPointInfo({bridge: bridge, bufferCap: bufferCap, rateLimitPerSecond: rps})
+        );
+
+        xVelo.removeBridge(bridge);
+        snapLastCall("XERC20_removeBridge");
+    }
 }
