@@ -30,7 +30,7 @@ contract WithdrawIntegrationFuzzTest is FeesVotingRewardTest {
         assertEq(leafFVR.balanceOf(tokenId), _amount);
 
         vm.expectEmit(address(leafFVR));
-        emit IReward.Withdraw({_sender: address(leafMessageModule), _amount: _amount, _tokenId: tokenId});
+        emit IReward.Withdraw({_amount: _amount, _tokenId: tokenId});
         leafFVR._withdraw({_payload: payload});
 
         assertEq(leafFVR.totalSupply(), 0);

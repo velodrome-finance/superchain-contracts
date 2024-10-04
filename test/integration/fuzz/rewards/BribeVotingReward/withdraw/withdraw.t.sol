@@ -32,7 +32,7 @@ contract WithdrawIntegrationFuzzTest is BribeVotingRewardTest {
         assertEq(leafIVR.balanceOf(tokenId), _amount);
 
         vm.expectEmit(address(leafIVR));
-        emit IReward.Withdraw({_sender: address(leafMessageModule), _amount: _amount, _tokenId: tokenId});
+        emit IReward.Withdraw({_amount: _amount, _tokenId: tokenId});
         leafIVR._withdraw({_payload: payload});
 
         assertEq(leafIVR.totalSupply(), 0);

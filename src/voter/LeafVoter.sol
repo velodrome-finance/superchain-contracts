@@ -108,8 +108,7 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
             pool: _pool,
             bribeVotingReward: _bribeVotingReward,
             feeVotingReward: _feesVotingReward,
-            gauge: _gauge,
-            creator: msg.sender
+            gauge: _gauge
         });
     }
 
@@ -160,6 +159,6 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
                 _whitelistedTokens.remove(_token);
             }
         }
-        emit WhitelistToken({whitelister: msg.sender, token: _token, _bool: _bool});
+        emit WhitelistToken({token: _token, _bool: _bool});
     }
 }

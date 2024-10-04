@@ -195,7 +195,7 @@ abstract contract Reward is IReward, ReentrancyGuard {
         _writeCheckpoint(tokenId, balanceOf[tokenId]);
         _writeSupplyCheckpoint();
 
-        emit Deposit(msg.sender, tokenId, amount);
+        emit Deposit(tokenId, amount);
     }
 
     /// @inheritdoc IReward
@@ -209,7 +209,7 @@ abstract contract Reward is IReward, ReentrancyGuard {
         _writeCheckpoint(tokenId, balanceOf[tokenId]);
         _writeSupplyCheckpoint();
 
-        emit Withdraw(msg.sender, tokenId, amount);
+        emit Withdraw(tokenId, amount);
     }
 
     /// @inheritdoc IReward

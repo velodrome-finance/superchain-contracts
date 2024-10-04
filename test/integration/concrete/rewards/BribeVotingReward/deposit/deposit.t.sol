@@ -25,7 +25,7 @@ contract DepositIntegrationConcreteTest is BribeVotingRewardTest {
 
         vm.prank(address(leafMessageModule));
         vm.expectEmit(address(leafIVR));
-        emit IReward.Deposit({_sender: address(leafMessageModule), _amount: amount, _tokenId: tokenId});
+        emit IReward.Deposit({_amount: amount, _tokenId: tokenId});
         leafIVR._deposit({_payload: payload});
 
         assertEq(leafIVR.totalSupply(), amount);

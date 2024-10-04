@@ -15,12 +15,11 @@ interface ILeafVoter {
         address pool,
         address bribeVotingReward,
         address feeVotingReward,
-        address gauge,
-        address creator
+        address gauge
     );
     event GaugeKilled(address indexed gauge);
     event GaugeRevived(address indexed gauge);
-    event WhitelistToken(address indexed whitelister, address indexed token, bool indexed _bool);
+    event WhitelistToken(address indexed token, bool indexed _bool);
 
     /// @notice Address of bridge contract used to forward x-chain messages
     function bridge() external view returns (address);

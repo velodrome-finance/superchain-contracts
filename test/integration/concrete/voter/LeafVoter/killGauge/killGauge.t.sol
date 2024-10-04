@@ -37,9 +37,9 @@ contract KillGaugeIntegrationConcreteTest is LeafVoterTest {
         // It should emit a {WhitelistToken} event
         // It should emit a {GaugeKilled} event
         vm.expectEmit(address(leafVoter));
-        emit ILeafVoter.WhitelistToken({whitelister: address(leafMessageModule), token: address(token0), _bool: false});
+        emit ILeafVoter.WhitelistToken({token: address(token0), _bool: false});
         vm.expectEmit(address(leafVoter));
-        emit ILeafVoter.WhitelistToken({whitelister: address(leafMessageModule), token: address(token1), _bool: false});
+        emit ILeafVoter.WhitelistToken({token: address(token1), _bool: false});
         vm.expectEmit(address(leafVoter));
         emit ILeafVoter.GaugeKilled({gauge: address(leafGauge)});
         leafVoter.killGauge(address(leafGauge));
@@ -74,9 +74,9 @@ contract KillGaugeIntegrationConcreteTest is LeafVoterTest {
         // It should emit a {WhitelistToken} event
         // It should emit a {GaugeKilled} event
         vm.expectEmit(address(leafVoter));
-        emit ILeafVoter.WhitelistToken({whitelister: address(leafMessageModule), token: address(token0), _bool: false});
+        emit ILeafVoter.WhitelistToken({token: address(token0), _bool: false});
         vm.expectEmit(address(leafVoter));
-        emit ILeafVoter.WhitelistToken({whitelister: address(leafMessageModule), token: address(token1), _bool: false});
+        emit ILeafVoter.WhitelistToken({token: address(token1), _bool: false});
         vm.expectEmit(address(leafVoter));
         vm.startPrank(address(leafMessageModule));
         emit ILeafVoter.GaugeKilled({gauge: address(leafGauge)});

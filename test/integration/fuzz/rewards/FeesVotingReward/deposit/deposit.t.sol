@@ -26,7 +26,7 @@ contract DepositIntegrationFuzzTest is FeesVotingRewardTest {
 
         vm.prank(address(leafMessageModule));
         vm.expectEmit(address(leafFVR));
-        emit IReward.Deposit({_sender: address(leafMessageModule), _amount: _amount, _tokenId: tokenId});
+        emit IReward.Deposit({_amount: _amount, _tokenId: tokenId});
         leafFVR._deposit({_payload: payload});
 
         assertEq(leafFVR.totalSupply(), _amount);

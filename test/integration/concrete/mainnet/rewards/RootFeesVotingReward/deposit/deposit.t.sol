@@ -29,9 +29,9 @@ contract DepositIntegrationConcreteTest is RootFeesVotingRewardTest {
 
         vm.selectFork({forkId: leafId});
         vm.expectEmit(address(leafFVR));
-        emit IReward.Deposit({_sender: address(leafMessageModule), _amount: amount, _tokenId: tokenId});
+        emit IReward.Deposit({_amount: amount, _tokenId: tokenId});
         vm.expectEmit(address(leafIVR));
-        emit IReward.Deposit({_sender: address(leafMessageModule), _amount: amount, _tokenId: tokenId});
+        emit IReward.Deposit({_amount: amount, _tokenId: tokenId});
         leafMailbox.processNextInboundMessage();
 
         assertEq(leafFVR.totalSupply(), amount);

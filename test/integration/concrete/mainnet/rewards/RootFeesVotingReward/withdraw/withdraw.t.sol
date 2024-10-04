@@ -40,9 +40,9 @@ contract WithdrawIntegrationConcreteTest is RootFeesVotingRewardTest {
 
         vm.selectFork({forkId: leafId});
         vm.expectEmit(address(leafFVR));
-        emit IReward.Withdraw({_sender: address(leafMessageModule), _amount: amount, _tokenId: tokenId});
+        emit IReward.Withdraw({_amount: amount, _tokenId: tokenId});
         vm.expectEmit(address(leafIVR));
-        emit IReward.Withdraw({_sender: address(leafMessageModule), _amount: amount, _tokenId: tokenId});
+        emit IReward.Withdraw({_amount: amount, _tokenId: tokenId});
         leafMailbox.processNextInboundMessage();
 
         assertEq(leafFVR.totalSupply(), 0);

@@ -27,7 +27,7 @@ contract DepositIntegrationFuzzTest is BribeVotingRewardTest {
 
         vm.prank(address(leafMessageModule));
         vm.expectEmit(address(leafIVR));
-        emit IReward.Deposit({_sender: address(leafMessageModule), _amount: _amount, _tokenId: tokenId});
+        emit IReward.Deposit({_amount: _amount, _tokenId: tokenId});
         leafIVR._deposit({_payload: payload});
 
         assertEq(leafIVR.totalSupply(), _amount);

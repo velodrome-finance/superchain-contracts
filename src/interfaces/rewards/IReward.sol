@@ -11,8 +11,8 @@ interface IReward {
     error NotWhitelisted();
     error ZeroAmount();
 
-    event Deposit(address indexed _sender, uint256 indexed _tokenId, uint256 _amount);
-    event Withdraw(address indexed _sender, uint256 indexed _tokenId, uint256 _amount);
+    event Deposit(uint256 indexed _tokenId, uint256 _amount);
+    event Withdraw(uint256 indexed _tokenId, uint256 _amount);
     event NotifyReward(address indexed _sender, address indexed _reward, uint256 indexed _epoch, uint256 _amount);
     event ClaimRewards(address indexed _sender, address indexed _reward, uint256 _amount);
 

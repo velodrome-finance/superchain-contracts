@@ -45,8 +45,7 @@ contract CreateGaugeIntegrationConcreteTest is LeafVoterTest {
             pool: address(0),
             bribeVotingReward: address(0),
             feeVotingReward: address(0),
-            gauge: address(0),
-            creator: address(0)
+            gauge: address(0)
         });
         leafGauge = LeafGauge(
             leafVoter.createGauge({

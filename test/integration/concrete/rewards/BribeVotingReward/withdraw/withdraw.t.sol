@@ -30,7 +30,7 @@ contract WithdrawIntegrationConcreteTest is BribeVotingRewardTest {
         assertEq(leafIVR.balanceOf(tokenId), amount);
 
         vm.expectEmit(address(leafIVR));
-        emit IReward.Withdraw({_sender: address(leafMessageModule), _amount: amount, _tokenId: tokenId});
+        emit IReward.Withdraw({_amount: amount, _tokenId: tokenId});
         leafIVR._withdraw({_payload: payload});
 
         assertEq(leafIVR.totalSupply(), 0);
