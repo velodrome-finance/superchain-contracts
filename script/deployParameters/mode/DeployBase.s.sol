@@ -24,6 +24,7 @@ contract DeployBase is DeployBaseFixture {
             feeManager: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
             tokenAdmin: 0x0000000000000000000000000000000000000001,
             bridgeOwner: 0x0000000000000000000000000000000000000001,
+            moduleOwner: 0x0000000000000000000000000000000000000001,
             mailbox: 0x2f2aFaE1139Ce54feFC03593FeE8AB2aDF4a85A7,
             outputFilename: "mode.json"
         });
@@ -137,6 +138,7 @@ contract DeployBase is DeployBaseFixture {
                 initCode: abi.encodePacked(
                     type(LeafHLMessageModule).creationCode,
                     abi.encode(
+                        _params.moduleOwner, // leaf module owner
                         address(messageBridge), // leaf message bridge
                         _params.mailbox, // leaf mailbox
                         address(ism) // leaf security module

@@ -5,6 +5,7 @@ import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
 import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin5/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 
 import {ILeafHLMessageModule, IHLHandler} from "../../interfaces/bridge/hyperlane/ILeafHLMessageModule.sol";
 import {ILeafMessageBridge} from "../../interfaces/bridge/ILeafMessageBridge.sol";
@@ -18,7 +19,7 @@ import {ISpecifiesInterchainSecurityModule} from "../../interfaces/external/ISpe
 
 /// @title Hyperlane Token Bridge
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
-contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecurityModule {
+contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecurityModule, Ownable {
     using SafeERC20 for IERC20;
 
     /// @inheritdoc ILeafHLMessageModule
@@ -30,11 +31,11 @@ contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecuri
     /// @inheritdoc ILeafHLMessageModule
     address public immutable mailbox;
     /// @inheritdoc ILeafHLMessageModule
-    IInterchainSecurityModule public immutable securityModule;
+    IInterchainSecurityModule public securityModule;
     /// @inheritdoc ILeafHLMessageModule
     uint256 public receivingNonce;
 
-    constructor(address _bridge, address _mailbox, address _ism) {
+    constructor(address _owner, address _bridge, address _mailbox, address _ism) Ownable(_owner) {
         bridge = _bridge;
         xerc20 = ILeafMessageBridge(_bridge).xerc20();
         voter = ILeafMessageBridge(_bridge).voter();
@@ -42,8 +43,15 @@ contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecuri
         securityModule = IInterchainSecurityModule(_ism);
     }
 
+    /// @inheritdoc ISpecifiesInterchainSecurityModule
     function interchainSecurityModule() external view returns (IInterchainSecurityModule) {
         return securityModule;
+    }
+
+    /// @inheritdoc ISpecifiesInterchainSecurityModule
+    function setInterchainSecurityModule(address _ism) external onlyOwner {
+        securityModule = IInterchainSecurityModule(_ism);
+        emit InterchainSecurityModuleChanged({_new: _ism});
     }
 
     /// @inheritdoc IHLHandler

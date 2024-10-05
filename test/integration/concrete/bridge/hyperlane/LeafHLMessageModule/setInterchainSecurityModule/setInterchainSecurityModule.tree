@@ -1,0 +1,6 @@
+SetInterchainSecurityModuleIntegrationConcreteTest
+├── When the caller is not the owner
+│   └── It reverts with {OwnableUnauthorizedAccount}
+└── When the caller is the owner
+    ├── It sets the new InterchainSecurityModule
+    └── It emits the {InterchainSecurityModuleChanged} event

@@ -24,7 +24,7 @@ contract TokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterchainSecurityMo
     /// @inheritdoc ITokenBridge
     address public immutable mailbox;
     /// @inheritdoc ITokenBridge
-    IInterchainSecurityModule public immutable securityModule;
+    IInterchainSecurityModule public securityModule;
 
     constructor(address _owner, address _xerc20, address _mailbox, address _ism) ChainRegistry(_owner) {
         xerc20 = _xerc20;
@@ -32,8 +32,15 @@ contract TokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterchainSecurityMo
         securityModule = IInterchainSecurityModule(_ism);
     }
 
+    /// @inheritdoc ISpecifiesInterchainSecurityModule
     function interchainSecurityModule() external view returns (IInterchainSecurityModule) {
         return securityModule;
+    }
+
+    /// @inheritdoc ISpecifiesInterchainSecurityModule
+    function setInterchainSecurityModule(address _ism) external onlyOwner {
+        securityModule = IInterchainSecurityModule(_ism);
+        emit InterchainSecurityModuleChanged({_new: _ism});
     }
 
     /// @inheritdoc ITokenBridge

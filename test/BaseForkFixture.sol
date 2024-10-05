@@ -7,6 +7,7 @@ import {IMinter} from "src/interfaces/external/IMinter.sol";
 import {IVotingEscrow} from "src/interfaces/external/IVotingEscrow.sol";
 import {IFactoryRegistry} from "src/interfaces/external/IFactoryRegistry.sol";
 import {IWETH} from "src/interfaces/external/IWETH.sol";
+import {ISpecifiesInterchainSecurityModule} from "src/interfaces/external/ISpecifiesInterchainSecurityModule.sol";
 
 import {Test, stdStorage, StdStorage} from "forge-std/src/Test.sol";
 import {GasSnapshot} from "forge-gas-snapshot/GasSnapshot.sol";
@@ -473,6 +474,7 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
                 initCode: abi.encodePacked(
                     type(LeafHLMessageModule).creationCode,
                     abi.encode(
+                        users.owner, // leaf module owner
                         address(leafMessageBridge), // leaf message bridge
                         address(leafMailbox), // leaf mailbox
                         address(leafIsm) // leaf security module

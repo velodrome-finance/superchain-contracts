@@ -27,6 +27,7 @@ contract SetModuleIntegrationConcreteTest is LeafMessageBridgeTest {
         // It emits {SetModule}
         address module = address(
             new LeafHLMessageModule({
+                _owner: users.owner,
                 _bridge: address(leafMessageBridge),
                 _mailbox: address(rootMailbox),
                 _ism: address(rootIsm)

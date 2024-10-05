@@ -29,6 +29,7 @@ abstract contract DeployBaseFixture is DeployFixture {
         address feeManager;
         address tokenAdmin;
         address bridgeOwner;
+        address moduleOwner;
         address mailbox;
         string outputFilename;
     }
@@ -155,6 +156,7 @@ abstract contract DeployBaseFixture is DeployFixture {
                 initCode: abi.encodePacked(
                     type(LeafHLMessageModule).creationCode,
                     abi.encode(
+                        _params.moduleOwner, // leaf module owner
                         address(messageBridge), // leaf message bridge
                         _params.mailbox, // leaf mailbox
                         address(ism) // leaf security module
