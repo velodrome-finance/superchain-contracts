@@ -10,7 +10,7 @@ contract ReviveLeafGaugeE2ETest is EmergencyCouncilE2ETest {
         // It should revert with OwnableUnauthorizedAccount
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.charlie));
-        emergencyCouncil.reviveLeafGauge(leaf, address(leafGauge));
+        emergencyCouncil.reviveLeafGauge(address(leafGauge));
     }
 
     modifier whenCallerIsOwner() {
@@ -21,7 +21,7 @@ contract ReviveLeafGaugeE2ETest is EmergencyCouncilE2ETest {
     function test_WhenGaugeIsAlive() external whenCallerIsOwner {
         // It should revert with GaugeAlreadyRevived
         vm.expectRevert(IVoter.GaugeAlreadyRevived.selector);
-        emergencyCouncil.reviveLeafGauge(leaf, address(leafGauge));
+        emergencyCouncil.reviveLeafGauge(address(leafGauge));
     }
 
     function test_WhenGaugeIsNotAlive() external whenCallerIsOwner {
@@ -44,7 +44,7 @@ contract ReviveLeafGaugeE2ETest is EmergencyCouncilE2ETest {
             _value: MESSAGE_FEE,
             _message: string(message)
         });
-        emergencyCouncil.reviveLeafGauge(leaf, address(leafGauge));
+        emergencyCouncil.reviveLeafGauge(address(leafGauge));
 
         assertEq(mockVoter.isAlive(address(leafGauge)), true);
 

@@ -20,9 +20,8 @@ interface IEmergencyCouncil {
 
     /// @notice Kills a gauge on the leaf chain by dispatching a message to the bridge contract.
     /// @dev Throws if not called by owner.
-    /// @param _chainid of the leaf chain where the gauge is located.
     /// @param _gauge .
-    function killLeafGauge(uint256 _chainid, address _gauge) external;
+    function killLeafGauge(address _gauge) external;
 
     /// @notice Revives a killed gauge. Gauge will receive emissions and deposits again.
     /// @dev Throws if not called by owner.
@@ -31,9 +30,8 @@ interface IEmergencyCouncil {
 
     /// @notice Revives a killed gauge on the leaf chain. Gauge will receive emissions and deposits again.
     /// @dev Throws if not called by owner.
-    /// @param _chainid of the leaf chain where the gauge is located.
     /// @param _gauge .
-    function reviveLeafGauge(uint256 _chainid, address _gauge) external;
+    function reviveLeafGauge(address _gauge) external;
 
     /// @notice Set pool name
     /// @dev Throws if not called by owner.

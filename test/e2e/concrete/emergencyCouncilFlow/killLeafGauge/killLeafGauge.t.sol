@@ -10,7 +10,7 @@ contract KillLeafGaugeE2ETest is EmergencyCouncilE2ETest {
         // It should revert with OwnableUnauthorizedAccount
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.charlie));
-        emergencyCouncil.killLeafGauge(leaf, address(leafGauge));
+        emergencyCouncil.killLeafGauge(address(leafGauge));
     }
 
     modifier whenCallerIsOwner() {
@@ -22,7 +22,7 @@ contract KillLeafGaugeE2ETest is EmergencyCouncilE2ETest {
         // It should revert with GaugeAlreadyKilled
         stdstore.target(address(mockVoter)).sig("isAlive(address)").with_key(address(leafGauge)).checked_write(false);
         vm.expectRevert(IVoter.GaugeAlreadyKilled.selector);
-        emergencyCouncil.killLeafGauge(leaf, address(leafGauge));
+        emergencyCouncil.killLeafGauge(address(leafGauge));
     }
 
     modifier whenGaugeIsAlive() {
@@ -62,7 +62,7 @@ contract KillLeafGaugeE2ETest is EmergencyCouncilE2ETest {
             _value: MESSAGE_FEE,
             _message: string(message)
         });
-        emergencyCouncil.killLeafGauge(leaf, address(leafGauge));
+        emergencyCouncil.killLeafGauge(address(leafGauge));
 
         assertEq(rootRewardToken.balanceOf(address(mockVoter)), 0);
         assertEq(rootRewardToken.balanceOf(minter) - balanceOfMinterBefore, claimable);
@@ -100,7 +100,7 @@ contract KillLeafGaugeE2ETest is EmergencyCouncilE2ETest {
             _value: MESSAGE_FEE,
             _message: string(message)
         });
-        emergencyCouncil.killLeafGauge(leaf, address(leafGauge));
+        emergencyCouncil.killLeafGauge(address(leafGauge));
 
         assertEq(rootRewardToken.balanceOf(address(mockVoter)) - balanceOfVoterBefore, 0);
         assertEq(mockVoter.isAlive(address(leafGauge)), false);
