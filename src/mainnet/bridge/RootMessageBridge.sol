@@ -82,8 +82,11 @@ contract RootMessageBridge is IRootMessageBridge, CrossChainRegistry {
         }
 
         uint256 fee = IMessageSender(module).quote({_destinationDomain: _chainid, _messageBody: _message});
-        IWETH(weth).safeTransferFrom({from: tx.origin, to: address(this), value: fee});
-        IWETH(weth).withdraw({wad: fee});
+        // skip if fee is 0 (some modules may support fee-less messaging)
+        if (fee > 0) {
+            IWETH(weth).safeTransferFrom({from: tx.origin, to: address(this), value: fee});
+            IWETH(weth).withdraw({wad: fee});
+        }
 
         IMessageSender(module).sendMessage{value: fee}({_chainid: _chainid, _message: _message});
     }
