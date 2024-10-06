@@ -8,12 +8,12 @@ import {IRootBribeVotingReward} from "../../interfaces/mainnet/rewards/IRootBrib
 import {IRootFeesVotingReward} from "../../interfaces/mainnet/rewards/IRootFeesVotingReward.sol";
 import {IRootMessageBridge} from "../../interfaces/mainnet/bridge/IRootMessageBridge.sol";
 import {IRootPool} from "../../interfaces/mainnet/pools/IRootPool.sol";
-import {IMinter} from "../..//interfaces/external/IMinter.sol";
-import {IVoter} from "../..//interfaces/external/IVoter.sol";
+import {IMinter} from "../../interfaces/external/IMinter.sol";
+import {IVoter} from "../../interfaces/external/IVoter.sol";
+import {RootGauge} from "./RootGauge.sol";
 
 import {CreateXLibrary} from "../../libraries/CreateXLibrary.sol";
 import {Commands} from "../../libraries/Commands.sol";
-import {RootGauge} from "./RootGauge.sol";
 
 /// @notice Factory that creates root gauges on mainnet
 contract RootGaugeFactory is IRootGaugeFactory {

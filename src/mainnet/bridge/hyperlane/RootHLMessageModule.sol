@@ -34,7 +34,7 @@ contract RootHLMessageModule is IRootHLMessageModule {
     }
 
     /// @inheritdoc IMessageSender
-    function quote(uint256 _destinationDomain, bytes calldata _messageBody) external payable returns (uint256) {
+    function quote(uint256 _destinationDomain, bytes calldata _messageBody) external view returns (uint256) {
         return Mailbox(mailbox).quoteDispatch({
             destinationDomain: uint32(_destinationDomain),
             recipientAddress: TypeCasts.addressToBytes32(address(this)),

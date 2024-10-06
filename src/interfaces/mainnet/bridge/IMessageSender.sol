@@ -18,5 +18,5 @@ interface IMessageSender {
     /// @param _destinationDomain The chain id of the destination chain
     /// @param _messageBody The message body to be dispatched
     /// @return The amount of native token required to dispatch the message
-    function quote(uint256 _destinationDomain, bytes calldata _messageBody) external payable returns (uint256);
+    function quote(uint256 _destinationDomain, bytes calldata _messageBody) external view returns (uint256);
 }

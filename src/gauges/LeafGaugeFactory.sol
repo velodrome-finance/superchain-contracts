@@ -4,7 +4,6 @@ pragma solidity >=0.8.19 <0.9.0;
 import {CreateXLibrary} from "../libraries/CreateXLibrary.sol";
 import {ILeafGaugeFactory} from "../interfaces/gauges/ILeafGaugeFactory.sol";
 import {IPool} from "../interfaces/pools/IPool.sol";
-import {IPool} from "../interfaces/pools/IPool.sol";
 import {LeafGauge} from "./LeafGauge.sol";
 
 /// @notice Factory that creates leaf gauges on the superchain
