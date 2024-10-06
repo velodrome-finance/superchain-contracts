@@ -4,7 +4,9 @@ pragma solidity ^0.8.0;
 interface IMessageSender {
     error NotBridge();
 
-    event SentMessage(uint32 indexed _destination, bytes32 indexed _recipient, uint256 _value, string _message);
+    event SentMessage(
+        uint32 indexed _destination, bytes32 indexed _recipient, uint256 _value, string _message, string _metadata
+    );
 
     /// @notice Sends a message to the destination module
     /// @dev All message modules must implement this function

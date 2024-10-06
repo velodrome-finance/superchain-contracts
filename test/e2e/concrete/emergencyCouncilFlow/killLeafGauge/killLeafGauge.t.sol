@@ -5,6 +5,7 @@ import "../EmergencyCouncilE2E.t.sol";
 
 contract KillLeafGaugeE2ETest is EmergencyCouncilE2ETest {
     using stdStorage for StdStorage;
+    using GasLimits for uint256;
 
     function test_WhenCallerIsNotOwner() external {
         // It should revert with OwnableUnauthorizedAccount
@@ -60,7 +61,15 @@ contract KillLeafGaugeE2ETest is EmergencyCouncilE2ETest {
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: MESSAGE_FEE,
-            _message: string(message)
+            _message: string(message),
+            _metadata: string(
+                StandardHookMetadata.formatMetadata({
+                    _msgValue: MESSAGE_FEE,
+                    _gasLimit: Commands.KILL_GAUGE.gasLimit(),
+                    _refundAddress: users.owner,
+                    _customMetadata: ""
+                })
+            )
         });
         emergencyCouncil.killLeafGauge(address(leafGauge));
 
@@ -98,7 +107,15 @@ contract KillLeafGaugeE2ETest is EmergencyCouncilE2ETest {
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: MESSAGE_FEE,
-            _message: string(message)
+            _message: string(message),
+            _metadata: string(
+                StandardHookMetadata.formatMetadata({
+                    _msgValue: MESSAGE_FEE,
+                    _gasLimit: Commands.KILL_GAUGE.gasLimit(),
+                    _refundAddress: users.owner,
+                    _customMetadata: ""
+                })
+            )
         });
         emergencyCouncil.killLeafGauge(address(leafGauge));
 
