@@ -39,6 +39,10 @@ contract GetRewardIntegrationConcreteTest is RootBribeVotingRewardTest {
         deal({token: address(weth), to: users.alice, give: MESSAGE_FEE});
         vm.prank(users.alice);
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
+
+        deal({token: address(weth), to: users.bob, give: MESSAGE_FEE});
+        vm.prank(users.bob);
+        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
     }
 
     modifier whenCallerIsNotApprovedOrOwnerOfTokenId() {
@@ -53,7 +57,28 @@ contract GetRewardIntegrationConcreteTest is RootBribeVotingRewardTest {
         rootIVR.getReward({_tokenId: tokenId, _tokens: tokens});
     }
 
-    function test_WhenCallerIsVoter() external whenCallerIsNotApprovedOrOwnerOfTokenId {
+    modifier whenCallerIsVoter() {
+        _;
+    }
+
+    function test_WhenNumberOfTokensToBeClaimedExceedsMaxRewards()
+        external
+        whenCallerIsNotApprovedOrOwnerOfTokenId
+        whenCallerIsVoter
+    {
+        // It should revert with {MaxTokensExceeded}
+        address[] memory tokens = new address[](rootIVR.MAX_REWARDS() + 1);
+
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
+        vm.expectRevert(IRootBribeVotingReward.MaxTokensExceeded.selector);
+        rootIVR.getReward({_tokenId: tokenId, _tokens: tokens});
+    }
+
+    function test_WhenNumberOfTokensToBeClaimedDoesNotExceedMaxRewards()
+        external
+        whenCallerIsNotApprovedOrOwnerOfTokenId
+        whenCallerIsVoter
+    {
         // It should encode the owner, token id and token addresses
         // It should forward the message to the corresponding incentive rewards contract on the leaf chain
         // It should claim rewards for owner on the leaf incentive voting contract
@@ -83,7 +108,25 @@ contract GetRewardIntegrationConcreteTest is RootBribeVotingRewardTest {
         assertEq(weth.balanceOf(users.alice), TOKEN_1);
     }
 
-    function test_WhenCallerIsApprovedOrOwnerOfTokenId() external {
+    modifier whenCallerIsApprovedOrOwnerOfTokenId() {
+        vm.prank(users.alice);
+        mockEscrow.approve(users.bob, tokenId);
+        _;
+    }
+
+    function test_WhenNumberOfTokensToBeClaimedExceedsMaxRewards_() external whenCallerIsApprovedOrOwnerOfTokenId {
+        // It should revert with {MaxTokensExceeded}
+        address[] memory tokens = new address[](rootIVR.MAX_REWARDS() + 1);
+
+        vm.prank({msgSender: users.bob, txOrigin: users.bob});
+        vm.expectRevert(IRootBribeVotingReward.MaxTokensExceeded.selector);
+        rootIVR.getReward({_tokenId: tokenId, _tokens: tokens});
+    }
+
+    function test_WhenNumberOfTokensToBeClaimedDoesNotExceedMaxRewards_()
+        external
+        whenCallerIsApprovedOrOwnerOfTokenId
+    {
         // It should encode the owner, token id and token addresses
         // It should forward the message to the corresponding incentive rewards contract on the leaf chain
         // It should claim rewards for owner on the leaf incentive voting contract
@@ -94,7 +137,7 @@ contract GetRewardIntegrationConcreteTest is RootBribeVotingRewardTest {
         tokens[1] = address(token1);
         tokens[2] = address(weth);
 
-        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
+        vm.prank({msgSender: users.bob, txOrigin: users.bob});
         rootIVR.getReward({_tokenId: tokenId, _tokens: tokens});
 
         vm.selectFork({forkId: leafId});
@@ -113,13 +156,16 @@ contract GetRewardIntegrationConcreteTest is RootBribeVotingRewardTest {
         assertEq(weth.balanceOf(users.alice), TOKEN_1);
     }
 
-    function testGas_WhenCallerIsApprovedOrOwnerOfTokenId() external {
+    function testGas_WhenNumberOfTokensToBeClaimedDoesNotExceedMaxRewards_()
+        external
+        whenCallerIsApprovedOrOwnerOfTokenId
+    {
         address[] memory tokens = new address[](3);
         tokens[0] = address(token0);
         tokens[1] = address(token1);
         tokens[2] = address(weth);
 
-        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
+        vm.prank({msgSender: users.bob, txOrigin: users.bob});
         rootIVR.getReward({_tokenId: tokenId, _tokens: tokens});
         snapLastCall("RootBribeVotingReward_getReward");
     }

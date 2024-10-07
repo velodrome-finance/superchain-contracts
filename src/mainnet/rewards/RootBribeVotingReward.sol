@@ -20,6 +20,8 @@ contract RootBribeVotingReward is IRootBribeVotingReward {
     address public gauge;
     /// @inheritdoc IRootBribeVotingReward
     uint256 public chainid;
+    /// @inheritdoc IRootBribeVotingReward
+    uint256 public constant MAX_REWARDS = 5;
 
     constructor(address _bridge, address _voter, address[] memory _rewards) {
         voter = _voter;
@@ -37,6 +39,7 @@ contract RootBribeVotingReward is IRootBribeVotingReward {
     /// @inheritdoc IRootBribeVotingReward
     function getReward(uint256 _tokenId, address[] memory _tokens) external override {
         if (!IVotingEscrow(ve).isApprovedOrOwner(msg.sender, _tokenId) && msg.sender != voter) revert NotAuthorized();
+        if (_tokens.length > MAX_REWARDS) revert MaxTokensExceeded();
 
         address _owner = IVotingEscrow(ve).ownerOf(_tokenId);
         bytes memory message =

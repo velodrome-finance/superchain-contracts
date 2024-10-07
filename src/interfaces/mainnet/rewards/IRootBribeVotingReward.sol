@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 interface IRootBribeVotingReward {
     error AlreadyInitialized();
+    error MaxTokensExceeded();
     error NotAuthorized();
 
     /// @notice Address of bridge contract used to forward messages
@@ -21,6 +22,9 @@ interface IRootBribeVotingReward {
     /// @notice Chain id associated with the gauge / this contract
     /// @dev Settable once on deploy only
     function chainid() external view returns (uint256);
+
+    /// @notice Maximum number of tokens that can be claimed in `getReward()`
+    function MAX_REWARDS() external view returns (uint256);
 
     /// @notice Initializes the contract with the gauge address and chain id
     /// @dev Called during voter.createGauge() only
