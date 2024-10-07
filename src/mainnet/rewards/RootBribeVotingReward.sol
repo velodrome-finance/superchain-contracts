@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
+import {IRootVotingRewardsFactory} from "../../interfaces/mainnet/rewards/IRootVotingRewardsFactory.sol";
 import {IRootBribeVotingReward} from "../../interfaces/mainnet/rewards/IRootBribeVotingReward.sol";
 import {IRootMessageBridge} from "../../interfaces/mainnet/bridge/IRootMessageBridge.sol";
 import {IRootGauge} from "../../interfaces/mainnet/gauges/IRootGauge.sol";
@@ -10,6 +11,8 @@ import {IVoter} from "../../interfaces/external/IVoter.sol";
 import {Commands} from "../../libraries/Commands.sol";
 
 contract RootBribeVotingReward is IRootBribeVotingReward {
+    /// @inheritdoc IRootBribeVotingReward
+    address public immutable factory;
     /// @inheritdoc IRootBribeVotingReward
     address public immutable bridge;
     /// @inheritdoc IRootBribeVotingReward
@@ -24,6 +27,7 @@ contract RootBribeVotingReward is IRootBribeVotingReward {
     uint256 public constant MAX_REWARDS = 5;
 
     constructor(address _bridge, address _voter, address[] memory _rewards) {
+        factory = msg.sender;
         voter = _voter;
         bridge = _bridge;
         ve = IVoter(_voter).ve();
@@ -41,9 +45,19 @@ contract RootBribeVotingReward is IRootBribeVotingReward {
         if (!IVotingEscrow(ve).isApprovedOrOwner(msg.sender, _tokenId) && msg.sender != voter) revert NotAuthorized();
         if (_tokens.length > MAX_REWARDS) revert MaxTokensExceeded();
 
-        address _owner = IVotingEscrow(ve).ownerOf(_tokenId);
+        address recipient = IVotingEscrow(ve).ownerOf(_tokenId);
+        address cachedRecipient = IRootVotingRewardsFactory(factory).recipient({_owner: recipient, _chainid: chainid});
+
+        if (cachedRecipient == address(0)) {
+            if (recipient.code.length > 0) {
+                revert RecipientNotSet();
+            }
+        } else {
+            recipient = cachedRecipient;
+        }
+
         bytes memory message =
-            abi.encodePacked(uint8(Commands.GET_INCENTIVES), gauge, _owner, _tokenId, uint8(_tokens.length), _tokens);
+            abi.encodePacked(uint8(Commands.GET_INCENTIVES), gauge, recipient, _tokenId, uint8(_tokens.length), _tokens);
 
         IRootMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
     }

@@ -9,9 +9,17 @@ import {RootFeesVotingReward} from "./RootFeesVotingReward.sol";
 contract RootVotingRewardsFactory is IRootVotingRewardsFactory {
     /// @inheritdoc IRootVotingRewardsFactory
     address public immutable bridge;
+    /// @inheritdoc IRootVotingRewardsFactory
+    mapping(address => mapping(uint256 => address)) public recipient;
 
     constructor(address _bridge) {
         bridge = _bridge;
+    }
+
+    /// @inheritdoc IRootVotingRewardsFactory
+    function setRecipient(uint256 _chainid, address _recipient) external {
+        recipient[msg.sender][_chainid] = _recipient;
+        emit RecipientSet({_caller: msg.sender, _chainid: _chainid, _recipient: _recipient});
     }
 
     /// @inheritdoc IRootVotingRewardsFactory

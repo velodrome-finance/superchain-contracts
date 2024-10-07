@@ -15,6 +15,7 @@ import {Clones} from "@openzeppelin5/contracts/proxy/Clones.sol";
 import {Math} from "@openzeppelin5/contracts/utils/math/Math.sol";
 import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 import {IERC20, IERC20Errors} from "@openzeppelin5/contracts/token/ERC20/ERC20.sol";
+import {IERC721} from "@openzeppelin5/contracts/token/ERC721/IERC721.sol";
 import {TestIsm} from "@hyperlane/core/contracts/test/TestIsm.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 import {SafeCast} from "@openzeppelin5/contracts/utils/math/SafeCast.sol";
@@ -101,7 +102,7 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
     XERC20Lockbox public rootLockbox;
     RootPoolFactory public rootPoolFactory;
     RootGaugeFactory public rootGaugeFactory;
-    RootVotingRewardsFactory public rootVotingRewardsFactory;
+    IRootVotingRewardsFactory public rootVotingRewardsFactory;
 
     RootPool public rootPool;
     RootPool public rootPoolImplementation;

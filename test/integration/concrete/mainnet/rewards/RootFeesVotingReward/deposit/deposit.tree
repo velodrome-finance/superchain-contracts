@@ -2,8 +2,18 @@ DepositIntegrationConcreteTest
 ├── When caller is not voter
 │   └── It should revert with NotAuthorized
 └── When caller is voter
-    ├── It should encode the deposit amount and token id
-    ├── It should forward the message to the corresponding rewards contract on the leaf chain
-    ├── It should update the total supply on the leaf fee + incentive voting contracts
-    ├── It should update the balance of the token id on the leaf fee + incentive voting contracts
-    └── It should emit a {Deposit} event
+    ├── When owner of token id is a contract
+    │   ├── When recipient is not set on the factory
+    │   │   └── It should revert with RecipientNotSet
+    │   └── When recipient is set on the factory
+    │       ├── It should encode the deposit amount and token id
+    │       ├── It should forward the message to the corresponding rewards contract on the leaf chain
+    │       ├── It should update the total supply on the leaf fee + incentive voting contracts
+    │       ├── It should update the balance of the token id on the leaf fee + incentive voting contracts
+    │       └── It should emit a {Deposit} event
+    └── When owner of token id is an EOA
+        ├── It should encode the deposit amount and token id
+        ├── It should forward the message to the corresponding rewards contract on the leaf chain
+        ├── It should update the total supply on the leaf fee + incentive voting contracts
+        ├── It should update the balance of the token id on the leaf fee + incentive voting contracts
+        └── It should emit a {Deposit} event

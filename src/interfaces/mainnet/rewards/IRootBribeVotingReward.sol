@@ -5,6 +5,10 @@ interface IRootBribeVotingReward {
     error AlreadyInitialized();
     error MaxTokensExceeded();
     error NotAuthorized();
+    error RecipientNotSet();
+
+    /// @notice Address of root voting rewards factory that created this contract
+    function factory() external view returns (address);
 
     /// @notice Address of bridge contract used to forward messages
     function bridge() external view returns (address);

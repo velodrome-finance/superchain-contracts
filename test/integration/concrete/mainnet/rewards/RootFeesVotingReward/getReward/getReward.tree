@@ -1,22 +1,42 @@
 GetRewardIntegrationConcreteTest
 ├── When caller is not approved or owner of token id
 │   ├── When caller is not voter
-│   │   └── It should revert with NotAuthorized
+│   │   └── It should revert with {NotAuthorized}
 │   └── When caller is voter
 │       ├── When number of tokens to be claimed exceeds max rewards
 │       │   └── It should revert with {MaxTokensExceeded}
 │       └── When number of tokens to be claimed does not exceed max rewards
-│           ├── It should encode the owner, token id and token addresses
-│           ├── It should forward the message to the corresponding fees reward contract on the leaf chain
-│           ├── It should claim rewards for owner on the leaf fees voting contract
-│           ├── It should update lastEarn timestamp for token id on leaf fees voting rewards contract
-│           └── It should emit a {ClaimRewards} event
+│           ├── When owner of token id is a contract
+│           │   ├── When recipient is not set on the factory
+│           │   │   └── It should revert with RecipientNotSet
+│           │   └── When recipient is set on the factory
+│           │       ├── It should encode the recipient, token id and token addresses
+│           │       ├── It should forward the message to the corresponding incentive rewards contract on the leaf chain
+│           │       ├── It should claim rewards for recipient on the leaf incentive voting contract
+│           │       ├── It should update lastEarn timestamp for token id on leaf incentive voting rewards contract
+│           │       └── It should emit a {ClaimRewards} event
+│           └── When owner of token id is an EOA
+│               ├── It should encode the recipient, token id and token addresses
+│               ├── It should forward the message to the corresponding incentive rewards contract on the leaf chain
+│               ├── It should claim rewards for recipient on the leaf incentive voting contract
+│               ├── It should update lastEarn timestamp for token id on leaf incentive voting rewards contract
+│               └── It should emit a {ClaimRewards} event
 └── When caller is approved or owner of token id
     ├── When number of tokens to be claimed exceeds max rewards_
     │   └── It should revert with {MaxTokensExceeded}
     └── When number of tokens to be claimed does not exceed max rewards_
-        ├── It should encode the owner, token id and token addresses
-        ├── It should forward the message to the corresponding fees reward contract on the leaf chain
-        ├── It should claim rewards for owner on the leaf fees voting contract
-        ├── It should update lastEarn timestamp for token id on leaf fees voting rewards contract
-        └── It should emit a {ClaimRewards} event
+        ├── When owner of token id is a contract_
+        │   ├── When recipient is not set on the factory_
+        │   │   └── It should revert with RecipientNotSet
+        │   └── When recipient is set on the factory_
+        │       ├── It should encode the recipient, token id and token addresses
+        │       ├── It should forward the message to the corresponding incentive rewards contract on the leaf chain
+        │       ├── It should claim rewards for recipient on the leaf incentive voting contract
+        │       ├── It should update lastEarn timestamp for token id on leaf incentive voting rewards contract
+        │       └── It should emit a {ClaimRewards} event
+        └── When owner of token id is an EOA_
+            ├── It should encode the recipient, token id and token addresses
+            ├── It should forward the message to the corresponding incentive rewards contract on the leaf chain
+            ├── It should claim rewards for recipient on the leaf incentive voting contract
+            ├── It should update lastEarn timestamp for token id on leaf incentive voting rewards contract
+            └── It should emit a {ClaimRewards} event

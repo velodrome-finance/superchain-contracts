@@ -46,7 +46,7 @@ contract GetRewardIntegrationConcreteTest is RootFeesVotingRewardTest {
     }
 
     function test_WhenCallerIsNotVoter() external whenCallerIsNotApprovedOrOwnerOfTokenId {
-        // It should revert with NotAuthorized
+        // It should revert with {NotAuthorized}
         address[] memory tokens = new address[](0);
         vm.prank(users.charlie);
         vm.expectRevert(IRootBribeVotingReward.NotAuthorized.selector);
@@ -54,6 +54,7 @@ contract GetRewardIntegrationConcreteTest is RootFeesVotingRewardTest {
     }
 
     modifier whenCallerIsVoter() {
+        vm.startPrank({msgSender: address(mockVoter), txOrigin: users.alice});
         _;
     }
 
@@ -63,28 +64,87 @@ contract GetRewardIntegrationConcreteTest is RootFeesVotingRewardTest {
         whenCallerIsVoter
     {
         // It should revert with {MaxTokensExceeded}
-        address[] memory tokens = new address[](rootIVR.MAX_REWARDS() + 1);
+        address[] memory tokens = new address[](rootFVR.MAX_REWARDS() + 1);
 
-        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
-        vm.expectRevert(IRootFeesVotingReward.MaxTokensExceeded.selector);
+        vm.expectRevert(IRootBribeVotingReward.MaxTokensExceeded.selector);
         rootFVR.getReward({_tokenId: tokenId, _tokens: tokens});
     }
 
-    function test_WhenNumberOfTokensToBeClaimedDoesNotExceedMaxRewards()
+    modifier whenNumberOfTokensToBeClaimedDoesNotExceedMaxRewards() {
+        _;
+    }
+
+    modifier whenOwnerOfTokenIdIsAContract() {
+        vm.mockCall(
+            address(mockEscrow),
+            abi.encodeWithSelector(IERC721.ownerOf.selector, tokenId),
+            abi.encode(address(mockVoter))
+        );
+        _;
+    }
+
+    function test_WhenRecipientIsNotSetOnTheFactory()
         external
         whenCallerIsNotApprovedOrOwnerOfTokenId
         whenCallerIsVoter
+        whenNumberOfTokensToBeClaimedDoesNotExceedMaxRewards
+        whenOwnerOfTokenIdIsAContract
     {
-        // It should encode the owner, token id and token addresses
-        // It should forward the message to the corresponding fees reward contract on the leaf chain
-        // It should claim rewards for owner on the leaf fees voting contract
-        // It should update lastEarn timestamp for token id on leaf fees voting rewards contract
+        // It should revert with RecipientNotSet
+        address[] memory tokens = new address[](0);
+        vm.expectRevert(IRootBribeVotingReward.RecipientNotSet.selector);
+        rootFVR.getReward({_tokenId: tokenId, _tokens: tokens});
+    }
+
+    function test_WhenRecipientIsSetOnTheFactory()
+        external
+        whenCallerIsNotApprovedOrOwnerOfTokenId
+        whenCallerIsVoter
+        whenNumberOfTokensToBeClaimedDoesNotExceedMaxRewards
+        whenOwnerOfTokenIdIsAContract
+    {
+        // It should encode the recipient, token id and token addresses
+        // It should forward the message to the corresponding incentive rewards contract on the leaf chain
+        // It should claim rewards for recipient on the leaf incentive voting contract
+        // It should update lastEarn timestamp for token id on leaf incentive voting rewards contract
         // It should emit a {ClaimRewards} event
         address[] memory tokens = new address[](2);
         tokens[0] = address(token0);
         tokens[1] = address(token1);
 
-        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
+        rootVotingRewardsFactory.setRecipient({_chainid: leaf, _recipient: users.alice});
+
+        rootFVR.getReward({_tokenId: tokenId, _tokens: tokens});
+
+        vm.selectFork({forkId: leafId});
+        for (uint256 i = 0; i < tokens.length; i++) {
+            vm.expectEmit(address(leafFVR));
+            emit IReward.ClaimRewards({_sender: users.alice, _reward: tokens[i], _amount: TOKEN_1});
+        }
+        leafMailbox.processNextInboundMessage();
+
+        assertEq(leafFVR.lastEarn(address(token0), tokenId), block.timestamp);
+        assertEq(leafFVR.lastEarn(address(token1), tokenId), block.timestamp);
+
+        assertEq(token0.balanceOf(users.alice), TOKEN_1);
+        assertEq(token1.balanceOf(users.alice), TOKEN_1);
+    }
+
+    function test_WhenOwnerOfTokenIdIsAnEOA()
+        external
+        whenCallerIsNotApprovedOrOwnerOfTokenId
+        whenCallerIsVoter
+        whenNumberOfTokensToBeClaimedDoesNotExceedMaxRewards
+    {
+        // It should encode the recipient, token id and token addresses
+        // It should forward the message to the corresponding incentive rewards contract on the leaf chain
+        // It should claim rewards for recipient on the leaf incentive voting contract
+        // It should update lastEarn timestamp for token id on leaf incentive voting rewards contract
+        // It should emit a {ClaimRewards} event
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(token0);
+        tokens[1] = address(token1);
+
         rootFVR.getReward({_tokenId: tokenId, _tokens: tokens});
 
         vm.selectFork({forkId: leafId});
@@ -111,25 +171,56 @@ contract GetRewardIntegrationConcreteTest is RootFeesVotingRewardTest {
         // It should revert with {MaxTokensExceeded}
         address[] memory tokens = new address[](rootFVR.MAX_REWARDS() + 1);
 
-        vm.prank({msgSender: users.bob, txOrigin: users.bob});
+        vm.startPrank({msgSender: users.bob, txOrigin: users.bob});
         vm.expectRevert(IRootBribeVotingReward.MaxTokensExceeded.selector);
         rootFVR.getReward({_tokenId: tokenId, _tokens: tokens});
     }
 
-    function test_WhenNumberOfTokensToBeClaimedDoesNotExceedMaxRewards_()
+    modifier whenNumberOfTokensToBeClaimedDoesNotExceedMaxRewards_() {
+        _;
+    }
+
+    modifier whenOwnerOfTokenIdIsAContract_() {
+        vm.mockCall(
+            address(mockEscrow),
+            abi.encodeWithSelector(IERC721.ownerOf.selector, tokenId),
+            abi.encode(address(mockVoter))
+        );
+        _;
+    }
+
+    function test_WhenRecipientIsNotSetOnTheFactory_()
         external
         whenCallerIsApprovedOrOwnerOfTokenId
+        whenNumberOfTokensToBeClaimedDoesNotExceedMaxRewards_
+        whenOwnerOfTokenIdIsAContract_
     {
-        // It should encode the owner, token id and token addresses
-        // It should forward the message to the corresponding fees reward contract on the leaf chain
-        // It should claim rewards for owner on the leaf fees voting contract
-        // It should update lastEarn timestamp for token id on leaf fees voting rewards contract
+        // It should revert with RecipientNotSet
+        address[] memory tokens = new address[](0);
+        vm.startPrank({msgSender: users.bob, txOrigin: users.bob});
+        vm.expectRevert(IRootBribeVotingReward.RecipientNotSet.selector);
+        rootFVR.getReward({_tokenId: tokenId, _tokens: tokens});
+    }
+
+    function test_WhenRecipientIsSetOnTheFactory_()
+        external
+        whenCallerIsApprovedOrOwnerOfTokenId
+        whenNumberOfTokensToBeClaimedDoesNotExceedMaxRewards_
+        whenOwnerOfTokenIdIsAContract_
+    {
+        // It should encode the recipient, token id and token addresses
+        // It should forward the message to the corresponding incentive rewards contract on the leaf chain
+        // It should claim rewards for recipient on the leaf incentive voting contract
+        // It should update lastEarn timestamp for token id on leaf incentive voting rewards contract
         // It should emit a {ClaimRewards} event
         address[] memory tokens = new address[](2);
         tokens[0] = address(token0);
         tokens[1] = address(token1);
 
-        vm.prank({msgSender: users.bob, txOrigin: users.bob});
+        vm.prank({msgSender: address(mockVoter)});
+        rootVotingRewardsFactory.setRecipient({_chainid: leaf, _recipient: users.alice});
+
+        vm.startPrank({msgSender: users.bob, txOrigin: users.bob});
         rootFVR.getReward({_tokenId: tokenId, _tokens: tokens});
 
         vm.selectFork({forkId: leafId});
@@ -146,10 +237,38 @@ contract GetRewardIntegrationConcreteTest is RootFeesVotingRewardTest {
         assertEq(token1.balanceOf(users.alice), TOKEN_1);
     }
 
-    function testGas_WhenNumberOfTokensToBeClaimedDoesNotExceedMaxRewards_()
+    function test_WhenOwnerOfTokenIdIsAnEOA_()
         external
         whenCallerIsApprovedOrOwnerOfTokenId
+        whenNumberOfTokensToBeClaimedDoesNotExceedMaxRewards_
     {
+        // It should encode the recipient, token id and token addresses
+        // It should forward the message to the corresponding incentive rewards contract on the leaf chain
+        // It should claim rewards for recipient on the leaf incentive voting contract
+        // It should update lastEarn timestamp for token id on leaf incentive voting rewards contract
+        // It should emit a {ClaimRewards} event
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(token0);
+        tokens[1] = address(token1);
+
+        vm.startPrank({msgSender: users.bob, txOrigin: users.bob});
+        rootFVR.getReward({_tokenId: tokenId, _tokens: tokens});
+
+        vm.selectFork({forkId: leafId});
+        for (uint256 i = 0; i < tokens.length; i++) {
+            vm.expectEmit(address(leafFVR));
+            emit IReward.ClaimRewards({_sender: users.alice, _reward: tokens[i], _amount: TOKEN_1});
+        }
+        leafMailbox.processNextInboundMessage();
+
+        assertEq(leafFVR.lastEarn(address(token0), tokenId), block.timestamp);
+        assertEq(leafFVR.lastEarn(address(token1), tokenId), block.timestamp);
+
+        assertEq(token0.balanceOf(users.alice), TOKEN_1);
+        assertEq(token1.balanceOf(users.alice), TOKEN_1);
+    }
+
+    function testGas_RootFeesVotingReward_getReward() external whenCallerIsApprovedOrOwnerOfTokenId {
         address[] memory tokens = new address[](2);
         tokens[0] = address(token0);
         tokens[1] = address(token1);

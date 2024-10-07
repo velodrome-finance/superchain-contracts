@@ -1,0 +1,4 @@
+SetRecipientIntegrationConcreteTest
+└── When the caller is anyone
+    ├── It should set the recipient for the message sender
+    └── It should emit a {RecipientSet} event

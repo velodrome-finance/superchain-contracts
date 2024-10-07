@@ -6,7 +6,10 @@ interface IRootFeesVotingReward {
     error MaxTokensExceeded();
     error NotAuthorized();
     error InvalidGauge();
+    error RecipientNotSet();
 
+    /// @notice Address of root voting rewards factory that created this contract
+    function factory() external view returns (address);
     /// @notice Address of bridge contract used to forward messages
     function bridge() external view returns (address);
     /// @notice Address of voter contract that sets voting power

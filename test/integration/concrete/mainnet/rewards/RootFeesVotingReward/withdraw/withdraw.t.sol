@@ -4,11 +4,24 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../RootFeesVotingReward.t.sol";
 
 contract WithdrawIntegrationConcreteTest is RootFeesVotingRewardTest {
+    uint256 tokenId = 1;
+
+    function setUp() public override {
+        super.setUp();
+
+        // Mock call to prevent ERC721NonexistentToken
+        vm.mockCall(
+            address(mockEscrow),
+            abi.encodeWithSelector(IERC721.ownerOf.selector, tokenId),
+            abi.encode(address(users.alice))
+        );
+    }
+
     function test_WhenCallerIsNotVoter() external {
         // It should revert with NotAuthorized
         vm.prank(users.charlie);
         vm.expectRevert(IRootFeesVotingReward.NotAuthorized.selector);
-        rootFVR._withdraw({_amount: 1, _tokenId: 1});
+        rootFVR._withdraw({_amount: 1, _tokenId: tokenId});
     }
 
     function test_WhenCallerIsVoter() external {
@@ -22,7 +35,6 @@ contract WithdrawIntegrationConcreteTest is RootFeesVotingRewardTest {
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
 
         uint256 amount = TOKEN_1 * 1000;
-        uint256 tokenId = 1;
 
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootFVR._deposit({_amount: amount, _tokenId: tokenId});
@@ -57,7 +69,6 @@ contract WithdrawIntegrationConcreteTest is RootFeesVotingRewardTest {
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
 
         uint256 amount = TOKEN_1 * 1000;
-        uint256 tokenId = 1;
 
         vm.selectFork({forkId: rootId});
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});

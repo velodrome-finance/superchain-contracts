@@ -5,6 +5,7 @@ import "test/BaseForkFixture.sol";
 
 abstract contract RootFeesVotingRewardTest is BaseForkFixture {
     function test_InitialState() public view {
+        assertEq(rootFVR.factory(), address(rootVotingRewardsFactory));
         assertEq(rootFVR.bridge(), address(rootMessageBridge));
         assertEq(rootFVR.voter(), address(mockVoter));
         assertEq(rootIVR.ve(), address(mockEscrow));
