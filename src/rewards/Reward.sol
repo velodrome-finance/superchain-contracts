@@ -185,9 +185,8 @@ abstract contract Reward is IReward, ReentrancyGuard {
     }
 
     /// @inheritdoc IReward
-    function _deposit(bytes calldata _payload) external nonReentrant {
+    function _deposit(uint256 amount, uint256 tokenId) external nonReentrant {
         if (msg.sender != ILeafMessageBridge(authorized).module()) revert NotAuthorized();
-        (uint256 amount, uint256 tokenId) = abi.decode(_payload, (uint256, uint256));
 
         totalSupply += amount;
         balanceOf[tokenId] += amount;
@@ -199,9 +198,8 @@ abstract contract Reward is IReward, ReentrancyGuard {
     }
 
     /// @inheritdoc IReward
-    function _withdraw(bytes calldata _payload) external nonReentrant {
+    function _withdraw(uint256 amount, uint256 tokenId) external nonReentrant {
         if (msg.sender != ILeafMessageBridge(authorized).module()) revert NotAuthorized();
-        (uint256 amount, uint256 tokenId) = abi.decode(_payload, (uint256, uint256));
 
         totalSupply -= amount;
         balanceOf[tokenId] -= amount;

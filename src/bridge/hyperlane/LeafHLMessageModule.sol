@@ -69,17 +69,19 @@ contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecuri
         }
 
         if (command == Commands.DEPOSIT) {
-            (address gauge, bytes memory payload) = _message.gaugeAndPayload();
+            address gauge = _message.toAddress();
+            (uint256 amount, uint256 tokenId) = _message.amountAndTokenId();
             address fvr = ILeafVoter(voter).gaugeToFees({_gauge: gauge});
-            IReward(fvr)._deposit({_payload: payload});
+            IReward(fvr)._deposit({amount: amount, tokenId: tokenId});
             address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: gauge});
-            IReward(ivr)._deposit({_payload: payload});
+            IReward(ivr)._deposit({amount: amount, tokenId: tokenId});
         } else if (command == Commands.WITHDRAW) {
-            (address gauge, bytes memory payload) = _message.gaugeAndPayload();
+            address gauge = _message.toAddress();
+            (uint256 amount, uint256 tokenId) = _message.amountAndTokenId();
             address fvr = ILeafVoter(voter).gaugeToFees({_gauge: gauge});
-            IReward(fvr)._withdraw({_payload: payload});
+            IReward(fvr)._withdraw({amount: amount, tokenId: tokenId});
             address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: gauge});
-            IReward(ivr)._withdraw({_payload: payload});
+            IReward(ivr)._withdraw({amount: amount, tokenId: tokenId});
         } else if (command == Commands.GET_INCENTIVES) {
             address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: _message.toAddress()});
 

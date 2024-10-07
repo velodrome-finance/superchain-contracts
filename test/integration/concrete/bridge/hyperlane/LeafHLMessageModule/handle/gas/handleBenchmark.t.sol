@@ -83,10 +83,9 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
             abi.encodePacked(uint8(Commands.WITHDRAW), address(leafGauge), amount, tokenId, uint256(1000));
 
         vm.stopPrank();
-        bytes memory depositPayload = abi.encodePacked(amount, tokenId);
         vm.startPrank(address(leafMessageModule));
-        leafFVR._deposit({_payload: depositPayload});
-        leafIVR._deposit({_payload: depositPayload});
+        leafFVR._deposit({amount: amount, tokenId: tokenId});
+        leafIVR._deposit({amount: amount, tokenId: tokenId});
         vm.stopPrank();
 
         vm.startPrank(address(leafMailbox));
@@ -96,10 +95,9 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
 
     function testGas_GetIncentives() public {
         uint256 tokenId = 1;
-        bytes memory depositPayload = abi.encodePacked(TOKEN_1, tokenId);
         vm.stopPrank();
         vm.startPrank(address(leafMessageModule));
-        leafIVR._deposit({_payload: depositPayload});
+        leafIVR._deposit({amount: TOKEN_1, tokenId: tokenId});
         vm.stopPrank();
 
         skipToNextEpoch(1);
@@ -121,10 +119,9 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
 
     function testGas_GetFees() public {
         uint256 tokenId = 1;
-        bytes memory depositPayload = abi.encodePacked(TOKEN_1, tokenId);
         vm.stopPrank();
         vm.startPrank(address(leafMessageModule));
-        leafFVR._deposit({_payload: depositPayload});
+        leafFVR._deposit({amount: TOKEN_1, tokenId: tokenId});
         vm.stopPrank();
 
         skipToNextEpoch(1);

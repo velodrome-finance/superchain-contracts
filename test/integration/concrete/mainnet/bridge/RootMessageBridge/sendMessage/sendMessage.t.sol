@@ -235,9 +235,8 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
         // Deposit into Reward contracts and Skip to next epoch to accrue rewards
         uint256 tokenId = 1;
-        bytes memory depositPayload = abi.encodePacked(TOKEN_1, tokenId);
         vm.prank(address(leafMessageModule));
-        leafIVR._deposit({_payload: depositPayload});
+        leafIVR._deposit({amount: TOKEN_1, tokenId: tokenId});
 
         skipToNextEpoch(1);
 
@@ -309,9 +308,8 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
         // Deposit into Reward contracts and Skip to next epoch to accrue rewards
         uint256 tokenId = 1;
-        bytes memory depositPayload = abi.encodePacked(TOKEN_1, tokenId);
         vm.prank(address(leafMessageModule));
-        leafFVR._deposit({_payload: depositPayload});
+        leafFVR._deposit({amount: TOKEN_1, tokenId: tokenId});
 
         skipToNextEpoch(1);
 

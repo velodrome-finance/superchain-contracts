@@ -8,11 +8,9 @@ contract DepositIntegrationConcreteTest is FeesVotingRewardTest {
         // It reverts with {NotAuthorized}
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-
         vm.prank(users.charlie);
         vm.expectRevert(IReward.NotAuthorized.selector);
-        leafFVR._deposit({_payload: payload});
+        leafFVR._deposit({amount: amount, tokenId: tokenId});
     }
 
     function test_WhenCallerIsTheModuleSetOnTheBridge() external {
@@ -21,12 +19,11 @@ contract DepositIntegrationConcreteTest is FeesVotingRewardTest {
         // It should emit a {Deposit} event
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
 
         vm.prank(address(leafMessageModule));
         vm.expectEmit(address(leafFVR));
         emit IReward.Deposit({_amount: amount, _tokenId: tokenId});
-        leafFVR._deposit({_payload: payload});
+        leafFVR._deposit({amount: amount, tokenId: tokenId});
 
         assertEq(leafFVR.totalSupply(), amount);
         assertEq(leafFVR.balanceOf(tokenId), amount);

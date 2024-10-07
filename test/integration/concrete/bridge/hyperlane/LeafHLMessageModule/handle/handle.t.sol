@@ -173,10 +173,9 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
 
         uint256 tokenId = 1;
-        bytes memory depositPayload = abi.encodePacked(TOKEN_1, tokenId);
         vm.stopPrank();
         vm.startPrank(address(leafMessageModule));
-        leafIVR._deposit({_payload: depositPayload});
+        leafIVR._deposit({amount: TOKEN_1, tokenId: tokenId});
         vm.stopPrank();
 
         skipToNextEpoch(1);
@@ -210,10 +209,9 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
 
         uint256 tokenId = 1;
-        bytes memory depositPayload = abi.encodePacked(TOKEN_1, tokenId);
         vm.stopPrank();
         vm.startPrank(address(leafMessageModule));
-        leafFVR._deposit({_payload: depositPayload});
+        leafFVR._deposit({amount: TOKEN_1, tokenId: tokenId});
         vm.stopPrank();
 
         skipToNextEpoch(1);

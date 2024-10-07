@@ -8,11 +8,10 @@ contract WithdrawIntegrationConcreteTest is BribeVotingRewardTest {
         // It reverts with {NotAuthorized}
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
 
         vm.prank(users.charlie);
         vm.expectRevert(IReward.NotAuthorized.selector);
-        leafIVR._withdraw({_payload: payload});
+        leafIVR._withdraw({amount: amount, tokenId: tokenId});
     }
 
     function test_WhenCallerIsTheModuleSetOnTheBridge() external {
@@ -21,17 +20,16 @@ contract WithdrawIntegrationConcreteTest is BribeVotingRewardTest {
         // It should emit a {Withdraw} event
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
 
         vm.startPrank(address(leafMessageModule));
-        leafIVR._deposit({_payload: payload});
+        leafIVR._deposit({amount: amount, tokenId: tokenId});
 
         assertEq(leafIVR.totalSupply(), amount);
         assertEq(leafIVR.balanceOf(tokenId), amount);
 
         vm.expectEmit(address(leafIVR));
         emit IReward.Withdraw({_amount: amount, _tokenId: tokenId});
-        leafIVR._withdraw({_payload: payload});
+        leafIVR._withdraw({amount: amount, tokenId: tokenId});
 
         assertEq(leafIVR.totalSupply(), 0);
         assertEq(leafIVR.balanceOf(tokenId), 0);

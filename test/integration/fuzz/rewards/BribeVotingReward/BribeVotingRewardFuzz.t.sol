@@ -27,9 +27,8 @@ contract BribeVotingRewardFuzzTest is BaseForkFixture {
 
     function _deposit(address _user, uint256 _amount) internal {
         uint256 tokenId = _user == users.alice ? 1 : 2;
-        bytes memory data = abi.encode(_amount, tokenId);
         vm.prank(address(leafMessageModule));
-        leafIVR._deposit(data);
+        leafIVR._deposit({amount: _amount, tokenId: tokenId});
     }
 
     function _getReward(address _user) internal {

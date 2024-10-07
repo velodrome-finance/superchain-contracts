@@ -68,8 +68,7 @@ contract GetRewardIntegrationFuzzTest is FeesVotingRewardTest {
 
         // Deposit and Skip to next epoch to vest all rewards
         _amount = bound(_amount, 1, MAX_TOKENS_NOTIFY);
-        bytes memory depositPayload = abi.encode(_amount, tokenId);
-        leafFVR._deposit({_payload: depositPayload});
+        leafFVR._deposit({amount: _amount, tokenId: tokenId});
 
         skipToNextEpoch(1);
 

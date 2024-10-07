@@ -8,11 +8,10 @@ contract DepositIntegrationConcreteTest is BribeVotingRewardTest {
         // It reverts with {NotAuthorized}
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
 
         vm.prank(users.charlie);
         vm.expectRevert(IReward.NotAuthorized.selector);
-        leafIVR._deposit({_payload: payload});
+        leafIVR._deposit({amount: amount, tokenId: tokenId});
     }
 
     function test_WhenCallerIsTheModuleSetOnTheBridge() external {
@@ -21,12 +20,11 @@ contract DepositIntegrationConcreteTest is BribeVotingRewardTest {
         // It should emit a {Deposit} event
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
 
         vm.prank(address(leafMessageModule));
         vm.expectEmit(address(leafIVR));
         emit IReward.Deposit({_amount: amount, _tokenId: tokenId});
-        leafIVR._deposit({_payload: payload});
+        leafIVR._deposit({amount: amount, tokenId: tokenId});
 
         assertEq(leafIVR.totalSupply(), amount);
         assertEq(leafIVR.balanceOf(tokenId), amount);

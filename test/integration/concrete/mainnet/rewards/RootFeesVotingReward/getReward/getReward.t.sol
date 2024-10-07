@@ -21,9 +21,8 @@ contract GetRewardIntegrationConcreteTest is RootFeesVotingRewardTest {
         leafFVR.notifyRewardAmount(address(token1), TOKEN_1);
 
         // Deposit & Skip to next Epoch to vest rewards
-        bytes memory depositPayload = abi.encode(TOKEN_1, tokenId);
         vm.startPrank(address(leafMessageModule));
-        leafFVR._deposit({_payload: depositPayload});
+        leafFVR._deposit({amount: TOKEN_1, tokenId: tokenId});
         vm.stopPrank();
 
         skipToNextEpoch(1);

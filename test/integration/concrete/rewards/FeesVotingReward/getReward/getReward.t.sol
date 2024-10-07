@@ -60,8 +60,7 @@ contract GetRewardIntegrationConcreteTest is FeesVotingRewardTest {
         // It should emit a {ClaimRewards} event
 
         // Deposit and Skip to next epoch to vest all rewards
-        bytes memory depositPayload = abi.encode(TOKEN_1, tokenId);
-        leafFVR._deposit({_payload: depositPayload});
+        leafFVR._deposit({amount: TOKEN_1, tokenId: tokenId});
 
         skipToNextEpoch(1);
 

@@ -25,9 +25,8 @@ contract GetRewardIntegrationConcreteTest is RootBribeVotingRewardTest {
         leafIVR.notifyRewardAmount(address(weth), TOKEN_1);
 
         // Deposit & Skip to next Epoch to vest rewards
-        bytes memory depositPayload = abi.encode(TOKEN_1, tokenId);
         vm.startPrank(address(leafMessageModule));
-        leafIVR._deposit({_payload: depositPayload});
+        leafIVR._deposit({amount: TOKEN_1, tokenId: tokenId});
         vm.stopPrank();
 
         skipToNextEpoch(1);
