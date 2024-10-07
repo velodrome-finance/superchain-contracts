@@ -9,5 +9,6 @@ abstract contract XERC20Test is BaseFixture {
         assertEq(xVelo.symbol(), "XVELO");
         assertEq(xVelo.owner(), users.owner);
         assertEq(xVelo.lockbox(), address(lockbox));
+        assertEq(xVelo.SUPERCHAIN_ERC20_BRIDGE(), SUPERCHAIN_ERC20_BRIDGE);
     }
 }

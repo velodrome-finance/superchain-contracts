@@ -17,7 +17,7 @@ import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {IRouter, Router} from "src/Router.sol";
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
 import {ITokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
-import {IXERC20, XERC20} from "src/xerc20/XERC20.sol";
+import {ICrosschainERC20, ISuperchainERC20, IXERC20, XERC20} from "src/xerc20/XERC20.sol";
 import {IXERC20Lockbox, XERC20Lockbox} from "src/xerc20/XERC20Lockbox.sol";
 import {IXERC20Factory, XERC20Factory} from "src/xerc20/XERC20Factory.sol";
 import {RateLimitMidPoint} from "src/libraries/rateLimits/RateLimitMidpointCommonLibrary.sol";

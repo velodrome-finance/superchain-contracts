@@ -16,4 +16,6 @@ abstract contract TestConstants is Constants {
 
     uint256 public constant DAY = 1 days;
     uint256 public constant WEEK = VelodromeTimeLibrary.WEEK;
+
+    address public constant SUPERCHAIN_ERC20_BRIDGE = 0x4200000000000000000000000000000000000028;
 }

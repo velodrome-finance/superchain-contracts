@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity >=0.8.4 <0.9.0;
+pragma solidity >=0.8.19 <0.9.0;
 
 import {ERC20} from "@openzeppelin5/contracts/token/ERC20/ERC20.sol";
 import {ERC20Permit} from "@openzeppelin5/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import {SafeCast} from "@openzeppelin5/contracts/utils/math/SafeCast.sol";
 import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 
+import {ISuperchainERC20} from "../interfaces/xerc20/ISuperchainERC20.sol";
+import {ICrosschainERC20} from "../interfaces/xerc20/ICrosschainERC20.sol";
 import {IXERC20} from "../interfaces/xerc20/IXERC20.sol";
 import {MintLimits} from "./MintLimits.sol";
 
@@ -36,13 +38,15 @@ import {RateLimitMidPoint} from "../libraries/rateLimits/RateLimitMidpointCommon
 
 */
 
-/// @title XERC20
+/// @title XERC20 with CrosschainERC20 support
 /// @notice Extension of ERC20 for bridged tokens
-contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit, MintLimits {
+contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit, MintLimits, ISuperchainERC20 {
     using SafeCast for uint256;
 
     /// @inheritdoc IXERC20
     address public immutable lockbox;
+    /// @inheritdoc ISuperchainERC20
+    address public constant SUPERCHAIN_ERC20_BRIDGE = 0x4200000000000000000000000000000000000028;
 
     /// @notice maximum rate limit per second is 25k
     uint128 public constant MAX_RATE_LIMIT_PER_SECOND = 25_000 * 1e18;
@@ -61,6 +65,11 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit, MintLimits {
         Ownable(_owner)
     {
         lockbox = _lockbox;
+    }
+
+    modifier onlySuperchainERC20Bridge() {
+        if (msg.sender != SUPERCHAIN_ERC20_BRIDGE) revert OnlySuperchainERC20Bridge();
+        _;
     }
 
     /// @inheritdoc IXERC20
@@ -158,5 +167,22 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit, MintLimits {
             _depleteBuffer(_caller, _amount);
         }
         _mint(_user, _amount);
+    }
+
+    /// @inheritdoc ICrosschainERC20
+    function __crosschainMint(address _to, uint256 _amount) external onlySuperchainERC20Bridge {
+        _depleteBuffer(msg.sender, _amount);
+        _mint(_to, _amount);
+
+        emit CrosschainMinted(_to, _amount);
+    }
+
+    /// @inheritdoc ICrosschainERC20
+    function __crosschainBurn(address _from, uint256 _amount) external onlySuperchainERC20Bridge {
+        _spendAllowance(_from, msg.sender, _amount);
+        _replenishBuffer(msg.sender, _amount);
+        _burn(_from, _amount);
+
+        emit CrosschainBurnt(_from, _amount);
     }
 }

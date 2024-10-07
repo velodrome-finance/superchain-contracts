@@ -1,0 +1,12 @@
+CrosschainMintUnitConcreteTest
+├── When caller is not SuperchainERC20Bridge
+│   └── It should revert with {OnlySuperchainERC20Bridge}
+└── When caller is SuperchainERC20Bridge
+    ├── When the requested amount is higher than the current minting limit of caller
+    │   └── It should revert with "RateLimited: rate limit hit"
+    └── When the requested amount is less than or equal to the current minting limit of caller
+        ├── It mints the requested amount of tokens to the user
+        ├── It decreases the current minting limit for the caller
+        ├── It should emit a {Transfer} event
+        ├── It should mint the amount to the user
+        └── It should emit a {CrosschainMinted} event

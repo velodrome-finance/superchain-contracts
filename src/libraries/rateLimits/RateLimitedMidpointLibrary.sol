@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BSD-3.0
-pragma solidity >=0.8.4 <0.9.0;
+pragma solidity >=0.8.19 <0.9.0;
 
 import {Math} from "@openzeppelin5/contracts/utils/math/Math.sol";
 

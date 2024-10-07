@@ -49,7 +49,6 @@ contract BurnUnitConcreteTest is XERC20Test {
                 rateLimitPerSecond: rps.toUint128()
             })
         );
-        xVelo.setBufferCap({_bridge: bridge, _newBufferCap: bufferCap});
 
         vm.startPrank(bridge);
         xVelo.mint(users.alice, TOKEN_1);
