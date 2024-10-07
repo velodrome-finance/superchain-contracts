@@ -41,9 +41,7 @@ contract RootFeesVotingReward is IRootFeesVotingReward {
     function _deposit(uint256 _amount, uint256 _tokenId) external {
         if (msg.sender != voter) revert NotAuthorized();
 
-        bytes memory payload = abi.encode(_amount, _tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(gauge, payload));
-
+        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), gauge, _amount, _tokenId);
         IRootMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
     }
 
@@ -51,9 +49,7 @@ contract RootFeesVotingReward is IRootFeesVotingReward {
     function _withdraw(uint256 _amount, uint256 _tokenId) external {
         if (msg.sender != voter) revert NotAuthorized();
 
-        bytes memory payload = abi.encode(_amount, _tokenId);
-        bytes memory message = abi.encode(Commands.WITHDRAW, abi.encode(gauge, payload));
-
+        bytes memory message = abi.encodePacked(uint8(Commands.WITHDRAW), gauge, _amount, _tokenId);
         IRootMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
     }
 
@@ -62,8 +58,8 @@ contract RootFeesVotingReward is IRootFeesVotingReward {
         if (!IVotingEscrow(ve).isApprovedOrOwner(msg.sender, _tokenId) && msg.sender != voter) revert NotAuthorized();
 
         address _owner = IVotingEscrow(ve).ownerOf(_tokenId);
-        bytes memory payload = abi.encode(_owner, _tokenId, _tokens);
-        bytes memory message = abi.encode(Commands.GET_FEES, abi.encode(gauge, payload));
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.GET_FEES), gauge, _owner, _tokenId, uint8(_tokens.length), _tokens);
 
         IRootMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
     }

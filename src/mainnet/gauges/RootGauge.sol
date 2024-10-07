@@ -92,8 +92,7 @@ contract RootGauge is IRootGauge {
 
         IERC20(xerc20).safeIncreaseAllowance({spender: bridge, value: _amount});
 
-        bytes memory payload = abi.encode(address(this), _amount);
-        bytes memory message = abi.encode(_command, payload);
+        bytes memory message = abi.encodePacked(uint8(_command), address(this), _amount);
         IRootMessageBridge(bridge).sendMessage({_chainid: uint32(chainid), _message: message});
 
         emit NotifyReward({_sender: msg.sender, _amount: _amount});

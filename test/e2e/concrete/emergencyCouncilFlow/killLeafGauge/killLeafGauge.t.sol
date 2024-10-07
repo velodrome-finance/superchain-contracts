@@ -51,8 +51,7 @@ contract KillLeafGaugeE2ETest is EmergencyCouncilE2ETest {
             claimable
         );
 
-        bytes memory payload = abi.encode(leafGauge);
-        bytes memory message = abi.encode(Commands.KILL_GAUGE, payload);
+        bytes memory message = abi.encodePacked(uint8(Commands.KILL_GAUGE), address(leafGauge));
 
         vm.expectEmit(address(mockVoter));
         emit IVoter.GaugeKilled({gauge: address(leafGauge)});
@@ -97,8 +96,7 @@ contract KillLeafGaugeE2ETest is EmergencyCouncilE2ETest {
         // It should emit a {GaugeKilled} event on the leaf chain
 
         uint256 balanceOfVoterBefore = rootRewardToken.balanceOf(address(mockVoter));
-        bytes memory payload = abi.encode(leafGauge);
-        bytes memory message = abi.encode(Commands.KILL_GAUGE, payload);
+        bytes memory message = abi.encodePacked(uint8(Commands.KILL_GAUGE), address(leafGauge));
 
         vm.expectEmit(address(mockVoter));
         emit IVoter.GaugeKilled({gauge: address(leafGauge)});

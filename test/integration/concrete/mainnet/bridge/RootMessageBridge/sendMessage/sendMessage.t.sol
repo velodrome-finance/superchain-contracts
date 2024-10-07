@@ -36,8 +36,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         // It should revert with {ChainNotRegistered}
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
 
         vm.prank(users.charlie);
         vm.expectRevert(ICrossChainRegistry.ChainNotRegistered.selector);
@@ -63,8 +62,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         // It should revert with {NotAuthorized}
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
 
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.DEPOSIT));
@@ -79,8 +77,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         // It dispatches the deposit message to the message module
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
 
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
@@ -109,12 +106,11 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         // It should revert with {NotAuthorized}
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
 
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
-        message = abi.encode(command, abi.encode(address(leafGauge), payload));
+        message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
         vm.startPrank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.WITHDRAW));
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
@@ -132,12 +128,11 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
 
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
-        message = abi.encode(command, abi.encode(address(leafGauge), payload));
+        message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
 
@@ -171,10 +166,15 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
     {
         // It should revert with NotAuthorized
         uint24 _poolParam = 1;
-        bytes memory payload = abi.encode(
-            address(rootVotingRewardsFactory), address(rootGaugeFactory), address(token0), address(token1), _poolParam
+        bytes memory message = abi.encodePacked(
+            uint8(command),
+            address(rootPoolFactory),
+            address(rootVotingRewardsFactory),
+            address(rootGaugeFactory),
+            address(token0),
+            address(token1),
+            _poolParam
         );
-        bytes memory message = abi.encode(Commands.CREATE_GAUGE, abi.encode(address(rootPoolFactory), payload));
 
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.CREATE_GAUGE));
@@ -184,10 +184,15 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
     function test_WhenTheCallerIsRootGaugeFactory() external whenTheChainIdIsRegistered whenTheCommandIsCreateGauge {
         // It dispatches the create gauge message to the message module
         uint24 _poolParam = 1;
-        bytes memory payload = abi.encode(
-            address(rootVotingRewardsFactory), address(rootGaugeFactory), address(token0), address(token1), _poolParam
+        bytes memory message = abi.encodePacked(
+            uint8(command),
+            address(rootPoolFactory),
+            address(rootVotingRewardsFactory),
+            address(rootGaugeFactory),
+            address(token0),
+            address(token1),
+            _poolParam
         );
-        bytes memory message = abi.encode(Commands.CREATE_GAUGE, abi.encode(address(rootPoolFactory), payload));
 
         vm.prank({msgSender: address(rootGaugeFactory), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
@@ -230,7 +235,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
         // Deposit into Reward contracts and Skip to next epoch to accrue rewards
         uint256 tokenId = 1;
-        bytes memory depositPayload = abi.encode(TOKEN_1, tokenId);
+        bytes memory depositPayload = abi.encodePacked(TOKEN_1, tokenId);
         vm.prank(address(leafMessageModule));
         leafIVR._deposit({_payload: depositPayload});
 
@@ -248,8 +253,8 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         // It should revert with NotAuthorized
         uint256 tokenId = 1;
         address[] memory tokens = new address[](0);
-        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
-        bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
+        bytes memory message =
+            abi.encodePacked(uint8(command), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens);
 
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.GET_INCENTIVES));
@@ -267,8 +272,8 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         tokens[0] = address(token0);
         tokens[1] = address(token1);
         tokens[2] = address(weth);
-        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
-        bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
+        bytes memory message =
+            abi.encodePacked(uint8(command), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens);
 
         vm.prank({msgSender: address(rootIVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
@@ -304,7 +309,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
         // Deposit into Reward contracts and Skip to next epoch to accrue rewards
         uint256 tokenId = 1;
-        bytes memory depositPayload = abi.encode(TOKEN_1, tokenId);
+        bytes memory depositPayload = abi.encodePacked(TOKEN_1, tokenId);
         vm.prank(address(leafMessageModule));
         leafFVR._deposit({_payload: depositPayload});
 
@@ -322,8 +327,8 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         // It should revert with NotAuthorized
         uint256 tokenId = 1;
         address[] memory tokens = new address[](0);
-        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
-        bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
+        bytes memory message =
+            abi.encodePacked(uint8(command), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens);
 
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.GET_FEES));
@@ -340,8 +345,8 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         address[] memory tokens = new address[](2);
         tokens[0] = address(token0);
         tokens[1] = address(token1);
-        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
-        bytes memory message = abi.encode(command, abi.encode(address(leafGauge), payload));
+        bytes memory message =
+            abi.encodePacked(uint8(command), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens);
 
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
@@ -366,8 +371,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
     function test_WhenTheCallerIsNotAnAliveGauge() external whenTheChainIdIsRegistered whenTheCommandIsNotify {
         // It should revert with NotValidGauge
         uint256 amount = TOKEN_1 * 1000;
-        bytes memory payload = abi.encode(address(leafGauge), amount);
-        bytes memory message = abi.encode(command, payload);
+        bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount);
 
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotValidGauge.selector));
@@ -381,8 +385,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
         setLimits({_rootBufferCap: amount * 2, _leafBufferCap: amount * 2});
 
-        bytes memory payload = abi.encode(address(leafGauge), amount);
-        bytes memory message = abi.encode(command, payload);
+        bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount);
 
         vm.prank(address(rootGauge));
         leafXVelo.approve(address(rootMessageBridge), amount);
@@ -419,8 +422,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
     {
         // It should revert with NotValidGauge
         uint256 amount = TOKEN_1 * 1000;
-        bytes memory payload = abi.encode(address(leafGauge), amount);
-        bytes memory message = abi.encode(command, payload);
+        bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount);
 
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotValidGauge.selector));
@@ -434,8 +436,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
         setLimits({_rootBufferCap: amount * 2, _leafBufferCap: amount * 2});
 
-        bytes memory payload = abi.encode(address(leafGauge), amount);
-        bytes memory message = abi.encode(command, payload);
+        bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount);
 
         vm.startPrank({msgSender: address(rootGauge), txOrigin: users.alice});
         leafXVelo.approve(address(rootMessageBridge), amount);
@@ -461,10 +462,9 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
     function test_WhenTheCommandIsNotAnyExpectedCommand() external whenTheChainIdIsRegistered {
         // It should revert with {InvalidCommand}
-        command = type(uint256).max;
+        command = type(uint8).max;
 
-        bytes memory payload = abi.encode(address(token0), address(token1), true);
-        bytes memory message = abi.encode(command, payload);
+        bytes memory message = abi.encodePacked(uint8(command), address(token0), address(token1), true);
 
         vm.prank(users.alice);
         vm.expectRevert(IRootMessageBridge.InvalidCommand.selector);

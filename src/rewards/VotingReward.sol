@@ -21,11 +21,10 @@ abstract contract VotingReward is Reward {
     }
 
     /// @inheritdoc Reward
-    function getReward(bytes calldata _payload) external override nonReentrant {
+    function getReward(address _recipient, uint256 _tokenId, address[] memory _tokens) external override nonReentrant {
         if (msg.sender != ILeafMessageBridge(authorized).module()) revert NotAuthorized();
-        (address owner, uint256 tokenId, address[] memory tokens) = abi.decode(_payload, (address, uint256, address[]));
 
-        _getReward({_recipient: owner, _tokenId: tokenId, _tokens: tokens});
+        _getReward({_recipient: _recipient, _tokenId: _tokenId, _tokens: _tokens});
     }
 
     /// @inheritdoc Reward

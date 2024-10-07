@@ -80,8 +80,10 @@ interface IReward {
     function _withdraw(bytes calldata _payload) external;
 
     /// @notice Claim the rewards earned by a veNFT staker
-    /// @param _payload (address,uint256,address[]) encoding containing owner, token id and token addresses
-    function getReward(bytes calldata _payload) external;
+    /// @param _recipient  Address of reward recipient
+    /// @param _tokenId  Unique identifier of the veNFT
+    /// @param _tokens   Array of tokens to claim rewards of
+    function getReward(address _recipient, uint256 _tokenId, address[] memory _tokens) external;
 
     /// @notice Add rewards for stakers to earn
     /// @param token    Address of token to reward

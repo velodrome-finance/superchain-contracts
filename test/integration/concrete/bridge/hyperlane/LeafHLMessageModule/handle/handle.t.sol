@@ -41,7 +41,11 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         // It reverts with NotMailbox
         vm.prank(users.charlie);
         vm.expectRevert(IHLHandler.NotMailbox.selector);
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: abi.encode(users.charlie, abi.encode(1))});
+        leafMessageModule.handle({
+            _origin: origin,
+            _sender: sender,
+            _message: abi.encodePacked(users.charlie, abi.encode(1))
+        });
     }
 
     modifier whenTheCallerIsMailbox() {
@@ -80,8 +84,8 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         // It should revert with InvalidNonce
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(999, abi.encode(address(leafGauge), payload)));
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.DEPOSIT), uint256(999), address(leafGauge), amount, tokenId);
 
         vm.expectRevert(ILeafHLMessageModule.InvalidNonce.selector);
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
@@ -106,8 +110,8 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
 
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(1_000, abi.encode(address(leafGauge), payload)));
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint256(1_000));
 
         vm.expectEmit(address(leafMessageModule));
         emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
@@ -135,8 +139,8 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
 
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(1_000, abi.encode(address(leafGauge), payload)));
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint256(1_000));
 
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
         assertEq(leafFVR.totalSupply(), amount);
@@ -144,7 +148,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         assertEq(leafIVR.totalSupply(), amount);
         assertEq(leafIVR.balanceOf(tokenId), amount);
 
-        message = abi.encode(Commands.WITHDRAW, abi.encode(1_001, abi.encode(address(leafGauge), payload)));
+        message = abi.encodePacked(uint8(Commands.WITHDRAW), address(leafGauge), amount, tokenId, uint256(1_001));
 
         vm.expectEmit(address(leafMessageModule));
         emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
@@ -169,7 +173,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
 
         uint256 tokenId = 1;
-        bytes memory depositPayload = abi.encode(TOKEN_1, tokenId);
+        bytes memory depositPayload = abi.encodePacked(TOKEN_1, tokenId);
         vm.stopPrank();
         vm.startPrank(address(leafMessageModule));
         leafIVR._deposit({_payload: depositPayload});
@@ -181,8 +185,9 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         tokens[0] = address(token0);
         tokens[1] = address(token1);
         tokens[2] = address(weth);
-        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
-        bytes memory message = abi.encode(Commands.GET_INCENTIVES, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.GET_INCENTIVES), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens
+        );
 
         assertEq(token0.balanceOf(users.alice), 0);
         assertEq(token1.balanceOf(users.alice), 0);
@@ -205,7 +210,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
 
         uint256 tokenId = 1;
-        bytes memory depositPayload = abi.encode(TOKEN_1, tokenId);
+        bytes memory depositPayload = abi.encodePacked(TOKEN_1, tokenId);
         vm.stopPrank();
         vm.startPrank(address(leafMessageModule));
         leafFVR._deposit({_payload: depositPayload});
@@ -216,8 +221,9 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         address[] memory tokens = new address[](2);
         tokens[0] = address(token0);
         tokens[1] = address(token1);
-        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
-        bytes memory message = abi.encode(Commands.GET_FEES, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.GET_FEES), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens
+        );
 
         assertEq(token0.balanceOf(users.alice), 0);
         assertEq(token1.balanceOf(users.alice), 0);
@@ -256,10 +262,15 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         assertFalse(leafPoolFactory.isPool(pool));
 
         uint24 _poolParam = 1;
-        bytes memory payload = abi.encode(
-            address(leafVotingRewardsFactory), address(leafGaugeFactory), address(token0), address(token1), _poolParam
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.CREATE_GAUGE),
+            address(leafPoolFactory),
+            address(leafVotingRewardsFactory),
+            address(leafGaugeFactory),
+            address(token0),
+            address(token1),
+            _poolParam
         );
-        bytes memory message = abi.encode(Commands.CREATE_GAUGE, abi.encode(address(leafPoolFactory), payload));
 
         vm.expectEmit(address(leafMessageModule));
         emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
@@ -290,10 +301,15 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         uint24 _poolParam = 1;
         leafPool = Pool(leafPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), fee: _poolParam}));
 
-        bytes memory payload = abi.encode(
-            address(leafVotingRewardsFactory), address(leafGaugeFactory), address(token0), address(token1), _poolParam
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.CREATE_GAUGE),
+            address(leafPoolFactory),
+            address(leafVotingRewardsFactory),
+            address(leafGaugeFactory),
+            address(token0),
+            address(token1),
+            _poolParam
         );
-        bytes memory message = abi.encode(Commands.CREATE_GAUGE, abi.encode(address(leafPoolFactory), payload));
 
         vm.expectEmit(address(leafMessageModule));
         emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
@@ -317,8 +333,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
 
         uint256 amount = TOKEN_1 * 1000;
-        bytes memory payload = abi.encode(address(leafGauge), amount);
-        bytes memory message = abi.encode(Commands.NOTIFY, payload);
+        bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY), address(leafGauge), amount);
 
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), 0);
@@ -351,8 +366,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
 
         uint256 amount = TOKEN_1 * 1000;
-        bytes memory payload = abi.encode(address(leafGauge), amount);
-        bytes memory message = abi.encode(Commands.NOTIFY_WITHOUT_CLAIM, payload);
+        bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY_WITHOUT_CLAIM), address(leafGauge), amount);
 
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), 0);
@@ -383,8 +397,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         // It emits the {ReceivedMessage} event
         stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
 
-        bytes memory payload = abi.encode(address(leafGauge));
-        bytes memory message = abi.encode(Commands.KILL_GAUGE, payload);
+        bytes memory message = abi.encodePacked(uint8(Commands.KILL_GAUGE), address(leafGauge));
         vm.expectEmit(address(leafMessageModule));
 
         emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
@@ -418,8 +431,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
 
         stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
 
-        bytes memory payload = abi.encode(address(leafGauge));
-        bytes memory message = abi.encode(Commands.REVIVE_GAUGE, payload);
+        bytes memory message = abi.encodePacked(uint8(Commands.REVIVE_GAUGE), address(leafGauge));
         vm.expectEmit(address(leafMessageModule));
 
         emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
@@ -438,8 +450,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         // It reverts with {InvalidCommand}
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(type(uint256).max, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encodePacked(type(uint8).max, address(leafGauge), amount, tokenId);
 
         vm.expectRevert(ILeafHLMessageModule.InvalidCommand.selector);
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});

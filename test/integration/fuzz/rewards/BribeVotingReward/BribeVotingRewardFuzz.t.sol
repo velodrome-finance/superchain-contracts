@@ -37,9 +37,8 @@ contract BribeVotingRewardFuzzTest is BaseForkFixture {
         address[] memory tokens = new address[](1);
         tokens[0] = address(weth);
 
-        bytes memory data = abi.encode(_user, tokenId, tokens);
         vm.prank(address(leafMessageModule));
-        leafIVR.getReward(data);
+        leafIVR.getReward({_recipient: _user, _tokenId: tokenId, _tokens: tokens});
     }
 
     function test_EarnedWithAlternatedNotifyAndGetReward(uint40 _ts1, uint40 _ts2, uint40 _ts3, uint40 _ts4) public {

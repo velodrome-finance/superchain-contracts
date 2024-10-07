@@ -24,7 +24,7 @@ contract CreateRewardsIntegrationConcreteTest is RootVotingRewardsFactoryTest {
         rewards[1] = address(token1);
 
         vm.prank(address(mockVoter));
-        (address fvr, address ivr) = rootVotingRewardsFactory.createRewards(address(0), rewards);
+        rootVotingRewardsFactory.createRewards(address(0), rewards);
         snapLastCall("RootVotingRewardsFactory_createRewards");
     }
 }

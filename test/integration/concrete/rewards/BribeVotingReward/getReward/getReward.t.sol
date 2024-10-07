@@ -26,11 +26,10 @@ contract GetRewardIntegrationConcreteTest is BribeVotingRewardTest {
     function test_WhenCallerIsNotTheModuleSetOnTheBridge() external {
         // It reverts with {NotAuthorized}
         address[] memory tokens = new address[](0);
-        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
 
         vm.prank(users.charlie);
         vm.expectRevert(IReward.NotAuthorized.selector);
-        leafIVR.getReward({_payload: payload});
+        leafIVR.getReward({_recipient: users.alice, _tokenId: tokenId, _tokens: tokens});
     }
 
     modifier whenCallerIsTheModuleSetOnTheBridge() {
@@ -45,13 +44,12 @@ contract GetRewardIntegrationConcreteTest is BribeVotingRewardTest {
         tokens[0] = address(token0);
         tokens[1] = address(token1);
         tokens[2] = address(weth);
-        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
 
         for (uint256 i = 0; i < tokens.length; i++) {
             vm.expectEmit(address(leafIVR));
             emit IReward.ClaimRewards({_sender: users.alice, _reward: tokens[i], _amount: 0});
         }
-        leafIVR.getReward({_payload: payload});
+        leafIVR.getReward({_recipient: users.alice, _tokenId: tokenId, _tokens: tokens});
 
         assertEq(leafIVR.lastEarn(address(token0), tokenId), block.timestamp);
         assertEq(leafIVR.lastEarn(address(token1), tokenId), block.timestamp);
@@ -76,13 +74,12 @@ contract GetRewardIntegrationConcreteTest is BribeVotingRewardTest {
         tokens[0] = address(token0);
         tokens[1] = address(token1);
         tokens[2] = address(weth);
-        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
 
         for (uint256 i = 0; i < tokens.length; i++) {
             vm.expectEmit(address(leafIVR));
             emit IReward.ClaimRewards({_sender: users.alice, _reward: tokens[i], _amount: TOKEN_1});
         }
-        leafIVR.getReward({_payload: payload});
+        leafIVR.getReward({_recipient: users.alice, _tokenId: tokenId, _tokens: tokens});
 
         assertEq(leafIVR.lastEarn(address(token0), tokenId), block.timestamp);
         assertEq(leafIVR.lastEarn(address(token1), tokenId), block.timestamp);

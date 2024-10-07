@@ -21,6 +21,7 @@ import {ISpecifiesInterchainSecurityModule} from "../../interfaces/external/ISpe
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
 contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecurityModule, Ownable {
     using SafeERC20 for IERC20;
+    using Commands for bytes;
 
     /// @inheritdoc ILeafHLMessageModule
     address public immutable bridge;
@@ -60,38 +61,48 @@ contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecuri
         if (_origin != 10) revert NotRoot();
         if (TypeCasts.bytes32ToAddress(_sender) != address(this)) revert NotModule();
 
-        (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
+        uint256 command = _message.command();
+
         if (command <= Commands.WITHDRAW) {
-            uint256 nonce;
-            (nonce, messageWithoutCommand) = abi.decode(messageWithoutCommand, (uint256, bytes));
-            if (nonce != receivingNonce) revert InvalidNonce();
+            if (_message.nonce() != receivingNonce) revert InvalidNonce();
             receivingNonce += 1;
         }
 
         if (command == Commands.DEPOSIT) {
-            (address gauge, bytes memory payload) = abi.decode(messageWithoutCommand, (address, bytes));
+            (address gauge, bytes memory payload) = _message.gaugeAndPayload();
             address fvr = ILeafVoter(voter).gaugeToFees({_gauge: gauge});
             IReward(fvr)._deposit({_payload: payload});
             address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: gauge});
             IReward(ivr)._deposit({_payload: payload});
         } else if (command == Commands.WITHDRAW) {
-            (address gauge, bytes memory payload) = abi.decode(messageWithoutCommand, (address, bytes));
+            (address gauge, bytes memory payload) = _message.gaugeAndPayload();
             address fvr = ILeafVoter(voter).gaugeToFees({_gauge: gauge});
             IReward(fvr)._withdraw({_payload: payload});
             address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: gauge});
             IReward(ivr)._withdraw({_payload: payload});
         } else if (command == Commands.GET_INCENTIVES) {
-            (address gauge, bytes memory payload) = abi.decode(messageWithoutCommand, (address, bytes));
-            address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: gauge});
-            IReward(ivr).getReward({_payload: payload});
+            address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: _message.toAddress()});
+
+            address owner = _message.owner();
+            uint256 tokenId = _message.tokenId();
+            address[] memory tokens = _message.tokens();
+            IReward(ivr).getReward({_recipient: owner, _tokenId: tokenId, _tokens: tokens});
         } else if (command == Commands.GET_FEES) {
-            (address gauge, bytes memory payload) = abi.decode(messageWithoutCommand, (address, bytes));
-            address fvr = ILeafVoter(voter).gaugeToFees({_gauge: gauge});
-            IReward(fvr).getReward({_payload: payload});
+            address fvr = ILeafVoter(voter).gaugeToFees({_gauge: _message.toAddress()});
+
+            address owner = _message.owner();
+            uint256 tokenId = _message.tokenId();
+            address[] memory tokens = _message.tokens();
+            IReward(fvr).getReward({_recipient: owner, _tokenId: tokenId, _tokens: tokens});
         } else if (command == Commands.CREATE_GAUGE) {
-            (address poolFactory, bytes memory payload) = abi.decode(messageWithoutCommand, (address, bytes));
-            (address votingRewardsFactory, address gaugeFactory, address token0, address token1, uint24 _poolParam) =
-                abi.decode(payload, (address, address, address, address, uint24));
+            (
+                address poolFactory,
+                address votingRewardsFactory,
+                address gaugeFactory,
+                address token0,
+                address token1,
+                uint24 _poolParam
+            ) = _message.createGaugeParams();
 
             address pool = IPoolFactory(poolFactory).getPool({tokenA: token0, tokenB: token1, fee: _poolParam});
 
@@ -105,20 +116,22 @@ contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecuri
                 _gaugeFactory: gaugeFactory
             });
         } else if (command == Commands.NOTIFY) {
-            (address gauge, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
+            address gauge = _message.toAddress();
+            uint256 amount = _message.amount();
             IXERC20(xerc20).mint({_user: address(this), _amount: amount});
             IERC20(xerc20).safeIncreaseAllowance({spender: gauge, value: amount});
             ILeafGauge(gauge).notifyRewardAmount({amount: amount});
         } else if (command == Commands.NOTIFY_WITHOUT_CLAIM) {
-            (address gauge, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
+            address gauge = _message.toAddress();
+            uint256 amount = _message.amount();
             IXERC20(xerc20).mint({_user: address(this), _amount: amount});
             IERC20(xerc20).safeIncreaseAllowance({spender: gauge, value: amount});
             ILeafGauge(gauge).notifyRewardWithoutClaim({amount: amount});
         } else if (command == Commands.KILL_GAUGE) {
-            address gauge = abi.decode(messageWithoutCommand, (address));
+            address gauge = _message.toAddress();
             ILeafVoter(voter).killGauge({_gauge: gauge});
         } else if (command == Commands.REVIVE_GAUGE) {
-            address gauge = abi.decode(messageWithoutCommand, (address));
+            address gauge = _message.toAddress();
             ILeafVoter(voter).reviveGauge({_gauge: gauge});
         } else {
             revert InvalidCommand();

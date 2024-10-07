@@ -17,6 +17,7 @@ import {GasLimits} from "../../../libraries/GasLimits.sol";
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
 contract RootHLMessageModule is IRootHLMessageModule {
     using GasLimits for uint256;
+    using Commands for bytes;
 
     /// @inheritdoc IRootHLMessageModule
     address public immutable bridge;
@@ -43,38 +44,55 @@ contract RootHLMessageModule is IRootHLMessageModule {
     }
 
     /// @inheritdoc IMessageSender
-    function sendMessage(uint256 _chainid, bytes memory _message) external payable override {
+    function sendMessage(uint256 _chainid, bytes calldata _message) external payable override {
         if (msg.sender != bridge) revert NotBridge();
         uint32 domain = uint32(_chainid);
 
-        (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
-        if (command <= Commands.WITHDRAW) {
-            _message = abi.encode(sendingNonce[_chainid], messageWithoutCommand);
-            _message = abi.encode(command, _message);
-            sendingNonce[_chainid] += 1;
-        } else if (command == Commands.NOTIFY) {
-            (, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
-            IXERC20(xerc20).burn({_user: address(this), _amount: amount});
-        } else if (command == Commands.NOTIFY_WITHOUT_CLAIM) {
-            (, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
-            IXERC20(xerc20).burn({_user: address(this), _amount: amount});
-        }
-
+        uint256 command = _message.command();
         bytes memory _metadata = _generateGasMetadata({_command: command});
-        Mailbox(mailbox).dispatch{value: msg.value}({
-            destinationDomain: domain,
-            recipientAddress: TypeCasts.addressToBytes32(address(this)),
-            messageBody: _message,
-            hookMetadata: _metadata
-        });
 
-        emit SentMessage({
-            _destination: domain,
-            _recipient: TypeCasts.addressToBytes32(address(this)),
-            _value: msg.value,
-            _message: string(_message),
-            _metadata: string(_metadata)
-        });
+        if (command <= Commands.WITHDRAW) {
+            /// @dev If command is deposit/withdraw, copy message into memory to include nonce
+            bytes memory message =
+                abi.encodePacked(uint8(command), _message.messageWithoutCommand(), sendingNonce[_chainid]);
+            sendingNonce[_chainid] += 1;
+
+            Mailbox(mailbox).dispatch{value: msg.value}({
+                destinationDomain: domain,
+                recipientAddress: TypeCasts.addressToBytes32(address(this)),
+                messageBody: message,
+                hookMetadata: _metadata
+            });
+
+            emit SentMessage({
+                _destination: domain,
+                _recipient: TypeCasts.addressToBytes32(address(this)),
+                _value: msg.value,
+                _message: string(message),
+                _metadata: string(_metadata)
+            });
+        } else {
+            /// @dev Remaining commands are parsed as calldata
+            if (command <= Commands.NOTIFY_WITHOUT_CLAIM) {
+                uint256 amount = _message.amount();
+                IXERC20(xerc20).burn({_user: address(this), _amount: amount});
+            }
+
+            Mailbox(mailbox).dispatch{value: msg.value}({
+                destinationDomain: domain,
+                recipientAddress: TypeCasts.addressToBytes32(address(this)),
+                messageBody: _message,
+                hookMetadata: _metadata
+            });
+
+            emit SentMessage({
+                _destination: domain,
+                _recipient: TypeCasts.addressToBytes32(address(this)),
+                _value: msg.value,
+                _message: string(_message),
+                _metadata: string(_metadata)
+            });
+        }
     }
 
     function _generateGasMetadata(uint256 _command) internal view returns (bytes memory) {

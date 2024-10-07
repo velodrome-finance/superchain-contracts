@@ -4,6 +4,8 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../../LeafHLMessageModule.t.sol";
 
 contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
+    using stdStorage for StdStorage;
+
     uint32 public origin;
     bytes32 public sender;
     TestERC20 public tokenA;
@@ -61,25 +63,30 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
     }
 
     function testGas_Deposit() public {
+        stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
+
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(0, abi.encode(address(leafGauge), payload)));
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint256(1000));
 
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
         snapLastCall("LeafHLMessageModule_handle_deposit");
     }
 
     function testGas_Withdraw() public {
+        stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
+
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.WITHDRAW, abi.encode(0, abi.encode(address(leafGauge), payload)));
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.WITHDRAW), address(leafGauge), amount, tokenId, uint256(1000));
 
         vm.stopPrank();
+        bytes memory depositPayload = abi.encodePacked(amount, tokenId);
         vm.startPrank(address(leafMessageModule));
-        leafFVR._deposit({_payload: payload});
-        leafIVR._deposit({_payload: payload});
+        leafFVR._deposit({_payload: depositPayload});
+        leafIVR._deposit({_payload: depositPayload});
         vm.stopPrank();
 
         vm.startPrank(address(leafMailbox));
@@ -89,7 +96,7 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
 
     function testGas_GetIncentives() public {
         uint256 tokenId = 1;
-        bytes memory depositPayload = abi.encode(TOKEN_1, tokenId);
+        bytes memory depositPayload = abi.encodePacked(TOKEN_1, tokenId);
         vm.stopPrank();
         vm.startPrank(address(leafMessageModule));
         leafIVR._deposit({_payload: depositPayload});
@@ -103,8 +110,9 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
         tokens[2] = address(weth);
         tokens[3] = address(tokenA);
         tokens[4] = address(tokenB);
-        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
-        bytes memory message = abi.encode(Commands.GET_INCENTIVES, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.GET_INCENTIVES), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens
+        );
 
         vm.startPrank(address(leafMailbox));
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
@@ -113,7 +121,7 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
 
     function testGas_GetFees() public {
         uint256 tokenId = 1;
-        bytes memory depositPayload = abi.encode(TOKEN_1, tokenId);
+        bytes memory depositPayload = abi.encodePacked(TOKEN_1, tokenId);
         vm.stopPrank();
         vm.startPrank(address(leafMessageModule));
         leafFVR._deposit({_payload: depositPayload});
@@ -124,8 +132,9 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
         address[] memory tokens = new address[](2);
         tokens[0] = address(token0);
         tokens[1] = address(token1);
-        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
-        bytes memory message = abi.encode(Commands.GET_FEES, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.GET_FEES), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens
+        );
 
         vm.startPrank(address(leafMailbox));
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
@@ -142,18 +151,22 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
         assertFalse(leafPoolFactory.isPool(pool));
 
         uint24 _poolParam = 1;
-        bytes memory payload = abi.encode(
-            address(leafVotingRewardsFactory), address(leafGaugeFactory), address(token0), address(token1), _poolParam
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.CREATE_GAUGE),
+            address(leafPoolFactory),
+            address(leafVotingRewardsFactory),
+            address(leafGaugeFactory),
+            address(token0),
+            address(token1),
+            _poolParam
         );
-        bytes memory message = abi.encode(Commands.CREATE_GAUGE, abi.encode(address(leafPoolFactory), payload));
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
         snapLastCall("LeafHLMessageModule_handle_createGauge");
     }
 
     function testGas_NotifyRewardAmount() public {
         uint256 amount = TOKEN_1 * 1000;
-        bytes memory payload = abi.encode(address(leafGauge), amount);
-        bytes memory message = abi.encode(Commands.NOTIFY, payload);
+        bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY), address(leafGauge), amount);
 
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
         snapLastCall("LeafHLMessageModule_handle_notifyRewardAmount");
@@ -161,16 +174,14 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
 
     function testGas_NotifyRewardWithoutClaim() public {
         uint256 amount = TOKEN_1 * 1000;
-        bytes memory payload = abi.encode(address(leafGauge), amount);
-        bytes memory message = abi.encode(Commands.NOTIFY_WITHOUT_CLAIM, payload);
+        bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY_WITHOUT_CLAIM), address(leafGauge), amount);
 
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
         snapLastCall("LeafHLMessageModule_handle_notifyRewardWithoutClaim");
     }
 
     function testGas_KillGauge() public {
-        bytes memory payload = abi.encode(address(leafGauge));
-        bytes memory message = abi.encode(Commands.KILL_GAUGE, payload);
+        bytes memory message = abi.encodePacked(uint8(Commands.KILL_GAUGE), address(leafGauge));
 
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
         snapLastCall("LeafHLMessageModule_handle_killGauge");
@@ -181,8 +192,7 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
         vm.startPrank(address(leafMessageModule));
         leafVoter.killGauge(address(leafGauge));
 
-        bytes memory payload = abi.encode(address(leafGauge));
-        bytes memory message = abi.encode(Commands.REVIVE_GAUGE, payload);
+        bytes memory message = abi.encodePacked(uint8(Commands.REVIVE_GAUGE), address(leafGauge));
 
         vm.startPrank(address(leafMailbox));
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});

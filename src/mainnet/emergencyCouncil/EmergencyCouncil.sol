@@ -38,8 +38,7 @@ contract EmergencyCouncil is Ownable, IEmergencyCouncil {
 
         uint256 _chainid = IRootGauge(_gauge).chainid();
 
-        bytes memory payload = abi.encode(_gauge);
-        bytes memory message = abi.encode(Commands.KILL_GAUGE, payload);
+        bytes memory message = abi.encodePacked(uint8(Commands.KILL_GAUGE), _gauge);
         IRootMessageBridge(bridge).sendMessage({_chainid: uint32(_chainid), _message: message});
     }
 
@@ -54,8 +53,7 @@ contract EmergencyCouncil is Ownable, IEmergencyCouncil {
 
         uint256 _chainid = IRootGauge(_gauge).chainid();
 
-        bytes memory payload = abi.encode(_gauge);
-        bytes memory message = abi.encode(Commands.REVIVE_GAUGE, payload);
+        bytes memory message = abi.encodePacked(uint8(Commands.REVIVE_GAUGE), _gauge);
         IRootMessageBridge(bridge).sendMessage({_chainid: uint32(_chainid), _message: message});
     }
 

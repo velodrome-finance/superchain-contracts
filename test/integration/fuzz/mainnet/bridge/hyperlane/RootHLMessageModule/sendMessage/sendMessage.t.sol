@@ -12,7 +12,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         vm.assume(_caller != address(rootMessageBridge));
         vm.prank(_caller);
         vm.expectRevert(IMessageSender.NotBridge.selector);
-        rootMessageModule.sendMessage({_chainid: leaf, _message: abi.encode(users.charlie, abi.encode(1))});
+        rootMessageModule.sendMessage({_chainid: leaf, _message: abi.encodePacked(users.charlie, uint256(1))});
     }
 
     function testFuzz_WhenTheCallerIsBridge(uint256 amount) external {
@@ -28,10 +28,9 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         vm.selectFork({forkId: rootId});
         uint256 tokenId = 1;
         uint256 ethAmount = TOKEN_1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
         bytes memory expectedMessage =
-            abi.encode(Commands.DEPOSIT, abi.encode(1_000, abi.encode(address(leafGauge), payload)));
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint256(1_000));
 
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
 

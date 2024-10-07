@@ -39,8 +39,8 @@ contract RootBribeVotingReward is IRootBribeVotingReward {
         if (!IVotingEscrow(ve).isApprovedOrOwner(msg.sender, _tokenId) && msg.sender != voter) revert NotAuthorized();
 
         address _owner = IVotingEscrow(ve).ownerOf(_tokenId);
-        bytes memory payload = abi.encode(_owner, _tokenId, _tokens);
-        bytes memory message = abi.encode(Commands.GET_INCENTIVES, abi.encode(gauge, payload));
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.GET_INCENTIVES), gauge, _owner, _tokenId, uint8(_tokens.length), _tokens);
 
         IRootMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
     }

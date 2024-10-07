@@ -20,8 +20,9 @@ import {Commands} from "../../libraries/Commands.sol";
 /// @dev The module can then use any mechanism available to it to send the tokens cross chain
 contract RootMessageBridge is IRootMessageBridge, CrossChainRegistry {
     using EnumerableSet for EnumerableSet.UintSet;
-    using SafeERC20 for IWETH;
     using SafeERC20 for IERC20;
+    using SafeERC20 for IWETH;
+    using Commands for bytes;
 
     /// @inheritdoc IRootMessageBridge
     address public immutable xerc20;
@@ -48,30 +49,26 @@ contract RootMessageBridge is IRootMessageBridge, CrossChainRegistry {
         if (!_chainids.contains({value: _chainid})) revert ChainNotRegistered();
         address module = chains[_chainid];
 
-        (uint256 command, bytes memory messageWithoutCommand) = abi.decode(_message, (uint256, bytes));
+        uint256 command = _message.command();
         if (command == Commands.DEPOSIT) {
-            (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
+            address gauge = _message.toAddress();
             if (msg.sender != IVoter(voter).gaugeToFees(gauge)) revert NotAuthorized(Commands.DEPOSIT);
         } else if (command == Commands.WITHDRAW) {
-            (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
+            address gauge = _message.toAddress();
             if (msg.sender != IVoter(voter).gaugeToFees(gauge)) revert NotAuthorized(Commands.WITHDRAW);
         } else if (command == Commands.CREATE_GAUGE) {
-            (address factory,) = abi.decode(messageWithoutCommand, (address, bytes));
+            address factory = _message.toAddress();
             (, address gaugeFactory) = IFactoryRegistry(factoryRegistry).factoriesToPoolFactory(factory);
             if (msg.sender != gaugeFactory) revert NotAuthorized(Commands.CREATE_GAUGE);
         } else if (command == Commands.GET_INCENTIVES) {
-            (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
+            address gauge = _message.toAddress();
             if (msg.sender != IVoter(voter).gaugeToBribe(gauge)) revert NotAuthorized(Commands.GET_INCENTIVES);
         } else if (command == Commands.GET_FEES) {
-            (address gauge,) = abi.decode(messageWithoutCommand, (address, bytes));
+            address gauge = _message.toAddress();
             if (msg.sender != IVoter(voter).gaugeToFees(gauge)) revert NotAuthorized(Commands.GET_FEES);
-        } else if (command == Commands.NOTIFY) {
+        } else if (command == Commands.NOTIFY || command == Commands.NOTIFY_WITHOUT_CLAIM) {
             if (!IVoter(voter).isAlive(msg.sender)) revert NotValidGauge();
-            (, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
-            IERC20(xerc20).safeTransferFrom({from: msg.sender, to: module, value: amount});
-        } else if (command == Commands.NOTIFY_WITHOUT_CLAIM) {
-            if (!IVoter(voter).isAlive(msg.sender)) revert NotValidGauge();
-            (, uint256 amount) = abi.decode(messageWithoutCommand, (address, uint256));
+            uint256 amount = _message.amount();
             IERC20(xerc20).safeTransferFrom({from: msg.sender, to: module, value: amount});
         } else if (command == Commands.KILL_GAUGE) {
             if (msg.sender != IVoter(voter).emergencyCouncil()) revert NotAuthorized(Commands.KILL_GAUGE);

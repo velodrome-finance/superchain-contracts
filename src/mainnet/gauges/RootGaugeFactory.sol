@@ -128,8 +128,9 @@ contract RootGaugeFactory is IRootGaugeFactory {
 
         /// @dev Used to create pool using alternate createPool function
         uint24 _poolParam = _stable ? 1 : 0;
-        bytes memory payload = abi.encode(votingRewardsFactory, address(this), _token0, _token1, _poolParam);
-        bytes memory message = abi.encode(Commands.CREATE_GAUGE, abi.encode(poolFactory, payload));
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.CREATE_GAUGE), poolFactory, votingRewardsFactory, address(this), _token0, _token1, _poolParam
+        );
         IRootMessageBridge(messageBridge).sendMessage({_chainid: _chainid, _message: message});
     }
 

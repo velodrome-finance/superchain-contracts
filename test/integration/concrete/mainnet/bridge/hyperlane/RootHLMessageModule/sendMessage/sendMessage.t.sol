@@ -11,7 +11,10 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         // It reverts with NotBridge
         vm.prank(users.charlie);
         vm.expectRevert(IMessageSender.NotBridge.selector);
-        rootMessageModule.sendMessage({_chainid: leaf, _message: abi.encode(users.charlie, abi.encode(1))});
+        rootMessageModule.sendMessage({
+            _chainid: leaf,
+            _message: abi.encodePacked(uint8(Commands.DEPOSIT), users.charlie, uint256(1))
+        });
     }
 
     modifier whenTheCallerIsBridge() {
@@ -34,10 +37,9 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         uint256 ethAmount = TOKEN_1;
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
         bytes memory expectedMessage =
-            abi.encode(Commands.DEPOSIT, abi.encode(1_000, abi.encode(address(leafGauge), payload)));
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint256(1_000));
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
 
         vm.expectEmit(address(rootMessageModule));
@@ -86,10 +88,15 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         vm.selectFork({forkId: rootId});
 
         uint256 ethAmount = TOKEN_1;
-        bytes memory payload = abi.encode(
-            address(rootVotingRewardsFactory), address(rootGaugeFactory), address(token0), address(token1), _poolParam
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.CREATE_GAUGE),
+            address(rootPoolFactory),
+            address(rootVotingRewardsFactory),
+            address(rootGaugeFactory),
+            address(token0),
+            address(token1),
+            _poolParam
         );
-        bytes memory message = abi.encode(Commands.CREATE_GAUGE, abi.encode(address(rootPoolFactory), payload));
 
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
 

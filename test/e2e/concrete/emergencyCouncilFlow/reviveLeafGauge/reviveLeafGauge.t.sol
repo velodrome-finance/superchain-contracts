@@ -32,8 +32,7 @@ contract ReviveLeafGaugeE2ETest is EmergencyCouncilE2ETest {
         // It should add gauge tokens to set of whitelisted tokens
         // It should emit a {GaugeRevived} event
 
-        bytes memory payload = abi.encode(leafGauge);
-        bytes memory message = abi.encode(Commands.REVIVE_GAUGE, payload);
+        bytes memory message = abi.encodePacked(uint8(Commands.REVIVE_GAUGE), address(leafGauge));
 
         stdstore.target(address(mockVoter)).sig("isAlive(address)").with_key(address(leafGauge)).checked_write(false);
         vm.expectEmit(address(mockVoter));

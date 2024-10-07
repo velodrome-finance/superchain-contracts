@@ -22,7 +22,11 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
 
         vm.prank(_caller);
         vm.expectRevert(IHLHandler.NotMailbox.selector);
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: abi.encode(users.charlie, abi.encode(1))});
+        leafMessageModule.handle({
+            _origin: origin,
+            _sender: sender,
+            _message: abi.encodePacked(users.charlie, uint256(1))
+        });
     }
 
     modifier whenTheCallerIsMailbox() {
@@ -34,7 +38,11 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         // It should revert with NotRoot
         vm.assume(_origin != root);
         vm.expectRevert(IHLHandler.NotRoot.selector);
-        leafMessageModule.handle({_origin: _origin, _sender: sender, _message: abi.encode(users.charlie, abi.encode(1))});
+        leafMessageModule.handle({
+            _origin: _origin,
+            _sender: sender,
+            _message: abi.encodePacked(users.charlie, uint256(1))
+        });
     }
 
     modifier whenTheOriginIsRoot() {
@@ -47,7 +55,11 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         vm.assume(_sender != address(leafMessageModule));
         sender = TypeCasts.addressToBytes32(_sender);
         vm.expectRevert(ILeafHLMessageModule.NotModule.selector);
-        leafMessageModule.handle({_origin: origin, _sender: sender, _message: abi.encode(users.charlie, abi.encode(1))});
+        leafMessageModule.handle({
+            _origin: origin,
+            _sender: sender,
+            _message: abi.encodePacked(users.charlie, uint256(1))
+        });
     }
 
     modifier whenTheSenderIsModule() {
@@ -65,8 +77,8 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         vm.assume(_nonce != leafMessageModule.receivingNonce());
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(999, abi.encode(address(leafGauge), payload)));
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint256(999));
 
         vm.expectRevert(ILeafHLMessageModule.InvalidNonce.selector);
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
@@ -90,8 +102,8 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
 
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(1_000, abi.encode(address(leafGauge), payload)));
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint256(1_000));
 
         vm.expectEmit(address(leafMessageModule));
         emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
@@ -118,8 +130,8 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
 
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(Commands.DEPOSIT, abi.encode(1_000, abi.encode(address(leafGauge), payload)));
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint256(1_000));
 
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
         assertEq(leafFVR.totalSupply(), amount);
@@ -127,7 +139,7 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         assertEq(leafIVR.totalSupply(), amount);
         assertEq(leafIVR.balanceOf(tokenId), amount);
 
-        message = abi.encode(Commands.WITHDRAW, abi.encode(1_001, abi.encode(address(leafGauge), payload)));
+        message = abi.encodePacked(uint8(Commands.WITHDRAW), address(leafGauge), amount, tokenId, uint256(1_001));
 
         vm.expectEmit(address(leafMessageModule));
         emit IHLHandler.ReceivedMessage({_origin: origin, _sender: sender, _value: 0, _message: string(message)});
@@ -156,8 +168,7 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
 
         amount = bound(amount, timeUntilNext, MAX_BUFFER_CAP / 2);
-        bytes memory payload = abi.encode(address(leafGauge), amount);
-        bytes memory message = abi.encode(Commands.NOTIFY, payload);
+        bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY), address(leafGauge), amount);
 
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), 0);
@@ -192,8 +203,7 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
         uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
 
         amount = bound(amount, timeUntilNext, MAX_BUFFER_CAP / 2);
-        bytes memory payload = abi.encode(address(leafGauge), amount);
-        bytes memory message = abi.encode(Commands.NOTIFY_WITHOUT_CLAIM, payload);
+        bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY_WITHOUT_CLAIM), address(leafGauge), amount);
 
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), 0);
@@ -220,8 +230,7 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
     {
         // It reverts with {InvalidCommand}
         uint256 tokenId = 1;
-        bytes memory payload = abi.encode(amount, tokenId);
-        bytes memory message = abi.encode(type(uint256).max, abi.encode(address(leafGauge), payload));
+        bytes memory message = abi.encodePacked(type(uint8).max, address(leafGauge), amount, tokenId);
 
         vm.expectRevert(ILeafHLMessageModule.InvalidCommand.selector);
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});

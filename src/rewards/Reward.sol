@@ -213,7 +213,7 @@ abstract contract Reward is IReward, ReentrancyGuard {
     }
 
     /// @inheritdoc IReward
-    function getReward(bytes calldata _payload) external virtual nonReentrant {}
+    function getReward(address _recipient, uint256 _tokenId, address[] memory _tokens) external virtual nonReentrant {}
 
     /// @dev used with all getReward implementations
     function _getReward(address _recipient, uint256 _tokenId, address[] memory _tokens) internal {

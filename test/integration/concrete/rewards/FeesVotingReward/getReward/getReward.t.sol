@@ -24,11 +24,10 @@ contract GetRewardIntegrationConcreteTest is FeesVotingRewardTest {
     function test_WhenCallerIsNotTheModuleSetOnTheBridge() external {
         // It reverts with {NotAuthorized}
         address[] memory tokens = new address[](0);
-        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
 
         vm.prank(users.charlie);
         vm.expectRevert(IReward.NotAuthorized.selector);
-        leafFVR.getReward({_payload: payload});
+        leafFVR.getReward({_recipient: users.alice, _tokenId: tokenId, _tokens: tokens});
     }
 
     modifier whenCallerIsTheModuleSetOnTheBridge() {
@@ -42,13 +41,12 @@ contract GetRewardIntegrationConcreteTest is FeesVotingRewardTest {
         address[] memory tokens = new address[](2);
         tokens[0] = address(token0);
         tokens[1] = address(token1);
-        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
 
         for (uint256 i = 0; i < tokens.length; i++) {
             vm.expectEmit(address(leafFVR));
             emit IReward.ClaimRewards({_sender: users.alice, _reward: tokens[i], _amount: 0});
         }
-        leafFVR.getReward({_payload: payload});
+        leafFVR.getReward({_recipient: users.alice, _tokenId: tokenId, _tokens: tokens});
 
         assertEq(leafFVR.lastEarn(address(token0), tokenId), block.timestamp);
         assertEq(leafFVR.lastEarn(address(token1), tokenId), block.timestamp);
@@ -70,13 +68,12 @@ contract GetRewardIntegrationConcreteTest is FeesVotingRewardTest {
         address[] memory tokens = new address[](2);
         tokens[0] = address(token0);
         tokens[1] = address(token1);
-        bytes memory payload = abi.encode(users.alice, tokenId, tokens);
 
         for (uint256 i = 0; i < tokens.length; i++) {
             vm.expectEmit(address(leafFVR));
             emit IReward.ClaimRewards({_sender: users.alice, _reward: tokens[i], _amount: TOKEN_1});
         }
-        leafFVR.getReward({_payload: payload});
+        leafFVR.getReward({_recipient: users.alice, _tokenId: tokenId, _tokens: tokens});
 
         assertEq(leafFVR.lastEarn(address(token0), tokenId), block.timestamp);
         assertEq(leafFVR.lastEarn(address(token1), tokenId), block.timestamp);
