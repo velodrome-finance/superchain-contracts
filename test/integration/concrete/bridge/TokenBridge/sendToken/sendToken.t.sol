@@ -94,7 +94,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootTokenBridge)),
             _value: ethAmount,
-            _message: string(abi.encode(address(leafGauge), amount))
+            _message: string(abi.encodePacked(address(leafGauge), amount))
         });
         rootTokenBridge.sendToken{value: ethAmount}({_amount: amount, _chainid: leaf});
 
@@ -107,9 +107,26 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
             _origin: root,
             _sender: TypeCasts.addressToBytes32(address(leafTokenBridge)),
             _value: 0,
-            _message: string(abi.encode(address(leafGauge), amount))
+            _message: string(abi.encodePacked(address(leafGauge), amount))
         });
         leafMailbox.processNextInboundMessage();
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
+    }
+
+    function testGas_WhenTheAmountIsLessThanOrEqualToTheBalanceOfCaller()
+        external
+        whenTheRequestedAmountIsNotZero
+        whenTheRequestedChainIsARegisteredChain
+        whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
+    {
+        uint256 ethAmount = TOKEN_1;
+        vm.deal({account: address(rootGauge), newBalance: ethAmount});
+        deal({token: address(rootXVelo), to: address(rootGauge), give: amount});
+
+        vm.startPrank(address(rootGauge));
+        rootXVelo.approve({spender: address(rootTokenBridge), value: amount});
+
+        rootTokenBridge.sendToken{value: ethAmount}({_amount: amount, _chainid: leaf});
+        snapLastCall("TokenBridge_sendToken");
     }
 }

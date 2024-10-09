@@ -22,7 +22,7 @@ contract HandleIntegrationFuzzTest is TokenBridgeTest {
         leafTokenBridge.handle({
             _origin: root,
             _sender: TypeCasts.addressToBytes32(_caller),
-            _message: abi.encode(_caller, 1)
+            _message: abi.encodePacked(_caller, uint256(1))
         });
     }
 
@@ -36,7 +36,7 @@ contract HandleIntegrationFuzzTest is TokenBridgeTest {
         vm.assume(_sender != address(leafTokenBridge));
         sender = TypeCasts.addressToBytes32(_sender);
         vm.expectRevert(ITokenBridge.NotBridge.selector);
-        leafTokenBridge.handle({_origin: root, _sender: sender, _message: abi.encode(users.charlie, abi.encode(1))});
+        leafTokenBridge.handle({_origin: root, _sender: sender, _message: abi.encodePacked(users.charlie, uint256(1))});
     }
 
     modifier whenTheSenderIsBridge() {
@@ -65,7 +65,7 @@ contract HandleIntegrationFuzzTest is TokenBridgeTest {
 
         vm.deal(address(leafMailbox), TOKEN_1);
 
-        bytes memory _message = abi.encode(address(leafGauge), _amount);
+        bytes memory _message = abi.encodePacked(address(leafGauge), _amount);
 
         vm.startPrank(address(leafMailbox));
         vm.expectRevert("RateLimited: rate limit hit");
@@ -93,7 +93,7 @@ contract HandleIntegrationFuzzTest is TokenBridgeTest {
 
         vm.deal(address(leafMailbox), TOKEN_1 / 2);
 
-        bytes memory _message = abi.encode(address(leafGauge), _amount);
+        bytes memory _message = abi.encodePacked(address(leafGauge), _amount);
 
         vm.prank(address(leafMailbox));
         vm.expectEmit(address(leafTokenBridge));

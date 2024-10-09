@@ -12,12 +12,14 @@ import {ITokenBridge} from "../interfaces/bridge/ITokenBridge.sol";
 import {IXERC20} from "../interfaces/xerc20/IXERC20.sol";
 import {ISpecifiesInterchainSecurityModule} from "../interfaces/external/ISpecifiesInterchainSecurityModule.sol";
 
+import {Commands} from "../libraries/Commands.sol";
 import {ChainRegistry} from "./ChainRegistry.sol";
 
 /// @title Token Bridge Contract
 /// @notice General Purpose Token Bridge
 contract TokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterchainSecurityModule, ChainRegistry {
     using EnumerableSet for EnumerableSet.UintSet;
+    using Commands for bytes;
 
     /// @inheritdoc ITokenBridge
     address public immutable xerc20;
@@ -51,7 +53,7 @@ contract TokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterchainSecurityMo
         IXERC20(xerc20).burn({_user: msg.sender, _amount: _amount});
 
         uint32 domain = uint32(_chainid);
-        bytes memory message = abi.encode(msg.sender, _amount);
+        bytes memory message = abi.encodePacked(msg.sender, _amount);
         Mailbox(mailbox).dispatch{value: msg.value}({
             _destinationDomain: domain,
             _recipientAddress: TypeCasts.addressToBytes32(address(this)),
@@ -71,7 +73,7 @@ contract TokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterchainSecurityMo
         if (msg.sender != mailbox) revert NotMailbox();
         if (_sender != TypeCasts.addressToBytes32(address(this))) revert NotBridge();
 
-        (address recipient, uint256 amount) = abi.decode(_message, (address, uint256));
+        (address recipient, uint256 amount) = _message.recipientAndAmount();
 
         IXERC20(xerc20).mint({_user: recipient, _amount: amount});
 

@@ -17,7 +17,7 @@ contract HandleIntegrationConcreteTest is TokenBridgeTest {
         // It should revert with NotMailbox
         vm.prank(users.charlie);
         vm.expectRevert(IHLHandler.NotMailbox.selector);
-        leafTokenBridge.handle({_origin: root, _sender: sender, _message: abi.encode(users.charlie, 1)});
+        leafTokenBridge.handle({_origin: root, _sender: sender, _message: abi.encodePacked(users.charlie, uint256(1))});
     }
 
     modifier whenTheCallerIsMailbox() {
@@ -28,7 +28,7 @@ contract HandleIntegrationConcreteTest is TokenBridgeTest {
     function test_WhenTheSenderIsNotBridge() external whenTheCallerIsMailbox {
         // It should revert with NotBridge
         vm.expectRevert(ITokenBridge.NotBridge.selector);
-        leafTokenBridge.handle({_origin: root, _sender: sender, _message: abi.encode(users.charlie, abi.encode(1))});
+        leafTokenBridge.handle({_origin: root, _sender: sender, _message: abi.encodePacked(users.charlie, uint256(1))});
     }
 
     modifier whenTheSenderIsBridge() {
@@ -46,7 +46,7 @@ contract HandleIntegrationConcreteTest is TokenBridgeTest {
 
         vm.deal(address(leafMailbox), TOKEN_1);
 
-        bytes memory _message = abi.encode(address(leafGauge), amount);
+        bytes memory _message = abi.encodePacked(address(leafGauge), amount);
 
         vm.expectRevert("RateLimited: rate limit hit");
         leafTokenBridge.handle{value: TOKEN_1 / 2}({_origin: root, _sender: sender, _message: _message});
@@ -69,7 +69,7 @@ contract HandleIntegrationConcreteTest is TokenBridgeTest {
 
         vm.deal(address(leafMailbox), TOKEN_1);
 
-        bytes memory _message = abi.encode(address(leafGauge), amount);
+        bytes memory _message = abi.encodePacked(address(leafGauge), amount);
 
         vm.prank(address(leafMailbox));
         vm.expectEmit(address(leafTokenBridge));
@@ -82,5 +82,27 @@ contract HandleIntegrationConcreteTest is TokenBridgeTest {
         leafTokenBridge.handle{value: TOKEN_1 / 2}({_origin: root, _sender: sender, _message: _message});
 
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
+    }
+
+    function testGas_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentMintingLimit() external whenTheSenderIsBridge {
+        uint256 amount = TOKEN_1 * 1000;
+        uint256 bufferCap = amount * 2;
+
+        vm.prank(users.owner);
+        leafXVelo.addBridge(
+            MintLimits.RateLimitMidPointInfo({
+                bridge: address(leafTokenBridge),
+                bufferCap: bufferCap.toUint112(),
+                rateLimitPerSecond: (bufferCap / DAY).toUint128()
+            })
+        );
+
+        vm.deal(address(leafMailbox), TOKEN_1);
+
+        bytes memory _message = abi.encodePacked(address(leafGauge), amount);
+
+        vm.prank(address(leafMailbox));
+        leafTokenBridge.handle{value: TOKEN_1 / 2}({_origin: root, _sender: sender, _message: _message});
+        snapLastCall("TokenBridge_handle");
     }
 }

@@ -30,6 +30,8 @@ library Commands {
     // Offset for Deposit/Withdraw
     uint256 private constant TOKEN_ID_OFFSET = ADDRESS_OFFSET + 20 + 32;
     uint256 private constant NONCE_OFFSET = ADDRESS_OFFSET + 20 + 32 + 32;
+    // Offset for Send Token amount
+    uint256 private constant AMOUNT_OFFSET = COMMAND_OFFSET + 20;
 
     /// @notice Returns the command encoded in the message
     /// @dev Assumes message is encoded as (command, ...)
@@ -66,6 +68,16 @@ library Commands {
         return (
             uint256(bytes32(_message[SECOND_OFFSET:SECOND_OFFSET + 32])),
             uint256(bytes32(_message[TOKEN_ID_OFFSET:TOKEN_ID_OFFSET + 32]))
+        );
+    }
+
+    /// @notice Returns the recipient and amount encoded in the message
+    /// @dev Assumes no command is encoded and message is encoded as (address, amount)
+    /// @param _message The message to be decoded
+    function recipientAndAmount(bytes calldata _message) internal pure returns (address, uint256) {
+        return (
+            address(bytes20(_message[COMMAND_OFFSET:COMMAND_OFFSET + 20])),
+            uint256(bytes32(_message[AMOUNT_OFFSET:AMOUNT_OFFSET + 32]))
         );
     }
 
