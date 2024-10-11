@@ -8,11 +8,11 @@ abstract contract LeafVoterTest is BaseForkFixture {
         super.setUp();
 
         vm.selectFork({forkId: leafId});
-        address bribePool = leafPoolFactory.getPool({tokenA: address(token0), tokenB: address(weth), stable: false});
-        address bribeGauge = leafVoter.gauges(bribePool);
-        // Disable Bribe Gauge to keep the same `whitelistTokenCount` in both tokens
+        address incentivePool = leafPoolFactory.getPool({tokenA: address(token0), tokenB: address(weth), stable: false});
+        address incentiveGauge = leafVoter.gauges(incentivePool);
+        // Disable Incentive Gauge to keep the same `whitelistTokenCount` in both tokens
         vm.prank(address(leafMessageModule));
-        leafVoter.killGauge(bribeGauge);
+        leafVoter.killGauge(incentiveGauge);
     }
 
     function test_InitialState() public view {

@@ -21,7 +21,7 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
         // Notify rewards contracts
         deal(address(token0), address(leafGauge), TOKEN_1 * 2);
         deal(address(token1), address(leafGauge), TOKEN_1 * 2);
-        // Using WETH, tokenA & tokenB as Bribe tokens
+        // Using WETH, tokenA & tokenB as Incentive tokens
         deal(address(weth), address(leafGauge), TOKEN_1);
         deal(address(tokenA), address(leafGauge), TOKEN_1);
         deal(address(tokenB), address(leafGauge), TOKEN_1);

@@ -8,6 +8,6 @@ NotifyRewardAmountIntegrationConcreteTest
         ├── When amount is zero 
         │   └── It should revert with ZeroAmount 
         └── When amount is not zero
-            ├── It should transfer amount from sender to bribe contract 
+            ├── It should transfer amount from sender to incentive contract 
             ├── It should update tokenRewardsPerEpoch mapping
             └── It should emit {NotifyReward}

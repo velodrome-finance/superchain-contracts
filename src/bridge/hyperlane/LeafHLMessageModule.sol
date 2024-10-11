@@ -73,17 +73,17 @@ contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecuri
             (uint256 amount, uint256 tokenId) = _message.amountAndTokenId();
             address fvr = ILeafVoter(voter).gaugeToFees({_gauge: gauge});
             IReward(fvr)._deposit({amount: amount, tokenId: tokenId});
-            address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: gauge});
+            address ivr = ILeafVoter(voter).gaugeToIncentive({_gauge: gauge});
             IReward(ivr)._deposit({amount: amount, tokenId: tokenId});
         } else if (command == Commands.WITHDRAW) {
             address gauge = _message.toAddress();
             (uint256 amount, uint256 tokenId) = _message.amountAndTokenId();
             address fvr = ILeafVoter(voter).gaugeToFees({_gauge: gauge});
             IReward(fvr)._withdraw({amount: amount, tokenId: tokenId});
-            address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: gauge});
+            address ivr = ILeafVoter(voter).gaugeToIncentive({_gauge: gauge});
             IReward(ivr)._withdraw({amount: amount, tokenId: tokenId});
         } else if (command == Commands.GET_INCENTIVES) {
-            address ivr = ILeafVoter(voter).gaugeToBribe({_gauge: _message.toAddress()});
+            address ivr = ILeafVoter(voter).gaugeToIncentive({_gauge: _message.toAddress()});
 
             address owner = _message.owner();
             uint256 tokenId = _message.tokenId();

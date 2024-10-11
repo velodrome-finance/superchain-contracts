@@ -16,7 +16,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         vm.selectFork({forkId: leafId});
         deal(address(token0), address(leafGauge), TOKEN_1 * 2);
         deal(address(token1), address(leafGauge), TOKEN_1 * 2);
-        // Using WETH as Bribe token
+        // Using WETH as Incentive token
         deal(address(weth), address(leafGauge), TOKEN_1);
 
         vm.startPrank(address(leafGauge));
@@ -402,7 +402,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
 
         assertFalse(leafVoter.isAlive(address(leafGauge)));
-        // because of bribePool token0 is still whitelisted
+        // because of incentivePool token0 is still whitelisted
         assertTrue(leafVoter.isWhitelistedToken(address(token0)));
         assertFalse(leafVoter.isWhitelistedToken(address(token1)));
         assertEq(leafVoter.whitelistTokenCount(address(token0)), 1);
@@ -438,7 +438,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         assertTrue(leafVoter.isAlive(address(leafGauge)));
         assertTrue(leafVoter.isWhitelistedToken(address(token0)));
         assertTrue(leafVoter.isWhitelistedToken(address(token1)));
-        // because of bribePool token0 whitelistTokenCount is 2
+        // because of incentivePool token0 whitelistTokenCount is 2
         assertEq(leafVoter.whitelistTokenCount(address(token0)), 2);
         assertEq(leafVoter.whitelistTokenCount(address(token1)), 1);
         assertEq(leafMessageModule.receivingNonce(), 1_000);

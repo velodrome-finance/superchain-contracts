@@ -3,8 +3,8 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {IVotingRewardsFactory} from "../interfaces/rewards/IVotingRewardsFactory.sol";
 
+import {IncentiveVotingReward} from "./IncentiveVotingReward.sol";
 import {FeesVotingReward} from "./FeesVotingReward.sol";
-import {BribeVotingReward} from "./BribeVotingReward.sol";
 
 /// @notice Creates voting rewards contracts for v2 style pools
 contract VotingRewardsFactory is IVotingRewardsFactory {
@@ -21,10 +21,11 @@ contract VotingRewardsFactory is IVotingRewardsFactory {
     /// @inheritdoc IVotingRewardsFactory
     function createRewards(address[] memory _rewards)
         external
-        returns (address feesVotingReward, address bribeVotingReward)
+        returns (address feesVotingReward, address incentiveVotingReward)
     {
         if (msg.sender != voter) revert NotVoter();
         feesVotingReward = address(new FeesVotingReward({_voter: voter, _authorized: bridge, _rewards: _rewards}));
-        bribeVotingReward = address(new BribeVotingReward({_voter: voter, _authorized: bridge, _rewards: _rewards}));
+        incentiveVotingReward =
+            address(new IncentiveVotingReward({_voter: voter, _authorized: bridge, _rewards: _rewards}));
     }
 }

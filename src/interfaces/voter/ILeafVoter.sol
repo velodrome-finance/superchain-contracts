@@ -13,7 +13,7 @@ interface ILeafVoter {
         address indexed votingRewardsFactory,
         address indexed gaugeFactory,
         address pool,
-        address bribeVotingReward,
+        address incentiveVotingReward,
         address feeVotingReward,
         address gauge
     );
@@ -33,8 +33,8 @@ interface ILeafVoter {
     /// @dev Gauge => Fees Voting Reward
     function gaugeToFees(address _gauge) external view returns (address);
 
-    /// @dev Gauge => Bribes Voting Reward
-    function gaugeToBribe(address _gauge) external view returns (address);
+    /// @dev Gauge => Incentives Voting Reward
+    function gaugeToIncentive(address _gauge) external view returns (address);
 
     /// @notice Check if a given address is a gauge
     /// @param _gauge The address to be checked

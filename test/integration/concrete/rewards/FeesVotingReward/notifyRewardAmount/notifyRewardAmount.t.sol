@@ -46,7 +46,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is FeesVotingRewardTest {
 
         deal(token, address(leafGauge), amount);
         uint256 senderBalance = IERC20(token).balanceOf(address(leafGauge));
-        uint256 bribeBalance = IERC20(token).balanceOf(address(leafFVR));
+        uint256 incentiveBalance = IERC20(token).balanceOf(address(leafFVR));
         IERC20(token).approve(address(leafFVR), amount);
 
         // It should emit {NotifyReward}
@@ -56,7 +56,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is FeesVotingRewardTest {
 
         // It should transfer amount from sender to fees contract
         assertEq(IERC20(token).balanceOf(address(leafGauge)), senderBalance - amount);
-        assertEq(IERC20(token).balanceOf(address(leafFVR)), bribeBalance + amount);
+        assertEq(IERC20(token).balanceOf(address(leafFVR)), incentiveBalance + amount);
 
         // It should update tokenRewardsPerEpoch mapping
         assertEq(leafFVR.tokenRewardsPerEpoch(token, epochStart), tokenRewardsPerEpoch + amount);

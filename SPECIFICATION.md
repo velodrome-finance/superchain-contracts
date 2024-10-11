@@ -18,8 +18,8 @@ the factory registry on root.
 
 The Superchain release does not change the flow or mechanics of Velodrome V2.
 
-Every pool on the leaf chain will have a root pool (see `interfaces/mainnet/pools/IRootPool.sol`).
-The leaf chain pool will also have a gauge if the root pool has one (see `interfaces/mainnet/gauges/IRootGauge.sol`).
+Every pool on the leaf chain will have a root pool (see `interfaces/root/pools/IRootPool.sol`).
+The leaf chain pool will also have a gauge if the root pool has one (see `interfaces/root/gauges/IRootGauge.sol`).
 The root pool is a placeholder and it is used by the Voter to maintain a registry of the created pools 
 and gauges.
 
@@ -86,7 +86,7 @@ The following contracts are deployed via CREATE3:
 
 As contracts are deployed via CREATE3, the implementation for the leaf chains must be reviewed before 
 it is enabled. This is because the code at the address could be different. The expectation is that 
-the root chain will run root code (housed in the `mainnet` folder) and the leaf chains will all 
+the root chain will run root code (housed in the `root` folder) and the leaf chains will all 
 operate the same leaf code. If there are differences in leaf chain code, it may be to support features
 not available on other chains (e.g. gas fee sharing).
 
@@ -133,7 +133,7 @@ Note the usage of `Voter` as the canonical source of truth for valid message sen
 sequenceDiagram
   participant User
   participant Voter (Root)
-  participant RootBribeVotingReward
+  participant RootIncentiveVotingReward
   participant RootFeesVotingReward
   participant RootMessageBridge
   participant WETH (Root)
@@ -142,11 +142,11 @@ sequenceDiagram
   participant MessageVendor (Leaf)
   participant LeafMessageModule
   participant LeafVoter
-  participant BribeVotingReward (Leaf)
+  participant IncentiveVotingReward (Leaf)
   participant FeeVotingReward (Leaf)
 
   User->>Voter (Root): vote(tokenId, weight, poolVote[], weights[])
-  Voter (Root) ->>RootBribeVotingReward: _deposit(amount, tokenId)
+  Voter (Root) ->>RootIncentiveVotingReward: _deposit(amount, tokenId)
   Voter (Root)->>RootFeesVotingReward: _deposit(amount, tokenId)
   RootFeesVotingReward->>RootMessageBridge: sendMessage(destination, message)
   RootMessageBridge->>Voter (Root): gaugeToFees(sender)
@@ -155,9 +155,9 @@ sequenceDiagram
   RootMessageBridge->>RootMessageModule: sendMessage{fee}(destination, message)
   RootMessageModule->>MessageVendor (Root): dispatch(destionation, recipient, message)
   MessageVendor (Leaf)->>LeafMessageModule: handle(origin, sender, message)
-  LeafMessageModule->>LeafVoter: gaugeToBribe(gauge)
+  LeafMessageModule->>LeafVoter: gaugeToIncentive(gauge)
   LeafMessageModule->>LeafVoter: gaugeToFees(gauge)
-  LeafMessageModule->>BribeVotingReward (Leaf): _deposit(amount, tokenId)
+  LeafMessageModule->>IncentiveVotingReward (Leaf): _deposit(amount, tokenId)
   LeafMessageModule->>FeeVotingReward (Leaf): _deposit(amount, tokenId)
 ```
 
@@ -322,18 +322,18 @@ via the message bridge.
 leaf gauge via the message bridge.
 
 #### RootVotingRewardsFactory
-- Supports the creation of bribe and fee voting rewards contracts on the root chain. 
+- Supports the creation of incentive and fee voting rewards contracts on the root chain. 
 - Supports the designation of a recipient for rewards on other chains. 
   - Rewards contracts will use this recipient if it is set.
   - A recipient _must_ be set for if one wishes to call `vote` or call `getReward` for a veNFT owned
   by a contract.
 
-#### RootBribeVotingRewards 
+#### RootIncentiveVotingRewards 
 - Supports the claiming of rewards from reward contracts on the leaf chain.
   - Rewards will be sent to the owner of the nft by default, but can be sent to any recipient. 
 
 #### RootFeesVotingRewards
-- Supports the depositing and withdrawing of voting weights to both bribe and fee contracts on the leaf chain.
+- Supports the depositing and withdrawing of voting weights to both incentive and fee contracts on the leaf chain.
 - Supports the claiming of rewards from reward contracts on the leaf chain.
   - Rewards will be sent to the owner of the nft by default, but can be sent to any recipient. 
 
@@ -362,7 +362,7 @@ root chain.
 - Vanilla Velodrome vAMM / sAMM gauge contracts.
 - Lightly modified to support emissions deposited from the root chain.
 
-#### BribeVotingRewards, FeesVotingRewards, VotingRewardsFactory
+#### IncentiveVotingRewards, FeesVotingRewards, VotingRewardsFactory
 - Vanilla Velodrome rewards contracts.
 - Lightly modified to support the recording of vote weights from the root chain.
 - Lightly modified to support the collection of rewards from the root chain.

@@ -20,7 +20,7 @@ contract ReviveGaugeIntegrationFuzzTest is LeafVoterTest {
     }
 
     function testFuzz_WhenAddressGivenIsNotAGauge(address _gauge) external whenCallerIsTheModuleSetOnTheBridge {
-        vm.assume(_gauge != address(leafGauge) && _gauge != address(bribeGauge));
+        vm.assume(_gauge != address(leafGauge) && _gauge != address(incentiveGauge));
         // It should revert with NotAGauge
         vm.expectRevert(ILeafVoter.NotAGauge.selector);
         leafVoter.reviveGauge(_gauge);

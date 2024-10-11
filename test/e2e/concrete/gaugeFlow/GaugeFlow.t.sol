@@ -19,7 +19,7 @@ contract GaugeFlowE2EConcreteTest is BaseE2EForkFixture {
     function setUp() public virtual override {
         super.setUp();
 
-        // setup test contracts from mainnet deployment
+        // setup test contracts from root deployment
         v2Token0 = rootRewardToken;
         v2Token1 = IERC20(address(weth));
         v2Pool = Pool(v2Factory.getPool(address(v2Token0), address(v2Token1), false));
@@ -70,7 +70,7 @@ contract GaugeFlowE2EConcreteTest is BaseE2EForkFixture {
         vm.prank({msgSender: mockVoter.governor(), txOrigin: users.alice});
         rootGauge = RootGauge(mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(rootPool)}));
         rootFVR = RootFeesVotingReward(mockVoter.gaugeToFees(address(rootGauge)));
-        rootIVR = RootBribeVotingReward(mockVoter.gaugeToBribe(address(rootGauge)));
+        rootIVR = RootIncentiveVotingReward(mockVoter.gaugeToBribe(address(rootGauge)));
 
         // set up leaf pool & gauge by processing pending `createGauge` message in mailbox
         vm.selectFork({forkId: leafId});
@@ -78,7 +78,7 @@ contract GaugeFlowE2EConcreteTest is BaseE2EForkFixture {
         leafPool = Pool(leafPoolFactory.getPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
         leafGauge = LeafGauge(leafVoter.gauges(address(leafPool)));
         leafFVR = FeesVotingReward(leafVoter.gaugeToFees(address(leafGauge)));
-        leafIVR = BribeVotingReward(leafVoter.gaugeToBribe(address(leafGauge)));
+        leafIVR = IncentiveVotingReward(leafVoter.gaugeToIncentive(address(leafGauge)));
 
         // Alice Provides Liquidity and Stakes into Leaf Gauge
         _addLiquidityToPool(
@@ -641,7 +641,7 @@ contract GaugeFlowE2EConcreteTest is BaseE2EForkFixture {
         tokens[1] = _tokenB;
         vm.startPrank(owner);
         IRootFeesVotingReward(v2FVR).getReward(_tokenId, tokens);
-        IRootBribeVotingReward(v2IVR).getReward(_tokenId, tokens);
+        IRootIncentiveVotingReward(v2IVR).getReward(_tokenId, tokens);
         vm.stopPrank();
 
         // Fees and Incentives are lagged by 1 week
@@ -726,8 +726,8 @@ contract GaugeFlowE2EConcreteTest is BaseE2EForkFixture {
         deal(_tokenB, address(this), _amountB);
         IERC20(_tokenA).approve(_ivr, _amountA);
         IERC20(_tokenB).approve(_ivr, _amountB);
-        BribeVotingReward(_ivr).notifyRewardAmount(_tokenA, _amountA);
-        BribeVotingReward(_ivr).notifyRewardAmount(_tokenB, _amountB);
+        IncentiveVotingReward(_ivr).notifyRewardAmount(_tokenA, _amountA);
+        IncentiveVotingReward(_ivr).notifyRewardAmount(_tokenB, _amountB);
 
         // Simulate Swaps to accrue Fees
         _simulateMultipleSwaps({

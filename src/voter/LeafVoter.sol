@@ -31,7 +31,7 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
     /// @inheritdoc ILeafVoter
     mapping(address => address) public gaugeToFees;
     /// @inheritdoc ILeafVoter
-    mapping(address => address) public gaugeToBribe;
+    mapping(address => address) public gaugeToIncentive;
     /// @inheritdoc ILeafVoter
     mapping(address => bool) public isGauge;
     /// @inheritdoc ILeafVoter
@@ -81,7 +81,7 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
         address[] memory rewards = new address[](2);
         (rewards[0], rewards[1]) = IPool(_pool).tokens();
 
-        (address _feesVotingReward, address _bribeVotingReward) =
+        (address _feesVotingReward, address _incentiveVotingReward) =
             IVotingRewardsFactory(_votingRewardsFactory).createRewards({_rewards: rewards});
 
         _gauge = ILeafGaugeFactory(_gaugeFactory).createGauge({
@@ -91,7 +91,7 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
         });
 
         gaugeToFees[_gauge] = _feesVotingReward;
-        gaugeToBribe[_gauge] = _bribeVotingReward;
+        gaugeToIncentive[_gauge] = _incentiveVotingReward;
         gauges[_pool] = _gauge;
         poolForGauge[_gauge] = _pool;
         isGauge[_gauge] = true;
@@ -106,7 +106,7 @@ contract LeafVoter is ILeafVoter, ReentrancyGuard {
             votingRewardsFactory: _votingRewardsFactory,
             gaugeFactory: _gaugeFactory,
             pool: _pool,
-            bribeVotingReward: _bribeVotingReward,
+            incentiveVotingReward: _incentiveVotingReward,
             feeVotingReward: _feesVotingReward,
             gauge: _gauge
         });

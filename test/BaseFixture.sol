@@ -24,7 +24,7 @@ import {RateLimitMidPoint} from "src/libraries/rateLimits/RateLimitMidpointCommo
 import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
 import {ILeafGauge} from "src/interfaces/gauges/ILeafGauge.sol";
 import {ILeafMessageBridge, LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
-import {IRootMessageBridge, RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
+import {IRootMessageBridge, RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
 import {ILeafHLMessageModule, LeafHLMessageModule} from "src/bridge/hyperlane/LeafHLMessageModule.sol";
 import {ILeafGaugeFactory, LeafGaugeFactory} from "src/gauges/LeafGaugeFactory.sol";
 import {ILeafVoter, LeafVoter} from "src/voter/LeafVoter.sol";

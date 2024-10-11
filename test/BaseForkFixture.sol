@@ -30,10 +30,10 @@ import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
 import {XERC20Factory} from "src/xerc20/XERC20Factory.sol";
 import {IXERC20, XERC20} from "src/xerc20/XERC20.sol";
 import {XERC20Lockbox} from "src/xerc20/XERC20Lockbox.sol";
-import {IRootPool, RootPool} from "src/mainnet/pools/RootPool.sol";
-import {IRootPoolFactory, RootPoolFactory} from "src/mainnet/pools/RootPoolFactory.sol";
-import {IRootGauge, RootGauge} from "src/mainnet/gauges/RootGauge.sol";
-import {IRootGaugeFactory, RootGaugeFactory} from "src/mainnet/gauges/RootGaugeFactory.sol";
+import {IRootPool, RootPool} from "src/root/pools/RootPool.sol";
+import {IRootPoolFactory, RootPoolFactory} from "src/root/pools/RootPoolFactory.sol";
+import {IRootGauge, RootGauge} from "src/root/gauges/RootGauge.sol";
+import {IRootGaugeFactory, RootGaugeFactory} from "src/root/gauges/RootGaugeFactory.sol";
 import {ILeafVoter, LeafVoter} from "src/voter/LeafVoter.sol";
 import {ILeafGauge, LeafGauge} from "src/gauges/LeafGauge.sol";
 import {ILeafGaugeFactory, LeafGaugeFactory} from "src/gauges/LeafGaugeFactory.sol";
@@ -42,24 +42,24 @@ import {IRouter, Router} from "src/Router.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {ITokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
 import {ILeafMessageBridge, LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
-import {IRootMessageBridge, RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
+import {IRootMessageBridge, RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
 import {IHLHandler} from "src/interfaces/bridge/hyperlane/IHLHandler.sol";
 import {ILeafHLMessageModule, LeafHLMessageModule} from "src/bridge/hyperlane/LeafHLMessageModule.sol";
 import {IVotingRewardsFactory, VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
 import {IChainRegistry} from "src/interfaces/bridge/IChainRegistry.sol";
 import {ICrossChainRegistry} from "src/interfaces/bridge/ICrossChainRegistry.sol";
 
-import {IMessageSender, RootHLMessageModule} from "src/mainnet/bridge/hyperlane/RootHLMessageModule.sol";
+import {IMessageSender, RootHLMessageModule} from "src/root/bridge/hyperlane/RootHLMessageModule.sol";
 
-import {IRootVotingRewardsFactory, RootVotingRewardsFactory} from "src/mainnet/rewards/RootVotingRewardsFactory.sol";
-import {IRootBribeVotingReward, RootBribeVotingReward} from "src/mainnet/rewards/RootBribeVotingReward.sol";
-import {IRootFeesVotingReward, RootFeesVotingReward} from "src/mainnet/rewards/RootFeesVotingReward.sol";
+import {IRootVotingRewardsFactory, RootVotingRewardsFactory} from "src/root/rewards/RootVotingRewardsFactory.sol";
+import {IRootIncentiveVotingReward, RootIncentiveVotingReward} from "src/root/rewards/RootIncentiveVotingReward.sol";
+import {IRootFeesVotingReward, RootFeesVotingReward} from "src/root/rewards/RootFeesVotingReward.sol";
 
 import {FeesVotingReward} from "src/rewards/FeesVotingReward.sol";
-import {BribeVotingReward} from "src/rewards/BribeVotingReward.sol";
+import {IncentiveVotingReward} from "src/rewards/IncentiveVotingReward.sol";
 import {IReward} from "src/interfaces/rewards/IReward.sol";
 
-import {IEmergencyCouncil, EmergencyCouncil} from "src/mainnet/emergencyCouncil/EmergencyCouncil.sol";
+import {IEmergencyCouncil, EmergencyCouncil} from "src/root/emergencyCouncil/EmergencyCouncil.sol";
 
 import {CreateX} from "test/mocks/CreateX.sol";
 import {TestERC20} from "test/mocks/TestERC20.sol";
@@ -108,7 +108,7 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
     RootPool public rootPoolImplementation;
     RootGauge public rootGauge;
     RootFeesVotingReward public rootFVR;
-    RootBribeVotingReward public rootIVR;
+    RootIncentiveVotingReward public rootIVR;
     IMinter public minter;
 
     // root-only mocks
@@ -141,7 +141,7 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
     Pool public leafPool;
     LeafGauge public leafGauge;
     FeesVotingReward public leafFVR;
-    BribeVotingReward public leafIVR;
+    IncentiveVotingReward public leafIVR;
 
     // leaf-only mocks
     TestERC20 public token0;
@@ -565,12 +565,12 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
         vm.startPrank({msgSender: mockVoter.governor(), txOrigin: users.alice});
         rootGauge = RootGauge(mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(rootPool)}));
         rootFVR = RootFeesVotingReward(mockVoter.gaugeToFees(address(rootGauge)));
-        rootIVR = RootBribeVotingReward(mockVoter.gaugeToBribe(address(rootGauge)));
+        rootIVR = RootIncentiveVotingReward(mockVoter.gaugeToBribe(address(rootGauge)));
 
-        // create pool & gauge to whitelist WETH as bribe token
-        address bribePool =
+        // create pool & gauge to whitelist WETH as incentive token
+        address incentivePool =
             rootPoolFactory.createPool({chainid: leaf, tokenA: address(token0), tokenB: address(weth), stable: false});
-        mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(bribePool)});
+        mockVoter.createGauge({_poolFactory: address(rootPoolFactory), _pool: address(incentivePool)});
         vm.stopPrank();
 
         vm.selectFork({forkId: leafId});
@@ -579,9 +579,9 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
         leafPool = Pool(leafPoolFactory.getPool({tokenA: address(token0), tokenB: address(token1), stable: false}));
         leafGauge = LeafGauge(leafVoter.gauges(address(leafPool)));
         leafFVR = FeesVotingReward(leafVoter.gaugeToFees(address(leafGauge)));
-        leafIVR = BribeVotingReward(leafVoter.gaugeToBribe(address(leafGauge)));
+        leafIVR = IncentiveVotingReward(leafVoter.gaugeToIncentive(address(leafGauge)));
 
-        // set up pool & gauge for bribe token on leaf by processing pending `createGauge` message in mailbox
+        // set up pool & gauge for incentive token on leaf by processing pending `createGauge` message in mailbox
         leafMailbox.processNextInboundMessage();
     }
 

@@ -80,7 +80,7 @@ interface IVoter {
     /// @notice Standard OZ IGovernor using ve for vote weights.
     function governor() external view returns (address);
 
-    /// @notice Whitelist (or unwhitelist) token for use in bribes.
+    /// @notice Whitelist (or unwhitelist) token for use in incentives.
     /// @dev Throws if not called by governor.
     /// @param _token .
     /// @param _bool .

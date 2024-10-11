@@ -28,7 +28,7 @@ contract CreateGaugeIntegrationConcreteTest is LeafVoterTest {
     function test_WhenCallerIsBridgeModule() external {
         // It should create new gauge
         // It should set gaugeToFees for new gauge
-        // It should set gaugeToBribe for new gauge
+        // It should set gaugeToIncentive for new gauge
         // It should set gauges for given pool to new gauge
         // It should set poolForGauge for new gauge to given pool
         // It should set isGauge for new gauge to true
@@ -43,7 +43,7 @@ contract CreateGaugeIntegrationConcreteTest is LeafVoterTest {
             votingRewardsFactory: address(leafVotingRewardsFactory),
             gaugeFactory: address(leafGaugeFactory),
             pool: address(0),
-            bribeVotingReward: address(0),
+            incentiveVotingReward: address(0),
             feeVotingReward: address(0),
             gauge: address(0)
         });
@@ -57,7 +57,7 @@ contract CreateGaugeIntegrationConcreteTest is LeafVoterTest {
         );
 
         assertNotEq(leafVoter.gaugeToFees(address(leafGauge)), address(0));
-        assertNotEq(leafVoter.gaugeToBribe(address(leafGauge)), address(0));
+        assertNotEq(leafVoter.gaugeToIncentive(address(leafGauge)), address(0));
         assertEq(leafVoter.gauges(address(leafPool)), address(leafGauge));
         assertEq(leafVoter.poolForGauge(address(leafGauge)), address(leafPool));
         assertTrue(leafVoter.isGauge(address(leafGauge)));

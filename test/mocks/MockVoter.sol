@@ -3,13 +3,13 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {IERC20} from "@openzeppelin5/contracts/token/ERC20/IERC20.sol";
 
-import {RootGaugeFactory} from "src/mainnet/gauges/RootGaugeFactory.sol";
+import {RootGaugeFactory} from "src/root/gauges/RootGaugeFactory.sol";
 import {IVoter} from "src/interfaces/external/IVoter.sol";
 import {IFactoryRegistry} from "src/interfaces/external/IFactoryRegistry.sol";
-import {IRootGauge} from "src/interfaces/mainnet/gauges/IRootGauge.sol";
-import {IRootPool} from "src/interfaces/mainnet/pools/IRootPool.sol";
-import {IRootPoolFactory} from "src/interfaces/mainnet/pools/IRootPoolFactory.sol";
-import {IRootVotingRewardsFactory} from "src/interfaces/mainnet/rewards/IRootVotingRewardsFactory.sol";
+import {IRootGauge} from "src/interfaces/root/gauges/IRootGauge.sol";
+import {IRootPool} from "src/interfaces/root/pools/IRootPool.sol";
+import {IRootPoolFactory} from "src/interfaces/root/pools/IRootPoolFactory.sol";
+import {IRootVotingRewardsFactory} from "src/interfaces/root/rewards/IRootVotingRewardsFactory.sol";
 
 contract MockVoter is IVoter {
     // mock addresses used for testing gauge creation, a copy is stored in Constants.sol

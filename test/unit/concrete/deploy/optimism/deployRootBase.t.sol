@@ -6,17 +6,17 @@ import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/II
 import "test/BaseFixture.sol";
 import {DeployRootBase} from "script/deployParameters/optimism/DeployRootBase.s.sol";
 
-import {RootPool} from "src/mainnet/pools/RootPool.sol";
+import {RootPool} from "src/root/pools/RootPool.sol";
 import {IVoter} from "src/interfaces/external/IVoter.sol";
 import {IMinter} from "src/interfaces/external/IMinter.sol";
-import {RootPoolFactory} from "src/mainnet/pools/RootPoolFactory.sol";
-import {RootGaugeFactory} from "src/mainnet/gauges/RootGaugeFactory.sol";
-import {RootVotingRewardsFactory} from "src/mainnet/rewards/RootVotingRewardsFactory.sol";
+import {RootPoolFactory} from "src/root/pools/RootPoolFactory.sol";
+import {RootGaugeFactory} from "src/root/gauges/RootGaugeFactory.sol";
+import {RootVotingRewardsFactory} from "src/root/rewards/RootVotingRewardsFactory.sol";
 
 import {TokenBridge} from "src/bridge/TokenBridge.sol";
-import {RootMessageBridge} from "src/mainnet/bridge/RootMessageBridge.sol";
-import {EmergencyCouncil} from "src/mainnet/emergencyCouncil/EmergencyCouncil.sol";
-import {RootHLMessageModule} from "src/mainnet/bridge/hyperlane/RootHLMessageModule.sol";
+import {RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
+import {EmergencyCouncil} from "src/root/emergencyCouncil/EmergencyCouncil.sol";
+import {RootHLMessageModule} from "src/root/bridge/hyperlane/RootHLMessageModule.sol";
 
 contract OptimismDeployRootBaseTest is BaseFixture {
     using stdStorage for StdStorage;
