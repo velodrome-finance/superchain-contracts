@@ -99,7 +99,7 @@ contract CreatePoolIntegrationConcreteTest is RootPoolFactoryTest {
         assertEq(rootPoolFactory.allPools(2), pool);
     }
 
-    function testGas_WhenThePoolDoesNotExist()
+    function testGas_createPool()
         external
         whenChainIdIsRegistered
         whenTokenAIsNotTheSameAsTokenB

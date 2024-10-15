@@ -128,7 +128,7 @@ contract SetBufferCapUnitConcreteTest is XERC20Test {
         assertEq(limit.bufferStored, oldBufferCap / 2);
     }
 
-    function testGas_WhenUpdatedBufferStoredIsGreaterThanNewBufferCap()
+    function testGas_setBufferCap()
         external
         whenCallerIsOwner
         whenNewBufferCapIsNotZero

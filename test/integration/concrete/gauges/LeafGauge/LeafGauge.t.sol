@@ -17,8 +17,8 @@ contract LeafGaugeTest is BaseForkFixture {
 
     function test_InitialState() public view {
         assertEq(leafGauge.stakingToken(), address(leafPool));
-        assertEq(leafGauge.feesVotingReward(), address(leafFVR));
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
+        assertEq(leafGauge.feesVotingReward(), address(leafFVR));
         assertEq(leafGauge.voter(), address(leafVoter));
         assertEq(leafGauge.bridge(), address(leafMessageBridge));
         assertTrue(leafGauge.isPool());

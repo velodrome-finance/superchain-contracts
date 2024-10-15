@@ -28,7 +28,7 @@ contract SetInterchainSecurityModuleIntegrationConcreteTest is LeafHLMessageModu
         assertEq(address(leafMessageModule.securityModule()), address(1));
     }
 
-    function testGas_WhenTheCallerIsTheOwner() external {
+    function testGas_setInterchainSecurityModule() external {
         vm.prank(users.owner);
         leafMessageModule.setInterchainSecurityModule({_ism: address(1)});
         snapLastCall("LeafHLMessageModule_setInterchainSecurityModule");

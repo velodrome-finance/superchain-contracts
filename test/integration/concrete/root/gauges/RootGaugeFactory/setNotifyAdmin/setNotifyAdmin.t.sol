@@ -31,4 +31,9 @@ contract SetNotifyAdminIntegrationConcreteTest is RootGaugeFactoryTest {
 
         assertEq(rootGaugeFactory.notifyAdmin(), users.alice);
     }
+
+    function testGas_setNotifyAdmin() external whenCallerIsTheNotifyAdmin {
+        rootGaugeFactory.setNotifyAdmin({_admin: users.alice});
+        snapLastCall("RootGaugeFactory_setNotifyAdmin");
+    }
 }

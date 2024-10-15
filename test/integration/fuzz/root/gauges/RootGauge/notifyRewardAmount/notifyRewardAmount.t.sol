@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "../RootGauge.t.sol";
 
-contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
+contract NotifyRewardAmountIntegrationFuzzTest is RootGaugeTest {
     using stdStorage for StdStorage;
 
     uint256 public WEEKLY_DECAY;
@@ -27,9 +27,11 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         rootStartTime = block.timestamp;
     }
 
-    function test_WhenTheCallerIsNotVoter() external {
+    function testFuzz_WhenTheCallerIsNotVoter(address _caller) external {
         // It should revert with {NotVoter}
-        vm.prank(users.charlie);
+        vm.assume(_caller != address(mockVoter));
+
+        vm.prank(_caller);
         vm.expectRevert(IRootGauge.NotVoter.selector);
         rootGauge.notifyRewardAmount({_amount: 0});
     }
@@ -53,7 +55,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         _;
     }
 
-    function test_WhenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish()
+    function testFuzz_WhenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish(uint256 _amount)
         external
         whenTheCallerIsVoter
         whenTailEmissionsHaveStarted
@@ -73,14 +75,16 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         uint256 weeklyEmissions = (rootRewardToken.totalSupply() * minter.tailEmissionRate()) / MAX_BPS;
         uint256 maxEmissionRate = rootGaugeFactory.emissionCaps(address(rootGauge));
         uint256 maxAmount = maxEmissionRate * weeklyEmissions / MAX_BPS;
-        uint256 amount = maxAmount + TOKEN_1;
-        uint256 bufferCap = Math.max(amount * 2, rootXVelo.minBufferCap() + 1);
+        _amount = bound(_amount, maxAmount, MAX_BUFFER_CAP / 2);
+        uint256 excessEmissions = _amount - maxAmount;
 
+        uint256 bufferCap = Math.max(_amount * 2, rootXVelo.minBufferCap() + 1);
         setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
+        vm.warp({newTimestamp: leafStartTime});
 
-        deal({token: address(rootRewardToken), to: address(mockVoter), give: amount});
+        deal({token: address(rootRewardToken), to: address(mockVoter), give: _amount});
         vm.prank(address(mockVoter));
-        rootRewardToken.approve({spender: address(rootGauge), value: amount});
+        rootRewardToken.approve({spender: address(rootGauge), value: _amount});
 
         assertEq(rootGauge.rewardToken(), address(rootRewardToken));
         uint256 oldMinterBalance = rootRewardToken.balanceOf(address(minter));
@@ -88,15 +92,16 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         vm.expectEmit(address(rootGauge));
         emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: maxAmount});
-        rootGauge.notifyRewardAmount({_amount: amount});
+        rootGauge.notifyRewardAmount({_amount: _amount});
 
         // Minter received excess emissions
-        assertEq(rootRewardToken.balanceOf(address(minter)), oldMinterBalance + TOKEN_1);
+        assertEq(rootRewardToken.balanceOf(address(minter)), oldMinterBalance + excessEmissions);
         assertEq(rootRewardToken.balanceOf(address(mockVoter)), 0);
         assertEq(rootRewardToken.balanceOf(address(rootGauge)), 0);
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         vm.expectEmit(address(leafGauge));
         emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: maxAmount});
         leafMailbox.processNextInboundMessage();
@@ -109,7 +114,11 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
     }
 
-    function test_WhenTheCurrentTimestampIsLessThanPeriodFinish()
+    function testFuzz_WhenTheCurrentTimestampIsLessThanPeriodFinish(
+        uint256 _initialAmount,
+        uint256 _amount,
+        uint256 _timeskip
+    )
         external
         whenTheCallerIsVoter
         whenTailEmissionsHaveStarted
@@ -127,28 +136,32 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         // It should update the period finish timestamp
         // It should emit a {NotifyReward} event
         uint256 weeklyEmissions = (rootRewardToken.totalSupply() * minter.tailEmissionRate()) / MAX_BPS;
-        uint256 maxEmissionRate = rootGaugeFactory.emissionCaps(address(rootGauge));
-        uint256 maxAmount = maxEmissionRate * weeklyEmissions / MAX_BPS;
-        uint256 amount = maxAmount + TOKEN_1;
-        uint256 bufferCap = amount * 2;
+        uint256 maxAmount = rootGaugeFactory.emissionCaps(address(rootGauge)) * weeklyEmissions / MAX_BPS;
+        _amount = bound(_amount, maxAmount, MAX_BUFFER_CAP / 4);
+        _initialAmount = bound(_initialAmount, WEEK, maxAmount);
+        _timeskip = bound(_timeskip, 1, WEEK - 1);
+        uint256 excessEmissions = _amount - maxAmount;
+        uint256 bufferCap = (_amount + _initialAmount) * 2;
 
         deal({token: address(weth), to: users.alice, give: MESSAGE_FEE * 2});
         vm.prank(users.alice);
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
 
         setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
+        vm.warp({newTimestamp: leafStartTime});
 
-        deal({token: address(rootRewardToken), to: address(mockVoter), give: amount * 2});
+        deal({token: address(rootRewardToken), to: address(mockVoter), give: _initialAmount + _amount});
         vm.prank(address(mockVoter));
-        rootRewardToken.approve({spender: address(rootGauge), value: amount * 2});
+        rootRewardToken.approve({spender: address(rootGauge), value: _initialAmount + _amount});
 
         // inital deposit of partial amount
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
-        rootGauge.notifyRewardAmount({_amount: maxAmount});
+        rootGauge.notifyRewardAmount({_amount: _initialAmount});
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         leafMailbox.processNextInboundMessage();
 
-        skipTime(WEEK / 7 * 5);
+        skipTime(_timeskip);
 
         vm.selectFork({forkId: rootId});
         uint256 oldMinterBalance = rootRewardToken.balanceOf(address(minter));
@@ -156,34 +169,35 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         vm.expectEmit(address(rootGauge));
         emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: maxAmount});
-        rootGauge.notifyRewardAmount({_amount: amount});
+        rootGauge.notifyRewardAmount({_amount: _amount});
 
         // Minter received excess emissions
-        assertEq(rootRewardToken.balanceOf(address(minter)), oldMinterBalance + TOKEN_1);
-        assertEq(rootRewardToken.balanceOf(address(mockVoter)), amount - maxAmount);
+        assertEq(rootRewardToken.balanceOf(address(minter)), oldMinterBalance + excessEmissions);
+        assertEq(rootRewardToken.balanceOf(address(mockVoter)), 0);
         assertEq(rootRewardToken.balanceOf(address(rootGauge)), 0);
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime + _timeskip});
         vm.expectEmit(address(leafGauge));
         emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: maxAmount});
         leafMailbox.processNextInboundMessage();
-        assertEq(leafXVelo.balanceOf(address(leafGauge)), maxAmount * 2);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), _initialAmount + maxAmount);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);
-        uint256 timeUntilNext = WEEK * 2 / 7;
-        uint256 rewardRate = ((maxAmount / WEEK) * timeUntilNext + maxAmount) / timeUntilNext;
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
+        uint256 rewardRate = ((_initialAmount / WEEK) * timeUntilNext + maxAmount) / timeUntilNext;
         assertEq(leafGauge.rewardRate(), rewardRate);
         assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), rewardRate);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
-        assertEq(leafGauge.periodFinish(), block.timestamp + WEEK / 7 * 2);
+        assertEq(leafGauge.periodFinish(), block.timestamp + timeUntilNext);
     }
 
     modifier whenTheAmountIsSmallerThanOrEqualToDefinedPercentageOfTailEmissions() {
         _;
     }
 
-    function test_WhenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish_()
+    function testFuzz_WhenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish_(uint256 _amount)
         external
         whenTheCallerIsVoter
         whenTailEmissionsHaveStarted
@@ -199,39 +213,47 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         // It should update the last update timestamp
         // It should update the period finish timestamp
         // It should emit a {NotifyReward} event
-        uint256 amount = TOKEN_1 * 1_000;
-        uint256 bufferCap = amount * 2;
+        uint256 weeklyEmissions = (rootRewardToken.totalSupply() * minter.tailEmissionRate()) / MAX_BPS;
+        uint256 maxAmount = rootGaugeFactory.emissionCaps(address(rootGauge)) * weeklyEmissions / MAX_BPS;
+        _amount = bound(_amount, WEEK, maxAmount);
+        uint256 bufferCap = Math.max(_amount * 2, rootXVelo.minBufferCap() + 1);
         setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
+        vm.warp({newTimestamp: leafStartTime});
 
-        deal({token: address(rootRewardToken), to: address(mockVoter), give: amount});
+        deal({token: address(rootRewardToken), to: address(mockVoter), give: _amount});
         vm.prank(address(mockVoter));
-        rootRewardToken.approve({spender: address(rootGauge), value: amount});
+        rootRewardToken.approve({spender: address(rootGauge), value: _amount});
 
         assertEq(rootGauge.rewardToken(), address(rootRewardToken));
 
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         vm.expectEmit(address(rootGauge));
-        emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: amount});
-        rootGauge.notifyRewardAmount({_amount: amount});
+        emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: _amount});
+        rootGauge.notifyRewardAmount({_amount: _amount});
 
         assertEq(rootRewardToken.balanceOf(address(mockVoter)), 0);
         assertEq(rootRewardToken.balanceOf(address(rootGauge)), 0);
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         vm.expectEmit(address(leafGauge));
-        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: amount});
+        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: _amount});
         leafMailbox.processNextInboundMessage();
-        assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), _amount);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);
-        assertEq(leafGauge.rewardRate(), amount / WEEK);
-        assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), amount / WEEK);
+        assertEq(leafGauge.rewardRate(), _amount / WEEK);
+        assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), _amount / WEEK);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
         assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
     }
 
-    function test_WhenTheCurrentTimestampIsLessThanPeriodFinish_()
+    function testFuzz_WhenTheCurrentTimestampIsLessThanPeriodFinish_(
+        uint256 _initialAmount,
+        uint256 _amount,
+        uint256 _timeskip
+    )
         external
         whenTheCallerIsVoter
         whenTailEmissionsHaveStarted
@@ -251,45 +273,53 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         vm.prank(users.alice);
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
 
-        uint256 amount = TOKEN_1 * 1_000;
-        uint256 bufferCap = amount * 2;
+        uint256 weeklyEmissions = (rootRewardToken.totalSupply() * minter.tailEmissionRate()) / MAX_BPS;
+        uint256 maxAmount = rootGaugeFactory.emissionCaps(address(rootGauge)) * weeklyEmissions / MAX_BPS;
+        _initialAmount = bound(_amount, WEEK, maxAmount);
+        _amount = bound(_amount, WEEK, maxAmount);
+        _timeskip = bound(_timeskip, 1, WEEK - 1);
+
+        uint256 bufferCap = Math.max((_initialAmount + _amount) * 2, rootXVelo.minBufferCap() + 1);
         setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
+        vm.warp({newTimestamp: leafStartTime});
 
-        deal({token: address(rootRewardToken), to: address(mockVoter), give: amount * 2});
+        deal({token: address(rootRewardToken), to: address(mockVoter), give: _initialAmount + _amount});
         vm.prank(address(mockVoter));
-        rootRewardToken.approve({spender: address(rootGauge), value: amount * 2});
+        rootRewardToken.approve({spender: address(rootGauge), value: _initialAmount + _amount});
 
-        // inital deposit of partial amount
+        // inital deposit of partial _amount
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
-        rootGauge.notifyRewardAmount({_amount: amount});
+        rootGauge.notifyRewardAmount({_amount: _amount});
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         leafMailbox.processNextInboundMessage();
 
-        skipTime(WEEK / 7 * 5);
+        skipTime(_timeskip);
 
         vm.selectFork({forkId: rootId});
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         vm.expectEmit(address(rootGauge));
-        emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: amount});
-        rootGauge.notifyRewardAmount({_amount: amount});
+        emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: _amount});
+        rootGauge.notifyRewardAmount({_amount: _amount});
 
         assertEq(rootRewardToken.balanceOf(address(mockVoter)), 0);
         assertEq(rootRewardToken.balanceOf(address(rootGauge)), 0);
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime + _timeskip});
         vm.expectEmit(address(leafGauge));
-        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: amount});
+        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: _amount});
         leafMailbox.processNextInboundMessage();
-        assertEq(leafXVelo.balanceOf(address(leafGauge)), amount * 2);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), _initialAmount + _amount);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);
-        uint256 timeUntilNext = WEEK * 2 / 7;
-        uint256 rewardRate = ((amount / WEEK) * timeUntilNext + amount) / timeUntilNext;
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
+        uint256 rewardRate = ((_amount / WEEK) * timeUntilNext + _amount) / timeUntilNext;
         assertEq(leafGauge.rewardRate(), rewardRate);
         assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), rewardRate);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
-        assertEq(leafGauge.periodFinish(), block.timestamp + WEEK / 7 * 2);
+        assertEq(leafGauge.periodFinish(), block.timestamp + timeUntilNext);
     }
 
     modifier whenTailEmissionsHaveNotStarted() {
@@ -300,7 +330,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         _;
     }
 
-    function test_WhenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish__()
+    function testFuzz_WhenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish__(uint256 _amount)
         external
         whenTheCallerIsVoter
         whenTailEmissionsHaveNotStarted
@@ -320,14 +350,16 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         uint256 weeklyEmissions = (minter.weekly() * MAX_BPS) / WEEKLY_DECAY;
         uint256 maxEmissionRate = rootGaugeFactory.emissionCaps(address(rootGauge));
         uint256 maxAmount = maxEmissionRate * weeklyEmissions / MAX_BPS;
-        uint256 amount = maxAmount + TOKEN_1;
-        uint256 bufferCap = amount * 2;
+        _amount = bound(_amount, maxAmount, MAX_BUFFER_CAP / 2);
+        uint256 excessEmissions = _amount - maxAmount;
+        uint256 bufferCap = _amount * 2;
 
         setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
+        vm.warp({newTimestamp: leafStartTime});
 
-        deal({token: address(rootRewardToken), to: address(mockVoter), give: amount});
+        deal({token: address(rootRewardToken), to: address(mockVoter), give: _amount});
         vm.prank(address(mockVoter));
-        rootRewardToken.approve({spender: address(rootGauge), value: amount});
+        rootRewardToken.approve({spender: address(rootGauge), value: _amount});
 
         assertEq(rootGauge.rewardToken(), address(rootRewardToken));
         uint256 oldMinterBalance = rootRewardToken.balanceOf(address(minter));
@@ -335,15 +367,16 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         vm.expectEmit(address(rootGauge));
         emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: maxAmount});
-        rootGauge.notifyRewardAmount({_amount: amount});
+        rootGauge.notifyRewardAmount({_amount: _amount});
 
         // Minter received excess emissions
-        assertEq(rootRewardToken.balanceOf(address(minter)), oldMinterBalance + TOKEN_1);
+        assertEq(rootRewardToken.balanceOf(address(minter)), oldMinterBalance + excessEmissions);
         assertEq(rootRewardToken.balanceOf(address(mockVoter)), 0);
         assertEq(rootRewardToken.balanceOf(address(rootGauge)), 0);
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         vm.expectEmit(address(leafGauge));
         emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: maxAmount});
         leafMailbox.processNextInboundMessage();
@@ -356,7 +389,11 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
     }
 
-    function test_WhenTheCurrentTimestampIsLessThanPeriodFinish__()
+    function testFuzz_WhenTheCurrentTimestampIsLessThanPeriodFinish__(
+        uint256 _initialAmount,
+        uint256 _amount,
+        uint256 _timeskip
+    )
         external
         whenTheCallerIsVoter
         whenTailEmissionsHaveNotStarted
@@ -374,28 +411,32 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         // It should update the period finish timestamp
         // It should emit a {NotifyReward} event
         uint256 weeklyEmissions = (minter.weekly() * MAX_BPS) / WEEKLY_DECAY;
-        uint256 maxEmissionRate = rootGaugeFactory.emissionCaps(address(rootGauge));
-        uint256 maxAmount = maxEmissionRate * weeklyEmissions / MAX_BPS;
-        uint256 amount = maxAmount + TOKEN_1;
-        uint256 bufferCap = amount * 2;
+        uint256 maxAmount = rootGaugeFactory.emissionCaps(address(rootGauge)) * weeklyEmissions / MAX_BPS;
+        _amount = bound(_amount, maxAmount, MAX_BUFFER_CAP / 4);
+        _initialAmount = bound(_initialAmount, WEEK, maxAmount);
+        _timeskip = bound(_timeskip, 1, WEEK - 1);
+        uint256 excessEmissions = _amount - maxAmount;
+        uint256 bufferCap = (_amount + _initialAmount) * 2;
 
         deal({token: address(weth), to: users.alice, give: MESSAGE_FEE * 2});
         vm.prank(users.alice);
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
 
         setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
+        vm.warp({newTimestamp: leafStartTime});
 
-        deal({token: address(rootRewardToken), to: address(mockVoter), give: amount * 2});
+        deal({token: address(rootRewardToken), to: address(mockVoter), give: _initialAmount + _amount});
         vm.prank(address(mockVoter));
-        rootRewardToken.approve({spender: address(rootGauge), value: amount * 2});
+        rootRewardToken.approve({spender: address(rootGauge), value: _initialAmount + _amount});
 
         // inital deposit of partial amount
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
-        rootGauge.notifyRewardAmount({_amount: maxAmount});
+        rootGauge.notifyRewardAmount({_amount: _initialAmount});
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         leafMailbox.processNextInboundMessage();
 
-        skipTime(WEEK / 7 * 5);
+        skipTime(_timeskip);
 
         vm.selectFork({forkId: rootId});
         uint256 oldMinterBalance = rootRewardToken.balanceOf(address(minter));
@@ -403,34 +444,35 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         vm.expectEmit(address(rootGauge));
         emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: maxAmount});
-        rootGauge.notifyRewardAmount({_amount: amount});
+        rootGauge.notifyRewardAmount({_amount: _amount});
 
         // Minter received excess emissions
-        assertEq(rootRewardToken.balanceOf(address(minter)), oldMinterBalance + TOKEN_1);
-        assertEq(rootRewardToken.balanceOf(address(mockVoter)), amount - maxAmount);
+        assertEq(rootRewardToken.balanceOf(address(minter)), oldMinterBalance + excessEmissions);
+        assertEq(rootRewardToken.balanceOf(address(mockVoter)), 0);
         assertEq(rootRewardToken.balanceOf(address(rootGauge)), 0);
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime + _timeskip});
         vm.expectEmit(address(leafGauge));
         emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: maxAmount});
         leafMailbox.processNextInboundMessage();
-        assertEq(leafXVelo.balanceOf(address(leafGauge)), maxAmount * 2);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), _initialAmount + maxAmount);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);
-        uint256 timeUntilNext = WEEK * 2 / 7;
-        uint256 rewardRate = ((maxAmount / WEEK) * timeUntilNext + maxAmount) / timeUntilNext;
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
+        uint256 rewardRate = ((_initialAmount / WEEK) * timeUntilNext + maxAmount) / timeUntilNext;
         assertEq(leafGauge.rewardRate(), rewardRate);
         assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), rewardRate);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
-        assertEq(leafGauge.periodFinish(), block.timestamp + WEEK / 7 * 2);
+        assertEq(leafGauge.periodFinish(), block.timestamp + timeUntilNext);
     }
 
     modifier whenTheAmountIsSmallerThanOrEqualToDefinedPercentageOfWeeklyEmissions() {
         _;
     }
 
-    function test_WhenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish___()
+    function testFuzz_WhenTheCurrentTimestampIsGreaterThanOrEqualToPeriodFinish___(uint256 _amount)
         external
         whenTheCallerIsVoter
         whenTailEmissionsHaveNotStarted
@@ -446,39 +488,47 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         // It should update the last update timestamp
         // It should update the period finish timestamp
         // It should emit a {NotifyReward} event
-        uint256 amount = TOKEN_1 * 1_000;
-        uint256 bufferCap = amount * 2;
+        uint256 weeklyEmissions = (minter.weekly() * MAX_BPS) / WEEKLY_DECAY;
+        uint256 maxAmount = rootGaugeFactory.emissionCaps(address(rootGauge)) * weeklyEmissions / MAX_BPS;
+        _amount = bound(_amount, WEEK, maxAmount);
+        uint256 bufferCap = Math.max(_amount * 2, rootXVelo.minBufferCap() + 1);
         setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
+        vm.warp({newTimestamp: leafStartTime});
 
-        deal({token: address(rootRewardToken), to: address(mockVoter), give: amount});
+        deal({token: address(rootRewardToken), to: address(mockVoter), give: _amount});
         vm.prank(address(mockVoter));
-        rootRewardToken.approve({spender: address(rootGauge), value: amount});
+        rootRewardToken.approve({spender: address(rootGauge), value: _amount});
 
         assertEq(rootGauge.rewardToken(), address(rootRewardToken));
 
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         vm.expectEmit(address(rootGauge));
-        emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: amount});
-        rootGauge.notifyRewardAmount({_amount: amount});
+        emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: _amount});
+        rootGauge.notifyRewardAmount({_amount: _amount});
 
         assertEq(rootRewardToken.balanceOf(address(mockVoter)), 0);
         assertEq(rootRewardToken.balanceOf(address(rootGauge)), 0);
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         vm.expectEmit(address(leafGauge));
-        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: amount});
+        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: _amount});
         leafMailbox.processNextInboundMessage();
-        assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), _amount);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);
-        assertEq(leafGauge.rewardRate(), amount / WEEK);
-        assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), amount / WEEK);
+        assertEq(leafGauge.rewardRate(), _amount / WEEK);
+        assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), _amount / WEEK);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
         assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
     }
 
-    function test_WhenTheCurrentTimestampIsLessThanPeriodFinish___()
+    function testFuzz_WhenTheCurrentTimestampIsLessThanPeriodFinish___(
+        uint256 _initialAmount,
+        uint256 _amount,
+        uint256 _timeskip
+    )
         external
         whenTheCallerIsVoter
         whenTailEmissionsHaveNotStarted
@@ -498,67 +548,52 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         vm.prank(users.alice);
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
 
-        uint256 amount = TOKEN_1 * 1_000;
-        uint256 bufferCap = amount * 2;
-        setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
+        uint256 weeklyEmissions = (minter.weekly() * MAX_BPS) / WEEKLY_DECAY;
+        uint256 maxAmount = rootGaugeFactory.emissionCaps(address(rootGauge)) * weeklyEmissions / MAX_BPS;
+        _initialAmount = bound(_amount, WEEK, maxAmount);
+        _amount = bound(_amount, WEEK, maxAmount);
+        _timeskip = bound(_timeskip, 1, WEEK - 1);
 
-        deal({token: address(rootRewardToken), to: address(mockVoter), give: amount * 2});
+        uint256 bufferCap = Math.max((_initialAmount + _amount) * 2, rootXVelo.minBufferCap() + 1);
+        setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
+        vm.warp({newTimestamp: leafStartTime});
+
+        deal({token: address(rootRewardToken), to: address(mockVoter), give: _initialAmount + _amount});
         vm.prank(address(mockVoter));
-        rootRewardToken.approve({spender: address(rootGauge), value: amount * 2});
+        rootRewardToken.approve({spender: address(rootGauge), value: _initialAmount + _amount});
 
         // inital deposit of partial amount
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
-        rootGauge.notifyRewardAmount({_amount: amount});
+        rootGauge.notifyRewardAmount({_amount: _initialAmount});
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         leafMailbox.processNextInboundMessage();
 
-        skipTime(WEEK / 7 * 5);
+        skipTime(_timeskip);
 
         vm.selectFork({forkId: rootId});
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         vm.expectEmit(address(rootGauge));
-        emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: amount});
-        rootGauge.notifyRewardAmount({_amount: amount});
+        emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: _amount});
+        rootGauge.notifyRewardAmount({_amount: _amount});
 
         assertEq(rootRewardToken.balanceOf(address(mockVoter)), 0);
         assertEq(rootRewardToken.balanceOf(address(rootGauge)), 0);
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime + _timeskip});
         vm.expectEmit(address(leafGauge));
-        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: amount});
+        emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: _amount});
         leafMailbox.processNextInboundMessage();
-        assertEq(leafXVelo.balanceOf(address(leafGauge)), amount * 2);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), _initialAmount + _amount);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);
-        uint256 timeUntilNext = WEEK * 2 / 7;
-        uint256 rewardRate = ((amount / WEEK) * timeUntilNext + amount) / timeUntilNext;
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
+        uint256 rewardRate = ((_initialAmount / WEEK) * timeUntilNext + _amount) / timeUntilNext;
         assertEq(leafGauge.rewardRate(), rewardRate);
         assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), rewardRate);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
-        assertEq(leafGauge.periodFinish(), block.timestamp + WEEK / 7 * 2);
-    }
-
-    function testGas_notifyRewardAmount()
-        external
-        whenTheCallerIsVoter
-        whenTailEmissionsHaveStarted
-        whenTheAmountIsGreaterThanDefinedPercentageOfTailEmissions
-        syncForkTimestamps
-    {
-        uint256 weeklyEmissions = (rootRewardToken.totalSupply() * minter.tailEmissionRate()) / MAX_BPS;
-        uint256 maxAmount = rootGaugeFactory.emissionCaps(address(rootGauge)) * weeklyEmissions / MAX_BPS;
-        uint256 amount = maxAmount + TOKEN_1;
-        uint256 bufferCap = Math.max(amount * 2, rootXVelo.minBufferCap() + 1);
-
-        setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
-
-        deal({token: address(rootRewardToken), to: address(mockVoter), give: amount});
-        vm.prank(address(mockVoter));
-        rootRewardToken.approve({spender: address(rootGauge), value: amount});
-
-        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
-        rootGauge.notifyRewardAmount({_amount: amount});
-        snapLastCall("RootGauge_notifyRewardAmount");
+        assertEq(leafGauge.periodFinish(), block.timestamp + timeUntilNext);
     }
 }

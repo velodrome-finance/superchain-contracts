@@ -1,9 +1,9 @@
 NotifyRewardWithoutClaimIntegrationConcreteTest
 ├── When the caller is not notify admin
-│   └── It should revert with NotAuthorized
+│   └── It should revert with {NotAuthorized}
 └── When the caller is notify admin
     ├── When the amount is smaller than the time in a week
-    │   └── It should revert with ZeroRewardRate
+    │   └── It should revert with {ZeroRewardRate}
     └── When the amount is greater than or equal to the time in a week
         ├── When the current timestamp is greater than or equal to periodFinish
         │   ├── It should wrap the tokens to the XERC20 token

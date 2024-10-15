@@ -88,7 +88,7 @@ contract DepositIntegrationConcreteTest is RootFeesVotingRewardTest {
         assertEq(leafIVR.balanceOf(tokenId), amount);
     }
 
-    function testGas_WhenRecipientIsSetOnTheFactory() external whenCallerIsVoter whenOwnerOfTokenIdIsAContract {
+    function testGas_deposit() external whenCallerIsVoter whenOwnerOfTokenIdIsAContract {
         rootVotingRewardsFactory.setRecipient({_chainid: leaf, _recipient: users.alice});
 
         uint256 amount = TOKEN_1 * 1000;

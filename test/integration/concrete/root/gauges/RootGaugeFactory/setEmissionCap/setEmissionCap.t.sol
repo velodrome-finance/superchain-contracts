@@ -33,4 +33,9 @@ contract SetEmissionCapIntegrationConcreteTest is RootGaugeFactoryTest {
 
         assertEq(rootGaugeFactory.emissionCaps(address(rootGauge)), 1000);
     }
+
+    function testGas_setEmissionCap() external whenCallerIsTheEmissionAdmin {
+        rootGaugeFactory.setEmissionCap({_gauge: address(rootGauge), _emissionCap: 1000});
+        snapLastCall("RootGaugeFactory_setEmissionCap");
+    }
 }

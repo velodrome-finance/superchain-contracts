@@ -18,7 +18,7 @@ contract CreateRewardsIntegrationConcreteTest is RootVotingRewardsFactoryTest {
         assertGt(ivr.code.length, 0);
     }
 
-    function testGas_WhenTheCallerIsAnyone() external {
+    function testGas_createRewards() external {
         address[] memory rewards = new address[](2);
         rewards[0] = address(token0);
         rewards[1] = address(token1);

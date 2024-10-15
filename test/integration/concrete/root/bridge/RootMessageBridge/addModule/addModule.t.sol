@@ -48,7 +48,7 @@ contract AddModuleIntegrationConcreteTest is RootMessageBridgeTest {
         assertEq(modules[0], address(rootMessageModule));
     }
 
-    function testGas_WhenTheModuleIsNotAddedToTheRegistry() external whenTheCallerIsOwner {
+    function testGas_addModule() external whenTheCallerIsOwner {
         rootMessageBridge.addModule({_module: address(rootMessageModule)});
         snapLastCall("RootMessageBridge_addModule");
     }

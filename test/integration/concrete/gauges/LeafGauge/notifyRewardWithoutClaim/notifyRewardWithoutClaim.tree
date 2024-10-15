@@ -1,11 +1,11 @@
 NotifyRewardWithoutClaimIntegrationConcreteTest
 ├── When the caller is not the module
-│   └── It should revert with NotModule
+│   └── It should revert with {NotModule}
 └── When the caller is the module
     ├── When the amount is zero
-    │   └── It should revert with ZeroAmount
+    │   └── It should revert with {ZeroAmount}
     ├── When the amount is greater than zero and smaller than the time until the next timestamp
-    │   └── It should revert with ZeroRewardRate
+    │   └── It should revert with {ZeroRewardRate}
     └── When the amount is greater than zero and greater than or equal to the time until the next timestamp
         ├── When the current timestamp is greater than or equal to periodFinish
         │   ├── It should update rewardPerTokenStored

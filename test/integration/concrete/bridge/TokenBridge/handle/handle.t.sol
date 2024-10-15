@@ -84,7 +84,7 @@ contract HandleIntegrationConcreteTest is TokenBridgeTest {
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
     }
 
-    function testGas_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentMintingLimit() external whenTheSenderIsBridge {
+    function testGas_handle() external whenTheSenderIsBridge {
         uint256 amount = TOKEN_1 * 1000;
         uint256 bufferCap = amount * 2;
 

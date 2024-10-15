@@ -75,7 +75,7 @@ contract SetRateLimitPerSecondCapUnitConcreteTest is XERC20Test {
         assertEq(limit.rateLimitPerSecond, rps);
     }
 
-    function testGas_WhenThereIsRateLimitForGivenBridge()
+    function testGas_setRateLimitPerSecond()
         external
         whenCallerIsOwner
         whenNewRatePerSecondIsSmallerThanOrEqualToMaxRatePerSecond

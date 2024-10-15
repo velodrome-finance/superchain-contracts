@@ -1,6 +1,6 @@
 NotifyRewardAmountIntegrationConcreteTest
 ├── When the caller is not voter
-│   └── It should revert with NotVoter
+│   └── It should revert with {NotVoter}
 └── When the caller is voter
     ├── When tail emissions have started
     │   ├── When the amount is greater than defined percentage of tail emissions

@@ -81,7 +81,7 @@ contract RegisterChainIntegrationConcreteTest is RootMessageBridgeTest {
         assertEq(rootMessageBridge.chains(leaf), address(rootMessageModule));
     }
 
-    function testGas_WhenTheChainIsNotRegistered()
+    function testGas_registerChain()
         external
         whenTheCallerIsOwner
         whenTheChainIdIsNot10

@@ -111,7 +111,7 @@ contract AddBridgeUnitConcreteTest is XERC20Test {
         assertEq(limit.rateLimitPerSecond, rps);
     }
 
-    function testGas_WhenBufferCapIsGreaterThanMinBufferCap()
+    function testGas_addBridge()
         external
         whenCallerIsOwner
         whenRateLimitPerSecondIsSmallerThanOrEqualToMaxRatePerSecond

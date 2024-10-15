@@ -9,7 +9,7 @@ contract NotifyRewardWithoutClaimIntegrationFuzzTest is LeafGaugeTest {
     }
 
     function testFuzz_WhenTheCallerIsNotTheModule(address _caller) external {
-        // It should revert with NotModule
+        // It should revert with {NotModule}
         vm.assume(_caller != address(leafMessageModule));
 
         vm.prank(_caller);
@@ -26,7 +26,7 @@ contract NotifyRewardWithoutClaimIntegrationFuzzTest is LeafGaugeTest {
         external
         whenTheCallerIsTheModule
     {
-        // It should revert with ZeroRewardRate
+        // It should revert with {ZeroRewardRate}
         _amount = bound(_amount, 1, WEEK - 1);
         deal({token: address(leafXVelo), to: address(leafMessageModule), give: _amount});
         leafXVelo.approve({spender: address(leafGauge), value: _amount});
@@ -69,7 +69,11 @@ contract NotifyRewardWithoutClaimIntegrationFuzzTest is LeafGaugeTest {
         assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
     }
 
-    function testFuzz_WhenTheCurrentTimestampIsLessThanPeriodFinish(uint256 _amount, uint256 _timeskip)
+    function testFuzz_WhenTheCurrentTimestampIsLessThanPeriodFinish(
+        uint256 _initialAmount,
+        uint256 _amount,
+        uint256 _timeskip
+    )
         external
         whenTheCallerIsTheModule
         whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeUntilTheNextTimestamp
@@ -81,14 +85,14 @@ contract NotifyRewardWithoutClaimIntegrationFuzzTest is LeafGaugeTest {
         // It should update the last update timestamp
         // It should update the period finish timestamp
         // It should emit a {NotifyReward} event
-        uint256 initialAmount = TOKEN_1 * 1000;
         _timeskip = bound(_timeskip, 1, WEEK - 1);
+        _initialAmount = bound(_amount, WEEK, MAX_TOKENS);
         _amount = bound(_amount, WEEK - _timeskip, MAX_TOKENS);
 
         // inital deposit of partial amount
-        deal({token: address(leafXVelo), to: address(leafMessageModule), give: initialAmount});
-        leafXVelo.approve({spender: address(leafGauge), value: initialAmount});
-        leafGauge.notifyRewardWithoutClaim({_amount: initialAmount});
+        deal({token: address(leafXVelo), to: address(leafMessageModule), give: _initialAmount});
+        leafXVelo.approve({spender: address(leafGauge), value: _initialAmount});
+        leafGauge.notifyRewardWithoutClaim({_amount: _initialAmount});
 
         skipTime(_timeskip);
 
@@ -100,11 +104,11 @@ contract NotifyRewardWithoutClaimIntegrationFuzzTest is LeafGaugeTest {
         leafGauge.notifyRewardWithoutClaim({_amount: _amount});
 
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
-        assertEq(leafXVelo.balanceOf(address(leafGauge)), _amount + initialAmount);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), _amount + _initialAmount);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);
         uint256 timeUntilNext = WEEK - _timeskip;
-        uint256 rewardRate = ((initialAmount / WEEK) * timeUntilNext + _amount) / timeUntilNext;
+        uint256 rewardRate = ((_initialAmount / WEEK) * timeUntilNext + _amount) / timeUntilNext;
         assertApproxEqAbs(leafGauge.rewardRate(), rewardRate, 1);
         assertApproxEqAbs(leafGauge.rewardRateByEpoch(leafStartTime), rewardRate, 1);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);

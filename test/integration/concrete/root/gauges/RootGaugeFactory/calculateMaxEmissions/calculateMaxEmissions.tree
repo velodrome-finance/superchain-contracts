@@ -6,7 +6,7 @@ CalculateMaxEmissionsIntegrationConcreteTest
 │   │   ├── It should cache the weekly emissions for this epoch
 │   │   └── It should return max amount based on weekly emissions and gauge emission cap
 │   └── When tail emissions have not started
-│       ├── It should weekly emissions before decay
+│       ├── It should calculate weekly emissions before decay
 │       ├── It should cache the current minter active period
 │       ├── It should cache the weekly emissions for this epoch
 │       └── It should return max amount based on weekly emissions and gauge emission cap

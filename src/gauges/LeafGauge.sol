@@ -60,7 +60,6 @@ contract LeafGauge is ILeafGauge, ReentrancyGuard {
     /// @inheritdoc ILeafGauge
     uint256 public fees1;
 
-    // TODO: is isPool necessary? BATMIN/ROBIN gauges?
     constructor(
         address _stakingToken,
         address _feesVotingReward,

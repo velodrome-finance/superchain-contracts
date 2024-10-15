@@ -147,7 +147,6 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
     TestERC20 public token0;
     TestERC20 public token1;
     MultichainMockMailbox public leafMailbox;
-    MockFactoryRegistry public leafMockFactoryRegistry;
     TestIsm public leafIsm;
 
     // common contracts
@@ -385,7 +384,6 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
         vm.startPrank(users.deployer2);
         leafMailbox = new MultichainMockMailbox(leaf);
         leafIsm = new TestIsm();
-        leafMockFactoryRegistry = new MockFactoryRegistry();
         vm.stopPrank();
 
         vm.startPrank(users.deployer);
@@ -531,7 +529,6 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
 
         vm.label({account: address(leafMailbox), newLabel: "Leaf Mailbox"});
         vm.label({account: address(leafIsm), newLabel: "Leaf ISM"});
-        vm.label({account: address(leafMockFactoryRegistry), newLabel: "Leaf Factory Registry"});
         vm.label({account: address(leafVoter), newLabel: "Leaf Voter"});
         vm.label({account: address(leafVotingRewardsFactory), newLabel: "Leaf Voting Rewards Factory"});
     }

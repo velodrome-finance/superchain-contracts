@@ -23,7 +23,7 @@ contract DepositUnitConcreteTest is XERC20LockboxTest {
         assertEq(xVelo.balanceOf(users.alice), amount);
     }
 
-    function testGas_GivenAnyAmount() external {
+    function testGas_deposit() external {
         uint256 amount = TOKEN_1 * 100_000;
         deal(address(rewardToken), users.alice, amount);
 

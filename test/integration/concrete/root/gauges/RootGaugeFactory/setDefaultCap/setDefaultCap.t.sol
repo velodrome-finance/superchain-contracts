@@ -31,4 +31,9 @@ contract SetDefaultCapIntegrationConcreteTest is RootGaugeFactoryTest {
 
         assertEq(rootGaugeFactory.defaultCap(), 1000);
     }
+
+    function testGas_setDefaultCap() external whenCallerIsTheEmissionAdmin {
+        rootGaugeFactory.setDefaultCap({_defaultCap: 1000});
+        snapLastCall("RootGaugeFactory_setDefaultCap");
+    }
 }

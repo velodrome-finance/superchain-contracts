@@ -42,10 +42,13 @@ contract CreateGaugeIntegrationConcreteTest is RootGaugeFactoryTest {
             )
         );
 
+        assertEq(rootGauge.gaugeFactory(), address(rootGaugeFactory));
         assertEq(rootGauge.rewardToken(), address(rootRewardToken));
         assertEq(rootGauge.xerc20(), address(rootXVelo));
+        assertEq(rootGauge.voter(), address(mockVoter));
         assertEq(rootGauge.lockbox(), address(rootLockbox));
         assertEq(rootGauge.bridge(), address(rootMessageBridge));
+        assertEq(rootGauge.minter(), address(minter));
         assertEq(rootGauge.chainid(), leaf);
 
         vm.selectFork({forkId: leafId});
@@ -82,10 +85,19 @@ contract CreateGaugeIntegrationConcreteTest is RootGaugeFactoryTest {
 
         leafGauge = LeafGauge(leafVoter.gauges(pool));
         assertEq(leafGauge.stakingToken(), pool);
-        assertNotEq(leafGauge.feesVotingReward(), address(0));
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
+        assertNotEq(leafGauge.feesVotingReward(), address(0));
+        assertEq(leafGauge.voter(), address(leafVoter));
         assertEq(leafGauge.bridge(), address(leafMessageBridge));
 
         assertEq(address(leafGauge), address(rootGauge));
+    }
+
+    function testGas_createGauge() external {
+        vm.prank(address(mockVoter));
+        (address rootFVR,) = rootVotingRewardsFactory.createRewards(address(0), new address[](0));
+        vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
+        rootGaugeFactory.createGauge(address(0), address(rootPool), address(rootFVR), address(rootRewardToken), true);
+        snapLastCall("RootGaugeFactory_createGauge");
     }
 }

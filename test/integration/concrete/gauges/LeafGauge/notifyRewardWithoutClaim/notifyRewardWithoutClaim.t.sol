@@ -17,7 +17,7 @@ contract NotifyRewardWithoutClaimIntegrationConcreteTest is BaseForkFixture {
     }
 
     function test_WhenTheCallerIsNotTheModule() external {
-        // It should revert with NotModule
+        // It should revert with {NotModule}
         vm.prank(users.charlie);
         vm.expectRevert(ILeafGauge.NotModule.selector);
         leafGauge.notifyRewardWithoutClaim({_amount: TOKEN_1 * 1000});
@@ -29,7 +29,7 @@ contract NotifyRewardWithoutClaimIntegrationConcreteTest is BaseForkFixture {
     }
 
     function test_WhenTheAmountIsZero() external whenTheCallerIsTheModule {
-        // It should revert with ZeroAmount
+        // It should revert with {ZeroAmount}
         vm.expectRevert(ILeafGauge.ZeroAmount.selector);
         leafGauge.notifyRewardWithoutClaim({_amount: 0});
     }
@@ -38,7 +38,7 @@ contract NotifyRewardWithoutClaimIntegrationConcreteTest is BaseForkFixture {
         external
         whenTheCallerIsTheModule
     {
-        // It should revert with ZeroRewardRate
+        // It should revert with {ZeroRewardRate}
         vm.expectRevert(ILeafGauge.ZeroRewardRate.selector);
         leafGauge.notifyRewardWithoutClaim({_amount: WEEK - 1});
     }
@@ -109,5 +109,15 @@ contract NotifyRewardWithoutClaimIntegrationConcreteTest is BaseForkFixture {
         assertEq(leafGauge.rewardRateByEpoch(leafStartTime), rewardRate);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
         assertEq(leafGauge.periodFinish(), block.timestamp + WEEK / 7 * 2);
+    }
+
+    function testGas_notifyRewardWithoutClaim()
+        external
+        whenTheCallerIsTheModule
+        whenTheAmountIsGreaterThanZeroAndGreaterThanOrEqualToTheTimeUntilTheNextTimestamp
+    {
+        uint256 amount = TOKEN_1 * 1000;
+        leafGauge.notifyRewardWithoutClaim({_amount: amount});
+        snapLastCall("LeafGauge_notifyRewardWithoutClaim");
     }
 }

@@ -113,7 +113,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
     }
 
-    function testGas_WhenTheAmountIsLessThanOrEqualToTheBalanceOfCaller()
+    function testGas_sendToken()
         external
         whenTheRequestedAmountIsNotZero
         whenTheRequestedChainIsARegisteredChain

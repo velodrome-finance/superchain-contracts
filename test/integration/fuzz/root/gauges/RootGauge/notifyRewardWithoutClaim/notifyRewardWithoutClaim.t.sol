@@ -101,11 +101,11 @@ contract NotifyRewardWithoutClaimIntegrationFuzzTest is RootGaugeTest {
         assertEq(leafGauge.periodFinish(), block.timestamp + timeUntilNext);
     }
 
-    function testFuzz_WhenTheCurrentTimestampIsLessThanPeriodFinish(uint256 _amount, uint256 _timeskip)
-        external
-        whenTheCallerIsNotifyAdmin
-        whenTheAmountIsGreaterThanOrEqualToTheTimeInAWeek
-    {
+    function testFuzz_WhenTheCurrentTimestampIsLessThanPeriodFinish(
+        uint256 _initialAmount,
+        uint256 _amount,
+        uint256 _timeskip
+    ) external whenTheCallerIsNotifyAdmin whenTheAmountIsGreaterThanOrEqualToTheTimeInAWeek {
         // It should wrap the tokens to the XERC20 token
         // It should bridge the XERC20 token to the corresponding LeafGauge
         // It should update rewardPerTokenStored
@@ -122,13 +122,14 @@ contract NotifyRewardWithoutClaimIntegrationFuzzTest is RootGaugeTest {
 
         _timeskip = bound(_timeskip, 1, WEEK - 1);
         _amount = bound(_amount, WEEK, MAX_BUFFER_CAP / 4);
-        uint256 bufferCap = Math.max(_amount * 4, rootXVelo.minBufferCap() + 1);
+        _initialAmount = bound(_amount, WEEK, MAX_BUFFER_CAP / 4);
+        uint256 bufferCap = Math.max((_initialAmount + _amount) * 2, rootXVelo.minBufferCap() + 1);
         setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
         vm.warp({newTimestamp: leafStartTime});
 
-        deal({token: address(rootRewardToken), to: notifyAdmin, give: _amount * 2});
+        deal({token: address(rootRewardToken), to: notifyAdmin, give: _initialAmount + _amount});
         vm.prank(notifyAdmin);
-        rootRewardToken.approve({spender: address(rootGauge), value: _amount * 2});
+        rootRewardToken.approve({spender: address(rootGauge), value: _initialAmount + _amount});
 
         // inital deposit of partial amount
         vm.prank({msgSender: notifyAdmin, txOrigin: users.alice});
@@ -153,7 +154,7 @@ contract NotifyRewardWithoutClaimIntegrationFuzzTest is RootGaugeTest {
         emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: _amount});
         vm.warp({newTimestamp: leafStartTime + _timeskip});
         leafMailbox.processNextInboundMessage();
-        assertEq(leafXVelo.balanceOf(address(leafGauge)), _amount * 2);
+        assertEq(leafXVelo.balanceOf(address(leafGauge)), _initialAmount + _amount);
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);
         uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;

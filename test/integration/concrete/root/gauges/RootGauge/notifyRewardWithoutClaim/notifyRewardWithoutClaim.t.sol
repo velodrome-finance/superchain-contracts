@@ -14,7 +14,7 @@ contract NotifyRewardWithoutClaimIntegrationConcreteTest is RootGaugeTest {
     }
 
     function test_WhenTheCallerIsNotNotifyAdmin() external {
-        // It should revert with NotAuthorized
+        // It should revert with {NotAuthorized}
         vm.prank(users.charlie);
         vm.expectRevert(IRootGauge.NotAuthorized.selector);
         rootGauge.notifyRewardWithoutClaim({_amount: 0});
@@ -26,7 +26,7 @@ contract NotifyRewardWithoutClaimIntegrationConcreteTest is RootGaugeTest {
     }
 
     function test_WhenTheAmountIsSmallerThanTheTimeInAWeek() external whenTheCallerIsNotifyAdmin {
-        // It should revert with ZeroRewardRate
+        // It should revert with {ZeroRewardRate}
         uint256 amount = WEEK - 1;
         vm.expectRevert(IRootGauge.ZeroRewardRate.selector);
         rootGauge.notifyRewardWithoutClaim({_amount: amount});
@@ -137,5 +137,22 @@ contract NotifyRewardWithoutClaimIntegrationConcreteTest is RootGaugeTest {
         assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), rewardRate);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
         assertEq(leafGauge.periodFinish(), block.timestamp + WEEK / 7 * 2);
+    }
+
+    function testGas_notifyRewardWithoutClaim()
+        external
+        whenTheCallerIsNotifyAdmin
+        whenTheAmountIsGreaterThanOrEqualToTheTimeInAWeek
+    {
+        uint256 amount = TOKEN_1 * 1_000;
+        setLimits({_rootBufferCap: amount * 2, _leafBufferCap: amount * 2});
+
+        deal({token: address(rootRewardToken), to: users.owner, give: amount});
+        vm.prank(users.owner);
+        rootRewardToken.approve({spender: address(rootGauge), value: amount});
+
+        vm.prank({msgSender: users.owner, txOrigin: users.alice});
+        rootGauge.notifyRewardWithoutClaim({_amount: amount});
+        snapLastCall("RootGauge_notifyRewardWithoutClaim");
     }
 }

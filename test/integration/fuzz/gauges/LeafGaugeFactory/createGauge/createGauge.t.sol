@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "../LeafGaugeFactory.t.sol";
 
-contract CreateGaugeIntegrationConcreteTest is LeafGaugeFactoryTest {
+contract CreateGaugeIntegrationFuzzTest is LeafGaugeFactoryTest {
     function setUp() public override {
         super.setUp();
 
@@ -11,31 +11,27 @@ contract CreateGaugeIntegrationConcreteTest is LeafGaugeFactoryTest {
         leafPool = Pool(leafPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), stable: true}));
     }
 
-    function test_WhenTheCallerIsNotVoter() external {
-        // It reverts with {NotVoter}
+    function testFuzz_WhenTheCallerIsNotVoter(address _caller) external {
+        // It reverts with NotVoter
+        vm.assume(_caller != address(leafVoter));
+
         vm.prank(users.charlie);
         vm.expectRevert(ILeafGaugeFactory.NotVoter.selector);
         leafGaugeFactory.createGauge({_pool: address(leafPool), _feesVotingReward: address(0), isPool: true});
     }
 
-    function test_WhenTheCallerIsVoter() external {
+    function testFuzz_WhenTheCallerIsVoter(address _fvr, bool _isPool) external {
         // It creates a new gauge
         vm.prank(address(leafVoter));
         LeafGauge leafGauge = LeafGauge(
-            leafGaugeFactory.createGauge({_pool: address(leafPool), _feesVotingReward: address(11), isPool: true})
+            leafGaugeFactory.createGauge({_pool: address(leafPool), _feesVotingReward: _fvr, isPool: _isPool})
         );
 
         assertEq(leafGauge.stakingToken(), address(leafPool));
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
-        assertEq(leafGauge.feesVotingReward(), address(11));
+        assertEq(leafGauge.feesVotingReward(), _fvr);
         assertEq(leafGauge.voter(), address(leafVoter));
         assertEq(leafGauge.bridge(), address(leafMessageBridge));
-        assertEq(leafGauge.isPool(), true);
-    }
-
-    function testGas_createGauge() external {
-        vm.prank(address(leafVoter));
-        leafGaugeFactory.createGauge({_pool: address(leafPool), _feesVotingReward: address(11), isPool: true});
-        snapLastCall("LeafGaugeFactory_createGauge");
+        assertEq(leafGauge.isPool(), _isPool);
     }
 }

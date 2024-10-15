@@ -28,7 +28,7 @@ contract SetInterchainSecurityModuleIntegrationConcreteTest is TokenBridgeTest {
         assertEq(address(leafTokenBridge.securityModule()), address(1));
     }
 
-    function testGas_WhenTheCallerIsTheOwner() external {
+    function testGas_setInterchainSecurityModule() external {
         vm.prank(users.owner);
         leafTokenBridge.setInterchainSecurityModule({_ism: address(1)});
         snapLastCall("TokenBridge_setInterchainSecurityModule");

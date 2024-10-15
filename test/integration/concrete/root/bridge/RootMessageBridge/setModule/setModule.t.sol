@@ -68,7 +68,7 @@ contract SetModuleIntegrationConcreteTest is RootMessageBridgeTest {
         assertEq(rootMessageBridge.chains(1), address(rootMessageModule));
     }
 
-    function testGas_WhenTheChainIsRegistered() external whenTheCallerIsOwner whenTheModuleIsAddedToTheRegistry {
+    function testGas_setModule() external whenTheCallerIsOwner whenTheModuleIsAddedToTheRegistry {
         vm.startPrank(users.owner);
         rootMessageBridge.addModule({_module: address(1)});
         rootMessageBridge.registerChain({_chainid: 1, _module: address(1)});

@@ -63,7 +63,7 @@ contract WithdrawIntegrationConcreteTest is RootFeesVotingRewardTest {
         assertEq(leafIVR.balanceOf(tokenId), 0);
     }
 
-    function testGas_WhenCallerIsVoter() external {
+    function testGas_withdraw() external {
         deal({token: address(weth), to: users.alice, give: MESSAGE_FEE * 2});
         vm.prank(users.alice);
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
