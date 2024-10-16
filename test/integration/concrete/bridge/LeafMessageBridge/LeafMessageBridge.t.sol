@@ -10,9 +10,9 @@ abstract contract LeafMessageBridgeTest is BaseForkFixture {
     }
 
     function test_InitialState() public view {
-        assertEq(leafMessageBridge.module(), address(leafMessageModule));
-        assertEq(leafMessageBridge.owner(), users.owner);
         assertEq(leafMessageBridge.xerc20(), address(leafXVelo));
         assertEq(leafMessageBridge.voter(), address(leafVoter));
+        assertEq(leafMessageBridge.module(), address(leafMessageModule));
+        assertEq(leafMessageBridge.owner(), users.owner);
     }
 }

@@ -41,4 +41,19 @@ contract SetModuleIntegrationConcreteTest is LeafMessageBridgeTest {
 
         assertEq(leafMessageBridge.module(), module);
     }
+
+    function testGas_setModule() external whenCallerIsOwner {
+        address module = address(
+            new LeafHLMessageModule({
+                _owner: users.owner,
+                _bridge: address(leafMessageBridge),
+                _mailbox: address(rootMailbox),
+                _ism: address(rootIsm)
+            })
+        );
+
+        vm.prank(users.owner);
+        leafMessageBridge.setModule({_module: module});
+        snapLastCall("LeafMessageBridge_setModule");
+    }
 }

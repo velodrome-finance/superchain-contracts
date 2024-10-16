@@ -1,9 +1,9 @@
 HandleIntegrationConcreteTest
 ├── When the caller is not mailbox
-│   └── It should revert with NotMailbox
+│   └── It should revert with {NotMailbox}
 └── When the caller is mailbox
     ├── When the sender is not bridge
-    │   └── It should revert with NotBridge
+    │   └── It should revert with {NotBridge}
     └── When the sender is bridge 
         ├── When the requested amount is higher than the current minting limit
         │   └── It should revert with "RateLimited: rate limit hit"

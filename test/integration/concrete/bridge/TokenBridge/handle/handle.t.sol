@@ -14,7 +14,7 @@ contract HandleIntegrationConcreteTest is TokenBridgeTest {
     }
 
     function test_WhenTheCallerIsNotMailbox() external {
-        // It should revert with NotMailbox
+        // It should revert with {NotMailbox}
         vm.prank(users.charlie);
         vm.expectRevert(IHLHandler.NotMailbox.selector);
         leafTokenBridge.handle({_origin: root, _sender: sender, _message: abi.encodePacked(users.charlie, uint256(1))});
@@ -26,7 +26,7 @@ contract HandleIntegrationConcreteTest is TokenBridgeTest {
     }
 
     function test_WhenTheSenderIsNotBridge() external whenTheCallerIsMailbox {
-        // It should revert with NotBridge
+        // It should revert with {NotBridge}
         vm.expectRevert(ITokenBridge.NotBridge.selector);
         leafTokenBridge.handle({_origin: root, _sender: sender, _message: abi.encodePacked(users.charlie, uint256(1))});
     }

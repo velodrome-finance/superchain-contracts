@@ -3,7 +3,8 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "../RootMessageBridge.t.sol";
 
-contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
+contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
+    uint256 public amount = TOKEN_1 * 1000;
     uint256 public command;
 
     function setUp() public override {
@@ -15,32 +16,21 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         deal({token: address(weth), to: users.alice, give: MESSAGE_FEE});
         vm.prank(users.alice);
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE});
-    }
 
-    function test_InitialState() public override {
+        vm.selectFork({forkId: leafId});
+        leafStartTime = block.timestamp;
         vm.selectFork({forkId: rootId});
-        assertEq(rootMessageBridge.owner(), users.owner);
-        assertEq(rootMessageBridge.xerc20(), address(rootXVelo));
-        assertEq(rootMessageBridge.voter(), address(mockVoter));
-        assertEq(rootMessageBridge.factoryRegistry(), address(mockFactoryRegistry));
-        assertEq(rootMessageBridge.weth(), address(weth));
-        // chain was deregistered in set up, but module was added in base fork fixture
-        uint256[] memory chainids = rootMessageBridge.chainids();
-        assertEq(chainids.length, 0);
-        address[] memory modules = rootMessageBridge.modules();
-        assertEq(modules.length, 1);
-        assertEq(modules[0], address(rootMessageModule));
+        rootStartTime = block.timestamp;
     }
 
-    function test_WhenTheChainIdIsNotRegistered() external {
+    function testFuzz_WhenTheChainIdIsNotRegistered(uint256 _chainid) external {
         // It should revert with {ChainNotRegistered}
-        uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
 
         vm.prank(users.charlie);
         vm.expectRevert(ICrossChainRegistry.ChainNotRegistered.selector);
-        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
+        rootMessageBridge.sendMessage({_chainid: _chainid, _message: message});
     }
 
     modifier whenTheChainIdIsRegistered() {
@@ -54,28 +44,29 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         _;
     }
 
-    function test_WhenTheCallerIsNotAFeeContractRegisteredOnTheVoter()
+    function testFuzz_WhenTheCallerIsNotAFeeContractRegisteredOnTheVoter(address _caller)
         external
         whenTheChainIdIsRegistered
         whenTheCommandIsDeposit
     {
         // It should revert with {NotAuthorized}
-        uint256 amount = TOKEN_1 * 1000;
+        vm.assume(_caller != address(rootFVR));
+
         uint256 tokenId = 1;
         bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
 
-        vm.prank(users.charlie);
+        vm.prank(_caller);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.DEPOSIT));
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
-    function test_WhenTheCallerIsAFeeContractRegisteredOnTheVoter()
+    function testFuzz_WhenTheCallerIsAFeeContractRegisteredOnTheVoter(uint256 _amount)
         external
         whenTheChainIdIsRegistered
         whenTheCommandIsDeposit
     {
         // It dispatches the deposit message to the message module
-        uint256 amount = TOKEN_1 * 1000;
+        amount = bound(_amount, 1, MAX_TOKENS);
         uint256 tokenId = 1;
         bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
 
@@ -98,25 +89,26 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         _;
     }
 
-    function test_WhenTheCallerIsNotAFeeContractRegisteredOnTheVoter_()
+    function testFuzz_WhenTheCallerIsNotAFeeContractRegisteredOnTheVoter_(address _caller)
         external
         whenTheChainIdIsRegistered
         whenTheCommandIsWithdraw
     {
         // It should revert with {NotAuthorized}
-        uint256 amount = TOKEN_1 * 1000;
+        vm.assume(_caller != address(rootFVR));
+
         uint256 tokenId = 1;
         bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
 
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
         message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
-        vm.startPrank(users.charlie);
+        vm.startPrank(_caller);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.WITHDRAW));
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
-    function test_WhenTheCallerIsAFeeContractRegisteredOnTheVoter_()
+    function testFuzz_WhenTheCallerIsAFeeContractRegisteredOnTheVoter_(uint256 _amount)
         external
         whenTheChainIdIsRegistered
         whenTheCommandIsWithdraw
@@ -126,13 +118,13 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         vm.prank(users.alice);
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
 
-        uint256 amount = TOKEN_1 * 1000;
+        _amount = bound(_amount, 1, MAX_TOKENS);
         uint256 tokenId = 1;
-        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
+        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), _amount, tokenId);
 
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
-        message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
+        message = abi.encodePacked(uint8(command), address(leafGauge), _amount, tokenId);
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
 
@@ -141,10 +133,10 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage();
 
-        assertEq(leafFVR.totalSupply(), amount);
-        assertEq(leafFVR.balanceOf(tokenId), amount);
-        assertEq(leafIVR.totalSupply(), amount);
-        assertEq(leafIVR.balanceOf(tokenId), amount);
+        assertEq(leafFVR.totalSupply(), _amount);
+        assertEq(leafFVR.balanceOf(tokenId), _amount);
+        assertEq(leafIVR.totalSupply(), _amount);
+        assertEq(leafIVR.balanceOf(tokenId), _amount);
 
         leafMailbox.processNextInboundMessage();
 
@@ -159,12 +151,13 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         _;
     }
 
-    function test_WhenTheCallerIsNotRootGaugeFactory()
+    function testFuzz_WhenTheCallerIsNotRootGaugeFactory(address _caller)
         external
         whenTheChainIdIsRegistered
         whenTheCommandIsCreateGauge
     {
         // It should revert with {NotAuthorized}
+        vm.assume(_caller != address(rootGaugeFactory));
         uint24 _poolParam = 1;
         bytes memory message = abi.encodePacked(
             uint8(command),
@@ -176,94 +169,71 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
             _poolParam
         );
 
-        vm.prank(users.charlie);
+        vm.prank(_caller);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.CREATE_GAUGE));
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
-    function test_WhenTheCallerIsRootGaugeFactory() external whenTheChainIdIsRegistered whenTheCommandIsCreateGauge {
-        // It dispatches the create gauge message to the message module
-        uint24 _poolParam = 1;
-        bytes memory message = abi.encodePacked(
-            uint8(command),
-            address(rootPoolFactory),
-            address(rootVotingRewardsFactory),
-            address(rootGaugeFactory),
-            address(token0),
-            address(token1),
-            _poolParam
-        );
+    function testFuzz_WhenTheCallerIsRootGaugeFactory()
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsCreateGauge
+    {}
 
-        vm.prank({msgSender: address(rootGaugeFactory), txOrigin: users.alice});
-        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
-
-        vm.selectFork({forkId: leafId});
-        leafMailbox.processNextInboundMessage();
-
-        address pool = Clones.predictDeterministicAddress({
-            deployer: address(leafPoolFactory),
-            implementation: leafPoolFactory.implementation(),
-            salt: keccak256(abi.encodePacked(address(token0), address(token1), true))
-        });
-
-        leafGauge = LeafGauge(leafVoter.gauges(pool));
-        assertEq(leafGauge.stakingToken(), pool);
-        assertNotEq(leafGauge.feesVotingReward(), address(0));
-        assertEq(leafGauge.rewardToken(), address(leafXVelo));
-        assertEq(leafGauge.bridge(), address(leafMessageBridge));
-    }
-
-    modifier whenTheCommandIsGetIncentives() {
+    modifier whenTheCommandIsGetIncentives(uint256 _amount) {
         command = Commands.GET_INCENTIVES;
+        amount = bound(_amount, 1, MAX_BUFFER_CAP / 2);
 
         vm.selectFork({forkId: leafId});
-        deal(address(token0), address(leafGauge), TOKEN_1);
-        deal(address(token1), address(leafGauge), TOKEN_1);
-        // Using WETH as Incentive token
-        deal(address(weth), address(leafGauge), TOKEN_1);
+        vm.warp(leafStartTime);
+        deal(address(token0), address(leafGauge), amount);
+        deal(address(token1), address(leafGauge), amount);
+        // Using WETH as Bribe token
+        deal(address(weth), address(leafGauge), amount);
 
         // Notify rewards contracts
         vm.startPrank(address(leafGauge));
 
-        token0.approve(address(leafIVR), TOKEN_1);
-        token1.approve(address(leafIVR), TOKEN_1);
-        weth.approve(address(leafIVR), TOKEN_1);
-        leafIVR.notifyRewardAmount(address(token0), TOKEN_1);
-        leafIVR.notifyRewardAmount(address(token1), TOKEN_1);
-        leafIVR.notifyRewardAmount(address(weth), TOKEN_1);
+        token0.approve(address(leafIVR), amount);
+        token1.approve(address(leafIVR), amount);
+        weth.approve(address(leafIVR), amount);
+        leafIVR.notifyRewardAmount(address(token0), amount);
+        leafIVR.notifyRewardAmount(address(token1), amount);
+        leafIVR.notifyRewardAmount(address(weth), amount);
         vm.stopPrank();
 
         // Deposit into Reward contracts and Skip to next epoch to accrue rewards
         uint256 tokenId = 1;
         vm.prank(address(leafMessageModule));
-        leafIVR._deposit({amount: TOKEN_1, tokenId: tokenId});
-
-        skipToNextEpoch(1);
+        leafIVR._deposit({amount: amount, tokenId: tokenId});
+        vm.warp(leafStartTime + WEEK + 1);
 
         vm.selectFork({forkId: rootId});
+        vm.warp(rootStartTime + WEEK + 1);
         _;
     }
 
-    function test_WhenTheCallerIsNotAnIncentiveContractRegisteredOnTheVoter()
+    function testFuzz_WhenTheCallerIsNotAnIncentiveContractRegisteredOnTheVoter(address _caller)
         external
         whenTheChainIdIsRegistered
-        whenTheCommandIsGetIncentives
+        whenTheCommandIsGetIncentives(0)
     {
         // It should revert with {NotAuthorized}
+        vm.assume(_caller != address(rootIVR));
         uint256 tokenId = 1;
         address[] memory tokens = new address[](0);
         bytes memory message =
             abi.encodePacked(uint8(command), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens);
 
-        vm.prank(users.charlie);
+        vm.prank(_caller);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.GET_INCENTIVES));
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
-    function test_WhenTheCallerIsAnIncentiveContractRegisteredOnTheVoter()
+    function testFuzz_WhenTheCallerIsAnIncentiveContractRegisteredOnTheVoter(uint256 _amount)
         external
         whenTheChainIdIsRegistered
-        whenTheCommandIsGetIncentives
+        whenTheCommandIsGetIncentives(_amount)
     {
         // It dispatches the get incentives message to the message module
         uint256 tokenId = 1;
@@ -284,59 +254,65 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         assertEq(token1.balanceOf(users.alice), 0);
         assertEq(weth.balanceOf(users.alice), 0);
 
+        vm.warp(leafStartTime + WEEK + 1);
         leafMailbox.processNextInboundMessage();
 
-        assertEq(token0.balanceOf(users.alice), TOKEN_1);
-        assertEq(token1.balanceOf(users.alice), TOKEN_1);
-        assertEq(weth.balanceOf(users.alice), TOKEN_1);
+        assertEq(token0.balanceOf(users.alice), amount);
+        assertEq(token1.balanceOf(users.alice), amount);
+        assertEq(weth.balanceOf(users.alice), amount);
     }
 
-    modifier whenTheCommandIsGetFees() {
+    modifier whenTheCommandIsGetFees(uint256 _amount) {
         command = Commands.GET_FEES;
+        amount = bound(_amount, 1, MAX_BUFFER_CAP / 2);
 
         vm.selectFork({forkId: leafId});
-        deal(address(token0), address(leafGauge), TOKEN_1);
-        deal(address(token1), address(leafGauge), TOKEN_1);
+        vm.warp(leafStartTime);
+        deal(address(token0), address(leafGauge), amount);
+        deal(address(token1), address(leafGauge), amount);
 
         // Notify rewards contracts
         vm.startPrank(address(leafGauge));
-        token0.approve(address(leafFVR), TOKEN_1);
-        token1.approve(address(leafFVR), TOKEN_1);
-        leafFVR.notifyRewardAmount(address(token0), TOKEN_1);
-        leafFVR.notifyRewardAmount(address(token1), TOKEN_1);
+        token0.approve(address(leafFVR), amount);
+        token1.approve(address(leafFVR), amount);
+        leafFVR.notifyRewardAmount(address(token0), amount);
+        leafFVR.notifyRewardAmount(address(token1), amount);
         vm.stopPrank();
 
         // Deposit into Reward contracts and Skip to next epoch to accrue rewards
         uint256 tokenId = 1;
         vm.prank(address(leafMessageModule));
-        leafFVR._deposit({amount: TOKEN_1, tokenId: tokenId});
+        leafFVR._deposit({amount: amount, tokenId: tokenId});
+        vm.warp(leafStartTime + WEEK + 1);
 
         skipToNextEpoch(1);
 
         vm.selectFork({forkId: rootId});
+        vm.warp(rootStartTime + WEEK + 1);
         _;
     }
 
-    function test_WhenTheCallerIsNotAFeesContractRegisteredOnTheVoter()
+    function testFuzz_WhenTheCallerIsNotAFeesContractRegisteredOnTheVoter(address _caller)
         external
         whenTheChainIdIsRegistered
-        whenTheCommandIsGetFees
+        whenTheCommandIsGetFees(0)
     {
         // It should revert with {NotAuthorized}
+        vm.assume(_caller != address(rootFVR));
         uint256 tokenId = 1;
         address[] memory tokens = new address[](0);
         bytes memory message =
             abi.encodePacked(uint8(command), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens);
 
-        vm.prank(users.charlie);
+        vm.prank(_caller);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.GET_FEES));
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
-    function test_WhenTheCallerIsAFeesContractRegisteredOnTheVoter()
+    function testFuzz_WhenTheCallerIsAFeesContractRegisteredOnTheVoter(uint256 _amount)
         external
         whenTheChainIdIsRegistered
-        whenTheCommandIsGetFees
+        whenTheCommandIsGetFees(_amount)
     {
         // It dispatches the get fees message to the message module
         uint256 tokenId = 1;
@@ -355,10 +331,11 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         assertEq(token0.balanceOf(users.alice), 0);
         assertEq(token1.balanceOf(users.alice), 0);
 
+        vm.warp(leafStartTime + WEEK + 1);
         leafMailbox.processNextInboundMessage();
 
-        assertEq(token0.balanceOf(users.alice), TOKEN_1);
-        assertEq(token1.balanceOf(users.alice), TOKEN_1);
+        assertEq(token0.balanceOf(users.alice), amount);
+        assertEq(token1.balanceOf(users.alice), amount);
     }
 
     modifier whenTheCommandIsNotify() {
@@ -366,22 +343,31 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         _;
     }
 
-    function test_WhenTheCallerIsNotAnAliveGauge() external whenTheChainIdIsRegistered whenTheCommandIsNotify {
+    function testFuzz_WhenTheCallerIsNotAnAliveGauge(address _caller)
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsNotify
+    {
         // It should revert with {NotValidGauge}
-        uint256 amount = TOKEN_1 * 1000;
+        vm.assume(mockVoter.isAlive(_caller) == false);
         bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount);
 
-        vm.prank(users.charlie);
+        vm.prank(_caller);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotValidGauge.selector));
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
-    function test_WhenTheCallerIsAnAliveGauge() external whenTheChainIdIsRegistered whenTheCommandIsNotify {
+    function testFuzz_WhenTheCallerIsAnAliveGauge(uint256 _amount)
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsNotify
+    {
         // It dispatches the notify message to the message module
-        uint256 amount = TOKEN_1 * 1000;
+        amount = bound(_amount, WEEK, MAX_BUFFER_CAP / 2);
         deal(address(rootXVelo), address(rootGauge), amount);
 
-        setLimits({_rootBufferCap: amount * 2, _leafBufferCap: amount * 2});
+        uint256 bufferCap = Math.max(amount * 2, rootXVelo.minBufferCap() + 1);
+        setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
 
         bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount);
 
@@ -413,26 +399,31 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         _;
     }
 
-    function test_WhenCallerIsNotAnAliveGauge()
+    function testFuzz_WhenCallerIsNotAnAliveGauge(address _caller)
         external
         whenTheChainIdIsRegistered
         whenTheCommandIsNotifyWithoutClaim
     {
         // It should revert with {NotValidGauge}
-        uint256 amount = TOKEN_1 * 1000;
+        vm.assume(mockVoter.isAlive(_caller) == false);
         bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount);
 
-        vm.prank(users.charlie);
+        vm.prank(_caller);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotValidGauge.selector));
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
-    function test_WhenCallerIsAnAliveGauge() external whenTheChainIdIsRegistered whenTheCommandIsNotifyWithoutClaim {
+    function testFuzz_WhenCallerIsAnAliveGauge(uint256 _amount)
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsNotifyWithoutClaim
+    {
         // It dispatches the notify without claim message to the message module
-        uint256 amount = TOKEN_1 * 1000;
+        amount = bound(_amount, WEEK, MAX_BUFFER_CAP / 2);
         deal(address(rootXVelo), address(rootGauge), amount);
 
-        setLimits({_rootBufferCap: amount * 2, _leafBufferCap: amount * 2});
+        uint256 bufferCap = Math.max(amount * 2, rootXVelo.minBufferCap() + 1);
+        setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
 
         bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount);
 
@@ -463,66 +454,46 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         _;
     }
 
-    function test_WhenCallerIsNotEmergencyCouncil() external whenTheChainIdIsRegistered whenTheCommandIsKillGauge {
+    function testFuzz_WhenCallerIsNotEmergencyCouncil(address _caller)
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsKillGauge
+    {
         // It should revert with {NotAuthorized}
+        vm.assume(_caller != mockVoter.emergencyCouncil());
         bytes memory message = abi.encodePacked(uint8(command), address(leafGauge));
 
-        vm.prank(users.charlie);
+        vm.prank(_caller);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, command));
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
-    function test_WhenCallerIsEmergencyCouncil() external whenTheChainIdIsRegistered whenTheCommandIsKillGauge {
-        // It dispatches the kill gauge message to the message module
-        bytes memory message = abi.encodePacked(uint8(command), address(leafGauge));
-
-        vm.startPrank({msgSender: mockVoter.emergencyCouncil(), txOrigin: users.alice});
-        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
-
-        vm.selectFork({forkId: leafId});
-        leafMailbox.processNextInboundMessage();
-
-        assertFalse(leafVoter.isAlive(address(leafGauge)));
-    }
+    function testFuzz_WhenCallerIsEmergencyCouncil() external whenTheChainIdIsRegistered whenTheCommandIsKillGauge {}
 
     modifier whenTheCommandIsReviveGauge() {
         command = Commands.REVIVE_GAUGE;
         _;
     }
 
-    function test_WhenCallerIsNotEmergencyCouncil_() external whenTheChainIdIsRegistered whenTheCommandIsReviveGauge {
+    function testFuzz_WhenCallerIsNotEmergencyCouncil_(address _caller)
+        external
+        whenTheChainIdIsRegistered
+        whenTheCommandIsReviveGauge
+    {
         // It should revert with {NotAuthorized}
+        vm.assume(_caller != mockVoter.emergencyCouncil());
         bytes memory message = abi.encodePacked(uint8(command), address(leafGauge));
 
-        vm.prank(users.charlie);
+        vm.prank(_caller);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, command));
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
-    function test_WhenCallerIsEmergencyCouncil_() external whenTheChainIdIsRegistered whenTheCommandIsReviveGauge {
-        // It dispatches the revive gauge message to the message module
-        vm.selectFork({forkId: leafId});
-        vm.startPrank(address(leafMessageModule));
-        leafVoter.killGauge(address(leafGauge));
+    function testFuzz_WhenCallerIsEmergencyCouncil_() external whenTheChainIdIsRegistered whenTheCommandIsReviveGauge {}
 
-        assertFalse(leafVoter.isAlive(address(leafGauge)));
-
-        vm.selectFork({forkId: rootId});
-        bytes memory message = abi.encodePacked(uint8(command), address(leafGauge));
-
-        vm.startPrank({msgSender: mockVoter.emergencyCouncil(), txOrigin: users.alice});
-        rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
-
-        vm.selectFork({forkId: leafId});
-        leafMailbox.processNextInboundMessage();
-
-        assertTrue(leafVoter.isAlive(address(leafGauge)));
-    }
-
-    function test_WhenTheCommandIsNotAnyExpectedCommand() external whenTheChainIdIsRegistered {
+    function testFuzz_WhenTheCommandIsNotAnyExpectedCommand(uint8 _command) external whenTheChainIdIsRegistered {
         // It should revert with {InvalidCommand}
-        command = type(uint8).max;
-
+        command = uint8(bound(_command, Commands.REVIVE_GAUGE + 1, type(uint8).max));
         bytes memory message = abi.encodePacked(uint8(command), address(token0), address(token1), true);
 
         vm.prank(users.alice);

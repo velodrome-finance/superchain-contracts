@@ -19,23 +19,33 @@ SendMessageIntegrationConcreteTest
     │       └── It dispatches the create gauge message to the message module
     ├── When the command is get incentives
     │   ├── When the caller is not an incentive contract registered on the voter
-    │   │   └── It should revert with NotAuthorized
+    │   │   └── It should revert with {NotAuthorized}
     │   └── When the caller is an incentive contract registered on the voter
     │       └── It dispatches the get incentives message to the message module
     ├── When the command is get fees
     │   ├── When the caller is not a fees contract registered on the voter
-    │   │   └── It should revert with NotAuthorized
+    │   │   └── It should revert with {NotAuthorized}
     │   └── When the caller is a fees contract registered on the voter
     │       └── It dispatches the get fees message to the message module
     ├── When the command is notify
     │   ├── When the caller is not an alive gauge 
-    │   │   └── It should revert with NotValidGauge
+    │   │   └── It should revert with {NotValidGauge}
     │   └── When the caller is an alive gauge 
     │       └── It dispatches the notify message to the message module
     ├── When the command is notify without claim
     │   ├── When caller is not an alive gauge
-    │   │   └── It should revert with NotValidGauge
+    │   │   └── It should revert with {NotValidGauge}
     │   └── When caller is an alive gauge
     │       └── It dispatches the notify without claim message to the message module
+    ├── When the command is kill gauge
+    │   ├── When caller is not emergency council
+    │   │   └── It should revert with {NotAuthorized}
+    │   └── When caller is emergency council
+    │       └── It dispatches the kill gauge message to the message module
+    ├── When the command is revive gauge
+    │   ├── When caller is not emergency council_
+    │   │   └── It should revert with {NotAuthorized}
+    │   └── When caller is emergency council_
+    │       └── It dispatches the revive gauge message to the message module
     └── When the command is not any expected command
         └── It should revert with {InvalidCommand}

@@ -11,7 +11,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
     }
 
     function test_WhenTheRequestedAmountIsZero() external {
-        // It should revert with ZeroAmount
+        // It should revert with {ZeroAmount}
         vm.expectRevert(ITokenBridge.ZeroAmount.selector);
         rootTokenBridge.sendToken({_amount: amount, _chainid: leaf});
     }
@@ -60,7 +60,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         whenTheRequestedChainIsARegisteredChain
         whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
     {
-        // It should revert with ERC20InsufficientBalance
+        // It should revert with {ERC20InsufficientBalance}
         deal({token: address(rootXVelo), to: address(rootGauge), give: amount - 1});
 
         vm.startPrank(address(rootGauge));

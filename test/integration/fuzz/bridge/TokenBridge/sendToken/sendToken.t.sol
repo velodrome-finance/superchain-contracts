@@ -47,7 +47,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
         whenTheRequestedChainIsARegisteredChain
         whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(_bufferCap, _amount)
     {
-        // It should revert with ERC20InsufficientBalance
+        // It should revert with {ERC20InsufficientBalance}
         _balance = bound(_balance, 0, amount - 1);
         deal({token: address(rootXVelo), to: address(rootGauge), give: _balance});
 

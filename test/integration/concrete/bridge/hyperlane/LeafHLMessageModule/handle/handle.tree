@@ -1,15 +1,15 @@
 HandleIntegrationConcreteTest
 ├── When the caller is not mailbox
-│   └── It reverts with NotMailbox
+│   └── It reverts with {NotMailbox}
 └── When the caller is mailbox
     ├── When the origin is not root
-    │   └── It should revert with NotRoot
+    │   └── It should revert with {NotRoot}
     └── When the origin is root
         ├── When the sender is not module
-        │   └── It should revert with NotModule
+        │   └── It should revert with {NotModule}
         └── When the sender is module
             ├── When the receiving nonce is not the expected nonce
-            │   └── It should revert with InvalidNonce
+            │   └── It should revert with {InvalidNonce}
             ├── When the receiving nonce is the expected nonce
             │   ├── When the command is deposit
             │   │   ├── It decodes the gauge address from the message

@@ -14,7 +14,7 @@ contract HandleIntegrationFuzzTest is TokenBridgeTest {
     }
 
     function testFuzz_WhenTheCallerIsNotMailbox(address _caller) external {
-        // It should revert with NotMailbox
+        // It should revert with {NotMailbox}
         vm.assume(_caller != address(leafMailbox));
 
         vm.prank(_caller);
@@ -32,7 +32,7 @@ contract HandleIntegrationFuzzTest is TokenBridgeTest {
     }
 
     function testFuzz_WhenTheSenderIsNotBridge(address _sender) external whenTheCallerIsMailbox {
-        // It should revert with NotBridge
+        // It should revert with {NotBridge}
         vm.assume(_sender != address(leafTokenBridge));
         sender = TypeCasts.addressToBytes32(_sender);
         vm.expectRevert(ITokenBridge.NotBridge.selector);

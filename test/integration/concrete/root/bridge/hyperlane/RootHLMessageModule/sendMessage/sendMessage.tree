@@ -7,6 +7,18 @@ SendMessageIntegrationConcreteTest
     │   ├── It emits the {SentMessage} event
     │   ├── It should update sendingNonce
     │   └── It calls receiveMessage on the recipient contract of the same address with the payload
+    ├── When the command is notify
+    │   ├── It burns the decoded amount of tokens
+    │   ├── It dispatches the message to the mailbox
+    │   ├── It emits the {SentMessage} event
+    │   ├── It should update sendingNonce
+    │   └── It calls receiveMessage on the recipient contract of the same address with the payload
+    ├── When the command is notify without claim
+    │   ├── It burns the decoded amount of tokens
+    │   ├── It dispatches the message to the mailbox
+    │   ├── It emits the {SentMessage} event
+    │   ├── It should update sendingNonce
+    │   └── It calls receiveMessage on the recipient contract of the same address with the payload
     └── When the command is createGauge
         ├── It dispatches the message to the mailbox
         ├── It emits the {SentMessage} event

@@ -38,7 +38,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
     }
 
     function test_WhenTheCallerIsNotMailbox() external {
-        // It reverts with NotMailbox
+        // It reverts with {NotMailbox}
         vm.prank(users.charlie);
         vm.expectRevert(IHLHandler.NotMailbox.selector);
         leafMessageModule.handle({
@@ -54,7 +54,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
     }
 
     function test_WhenTheOriginIsNotRoot() external whenTheCallerIsMailbox {
-        // It should revert with NotRoot
+        // It should revert with {NotRoot}
         vm.expectRevert(IHLHandler.NotRoot.selector);
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: abi.encode(users.charlie, abi.encode(1))});
     }
@@ -65,7 +65,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
     }
 
     function test_WhenTheSenderIsNotModule() external whenTheCallerIsMailbox whenTheOriginIsRoot {
-        // It should revert with NotModule
+        // It should revert with {NotModule}
         vm.expectRevert(ILeafHLMessageModule.NotModule.selector);
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: abi.encode(users.charlie, abi.encode(1))});
     }
@@ -81,7 +81,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         whenTheOriginIsRoot
         whenTheSenderIsModule
     {
-        // It should revert with InvalidNonce
+        // It should revert with {InvalidNonce}
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory message =
@@ -377,7 +377,7 @@ contract HandleIntegrationConcreteTest is LeafHLMessageModuleTest {
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
         assertEq(leafGauge.rewardPerTokenStored(), 0);
         assertEq(leafGauge.rewardRate(), amount / WEEK);
-        assertEq(leafGauge.rewardRateByEpoch(rootStartTime), amount / WEEK);
+        assertEq(leafGauge.rewardRateByEpoch(leafStartTime), amount / WEEK);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
         assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
         assertEq(leafMessageModule.receivingNonce(), 1_000);

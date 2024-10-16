@@ -22,7 +22,7 @@ abstract contract TokenBridgeTest is BaseForkFixture {
         assertEq(address(leafTokenBridge.securityModule()), address(leafIsm));
         assertEq(address(leafTokenBridge).balance, 0);
 
-        chainids = rootTokenBridge.chainids();
+        chainids = leafTokenBridge.chainids();
         assertEq(chainids.length, 0);
     }
 }
