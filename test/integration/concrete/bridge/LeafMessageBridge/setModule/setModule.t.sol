@@ -24,7 +24,7 @@ contract SetModuleIntegrationConcreteTest is LeafMessageBridgeTest {
 
     function test_WhenModuleIsNotZeroAddress() external whenCallerIsOwner {
         // It sets new module
-        // It emits {SetModule}
+        // It emits {ModuleSet}
         address module = address(
             new LeafHLMessageModule({
                 _owner: users.owner,
@@ -36,7 +36,7 @@ contract SetModuleIntegrationConcreteTest is LeafMessageBridgeTest {
 
         vm.prank(users.owner);
         vm.expectEmit(address(leafMessageBridge));
-        emit ILeafMessageBridge.SetModule({_sender: users.owner, _module: module});
+        emit ILeafMessageBridge.ModuleSet({_sender: users.owner, _module: module});
         leafMessageBridge.setModule({_module: module});
 
         assertEq(leafMessageBridge.module(), module);

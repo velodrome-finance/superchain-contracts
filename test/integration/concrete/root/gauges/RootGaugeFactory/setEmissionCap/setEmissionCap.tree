@@ -6,4 +6,4 @@ SetEmissionCapIntegrationConcreteTest
     │   └── It should revert with {ZeroAddress}
     └── When gauge is not the zero address
         ├── It should set the new emission cap for the gauge
-        └── It should emit a {SetEmissionCap} event
+        └── It should emit a {EmissionCapSet} event

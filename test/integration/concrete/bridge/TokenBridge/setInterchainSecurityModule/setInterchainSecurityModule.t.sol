@@ -18,11 +18,11 @@ contract SetInterchainSecurityModuleIntegrationConcreteTest is TokenBridgeTest {
 
     function test_WhenTheCallerIsTheOwner() external {
         // It sets the new InterchainSecurityModule
-        // It emits the {InterchainSecurityModuleChanged} event
+        // It emits the {InterchainSecurityModuleSet} event
         vm.startPrank(users.owner);
 
         vm.expectEmit(address(leafTokenBridge));
-        emit ISpecifiesInterchainSecurityModule.InterchainSecurityModuleChanged({_new: address(1)});
+        emit ISpecifiesInterchainSecurityModule.InterchainSecurityModuleSet({_new: address(1)});
         leafTokenBridge.setInterchainSecurityModule({_ism: address(1)});
 
         assertEq(address(leafTokenBridge.securityModule()), address(1));

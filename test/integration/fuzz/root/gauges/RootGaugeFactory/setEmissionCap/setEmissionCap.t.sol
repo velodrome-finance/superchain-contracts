@@ -23,11 +23,11 @@ contract SetEmissionCapIntegrationFuzzTest is RootGaugeFactoryTest {
         whenCallerIsTheEmissionAdmin
     {
         // It should set the new emission cap for the gauge
-        // It should emit a {SetEmissionCap} event
+        // It should emit a {EmissionCapSet} event
         vm.assume(_gauge != address(0));
 
         vm.expectEmit(address(rootGaugeFactory));
-        emit IRootGaugeFactory.SetEmissionCap({_gauge: _gauge, _newEmissionCap: _emissionCap});
+        emit IRootGaugeFactory.EmissionCapSet({_gauge: _gauge, _newEmissionCap: _emissionCap});
         rootGaugeFactory.setEmissionCap({_gauge: _gauge, _emissionCap: _emissionCap});
 
         // @dev If `emissionCap` is set to 0, `defaultCap` should be returned

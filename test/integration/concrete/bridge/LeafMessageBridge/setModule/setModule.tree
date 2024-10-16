@@ -6,4 +6,4 @@ SetModuleIntegrationConcreteTest
     │   └── It reverts with {ZeroAddress}
     └── When module is not zero address
         ├── It sets new module
-        └── It emits {SetModule}
+        └── It emits {ModuleSet}

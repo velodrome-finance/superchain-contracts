@@ -24,9 +24,9 @@ contract SetNotifyAdminIntegrationConcreteTest is RootGaugeFactoryTest {
 
     function test_WhenAdminIsNotTheZeroAddress() external whenCallerIsTheNotifyAdmin {
         // It should set the new notify admin
-        // It should emit a {SetNotifyAdmin} event
+        // It should emit a {NotifyAdminSet} event
         vm.expectEmit(address(rootGaugeFactory));
-        emit IRootGaugeFactory.SetNotifyAdmin({notifyAdmin: users.alice});
+        emit IRootGaugeFactory.NotifyAdminSet({notifyAdmin: users.alice});
         rootGaugeFactory.setNotifyAdmin({_admin: users.alice});
 
         assertEq(rootGaugeFactory.notifyAdmin(), users.alice);

@@ -6,4 +6,4 @@ SetDefaultCapIntegrationConcreteTest
     │   └── It should revert with {ZeroDefaultCap}
     └── When default cap is not zero
         ├── It should set the new default cap for gauges
-        └── It should emit a {SetDefaultCap} event
+        └── It should emit a {DefaultCapSet} event

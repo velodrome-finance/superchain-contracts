@@ -6,4 +6,4 @@ SetNotifyAdminIntegrationConcreteTest
     │   └── It should revert with {ZeroAddress}
     └── When admin is not the zero address
         ├── It should set the new notify admin
-        └── It should emit a {SetNotifyAdmin} event
+        └── It should emit a {NotifyAdminSet} event

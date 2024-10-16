@@ -77,6 +77,9 @@ contract RootGaugeFactory is IRootGaugeFactory {
         defaultCap = _defaultCap;
         minter = IVoter(_voter).minter();
         rewardToken = IMinter(minter).velo();
+        emit NotifyAdminSet({notifyAdmin: _notifyAdmin});
+        emit EmissionAdminSet({_emissionAdmin: _emissionAdmin});
+        emit DefaultCapSet({_newDefaultCap: _defaultCap});
     }
 
     /// @inheritdoc IRootGaugeFactory
@@ -90,7 +93,7 @@ contract RootGaugeFactory is IRootGaugeFactory {
         if (notifyAdmin != msg.sender) revert NotAuthorized();
         if (_admin == address(0)) revert ZeroAddress();
         notifyAdmin = _admin;
-        emit SetNotifyAdmin({notifyAdmin: _admin});
+        emit NotifyAdminSet({notifyAdmin: _admin});
     }
 
     /// @inheritdoc IRootGaugeFactory
@@ -165,7 +168,7 @@ contract RootGaugeFactory is IRootGaugeFactory {
         if (msg.sender != emissionAdmin) revert NotAuthorized();
         if (_admin == address(0)) revert ZeroAddress();
         emissionAdmin = _admin;
-        emit SetEmissionAdmin({_emissionAdmin: _admin});
+        emit EmissionAdminSet({_emissionAdmin: _admin});
     }
 
     /// @inheritdoc IRootGaugeFactory
@@ -173,7 +176,7 @@ contract RootGaugeFactory is IRootGaugeFactory {
         if (msg.sender != emissionAdmin) revert NotAuthorized();
         if (_gauge == address(0)) revert ZeroAddress();
         _emissionCaps[_gauge] = _emissionCap;
-        emit SetEmissionCap({_gauge: _gauge, _newEmissionCap: _emissionCap});
+        emit EmissionCapSet({_gauge: _gauge, _newEmissionCap: _emissionCap});
     }
 
     /// @inheritdoc IRootGaugeFactory
@@ -181,6 +184,6 @@ contract RootGaugeFactory is IRootGaugeFactory {
         if (msg.sender != emissionAdmin) revert NotAuthorized();
         if (_defaultCap == 0) revert ZeroDefaultCap();
         defaultCap = _defaultCap;
-        emit SetDefaultCap({_newDefaultCap: _defaultCap});
+        emit DefaultCapSet({_newDefaultCap: _defaultCap});
     }
 }

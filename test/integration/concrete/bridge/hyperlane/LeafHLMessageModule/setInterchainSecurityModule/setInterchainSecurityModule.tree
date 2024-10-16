@@ -3,4 +3,4 @@ SetInterchainSecurityModuleIntegrationConcreteTest
 │   └── It reverts with {OwnableUnauthorizedAccount}
 └── When the caller is the owner
     ├── It sets the new InterchainSecurityModule
-    └── It emits the {InterchainSecurityModuleChanged} event
+    └── It emits the {InterchainSecurityModuleSet} event

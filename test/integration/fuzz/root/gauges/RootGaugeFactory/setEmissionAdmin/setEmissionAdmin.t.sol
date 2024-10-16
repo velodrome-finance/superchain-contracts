@@ -20,11 +20,11 @@ contract SetEmissionAdminIntegrationFuzzTest is RootGaugeFactoryTest {
 
     function testFuzz_WhenAdminIsNotTheZeroAddress(address _emissionAdmin) external whenCallerIsTheEmissionAdmin {
         // It should set the new emission admin
-        // It should emit a {SetEmissionAdmin} event
+        // It should emit a {EmissionAdminSet} event
         vm.assume(_emissionAdmin != address(0));
 
         vm.expectEmit(address(rootGaugeFactory));
-        emit IRootGaugeFactory.SetEmissionAdmin({_emissionAdmin: _emissionAdmin});
+        emit IRootGaugeFactory.EmissionAdminSet({_emissionAdmin: _emissionAdmin});
         rootGaugeFactory.setEmissionAdmin({_admin: _emissionAdmin});
 
         assertEq(rootGaugeFactory.emissionAdmin(), _emissionAdmin);

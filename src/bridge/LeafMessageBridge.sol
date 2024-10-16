@@ -19,12 +19,13 @@ contract LeafMessageBridge is ILeafMessageBridge, Ownable {
         xerc20 = _xerc20;
         voter = _voter;
         module = _module;
+        emit ModuleSet({_sender: _owner, _module: _module});
     }
 
     /// @inheritdoc ILeafMessageBridge
     function setModule(address _module) external onlyOwner {
         if (_module == address(0)) revert ZeroAddress();
         module = _module;
-        emit SetModule({_sender: msg.sender, _module: _module});
+        emit ModuleSet({_sender: msg.sender, _module: _module});
     }
 }

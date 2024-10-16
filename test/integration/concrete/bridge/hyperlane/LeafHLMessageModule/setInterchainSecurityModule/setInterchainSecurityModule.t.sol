@@ -18,11 +18,11 @@ contract SetInterchainSecurityModuleIntegrationConcreteTest is LeafHLMessageModu
 
     function test_WhenTheCallerIsTheOwner() external {
         // It sets the new InterchainSecurityModule
-        // It emits the {InterchainSecurityModuleChanged} event
+        // It emits the {InterchainSecurityModuleSet} event
         vm.startPrank(users.owner);
 
         vm.expectEmit(address(leafMessageModule));
-        emit ISpecifiesInterchainSecurityModule.InterchainSecurityModuleChanged({_new: address(1)});
+        emit ISpecifiesInterchainSecurityModule.InterchainSecurityModuleSet({_new: address(1)});
         leafMessageModule.setInterchainSecurityModule({_ism: address(1)});
 
         assertEq(address(leafMessageModule.securityModule()), address(1));

@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
 
 interface ISpecifiesInterchainSecurityModule {
-    event InterchainSecurityModuleChanged(address indexed _new);
+    event InterchainSecurityModuleSet(address indexed _new);
 
     // @notice The currently set InterchainSecurityModule.
     function interchainSecurityModule() external view returns (IInterchainSecurityModule);

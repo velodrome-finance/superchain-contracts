@@ -20,9 +20,9 @@ contract SetNotifyAdminIntegrationFuzzTest is RootGaugeFactoryTest {
     function testFuzz_WhenAdminIsNotTheZeroAddress(address _notifyAdmin) external whenCallerIsTheNotifyAdmin {
         vm.assume(_notifyAdmin != address(0));
         // It should set the new notify admin
-        // It should emit a {SetNotifyAdmin} event
+        // It should emit a {NotifyAdminSet} event
         vm.expectEmit(address(rootGaugeFactory));
-        emit IRootGaugeFactory.SetNotifyAdmin({notifyAdmin: _notifyAdmin});
+        emit IRootGaugeFactory.NotifyAdminSet({notifyAdmin: _notifyAdmin});
         rootGaugeFactory.setNotifyAdmin({_admin: _notifyAdmin});
 
         assertEq(rootGaugeFactory.notifyAdmin(), _notifyAdmin);

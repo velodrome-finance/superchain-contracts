@@ -32,6 +32,7 @@ contract TokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterchainSecurityMo
         xerc20 = _xerc20;
         mailbox = _mailbox;
         securityModule = IInterchainSecurityModule(_ism);
+        emit InterchainSecurityModuleSet({_new: _ism});
     }
 
     /// @inheritdoc ISpecifiesInterchainSecurityModule
@@ -42,7 +43,7 @@ contract TokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterchainSecurityMo
     /// @inheritdoc ISpecifiesInterchainSecurityModule
     function setInterchainSecurityModule(address _ism) external onlyOwner {
         securityModule = IInterchainSecurityModule(_ism);
-        emit InterchainSecurityModuleChanged({_new: _ism});
+        emit InterchainSecurityModuleSet({_new: _ism});
     }
 
     /// @inheritdoc ITokenBridge

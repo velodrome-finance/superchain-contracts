@@ -7,10 +7,10 @@ interface IRootGaugeFactory {
     error ZeroAddress();
     error NotVoter();
 
-    event SetNotifyAdmin(address indexed notifyAdmin);
-    event SetEmissionAdmin(address indexed _emissionAdmin);
-    event SetDefaultCap(uint256 indexed _newDefaultCap);
-    event SetEmissionCap(address indexed _gauge, uint256 _newEmissionCap);
+    event NotifyAdminSet(address indexed notifyAdmin);
+    event EmissionAdminSet(address indexed _emissionAdmin);
+    event DefaultCapSet(uint256 indexed _newDefaultCap);
+    event EmissionCapSet(address indexed _gauge, uint256 _newEmissionCap);
 
     /// @notice Voter contract address
     function voter() external view returns (address);

@@ -42,6 +42,7 @@ contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecuri
         voter = ILeafMessageBridge(_bridge).voter();
         mailbox = _mailbox;
         securityModule = IInterchainSecurityModule(_ism);
+        emit InterchainSecurityModuleSet({_new: _ism});
     }
 
     /// @inheritdoc ISpecifiesInterchainSecurityModule
@@ -52,7 +53,7 @@ contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecuri
     /// @inheritdoc ISpecifiesInterchainSecurityModule
     function setInterchainSecurityModule(address _ism) external onlyOwner {
         securityModule = IInterchainSecurityModule(_ism);
-        emit InterchainSecurityModuleChanged({_new: _ism});
+        emit InterchainSecurityModuleSet({_new: _ism});
     }
 
     /// @inheritdoc IHLHandler

@@ -24,9 +24,9 @@ contract SetEmissionAdminIntegrationConcreteTest is RootGaugeFactoryTest {
 
     function test_WhenAdminIsNotTheZeroAddress() external whenCallerIsTheEmissionAdmin {
         // It should set the new emission admin
-        // It should emit a {SetEmissionAdmin} event
+        // It should emit a {EmissionAdminSet} event
         vm.expectEmit(address(rootGaugeFactory));
-        emit IRootGaugeFactory.SetEmissionAdmin({_emissionAdmin: users.alice});
+        emit IRootGaugeFactory.EmissionAdminSet({_emissionAdmin: users.alice});
         rootGaugeFactory.setEmissionAdmin({_admin: users.alice});
 
         assertEq(rootGaugeFactory.emissionAdmin(), users.alice);

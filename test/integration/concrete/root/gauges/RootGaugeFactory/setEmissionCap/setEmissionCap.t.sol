@@ -24,11 +24,11 @@ contract SetEmissionCapIntegrationConcreteTest is RootGaugeFactoryTest {
 
     function test_WhenGaugeIsNotTheZeroAddress() external whenCallerIsTheEmissionAdmin {
         // It should set the new emission cap for the gauge
-        // It should emit a {SetEmissionCap} event
+        // It should emit a {EmissionCapSet} event
         assertEq(rootGaugeFactory.emissionCaps(address(rootGauge)), 100);
 
         vm.expectEmit(address(rootGaugeFactory));
-        emit IRootGaugeFactory.SetEmissionCap({_gauge: address(rootGauge), _newEmissionCap: 1000});
+        emit IRootGaugeFactory.EmissionCapSet({_gauge: address(rootGauge), _newEmissionCap: 1000});
         rootGaugeFactory.setEmissionCap({_gauge: address(rootGauge), _emissionCap: 1000});
 
         assertEq(rootGaugeFactory.emissionCaps(address(rootGauge)), 1000);

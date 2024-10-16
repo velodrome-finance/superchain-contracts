@@ -20,11 +20,11 @@ contract SetModuleIntegrationFuzzTest is LeafMessageBridgeTest {
 
     function testFuzz_WhenModuleIsNotZeroAddress(address _module) external whenCallerIsOwner {
         // It sets new module
-        // It emits {SetModule}
+        // It emits {ModuleSet}
         vm.assume(_module != address(0));
 
         vm.expectEmit(address(leafMessageBridge));
-        emit ILeafMessageBridge.SetModule({_sender: users.owner, _module: _module});
+        emit ILeafMessageBridge.ModuleSet({_sender: users.owner, _module: _module});
         leafMessageBridge.setModule({_module: _module});
 
         assertEq(leafMessageBridge.module(), _module);

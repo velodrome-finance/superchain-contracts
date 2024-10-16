@@ -24,9 +24,9 @@ contract SetDefaultCapIntegrationConcreteTest is RootGaugeFactoryTest {
 
     function test_WhenDefaultCapIsNotZero() external whenCallerIsTheEmissionAdmin {
         // It should set the new default cap for gauges
-        // It should emit a {SetDefaultCap} event
+        // It should emit a {DefaultCapSet} event
         vm.expectEmit(address(rootGaugeFactory));
-        emit IRootGaugeFactory.SetDefaultCap({_newDefaultCap: 1000});
+        emit IRootGaugeFactory.DefaultCapSet({_newDefaultCap: 1000});
         rootGaugeFactory.setDefaultCap({_defaultCap: 1000});
 
         assertEq(rootGaugeFactory.defaultCap(), 1000);
