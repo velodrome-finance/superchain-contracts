@@ -36,10 +36,13 @@ contract RootHLMessageModule is IRootHLMessageModule {
 
     /// @inheritdoc IMessageSender
     function quote(uint256 _destinationDomain, bytes calldata _messageBody) external view returns (uint256) {
+        bytes memory _metadata = _generateGasMetadata({_command: _messageBody.command()});
+
         return Mailbox(mailbox).quoteDispatch({
             destinationDomain: uint32(_destinationDomain),
             recipientAddress: TypeCasts.addressToBytes32(address(this)),
-            messageBody: _messageBody
+            messageBody: _messageBody,
+            defaultHookMetadata: _metadata
         });
     }
 

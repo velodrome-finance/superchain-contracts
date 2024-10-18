@@ -539,7 +539,7 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
         // mock calls to dispatch
         vm.mockCall({
             callee: address(rootMailbox),
-            data: abi.encode(bytes4(keccak256("quoteDispatch(uint32,bytes32,bytes)"))),
+            data: abi.encode(bytes4(keccak256("quoteDispatch(uint32,bytes32,bytes,bytes)"))),
             returnData: abi.encode(MESSAGE_FEE)
         });
 
