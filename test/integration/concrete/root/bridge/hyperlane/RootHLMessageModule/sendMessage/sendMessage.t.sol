@@ -246,8 +246,6 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
-        bytes memory expectedMessage =
-            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint256(1_000));
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
 
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});

@@ -14,10 +14,10 @@ contract SetFeeTest is BaseFixture {
     }
 
     function test_WhenCallerIsNotFeeManager() external {
-        // It should revert with NotFeeManager
+        // It should revert with {NotFeeManager}
         vm.prank(users.charlie);
         vm.expectRevert(IPoolFactory.NotFeeManager.selector);
-        poolFactory.setFee(true, 2);
+        poolFactory.setFee({_stable: true, _fee: 2});
     }
 
     modifier whenCallerIsFeeManager() {
@@ -27,9 +27,9 @@ contract SetFeeTest is BaseFixture {
     }
 
     function test_WhenTheFeeIsGreaterThanMaximumFee() external whenCallerIsFeeManager {
-        // It should revert with FeeTooHigh
+        // It should revert with {FeeTooHigh}
         vm.expectRevert(IPoolFactory.FeeTooHigh.selector);
-        poolFactory.setFee(true, 301); // 301 bps = 3.01%
+        poolFactory.setFee({_stable: true, _fee: 301}); // 301 bps = 3.01%
     }
 
     modifier whenTheFeeIsNotGreaterThanMaximumFee() {
@@ -38,9 +38,9 @@ contract SetFeeTest is BaseFixture {
     }
 
     function test_WhenTheFeeIsEqualTo0() external whenCallerIsFeeManager whenTheFeeIsNotGreaterThanMaximumFee {
-        // It should revert with ZeroFee
+        // It should revert with {ZeroFee}
         vm.expectRevert(IPoolFactory.ZeroFee.selector);
-        poolFactory.setFee(true, 0);
+        poolFactory.setFee({_stable: true, _fee: 0});
     }
 
     modifier whenTheFeeIsNotEqualTo0() {
@@ -58,8 +58,8 @@ contract SetFeeTest is BaseFixture {
         // It should emit a {SetDefaultFee} event
         vm.expectEmit(address(poolFactory));
         emit IPoolFactory.SetDefaultFee({stable: true, fee: fee});
-        poolFactory.setFee(true, fee);
-        assertEq(poolFactory.getFee(address(pool), true), fee);
+        poolFactory.setFee({_stable: true, _fee: fee});
+        assertEq(poolFactory.getFee({_pool: address(pool), _stable: true}), fee);
     }
 
     function test_WhenTheStableIsFalse()
@@ -72,7 +72,7 @@ contract SetFeeTest is BaseFixture {
         // It should emit a {SetDefaultFee} event
         vm.expectEmit(address(poolFactory));
         emit IPoolFactory.SetDefaultFee({stable: false, fee: fee});
-        poolFactory.setFee(false, fee);
-        assertEq(poolFactory.getFee(address(pool), false), fee);
+        poolFactory.setFee({_stable: false, _fee: fee});
+        assertEq(poolFactory.getFee({_pool: address(pool), _stable: false}), fee);
     }
 }

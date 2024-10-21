@@ -1,0 +1,9 @@
+SetFeeModuleTest
+├── When caller is not Fee Manager
+│   └── It should revert with {NotFeeManager}
+└── When caller is Fee Manager
+    ├── When the fee module is address zero
+    │   └── It should revert with {ZeroAddress}
+    └── When the fee module is not address zero
+        ├── It should set the new fee module
+        └── It should emit a {FeeModuleChanged} event

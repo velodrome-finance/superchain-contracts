@@ -1,0 +1,20 @@
+GetFeeTest
+├── When fee module is address zero
+│   ├── When pool is stable
+│   │   └── It should return stable fee
+│   └── When pool is volatile
+│       └── It should return volatile fee
+└── When fee module is not address zero
+    ├── When safe call succeeds
+    │   ├── When fee is smaller than or equal to max
+    │   │   └── It should return custom fee
+    │   └── When fee is greater than max
+    │       ├── When pool is stable_
+    │       │   └── It should return stable fee
+    │       └── When pool is volatile_
+    │           └── It should return volatile fee
+    └── When safe call fails
+        ├── When pool is stable__
+        │   └── It should return stable fee
+        └── When pool is volatile__
+            └── It should return volatile fee

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "test/BaseFixture.sol";
+import "../PoolFactory.t.sol";
 
-contract SetFeeManagerTest is BaseFixture {
+contract SetFeeManagerTest is PoolFactoryTest {
     function test_WhenCallerIsNotFeeManager() external {
         // It should revert with NotFeeManager
         vm.prank(users.charlie);

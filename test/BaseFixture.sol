@@ -14,6 +14,7 @@ import {Clones} from "@openzeppelin5/contracts/proxy/Clones.sol";
 
 import {IPool, Pool} from "src/pools/Pool.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
+import {IFeeModule, ICustomFeeModule, CustomFeeModule} from "src/fees/CustomFeeModule.sol";
 import {IRouter, Router} from "src/Router.sol";
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
 import {ITokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
@@ -62,6 +63,7 @@ abstract contract BaseFixture is Test, TestConstants, GasSnapshot {
     // leaf-only contracts
     PoolFactory public leafPoolFactory;
     LeafGaugeFactory public leafGaugeFactory;
+    CustomFeeModule public feeModule;
     LeafVoter public leafVoter;
     VotingRewardsFactory public leafVotingRewardsFactory;
     IInterchainSecurityModule public leafIsm;
@@ -135,6 +137,7 @@ abstract contract BaseFixture is Test, TestConstants, GasSnapshot {
                 )
             })
         );
+        feeModule = new CustomFeeModule({_factory: address(poolFactory)});
 
         router = Router(
             payable(

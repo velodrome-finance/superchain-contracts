@@ -2,8 +2,10 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import {Clones} from "@openzeppelin5/contracts/proxy/Clones.sol";
+import {ExcessivelySafeCall} from "@nomad-xyz/src/ExcessivelySafeCall.sol";
 
 import {IPoolFactory} from "../interfaces/pools/IPoolFactory.sol";
+import {IFeeModule} from "../interfaces/fees/IFeeModule.sol";
 import {IPool} from "../interfaces/pools/IPool.sol";
 
 /*
@@ -35,6 +37,8 @@ import {IPool} from "../interfaces/pools/IPool.sol";
 /// @author velodrome.finance
 /// @notice Velodrome V2 pool factory
 contract PoolFactory is IPoolFactory {
+    using ExcessivelySafeCall for address;
+
     /// @inheritdoc IPoolFactory
     address public immutable implementation;
 
@@ -50,9 +54,9 @@ contract PoolFactory is IPoolFactory {
     /// @inheritdoc IPoolFactory
     uint256 public constant MAX_FEE = 300; // 3%
     /// @inheritdoc IPoolFactory
-    uint256 public constant ZERO_FEE_INDICATOR = 420;
-    /// @inheritdoc IPoolFactory
     address public feeManager;
+    /// @inheritdoc IPoolFactory
+    address public feeModule;
     /// @inheritdoc IPoolFactory
     address public poolAdmin;
 
@@ -60,8 +64,6 @@ contract PoolFactory is IPoolFactory {
     address[] internal _allPools;
     /// @dev simplified check if its a pool, given that `stable` flag might not be available in peripherals
     mapping(address => bool) internal _isPool;
-    /// @inheritdoc IPoolFactory
-    mapping(address => uint256) public customFee; // override for custom fees
 
     constructor(address _implementation, address _poolAdmin, address _pauser, address _feeManager) {
         implementation = _implementation;
@@ -140,6 +142,15 @@ contract PoolFactory is IPoolFactory {
     }
 
     /// @inheritdoc IPoolFactory
+    function setFeeModule(address _feeModule) external {
+        if (msg.sender != feeManager) revert NotFeeManager();
+        if (_feeModule == address(0)) revert ZeroAddress();
+        address oldFeeModule = feeModule;
+        feeModule = _feeModule;
+        emit FeeModuleChanged({oldFeeModule: oldFeeModule, newFeeModule: _feeModule});
+    }
+
+    /// @inheritdoc IPoolFactory
     function setFee(bool _stable, uint256 _fee) external {
         if (msg.sender != feeManager) revert NotFeeManager();
         if (_fee > MAX_FEE) revert FeeTooHigh();
@@ -153,19 +164,19 @@ contract PoolFactory is IPoolFactory {
     }
 
     /// @inheritdoc IPoolFactory
-    function setCustomFee(address pool, uint256 fee) external {
-        if (msg.sender != feeManager) revert NotFeeManager();
-        if (fee > MAX_FEE && fee != ZERO_FEE_INDICATOR) revert FeeTooHigh();
-        if (!_isPool[pool]) revert InvalidPool();
-
-        customFee[pool] = fee;
-        emit SetCustomFee(pool, fee);
-    }
-
-    /// @inheritdoc IPoolFactory
-    function getFee(address pool, bool _stable) public view returns (uint256) {
-        uint256 fee = customFee[pool];
-        return fee == ZERO_FEE_INDICATOR ? 0 : fee != 0 ? fee : _stable ? stableFee : volatileFee;
+    function getFee(address _pool, bool _stable) external view returns (uint256) {
+        if (feeModule != address(0)) {
+            (bool success, bytes memory data) = feeModule.excessivelySafeStaticCall(
+                500_000, 32, abi.encodeWithSelector(IFeeModule.getFee.selector, _pool)
+            );
+            if (success) {
+                uint256 fee = abi.decode(data, (uint24));
+                if (fee <= 1_000) {
+                    return fee;
+                }
+            }
+        }
+        return _stable ? stableFee : volatileFee;
     }
 
     /// @inheritdoc IPoolFactory

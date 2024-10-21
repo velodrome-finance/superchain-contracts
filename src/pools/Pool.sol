@@ -426,7 +426,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     }
 
     /// @dev Use newton raphson method to approximate solution to x3y+y3x >= k
-    function _get_y(uint256 x0, uint256 xy, uint256 y) internal view returns (uint256) {
+    function _get_y(uint256 x0, uint256 xy, uint256 y) internal pure returns (uint256) {
         for (uint256 i = 0; i < 255; i++) {
             uint256 k = _f(x0, y);
             if (k < xy) {

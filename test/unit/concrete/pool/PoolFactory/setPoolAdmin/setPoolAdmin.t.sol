@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "test/BaseFixture.sol";
+import "../PoolFactory.t.sol";
 
-contract SetPoolAdminTest is BaseFixture {
+contract SetPoolAdminTest is PoolFactoryTest {
     function test_WhenCallerIsNotPoolAdmin() external {
         // It should revert with NotPoolAdmin
         vm.expectRevert(IPoolFactory.NotPoolAdmin.selector);

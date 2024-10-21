@@ -1,12 +1,12 @@
 SetFeeTest
 ├── When caller is not Fee Manager 
-│   └── It should revert with NotFeeManager
+│   └── It should revert with {NotFeeManager}
 └── When caller is Fee Manager 
     ├── When the fee is greater than maximum fee
-    │   └── It should revert with FeeTooHigh
+    │   └── It should revert with {FeeTooHigh}
     └── When the fee is not greater than maximum fee 
         ├── When the fee is equal to 0 
-        │   └── It should revert with ZeroFee
+        │   └── It should revert with {ZeroFee}
         └── When the fee is not equal to 0
             ├── When the stable is true
             │   ├── It should set the stable fee

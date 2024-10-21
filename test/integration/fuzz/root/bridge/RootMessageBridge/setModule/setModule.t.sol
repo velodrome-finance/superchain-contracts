@@ -36,6 +36,7 @@ contract SetModuleIntegrationFuzzTest is RootMessageBridgeTest {
     }
 
     modifier whenTheModuleIsAddedToTheRegistry(address _module) {
+        vm.assume(_module != address(1));
         rootMessageBridge.addModule({_module: _module});
         _;
     }

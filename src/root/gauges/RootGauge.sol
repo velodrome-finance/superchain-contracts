@@ -8,7 +8,7 @@ import {IRootGauge} from "../../interfaces/root/gauges/IRootGauge.sol";
 import {IXERC20Lockbox} from "../../interfaces/xerc20/IXERC20Lockbox.sol";
 import {IRootMessageBridge} from "../../interfaces/root/bridge/IRootMessageBridge.sol";
 import {IRootGaugeFactory} from "../../interfaces/root/gauges/IRootGaugeFactory.sol";
-import {IVoter} from "../..//interfaces/external/IVoter.sol";
+import {IVoter} from "../../interfaces/external/IVoter.sol";
 
 import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
 import {Commands} from "../../libraries/Commands.sol";

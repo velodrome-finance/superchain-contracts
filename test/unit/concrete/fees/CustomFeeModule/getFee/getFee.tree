@@ -1,0 +1,11 @@
+GetFeeTest
+├── When custom fee is zero fee indicator
+│   └── It should return 0
+└── When custom fee is not zero fee indicator
+    ├── When custom fee is zero
+    │   ├── When pool is stable
+    │   │   └── It should return stable fee
+    │   └── When pool is volatile
+    │       └── It should return volatile fee
+    └── When custom fee is not zero
+        └── It should return custom fee

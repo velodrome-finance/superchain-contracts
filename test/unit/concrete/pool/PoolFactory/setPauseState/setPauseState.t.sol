@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "test/BaseFixture.sol";
+import "../PoolFactory.t.sol";
 
-contract SetPauseStateTest is BaseFixture {
+contract SetPauseStateTest is PoolFactoryTest {
     function test_WhenCallerIsNotPauser() external {
         // It should revert with NotPauser
         vm.prank(users.charlie);

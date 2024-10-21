@@ -7,12 +7,11 @@ interface IPoolFactory {
     event SetPauseState(bool indexed state);
     event SetPoolAdmin(address indexed poolAdmin);
     event PoolCreated(address indexed token0, address indexed token1, bool indexed stable, address pool, uint256);
-    event SetCustomFee(address indexed pool, uint256 fee);
     event SetDefaultFee(bool indexed stable, uint256 fee);
+    event FeeModuleChanged(address indexed oldFeeModule, address indexed newFeeModule);
 
     error FeeInvalid();
     error FeeTooHigh();
-    error InvalidPool();
     error NotFeeManager();
     error NotPauser();
     error NotPoolAdmin();
@@ -70,16 +69,17 @@ interface IPoolFactory {
     /// @param _feeManager Address of the fee manager
     function setFeeManager(address _feeManager) external;
 
+    /// @notice Updates the feeModule of the factory
+    /// @dev Must be called by the current fee manager
+    /// @param _feeModule The new feeModule of the factory
+    function setFeeModule(address _feeModule) external;
+
     /// @notice Set default fee for stable and volatile pools.
     /// @dev Throws if higher than maximum fee.
     ///      Throws if fee is zero.
     /// @param _stable Stable or volatile pool.
     /// @param _fee .
     function setFee(bool _stable, uint256 _fee) external;
-
-    /// @notice Set overriding fee for a pool from the default
-    /// @dev A custom fee of zero means the default fee will be used.
-    function setCustomFee(address _pool, uint256 _fee) external;
 
     /// @notice Returns fee for a pool, as custom fees are possible.
     function getFee(address _pool, bool _stable) external view returns (uint256);
@@ -123,21 +123,17 @@ interface IPoolFactory {
     /// @return 3%
     function MAX_FEE() external view returns (uint256);
 
-    /// @dev Override to indicate there is custom 0% fee - as a 0 value in the
-    /// @dev customFee mapping indicates that no custom fee rate has been set
-    function ZERO_FEE_INDICATOR() external view returns (uint256);
-
     /// @notice Address of the fee manager, can set fees on pools associated with factory.
     /// @notice This overrides the default fee for that pool.
     /// @return Address of the fee manager
     function feeManager() external view returns (address);
 
+    /// @notice Address of the fee module of the factory
+    /// @dev Can be changed by the current fee manager via setFeeModule
+    /// @return Address of the fee module
+    function feeModule() external view returns (address);
+
     /// @notice Address of the pool administrator, can change the name and symbol of pools created by factory.
     /// @return Address of the pool administrator
     function poolAdmin() external view returns (address);
-
-    /// @notice Returns the custom fee for a pool
-    /// @param _pool Address of the pool
-    /// @return Custom fee for the pool
-    function customFee(address _pool) external view returns (uint256);
 }

@@ -9,5 +9,6 @@ contract PoolFactoryTest is BaseFixture {
         assertEq(poolFactory.pauser(), users.owner);
         assertEq(poolFactory.feeManager(), users.feeManager);
         assertEq(poolFactory.implementation(), address(poolImplementation));
+        assertEq(poolFactory.feeModule(), address(0));
     }
 }
