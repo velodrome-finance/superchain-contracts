@@ -4,7 +4,13 @@ pragma solidity ^0.8.15;
 import "../../01_DeployBaseFixture.s.sol";
 import {ModeRouter} from "src/extensions/ModeRouter.sol";
 import {ModePool} from "src/pools/extensions/ModePool.sol";
+import {ModeLeafVoter} from "src/voter/extensions/ModeLeafVoter.sol";
 import {ModePoolFactory} from "src/pools/extensions/ModePoolFactory.sol";
+import {ModeTokenBridge} from "src/bridge/extensions/ModeTokenBridge.sol";
+import {ModeXERC20Factory} from "src/xerc20/extensions/ModeXERC20Factory.sol";
+import {ModeLeafGaugeFactory} from "src/gauges/extensions/ModeLeafGaugeFactory.sol";
+import {ModeLeafMessageBridge} from "src/bridge/extensions/ModeLeafMessageBridge.sol";
+import {ModeLeafHLMessageModule} from "src/bridge/extensions/hyperlane/ModeLeafHLMessageModule.sol";
 
 contract DeployBase is DeployBaseFixture {
     using CreateXLibrary for bytes11;
@@ -55,7 +61,6 @@ contract DeployBase is DeployBaseFixture {
                         _params.poolAdmin, // pool admin
                         _params.pauser, // pauser
                         _params.feeManager, // fee manager
-                        _modeParams.sfs, // sequencer fee sharing contract
                         _modeParams.recipient // sfs nft recipient
                     )
                 )
@@ -72,7 +77,6 @@ contract DeployBase is DeployBaseFixture {
                         abi.encode(
                             address(poolFactory), // pool factory
                             _params.weth, // weth contract
-                            _modeParams.sfs, // sequencer fee sharing contract
                             _modeParams.recipient // sfs nft recipient
                         )
                     )
@@ -81,30 +85,31 @@ contract DeployBase is DeployBaseFixture {
         );
         checkAddress({_entropy: ROUTER_ENTROPY, _output: address(router)});
 
-        xerc20Factory = XERC20Factory(
+        xerc20Factory = ModeXERC20Factory(
             cx.deployCreate3({
                 salt: XERC20_FACTORY_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
-                    type(XERC20Factory).creationCode,
+                    type(ModeXERC20Factory).creationCode,
                     abi.encode(
-                        address(cx), // create x address
-                        _params.tokenAdmin // xerc20 owner
+                        _params.tokenAdmin, // xerc20 owner
+                        _modeParams.recipient // sfs nft recipient
                     )
                 )
             })
         );
         checkAddress({_entropy: XERC20_FACTORY_ENTROPY, _output: address(xerc20Factory)});
 
-        messageBridge = LeafMessageBridge(
+        messageBridge = ModeLeafMessageBridge(
             CreateXLibrary.computeCreate3Address({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: _deployer})
         );
-        voter = LeafVoter(
+        voter = ModeLeafVoter(
             cx.deployCreate3({
                 salt: VOTER_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
-                    type(LeafVoter).creationCode,
+                    type(ModeLeafVoter).creationCode,
                     abi.encode(
-                        address(messageBridge) // message bridge
+                        address(messageBridge), // message bridge
+                        _modeParams.recipient // sfs nft recipient
                     )
                 )
             })
@@ -113,30 +118,31 @@ contract DeployBase is DeployBaseFixture {
 
         xVelo = XERC20(xerc20Factory.deployXERC20());
 
-        messageModule = LeafHLMessageModule(
+        messageModule = ModeLeafHLMessageModule(
             CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: _deployer})
         );
-        messageBridge = LeafMessageBridge(
+        messageBridge = ModeLeafMessageBridge(
             cx.deployCreate3({
                 salt: MESSAGE_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
-                    type(LeafMessageBridge).creationCode,
+                    type(ModeLeafMessageBridge).creationCode,
                     abi.encode(
                         _params.bridgeOwner, // message bridge owner
                         address(xVelo), // xerc20 address
                         address(voter), // leaf voter
-                        address(messageModule) // message module
+                        address(messageModule), // message module
+                        _modeParams.recipient // sfs nft recipient
                     )
                 )
             })
         );
         checkAddress({_entropy: MESSAGE_BRIDGE_ENTROPY, _output: address(messageBridge)});
 
-        messageModule = LeafHLMessageModule(
+        messageModule = ModeLeafHLMessageModule(
             cx.deployCreate3({
                 salt: HL_MESSAGE_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
-                    type(LeafHLMessageModule).creationCode,
+                    type(ModeLeafHLMessageModule).creationCode,
                     abi.encode(
                         _params.moduleOwner, // leaf module owner
                         address(messageBridge), // leaf message bridge
@@ -148,27 +154,28 @@ contract DeployBase is DeployBaseFixture {
         );
         checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _output: address(messageModule)});
 
-        tokenBridge = TokenBridge(
+        tokenBridge = ModeTokenBridge(
             cx.deployCreate3({
                 salt: TOKEN_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
-                    type(TokenBridge).creationCode,
+                    type(ModeTokenBridge).creationCode,
                     abi.encode(
                         _params.bridgeOwner, // bridge owner
                         address(xVelo), // xerc20 address
                         _params.mailbox, // mailbox
-                        address(ism) // security module
+                        address(ism), // security module
+                        _modeParams.recipient // sfs nft recipient
                     )
                 )
             })
         );
         checkAddress({_entropy: TOKEN_BRIDGE_ENTROPY, _output: address(tokenBridge)});
 
-        gaugeFactory = LeafGaugeFactory(
+        gaugeFactory = ModeLeafGaugeFactory(
             cx.deployCreate3({
                 salt: GAUGE_FACTORY_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
-                    type(LeafGaugeFactory).creationCode,
+                    type(ModeLeafGaugeFactory).creationCode,
                     abi.encode(
                         address(voter), // voter address
                         address(xVelo), // xerc20 address

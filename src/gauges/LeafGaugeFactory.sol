@@ -24,7 +24,11 @@ contract LeafGaugeFactory is ILeafGaugeFactory {
     }
 
     /// @inheritdoc ILeafGaugeFactory
-    function createGauge(address _pool, address _feesVotingReward, bool isPool) external returns (address gauge) {
+    function createGauge(address _pool, address _feesVotingReward, bool isPool)
+        external
+        virtual
+        returns (address gauge)
+    {
         if (msg.sender != voter) revert NotVoter();
         bytes32 salt = calculateSalt({_pool: _pool});
         bytes11 entropy = bytes11(salt);
@@ -39,7 +43,7 @@ contract LeafGaugeFactory is ILeafGaugeFactory {
                     xerc20, // xerc20 corresponding to reward token
                     voter, // superchain voter contract
                     bridge, // bridge to communicate x-chain
-                    isPool
+                    isPool // whether the gauge is linked to a pool
                 )
             )
         });

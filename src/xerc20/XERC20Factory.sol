@@ -40,8 +40,6 @@ contract XERC20Factory is IXERC20Factory {
     using CreateXLibrary for bytes11;
 
     /// @inheritdoc IXERC20Factory
-    ICreateX public immutable createx;
-    /// @inheritdoc IXERC20Factory
     address public immutable owner;
 
     /// @inheritdoc IXERC20Factory
@@ -55,20 +53,17 @@ contract XERC20Factory is IXERC20Factory {
     bytes11 public constant LOCKBOX_ENTROPY = 0x0000000000000000000001;
 
     /// @notice Constructs the initial config of the XERC20Factory
-    /// @param _createx The address of the CreateX factory instance
     /// @param _owner The address of the initial owner for XERC20 deployments
-    constructor(address _createx, address _owner) {
-        if (_createx == address(0)) revert ZeroAddress();
+    constructor(address _owner) {
         if (_owner == address(0)) revert ZeroAddress();
-        createx = ICreateX(_createx);
         owner = _owner;
     }
 
     /// @inheritdoc IXERC20Factory
-    function deployXERC20() external returns (address _XERC20) {
+    function deployXERC20() external virtual returns (address _XERC20) {
         if (block.chainid == 10) revert InvalidChainId();
 
-        _XERC20 = createx.deployCreate3({
+        _XERC20 = CreateXLibrary.CREATEX.deployCreate3({
             salt: XERC20_ENTROPY.calculateSalt({_deployer: address(this)}),
             initCode: abi.encodePacked(
                 type(XERC20).creationCode,
@@ -90,7 +85,7 @@ contract XERC20Factory is IXERC20Factory {
 
         address expectedAddress = XERC20_ENTROPY.computeCreate3Address({_deployer: address(this)});
 
-        _lockbox = createx.deployCreate3({
+        _lockbox = CreateXLibrary.CREATEX.deployCreate3({
             salt: LOCKBOX_ENTROPY.calculateSalt({_deployer: address(this)}),
             initCode: abi.encodePacked(
                 type(XERC20Lockbox).creationCode,
@@ -101,7 +96,7 @@ contract XERC20Factory is IXERC20Factory {
             )
         });
 
-        _XERC20 = createx.deployCreate3({
+        _XERC20 = CreateXLibrary.CREATEX.deployCreate3({
             salt: XERC20_ENTROPY.calculateSalt({_deployer: address(this)}),
             initCode: abi.encodePacked(
                 type(XERC20).creationCode,

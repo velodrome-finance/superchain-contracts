@@ -2,14 +2,11 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import {Router} from "../Router.sol";
-import {IFeeSharing} from "../interfaces/IFeeSharing.sol";
-import {IModeRouter} from "../interfaces/extensions/IModeRouter.sol";
+import {ModeFeeSharing} from "./ModeFeeSharing.sol";
 
-contract ModeRouter is Router, IModeRouter {
-    /// @inheritdoc IModeRouter
-    uint256 public immutable tokenId;
-
-    constructor(address _factory, address _weth, address _sfs, address _recipient) Router(_factory, _weth) {
-        tokenId = IFeeSharing(_sfs).register(_recipient);
-    }
+contract ModeRouter is Router, ModeFeeSharing {
+    constructor(address _factory, address _weth, address _recipient)
+        Router(_factory, _weth)
+        ModeFeeSharing(_recipient)
+    {}
 }

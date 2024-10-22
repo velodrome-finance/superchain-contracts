@@ -10,9 +10,6 @@ interface IXERC20Factory {
     error InvalidChainId();
     error ZeroAddress();
 
-    /// @notice CreateX factory instance
-    function createx() external view returns (ICreateX);
-
     /// @notice Initial owner of XERC20
     function owner() external view returns (address);
 

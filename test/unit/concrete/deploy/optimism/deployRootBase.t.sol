@@ -92,7 +92,6 @@ contract OptimismDeployRootBaseTest is BaseFixture {
         assertEq(rootPoolFactory.implementation(), address(rootPoolImplementation));
         assertEq(rootPoolFactory.bridge(), address(rootMessageBridge));
 
-        assertEq(address(rootXFactory.createx()), address(cx));
         assertEq(rootXFactory.owner(), params.tokenAdmin);
         assertEq(rootXFactory.name(), "Superchain Velodrome");
         assertEq(rootXFactory.symbol(), "XVELO");

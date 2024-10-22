@@ -106,7 +106,6 @@ abstract contract BaseFixture is Test, TestConstants, GasSnapshot {
                 initCode: abi.encodePacked(
                     type(XERC20Factory).creationCode,
                     abi.encode(
-                        address(cx), // create x address
                         users.owner // xerc20 owner address
                     )
                 )

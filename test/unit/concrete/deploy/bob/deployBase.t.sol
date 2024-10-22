@@ -77,7 +77,6 @@ contract BobDeployBaseTest is BaseFixture {
 
         assertEq(leafVoter.bridge(), address(leafMessageBridge));
 
-        assertEq(address(leafXFactory.createx()), address(cx));
         assertEq(leafXFactory.owner(), params.tokenAdmin);
         assertEq(leafXFactory.name(), "Superchain Velodrome");
         assertEq(leafXFactory.symbol(), "XVELO");
