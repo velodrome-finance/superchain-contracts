@@ -88,16 +88,16 @@ contract CreateXDeployTest is BaseFixture {
         /// Deploy Root contracts
         rootDeploy.run();
         root = RootDeployment({
-            poolImplementation: rootDeploy.poolImplementation(),
-            poolFactory: rootDeploy.poolFactory(),
-            gaugeFactory: rootDeploy.gaugeFactory(),
-            votingRewardsFactory: rootDeploy.votingRewardsFactory(),
-            xerc20Factory: rootDeploy.xerc20Factory(),
-            xVelo: rootDeploy.xVelo(),
-            lockbox: rootDeploy.lockbox(),
-            tokenBridge: rootDeploy.tokenBridge(),
-            messageBridge: rootDeploy.messageBridge(),
-            messageModule: rootDeploy.messageModule(),
+            poolImplementation: rootDeploy.rootPoolImplementation(),
+            poolFactory: rootDeploy.rootPoolFactory(),
+            gaugeFactory: rootDeploy.rootGaugeFactory(),
+            votingRewardsFactory: rootDeploy.rootVotingRewardsFactory(),
+            xerc20Factory: rootDeploy.rootXFactory(),
+            xVelo: rootDeploy.rootXVelo(),
+            lockbox: rootDeploy.rootLockbox(),
+            tokenBridge: rootDeploy.rootTokenBridge(),
+            messageBridge: rootDeploy.rootMessageBridge(),
+            messageModule: rootDeploy.rootMessageModule(),
             emergencyCouncil: rootDeploy.emergencyCouncil(),
             ism: rootDeploy.ism()
         });
@@ -120,17 +120,17 @@ contract CreateXDeployTest is BaseFixture {
         /// Deploy Leaf contracts
         leafDeploy.run();
         leaf = LeafDeployment({
-            poolImplementation: ModePool(address(leafDeploy.poolImplementation())),
-            poolFactory: ModePoolFactory(address(leafDeploy.poolFactory())),
-            gaugeFactory: leafDeploy.gaugeFactory(),
-            votingRewardsFactory: leafDeploy.votingRewardsFactory(),
-            xerc20Factory: leafDeploy.xerc20Factory(),
-            xVelo: leafDeploy.xVelo(),
-            voter: leafDeploy.voter(),
-            tokenBridge: leafDeploy.tokenBridge(),
-            messageBridge: leafDeploy.messageBridge(),
-            messageModule: leafDeploy.messageModule(),
-            router: ModeRouter(payable(leafDeploy.router())),
+            poolImplementation: ModePool(address(leafDeploy.leafPoolImplementation())),
+            poolFactory: ModePoolFactory(address(leafDeploy.leafPoolFactory())),
+            gaugeFactory: leafDeploy.leafGaugeFactory(),
+            votingRewardsFactory: leafDeploy.leafVotingRewardsFactory(),
+            xerc20Factory: leafDeploy.leafXFactory(),
+            xVelo: leafDeploy.leafXVelo(),
+            voter: leafDeploy.leafVoter(),
+            tokenBridge: leafDeploy.leafTokenBridge(),
+            messageBridge: leafDeploy.leafMessageBridge(),
+            messageModule: leafDeploy.leafMessageModule(),
+            router: ModeRouter(payable(leafDeploy.leafRouter())),
             ism: leafDeploy.ism()
         });
 

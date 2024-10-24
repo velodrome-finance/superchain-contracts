@@ -10,6 +10,21 @@ contract BobDeployBaseTest is BaseFixture {
     DeployBase public deploy;
     DeployBase.DeploymentParameters public params;
 
+    // leaf superchain contracts
+    XERC20Factory public leafXFactory;
+    XERC20 public leafXVelo;
+    Router public leafRouter;
+    TokenBridge public leafTokenBridge;
+    LeafMessageBridge public leafMessageBridge;
+    LeafHLMessageModule public leafMessageModule;
+
+    // leaf-only contracts
+    PoolFactory public leafPoolFactory;
+    Pool public leafPoolImplementation;
+    LeafGaugeFactory public leafGaugeFactory;
+    LeafVoter public leafVoter;
+    VotingRewardsFactory public leafVotingRewardsFactory;
+
     function setUp() public override {
         vm.createSelectFork({urlOrAlias: "bob", blockNumber: 1323496});
 
@@ -25,26 +40,26 @@ contract BobDeployBaseTest is BaseFixture {
     function testRun() public {
         deploy.run();
 
-        poolImplementation = deploy.poolImplementation();
-        poolFactory = deploy.poolFactory();
-        leafGaugeFactory = deploy.gaugeFactory();
-        leafVotingRewardsFactory = deploy.votingRewardsFactory();
-        leafVoter = deploy.voter();
+        leafPoolImplementation = deploy.leafPoolImplementation();
+        leafPoolFactory = deploy.leafPoolFactory();
+        leafGaugeFactory = deploy.leafGaugeFactory();
+        leafVotingRewardsFactory = deploy.leafVotingRewardsFactory();
+        leafVoter = deploy.leafVoter();
 
-        leafXFactory = deploy.xerc20Factory();
-        leafXVelo = deploy.xVelo();
+        leafXFactory = deploy.leafXFactory();
+        leafXVelo = deploy.leafXVelo();
 
-        leafTokenBridge = deploy.tokenBridge();
-        leafMessageBridge = deploy.messageBridge();
-        leafMessageModule = deploy.messageModule();
+        leafTokenBridge = deploy.leafTokenBridge();
+        leafMessageBridge = deploy.leafMessageBridge();
+        leafMessageModule = deploy.leafMessageModule();
 
         leafIsm = deploy.ism();
-        leafRouter = deploy.router();
+        leafRouter = deploy.leafRouter();
 
         params = deploy.params();
 
-        assertNotEq(address(poolImplementation), address(0));
-        assertNotEq(address(poolFactory), address(0));
+        assertNotEq(address(leafPoolImplementation), address(0));
+        assertNotEq(address(leafPoolFactory), address(0));
 
         assertNotEq(address(leafGaugeFactory), address(0));
         assertNotEq(address(leafVotingRewardsFactory), address(0));
@@ -60,13 +75,13 @@ contract BobDeployBaseTest is BaseFixture {
         // assertNotEq(address(leafIsm), address(0));
         assertNotEq(address(leafRouter), address(0));
 
-        assertEq(poolFactory.implementation(), address(poolImplementation));
-        assertEq(poolFactory.poolAdmin(), params.poolAdmin);
-        assertEq(poolFactory.pauser(), params.pauser);
-        assertEq(poolFactory.feeManager(), params.feeManager);
-        assertEq(poolFactory.isPaused(), false);
-        assertEq(poolFactory.stableFee(), 5);
-        assertEq(poolFactory.volatileFee(), 30);
+        assertEq(leafPoolFactory.implementation(), address(leafPoolImplementation));
+        assertEq(leafPoolFactory.poolAdmin(), params.poolAdmin);
+        assertEq(leafPoolFactory.pauser(), params.pauser);
+        assertEq(leafPoolFactory.feeManager(), params.feeManager);
+        assertEq(leafPoolFactory.isPaused(), false);
+        assertEq(leafPoolFactory.stableFee(), 5);
+        assertEq(leafPoolFactory.volatileFee(), 30);
 
         assertEq(leafGaugeFactory.voter(), address(leafVoter));
         assertEq(leafGaugeFactory.xerc20(), address(leafXVelo));
@@ -105,8 +120,8 @@ contract BobDeployBaseTest is BaseFixture {
         assertEq(leafMessageModule.mailbox(), params.mailbox);
         assertEq(address(leafMessageModule.securityModule()), address(leafIsm));
 
-        assertEq(leafRouter.factory(), address(poolFactory));
-        assertEq(leafRouter.poolImplementation(), address(poolImplementation));
+        assertEq(leafRouter.factory(), address(leafPoolFactory));
+        assertEq(leafRouter.poolImplementation(), address(leafPoolImplementation));
         assertEq(address(leafRouter.weth()), params.weth);
     }
 }

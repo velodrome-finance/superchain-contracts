@@ -25,7 +25,6 @@ import {RateLimitMidPoint} from "src/libraries/rateLimits/RateLimitMidpointCommo
 import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
 import {ILeafGauge} from "src/interfaces/gauges/ILeafGauge.sol";
 import {ILeafMessageBridge, LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
-import {IRootMessageBridge, RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
 import {ILeafHLMessageModule, LeafHLMessageModule} from "src/bridge/hyperlane/LeafHLMessageModule.sol";
 import {ILeafGaugeFactory, LeafGaugeFactory} from "src/gauges/LeafGaugeFactory.sol";
 import {ILeafVoter, LeafVoter} from "src/voter/LeafVoter.sol";
@@ -42,10 +41,6 @@ import {CreateX} from "test/mocks/CreateX.sol";
 abstract contract BaseFixture is Test, TestConstants, GasSnapshot {
     using SafeERC20 for TestERC20;
 
-    Pool public poolImplementation;
-    PoolFactory public poolFactory;
-    Router public router;
-
     /// superchain contracts
     XERC20 public xVelo;
     XERC20Lockbox public lockbox;
@@ -53,19 +48,18 @@ abstract contract BaseFixture is Test, TestConstants, GasSnapshot {
     address public bridge = address(1); // placeholder
 
     // leaf superchain contracts
-    XERC20Factory public leafXFactory;
-    XERC20 public leafXVelo;
-    Router public leafRouter;
-    TokenBridge public leafTokenBridge;
-    LeafMessageBridge public leafMessageBridge;
-    LeafHLMessageModule public leafMessageModule;
+    Router public router;
+    TokenBridge public tokenBridge;
+    LeafMessageBridge public messageBridge;
+    LeafHLMessageModule public messageModule;
 
     // leaf-only contracts
-    PoolFactory public leafPoolFactory;
-    LeafGaugeFactory public leafGaugeFactory;
+    PoolFactory public poolFactory;
+    Pool public poolImplementation;
     CustomFeeModule public feeModule;
-    LeafVoter public leafVoter;
-    VotingRewardsFactory public leafVotingRewardsFactory;
+    LeafGaugeFactory public gaugeFactory;
+    LeafVoter public voter;
+    VotingRewardsFactory public votingRewardsFactory;
     IInterchainSecurityModule public leafIsm;
 
     /// tokens

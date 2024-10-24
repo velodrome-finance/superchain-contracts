@@ -75,8 +75,9 @@ contract RootGaugeFactory is IRootGaugeFactory {
         notifyAdmin = _notifyAdmin;
         emissionAdmin = _emissionAdmin;
         defaultCap = _defaultCap;
-        minter = IVoter(_voter).minter();
-        rewardToken = IMinter(minter).velo();
+        address _minter = IVoter(_voter).minter();
+        minter = _minter;
+        rewardToken = IMinter(_minter).velo();
         emit NotifyAdminSet({notifyAdmin: _notifyAdmin});
         emit EmissionAdminSet({_emissionAdmin: _emissionAdmin});
         emit DefaultCapSet({_newDefaultCap: _defaultCap});

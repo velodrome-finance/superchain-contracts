@@ -55,18 +55,18 @@ contract OptimismDeployRootBaseTest is BaseFixture {
     function testRun() public {
         deploy.run();
 
-        rootPoolImplementation = deploy.poolImplementation();
-        rootPoolFactory = deploy.poolFactory();
-        rootGaugeFactory = deploy.gaugeFactory();
-        rootVotingRewardsFactory = deploy.votingRewardsFactory();
+        rootPoolImplementation = deploy.rootPoolImplementation();
+        rootPoolFactory = deploy.rootPoolFactory();
+        rootGaugeFactory = deploy.rootGaugeFactory();
+        rootVotingRewardsFactory = deploy.rootVotingRewardsFactory();
 
-        rootXFactory = deploy.xerc20Factory();
-        rootXVelo = deploy.xVelo();
-        rootLockbox = deploy.lockbox();
+        rootXFactory = deploy.rootXFactory();
+        rootXVelo = deploy.rootXVelo();
+        rootLockbox = deploy.rootLockbox();
 
-        rootTokenBridge = deploy.tokenBridge();
-        rootMessageBridge = deploy.messageBridge();
-        rootMessageModule = deploy.messageModule();
+        rootTokenBridge = deploy.rootTokenBridge();
+        rootMessageBridge = deploy.rootMessageBridge();
+        rootMessageModule = deploy.rootMessageModule();
 
         emergencyCouncil = deploy.emergencyCouncil();
 

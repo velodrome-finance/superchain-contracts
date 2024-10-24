@@ -43,21 +43,21 @@ contract DeployBase is DeployBaseFixture {
     function deploy() internal override {
         address _deployer = deployer;
 
-        poolImplementation = ModePool(
+        leafPoolImplementation = ModePool(
             cx.deployCreate3({
                 salt: POOL_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(type(ModePool).creationCode)
             })
         );
-        checkAddress({_entropy: POOL_ENTROPY, _output: address(poolImplementation)});
+        checkAddress({_entropy: POOL_ENTROPY, _output: address(leafPoolImplementation)});
 
-        poolFactory = ModePoolFactory(
+        leafPoolFactory = ModePoolFactory(
             cx.deployCreate3({
                 salt: POOL_FACTORY_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(ModePoolFactory).creationCode,
                     abi.encode(
-                        address(poolImplementation), // pool implementation
+                        address(leafPoolImplementation), // pool implementation
                         _params.poolAdmin, // pool admin
                         _params.pauser, // pauser
                         _params.feeManager, // fee manager
@@ -66,16 +66,16 @@ contract DeployBase is DeployBaseFixture {
                 )
             })
         );
-        checkAddress({_entropy: POOL_FACTORY_ENTROPY, _output: address(poolFactory)});
+        checkAddress({_entropy: POOL_FACTORY_ENTROPY, _output: address(leafPoolFactory)});
 
-        router = ModeRouter(
+        leafRouter = ModeRouter(
             payable(
                 cx.deployCreate3({
                     salt: ROUTER_ENTROPY.calculateSalt({_deployer: _deployer}),
                     initCode: abi.encodePacked(
                         type(ModeRouter).creationCode,
                         abi.encode(
-                            address(poolFactory), // pool factory
+                            address(leafPoolFactory), // pool factory
                             _params.weth, // weth contract
                             _modeParams.recipient // sfs nft recipient
                         )
@@ -83,9 +83,9 @@ contract DeployBase is DeployBaseFixture {
                 })
             )
         );
-        checkAddress({_entropy: ROUTER_ENTROPY, _output: address(router)});
+        checkAddress({_entropy: ROUTER_ENTROPY, _output: address(leafRouter)});
 
-        xerc20Factory = ModeXERC20Factory(
+        leafXFactory = ModeXERC20Factory(
             cx.deployCreate3({
                 salt: XERC20_FACTORY_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
@@ -97,71 +97,71 @@ contract DeployBase is DeployBaseFixture {
                 )
             })
         );
-        checkAddress({_entropy: XERC20_FACTORY_ENTROPY, _output: address(xerc20Factory)});
+        checkAddress({_entropy: XERC20_FACTORY_ENTROPY, _output: address(leafXFactory)});
 
-        messageBridge = ModeLeafMessageBridge(
+        leafMessageBridge = ModeLeafMessageBridge(
             CreateXLibrary.computeCreate3Address({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: _deployer})
         );
-        voter = ModeLeafVoter(
+        leafVoter = ModeLeafVoter(
             cx.deployCreate3({
                 salt: VOTER_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(ModeLeafVoter).creationCode,
                     abi.encode(
-                        address(messageBridge), // message bridge
+                        address(leafMessageBridge), // message bridge
                         _modeParams.recipient // sfs nft recipient
                     )
                 )
             })
         );
-        checkAddress({_entropy: VOTER_ENTROPY, _output: address(voter)});
+        checkAddress({_entropy: VOTER_ENTROPY, _output: address(leafVoter)});
 
-        xVelo = XERC20(xerc20Factory.deployXERC20());
+        leafXVelo = XERC20(leafXFactory.deployXERC20());
 
-        messageModule = ModeLeafHLMessageModule(
+        leafMessageModule = ModeLeafHLMessageModule(
             CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: _deployer})
         );
-        messageBridge = ModeLeafMessageBridge(
+        leafMessageBridge = ModeLeafMessageBridge(
             cx.deployCreate3({
                 salt: MESSAGE_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(ModeLeafMessageBridge).creationCode,
                     abi.encode(
                         _params.bridgeOwner, // message bridge owner
-                        address(xVelo), // xerc20 address
-                        address(voter), // leaf voter
-                        address(messageModule), // message module
+                        address(leafXVelo), // xerc20 address
+                        address(leafVoter), // leaf voter
+                        address(leafMessageModule), // message module
                         _modeParams.recipient // sfs nft recipient
                     )
                 )
             })
         );
-        checkAddress({_entropy: MESSAGE_BRIDGE_ENTROPY, _output: address(messageBridge)});
+        checkAddress({_entropy: MESSAGE_BRIDGE_ENTROPY, _output: address(leafMessageBridge)});
 
-        messageModule = ModeLeafHLMessageModule(
+        leafMessageModule = ModeLeafHLMessageModule(
             cx.deployCreate3({
                 salt: HL_MESSAGE_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(ModeLeafHLMessageModule).creationCode,
                     abi.encode(
                         _params.moduleOwner, // leaf module owner
-                        address(messageBridge), // leaf message bridge
+                        address(leafMessageBridge), // leaf message bridge
                         _params.mailbox, // leaf mailbox
                         address(ism) // leaf security module
                     )
                 )
             })
         );
-        checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _output: address(messageModule)});
+        checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _output: address(leafMessageModule)});
 
-        tokenBridge = ModeTokenBridge(
+        leafTokenBridge = ModeTokenBridge(
             cx.deployCreate3({
                 salt: TOKEN_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(ModeTokenBridge).creationCode,
                     abi.encode(
                         _params.bridgeOwner, // bridge owner
-                        address(xVelo), // xerc20 address
+                        address(leafXVelo), // xerc20 address
                         _params.mailbox, // mailbox
                         address(ism), // security module
                         _modeParams.recipient // sfs nft recipient
@@ -169,36 +169,36 @@ contract DeployBase is DeployBaseFixture {
                 )
             })
         );
-        checkAddress({_entropy: TOKEN_BRIDGE_ENTROPY, _output: address(tokenBridge)});
+        checkAddress({_entropy: TOKEN_BRIDGE_ENTROPY, _output: address(leafTokenBridge)});
 
-        gaugeFactory = ModeLeafGaugeFactory(
+        leafGaugeFactory = ModeLeafGaugeFactory(
             cx.deployCreate3({
                 salt: GAUGE_FACTORY_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(ModeLeafGaugeFactory).creationCode,
                     abi.encode(
-                        address(voter), // voter address
-                        address(xVelo), // xerc20 address
-                        address(messageBridge) // bridge address
+                        address(leafVoter), // voter address
+                        address(leafXVelo), // xerc20 address
+                        address(leafMessageBridge) // bridge address
                     )
                 )
             })
         );
-        checkAddress({_entropy: GAUGE_FACTORY_ENTROPY, _output: address(gaugeFactory)});
+        checkAddress({_entropy: GAUGE_FACTORY_ENTROPY, _output: address(leafGaugeFactory)});
 
-        votingRewardsFactory = VotingRewardsFactory(
+        leafVotingRewardsFactory = VotingRewardsFactory(
             cx.deployCreate3({
                 salt: REWARDS_FACTORY_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(VotingRewardsFactory).creationCode,
                     abi.encode(
-                        address(voter), // voter address
-                        address(messageBridge) // bridge address
+                        address(leafVoter), // voter address
+                        address(leafMessageBridge) // bridge address
                     )
                 )
             })
         );
-        checkAddress({_entropy: REWARDS_FACTORY_ENTROPY, _output: address(votingRewardsFactory)});
+        checkAddress({_entropy: REWARDS_FACTORY_ENTROPY, _output: address(leafVotingRewardsFactory)});
     }
 
     function modeParams() public view returns (ModeDeploymentParameters memory) {

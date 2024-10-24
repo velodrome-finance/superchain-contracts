@@ -100,12 +100,12 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
 
     // root-only contracts
     XERC20Lockbox public rootLockbox;
+    RootPool public rootPoolImplementation;
     RootPoolFactory public rootPoolFactory;
     RootGaugeFactory public rootGaugeFactory;
     IRootVotingRewardsFactory public rootVotingRewardsFactory;
 
     RootPool public rootPool;
-    RootPool public rootPoolImplementation;
     RootGauge public rootGauge;
     RootFeesVotingReward public rootFVR;
     RootIncentiveVotingReward public rootIVR;
@@ -133,6 +133,7 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
     LeafHLMessageModule public leafMessageModule;
 
     // leaf-only contracts
+    Pool public leafPoolImplementation;
     PoolFactory public leafPoolFactory;
     LeafGaugeFactory public leafGaugeFactory;
     LeafVoter public leafVoter;
@@ -280,7 +281,7 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
                 initCode: abi.encodePacked(
                     type(RootHLMessageModule).creationCode,
                     abi.encode(
-                        address(rootMessageBridge), // root bridge
+                        address(rootMessageBridge), // root message bridge
                         address(rootMailbox) // root mailbox
                     )
                 )
@@ -386,7 +387,7 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
         vm.stopPrank();
 
         vm.startPrank(users.deployer);
-        leafPool = Pool(
+        leafPoolImplementation = Pool(
             cx.deployCreate3({
                 salt: CreateXLibrary.calculateSalt({_entropy: POOL_ENTROPY, _deployer: users.deployer}),
                 initCode: abi.encodePacked(type(Pool).creationCode)
@@ -398,7 +399,7 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
                 initCode: abi.encodePacked(
                     type(PoolFactory).creationCode,
                     abi.encode(
-                        address(leafPool), // pool implementation
+                        address(leafPoolImplementation), // pool implementation
                         users.owner, // pool admin
                         users.owner, // pauser
                         users.feeManager // fee manager
