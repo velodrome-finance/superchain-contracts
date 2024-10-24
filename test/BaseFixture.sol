@@ -111,7 +111,7 @@ abstract contract BaseFixture is Test, TestConstants, GasSnapshot {
                 )
             })
         );
-        snapshot = vm.snapshot();
+        snapshot = vm.snapshotState();
         (address _xVelo, address _lockbox) = xFactory.deployXERC20WithLockbox({_erc20: address(rewardToken)});
         xVelo = XERC20(_xVelo);
         lockbox = XERC20Lockbox(_lockbox);

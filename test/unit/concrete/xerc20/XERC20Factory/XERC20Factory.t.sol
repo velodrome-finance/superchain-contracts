@@ -7,7 +7,7 @@ abstract contract XERC20FactoryTest is BaseFixture {
     function setUp() public virtual override {
         super.setUp();
 
-        vm.revertToAndDelete(snapshot);
+        vm.revertToStateAndDelete(snapshot);
     }
 
     function test_InitialState() public view {
