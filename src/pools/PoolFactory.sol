@@ -97,7 +97,7 @@ contract PoolFactory is IPoolFactory {
 
     /// @inheritdoc IPoolFactory
     function getPool(address tokenA, address tokenB, uint24 fee) external view returns (address) {
-        return fee > 1 ? address(0) : fee == 1 ? _getPool[tokenA][tokenB][true] : _getPool[tokenA][tokenB][false];
+        return fee > 1 ? address(0) : _getPool[tokenA][tokenB][fee == 1];
     }
 
     /// @inheritdoc IPoolFactory
