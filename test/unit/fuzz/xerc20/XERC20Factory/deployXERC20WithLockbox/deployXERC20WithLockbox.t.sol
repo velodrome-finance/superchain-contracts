@@ -22,6 +22,6 @@ contract DeployXERC20WithLockboxUnitFuzzTest is XERC20FactoryTest {
         vm.chainId(chainId);
 
         vm.expectRevert(IXERC20Factory.InvalidChainId.selector);
-        xFactory.deployXERC20WithLockbox({_erc20: address(rewardToken)});
+        xFactory.deployXERC20WithLockbox();
     }
 }

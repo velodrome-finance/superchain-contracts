@@ -100,13 +100,14 @@ abstract contract BaseFixture is Test, TestConstants, GasSnapshot {
                 initCode: abi.encodePacked(
                     type(XERC20Factory).creationCode,
                     abi.encode(
-                        users.owner // xerc20 owner address
+                        users.owner, // xerc20 owner address
+                        address(rewardToken) // erc20 address
                     )
                 )
             })
         );
         snapshot = vm.snapshotState();
-        (address _xVelo, address _lockbox) = xFactory.deployXERC20WithLockbox({_erc20: address(rewardToken)});
+        (address _xVelo, address _lockbox) = xFactory.deployXERC20WithLockbox();
         xVelo = XERC20(_xVelo);
         lockbox = XERC20Lockbox(_lockbox);
 

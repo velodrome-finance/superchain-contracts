@@ -95,6 +95,7 @@ contract OptimismDeployRootBaseTest is BaseFixture {
         assertEq(rootXFactory.owner(), params.tokenAdmin);
         assertEq(rootXFactory.name(), "Superchain Velodrome");
         assertEq(rootXFactory.symbol(), "XVELO");
+        assertEq(rootXFactory.erc20(), params.velo);
         assertEq(rootXFactory.XERC20_ENTROPY(), XERC20_ENTROPY);
         assertEq(rootXFactory.LOCKBOX_ENTROPY(), LOCKBOX_ENTROPY);
 

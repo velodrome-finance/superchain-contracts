@@ -91,14 +91,15 @@ abstract contract DeployRootBaseFixture is DeployFixture {
                 initCode: abi.encodePacked(
                     type(XERC20Factory).creationCode,
                     abi.encode(
-                        _params.tokenAdmin // xerc20 owner address
+                        _params.tokenAdmin, // xerc20 owner address
+                        _params.velo // erc20 address
                     )
                 )
             })
         );
         checkAddress({_entropy: XERC20_FACTORY_ENTROPY, _output: address(rootXFactory)});
 
-        (address _xVelo, address _lockbox) = rootXFactory.deployXERC20WithLockbox({_erc20: _params.velo});
+        (address _xVelo, address _lockbox) = rootXFactory.deployXERC20WithLockbox();
         rootXVelo = XERC20(_xVelo);
         rootLockbox = XERC20Lockbox(_lockbox);
 

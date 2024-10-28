@@ -13,6 +13,10 @@ interface IXERC20Factory {
     /// @notice Initial owner of XERC20
     function owner() external view returns (address);
 
+    /// @notice ERC20 token to wrap
+    /// @dev Must be a valid ERC20 token on root, not used on leaf chains
+    function erc20() external view returns (address);
+
     /// @notice Name of XERC20 token
     function name() external view returns (string memory);
 
@@ -31,5 +35,5 @@ interface IXERC20Factory {
 
     /// @notice Deploys a new XERC20 token with a deterministic address with a corresponding lockbox
     /// @dev Reverts if chain is not 10 (i.e. not Optimism)
-    function deployXERC20WithLockbox(address _erc20) external returns (address _XERC20, address _lockbox);
+    function deployXERC20WithLockbox() external returns (address _XERC20, address _lockbox);
 }

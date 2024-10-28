@@ -14,10 +14,10 @@ contract DeployXERC20WithLockboxUnitConcreteTest is XERC20FactoryTest {
 
     function test_GivenXERC20AlreadyDeployed() external {
         // It should revert with {FailedContractCreation}
-        xFactory.deployXERC20WithLockbox({_erc20: address(rewardToken)});
+        xFactory.deployXERC20WithLockbox();
 
         vm.expectRevert(abi.encodeWithSelector(CreateX.FailedContractCreation.selector, address(cx)));
-        xFactory.deployXERC20WithLockbox({_erc20: address(rewardToken)});
+        xFactory.deployXERC20WithLockbox();
     }
 
     modifier givenXERC20NotYetDeployed() {
@@ -29,7 +29,7 @@ contract DeployXERC20WithLockboxUnitConcreteTest is XERC20FactoryTest {
         vm.chainId(31337);
 
         vm.expectRevert(IXERC20Factory.InvalidChainId.selector);
-        xFactory.deployXERC20WithLockbox({_erc20: address(rewardToken)});
+        xFactory.deployXERC20WithLockbox();
     }
 
     function test_GivenChainIdIs10() external givenXERC20NotYetDeployed {
@@ -56,7 +56,7 @@ contract DeployXERC20WithLockboxUnitConcreteTest is XERC20FactoryTest {
 
         vm.expectEmit(address(xFactory));
         emit IXERC20Factory.DeployXERC20WithLockbox({_xerc20: expectedTokenAddress, _lockbox: expectedLockboxAddress});
-        (address xerc20, address lockbox) = xFactory.deployXERC20WithLockbox({_erc20: address(rewardToken)});
+        (address xerc20, address lockbox) = xFactory.deployXERC20WithLockbox();
 
         assertEq(xerc20, expectedTokenAddress);
         assertEq(IERC20Metadata(xerc20).name(), "Superchain Velodrome");
@@ -70,7 +70,7 @@ contract DeployXERC20WithLockboxUnitConcreteTest is XERC20FactoryTest {
     }
 
     function testGas_deployXERC20WithLockbox() external givenXERC20NotYetDeployed {
-        xFactory.deployXERC20WithLockbox({_erc20: address(rewardToken)});
+        xFactory.deployXERC20WithLockbox();
         snapLastCall("XERC20Factory_deployXERC20WithLockbox");
     }
 }

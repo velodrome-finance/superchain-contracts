@@ -254,13 +254,14 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
                 initCode: abi.encodePacked(
                     type(XERC20Factory).creationCode,
                     abi.encode(
-                        users.owner // xerc20 owner address
+                        users.owner, // xerc20 owner address
+                        address(rootRewardToken) // erc20 address
                     )
                 )
             })
         );
 
-        (address _xVelo, address _lockbox) = rootXFactory.deployXERC20WithLockbox({_erc20: address(rootRewardToken)});
+        (address _xVelo, address _lockbox) = rootXFactory.deployXERC20WithLockbox();
         rootXVelo = XERC20(_xVelo);
         rootLockbox = XERC20Lockbox(_lockbox);
 
@@ -433,7 +434,8 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
                 initCode: abi.encodePacked(
                     type(XERC20Factory).creationCode,
                     abi.encode(
-                        users.owner // xerc20 owner address
+                        users.owner, // xerc20 owner address
+                        address(0)
                     )
                 )
             })

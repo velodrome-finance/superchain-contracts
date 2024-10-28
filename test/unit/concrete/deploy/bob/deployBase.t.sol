@@ -98,6 +98,7 @@ contract BobDeployBaseTest is BaseFixture {
         assertEq(leafXFactory.XERC20_ENTROPY(), XERC20_ENTROPY);
         assertEq(leafXFactory.LOCKBOX_ENTROPY(), LOCKBOX_ENTROPY);
         assertEq(leafXFactory.owner(), params.tokenAdmin);
+        assertEq(leafXFactory.erc20(), address(0));
 
         assertEq(leafXVelo.name(), "Superchain Velodrome");
         assertEq(leafXVelo.symbol(), "XVELO");

@@ -106,7 +106,8 @@ abstract contract DeployBaseFixture is DeployFixture {
                 initCode: abi.encodePacked(
                     type(XERC20Factory).creationCode,
                     abi.encode(
-                        _params.tokenAdmin // xerc20 owner
+                        _params.tokenAdmin, // xerc20 owner
+                        address(0) // erc20 address
                     )
                 )
             })

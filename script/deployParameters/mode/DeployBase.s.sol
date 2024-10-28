@@ -92,6 +92,7 @@ contract DeployBase is DeployBaseFixture {
                     type(ModeXERC20Factory).creationCode,
                     abi.encode(
                         _params.tokenAdmin, // xerc20 owner
+                        address(0), // erc20 address
                         _modeParams.recipient // sfs nft recipient
                     )
                 )

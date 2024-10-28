@@ -36,11 +36,14 @@ import {CreateXLibrary} from "../libraries/CreateXLibrary.sol";
 /// @title XERC20Factory
 /// @notice Deploys a canonical XERC20 on each chain
 /// @dev Depends on CreateX, assumes bytecode for CreateX has already been checked prior to deployment
+/// @dev Supports 18 decimal tokens only. Pass in the erc20 address on root to create a lockbox for it.
 contract XERC20Factory is IXERC20Factory {
     using CreateXLibrary for bytes11;
 
     /// @inheritdoc IXERC20Factory
     address public immutable owner;
+    /// @inheritdoc IXERC20Factory
+    address public immutable erc20;
 
     /// @inheritdoc IXERC20Factory
     string public constant name = "Superchain Velodrome";
@@ -54,9 +57,10 @@ contract XERC20Factory is IXERC20Factory {
 
     /// @notice Constructs the initial config of the XERC20Factory
     /// @param _owner The address of the initial owner for XERC20 deployments
-    constructor(address _owner) {
+    constructor(address _owner, address _erc20) {
         if (_owner == address(0)) revert ZeroAddress();
         owner = _owner;
+        erc20 = _erc20;
     }
 
     /// @inheritdoc IXERC20Factory
@@ -80,7 +84,7 @@ contract XERC20Factory is IXERC20Factory {
     }
 
     /// @inheritdoc IXERC20Factory
-    function deployXERC20WithLockbox(address _erc20) external returns (address _XERC20, address _lockbox) {
+    function deployXERC20WithLockbox() external returns (address _XERC20, address _lockbox) {
         if (block.chainid != 10) revert InvalidChainId();
 
         address expectedAddress = XERC20_ENTROPY.computeCreate3Address({_deployer: address(this)});
@@ -91,7 +95,7 @@ contract XERC20Factory is IXERC20Factory {
                 type(XERC20Lockbox).creationCode,
                 abi.encode(
                     expectedAddress, // xerc20 address
-                    _erc20 // erc20 address
+                    erc20 // erc20 address
                 )
             )
         });

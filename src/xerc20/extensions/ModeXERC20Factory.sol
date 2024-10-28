@@ -9,7 +9,10 @@ import {IXERC20Factory, XERC20Factory, CreateXLibrary} from "../XERC20Factory.so
 contract ModeXERC20Factory is XERC20Factory, ModeFeeSharing {
     using CreateXLibrary for bytes11;
 
-    constructor(address _owner, address _recipient) XERC20Factory(_owner) ModeFeeSharing(_recipient) {}
+    constructor(address _owner, address _erc20, address _recipient)
+        XERC20Factory(_owner, _erc20)
+        ModeFeeSharing(_recipient)
+    {}
 
     /// @inheritdoc IXERC20Factory
     function deployXERC20() external override returns (address _XERC20) {

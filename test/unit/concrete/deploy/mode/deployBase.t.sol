@@ -105,6 +105,7 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(leafXFactory.XERC20_ENTROPY(), XERC20_ENTROPY);
         assertEq(leafXFactory.LOCKBOX_ENTROPY(), LOCKBOX_ENTROPY);
         assertEq(leafXFactory.owner(), params.tokenAdmin);
+        assertEq(leafXFactory.erc20(), address(0));
         assertEq(ModeFeeSharing(address(leafXFactory)).sfs(), modeParams.sfs);
         assertEq(ModeFeeSharing(address(leafXFactory)).tokenId(), 555);
 
