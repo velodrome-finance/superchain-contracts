@@ -1,0 +1,6 @@
+SetHookIntegrationConcreteTest
+├── When the caller is not bridge owner
+│   └── It should revert with {NotBridgeOwner}
+└── When the caller is bridge owner
+    ├── It should set new hook
+    └── It should emit {HookSet} event

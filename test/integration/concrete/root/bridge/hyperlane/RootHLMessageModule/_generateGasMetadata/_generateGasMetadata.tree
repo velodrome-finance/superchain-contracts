@@ -1,0 +1,5 @@
+GenerateGasMetadataIntegrationConcreteTest
+├── When there is no custom hook set
+│   └── It should fetch the gas limit for the command from the library
+└── When there is a custom hook set
+    └── It should fetch the gas limit for the command from the custom hook

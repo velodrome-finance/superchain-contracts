@@ -49,7 +49,11 @@ import {IVotingRewardsFactory, VotingRewardsFactory} from "src/rewards/VotingRew
 import {IChainRegistry} from "src/interfaces/bridge/IChainRegistry.sol";
 import {ICrossChainRegistry} from "src/interfaces/bridge/ICrossChainRegistry.sol";
 
-import {IMessageSender, RootHLMessageModule} from "src/root/bridge/hyperlane/RootHLMessageModule.sol";
+import {
+    IMessageSender,
+    IRootHLMessageModule,
+    RootHLMessageModule
+} from "src/root/bridge/hyperlane/RootHLMessageModule.sol";
 
 import {IRootVotingRewardsFactory, RootVotingRewardsFactory} from "src/root/rewards/RootVotingRewardsFactory.sol";
 import {IRootIncentiveVotingReward, RootIncentiveVotingReward} from "src/root/rewards/RootIncentiveVotingReward.sol";
@@ -65,6 +69,7 @@ import {CreateX} from "test/mocks/CreateX.sol";
 import {TestERC20} from "test/mocks/TestERC20.sol";
 import {Mailbox, MultichainMockMailbox} from "test/mocks/MultichainMockMailbox.sol";
 import {IVoter, MockVoter} from "test/mocks/MockVoter.sol";
+import {MockCustomHook} from "test/mocks/MockCustomHook.sol";
 import {IVotingEscrow, MockVotingEscrow} from "test/mocks/MockVotingEscrow.sol";
 import {IFactoryRegistry, MockFactoryRegistry} from "test/mocks/MockFactoryRegistry.sol";
 import {TestConstants} from "test/utils/TestConstants.sol";
@@ -538,7 +543,7 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
         // mock calls to dispatch
         vm.mockCall({
             callee: address(rootMailbox),
-            data: abi.encode(bytes4(keccak256("quoteDispatch(uint32,bytes32,bytes,bytes)"))),
+            data: abi.encode(bytes4(keccak256("quoteDispatch(uint32,bytes32,bytes,bytes,address)"))),
             returnData: abi.encode(MESSAGE_FEE)
         });
 

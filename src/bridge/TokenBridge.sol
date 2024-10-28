@@ -4,8 +4,9 @@ pragma solidity >=0.8.19 <0.9.0;
 import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
-import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
+import {IPostDispatchHook} from "@hyperlane/core/contracts/interfaces/hooks/IPostDispatchHook.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
+import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
 
 import {IHLHandler} from "../interfaces/bridge/hyperlane/IHLHandler.sol";
 import {ITokenBridge} from "../interfaces/bridge/ITokenBridge.sol";
@@ -25,6 +26,8 @@ contract TokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterchainSecurityMo
     address public immutable xerc20;
     /// @inheritdoc ITokenBridge
     address public immutable mailbox;
+    /// @inheritdoc ITokenBridge
+    address public hook;
     /// @inheritdoc ITokenBridge
     IInterchainSecurityModule public securityModule;
 
@@ -47,6 +50,12 @@ contract TokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterchainSecurityMo
     }
 
     /// @inheritdoc ITokenBridge
+    function setHook(address _hook) external onlyOwner {
+        hook = _hook;
+        emit HookSet({_newHook: _hook});
+    }
+
+    /// @inheritdoc ITokenBridge
     function sendToken(uint256 _amount, uint256 _chainid) external payable {
         if (_amount == 0) revert ZeroAmount();
         if (!_chainids.contains({value: _chainid})) revert NotRegistered();
@@ -56,9 +65,11 @@ contract TokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterchainSecurityMo
         uint32 domain = uint32(_chainid);
         bytes memory message = abi.encodePacked(msg.sender, _amount);
         Mailbox(mailbox).dispatch{value: msg.value}({
-            _destinationDomain: domain,
-            _recipientAddress: TypeCasts.addressToBytes32(address(this)),
-            _messageBody: message
+            destinationDomain: domain,
+            recipientAddress: TypeCasts.addressToBytes32(address(this)),
+            messageBody: message,
+            metadata: "",
+            hook: IPostDispatchHook(hook)
         });
 
         emit SentMessage({

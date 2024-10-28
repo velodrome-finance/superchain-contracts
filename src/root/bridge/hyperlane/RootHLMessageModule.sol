@@ -4,14 +4,17 @@ pragma solidity >=0.8.19 <0.9.0;
 import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 import {StandardHookMetadata} from "@hyperlane/core/contracts/hooks/libs/StandardHookMetadata.sol";
+import {IPostDispatchHook} from "@hyperlane/core/contracts/interfaces/hooks/IPostDispatchHook.sol";
+import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 
 import {
     IRootHLMessageModule, IMessageSender
 } from "../../../interfaces/root/bridge/hyperlane/IRootHLMessageModule.sol";
+import {IHookGasEstimator} from "../../../interfaces/root/bridge/hyperlane/IHookGasEstimator.sol";
 import {IRootMessageBridge} from "../../../interfaces/root/bridge/IRootMessageBridge.sol";
 import {IXERC20} from "../../../interfaces/xerc20/IXERC20.sol";
-import {Commands} from "../../../libraries/Commands.sol";
 import {GasLimits} from "../../../libraries/GasLimits.sol";
+import {Commands} from "../../../libraries/Commands.sol";
 
 /// @title Hyperlane Token Bridge
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
@@ -26,6 +29,8 @@ contract RootHLMessageModule is IRootHLMessageModule {
     /// @inheritdoc IRootHLMessageModule
     address public immutable mailbox;
     /// @inheritdoc IRootHLMessageModule
+    address public hook;
+    /// @inheritdoc IRootHLMessageModule
     mapping(uint256 => uint256) public sendingNonce;
 
     constructor(address _bridge, address _mailbox) {
@@ -36,13 +41,15 @@ contract RootHLMessageModule is IRootHLMessageModule {
 
     /// @inheritdoc IMessageSender
     function quote(uint256 _destinationDomain, bytes calldata _messageBody) external view returns (uint256) {
-        bytes memory _metadata = _generateGasMetadata({_command: _messageBody.command()});
+        address _hook = hook;
+        bytes memory _metadata = _generateGasMetadata({_command: _messageBody.command(), _hook: _hook});
 
         return Mailbox(mailbox).quoteDispatch({
             destinationDomain: uint32(_destinationDomain),
             recipientAddress: TypeCasts.addressToBytes32(address(this)),
             messageBody: _messageBody,
-            defaultHookMetadata: _metadata
+            metadata: _metadata,
+            hook: IPostDispatchHook(_hook)
         });
     }
 
@@ -52,7 +59,8 @@ contract RootHLMessageModule is IRootHLMessageModule {
         uint32 domain = uint32(_chainid);
 
         uint256 command = _message.command();
-        bytes memory _metadata = _generateGasMetadata({_command: command});
+        address _hook = hook;
+        bytes memory _metadata = _generateGasMetadata({_command: command, _hook: _hook});
 
         if (command <= Commands.WITHDRAW) {
             /// @dev If command is deposit/withdraw, copy message into memory to include nonce
@@ -64,7 +72,8 @@ contract RootHLMessageModule is IRootHLMessageModule {
                 destinationDomain: domain,
                 recipientAddress: TypeCasts.addressToBytes32(address(this)),
                 messageBody: message,
-                hookMetadata: _metadata
+                metadata: _metadata,
+                hook: IPostDispatchHook(_hook)
             });
 
             emit SentMessage({
@@ -85,7 +94,8 @@ contract RootHLMessageModule is IRootHLMessageModule {
                 destinationDomain: domain,
                 recipientAddress: TypeCasts.addressToBytes32(address(this)),
                 messageBody: _message,
-                hookMetadata: _metadata
+                metadata: _metadata,
+                hook: IPostDispatchHook(_hook)
             });
 
             emit SentMessage({
@@ -98,10 +108,20 @@ contract RootHLMessageModule is IRootHLMessageModule {
         }
     }
 
-    function _generateGasMetadata(uint256 _command) internal view returns (bytes memory) {
+    /// @inheritdoc IRootHLMessageModule
+    function setHook(address _hook) external {
+        if (msg.sender != Ownable(bridge).owner()) revert NotBridgeOwner();
+        hook = _hook;
+        emit HookSet({_newHook: _hook});
+    }
+
+    function _generateGasMetadata(uint256 _command, address _hook) internal view returns (bytes memory) {
+        /// @dev If custom hook is set, it should be used to estimate gas
+        uint256 gasLimit =
+            _hook == address(0) ? _command.gasLimit() : IHookGasEstimator(_hook).estimateGas({_command: _command});
         return StandardHookMetadata.formatMetadata({
             _msgValue: msg.value,
-            _gasLimit: _command.gasLimit(),
+            _gasLimit: gasLimit,
             _refundAddress: tx.origin,
             _customMetadata: ""
         });
