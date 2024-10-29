@@ -28,6 +28,8 @@ contract ModeDeployBaseTest is BaseFixture {
     LeafVoter public leafVoter;
     VotingRewardsFactory public leafVotingRewardsFactory;
 
+    address constant sfs = 0x8680CEaBcb9b56913c519c069Add6Bc3494B7020;
+
     function setUp() public override {
         vm.createSelectFork({urlOrAlias: "mode", blockNumber: 11032400});
         deploy = new DeployBase();
@@ -85,7 +87,7 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(leafPoolFactory.isPaused(), false);
         assertEq(leafPoolFactory.stableFee(), 5);
         assertEq(leafPoolFactory.volatileFee(), 30);
-        assertEq(ModeFeeSharing(address(leafPoolFactory)).sfs(), modeParams.sfs);
+        assertEq(ModeFeeSharing(address(leafPoolFactory)).sfs(), sfs);
         assertEq(ModeFeeSharing(address(leafPoolFactory)).tokenId(), 553);
 
         assertEq(leafGaugeFactory.voter(), address(leafVoter));
@@ -96,7 +98,7 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(leafVotingRewardsFactory.bridge(), address(leafMessageBridge));
 
         assertEq(leafVoter.bridge(), address(leafMessageBridge));
-        assertEq(ModeFeeSharing(address(leafVoter)).sfs(), modeParams.sfs);
+        assertEq(ModeFeeSharing(address(leafVoter)).sfs(), sfs);
         assertEq(ModeFeeSharing(address(leafVoter)).tokenId(), 556);
 
         assertEq(leafXFactory.owner(), params.tokenAdmin);
@@ -106,7 +108,7 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(leafXFactory.LOCKBOX_ENTROPY(), LOCKBOX_ENTROPY);
         assertEq(leafXFactory.owner(), params.tokenAdmin);
         assertEq(leafXFactory.erc20(), address(0));
-        assertEq(ModeFeeSharing(address(leafXFactory)).sfs(), modeParams.sfs);
+        assertEq(ModeFeeSharing(address(leafXFactory)).sfs(), sfs);
         assertEq(ModeFeeSharing(address(leafXFactory)).tokenId(), 555);
 
         assertEq(leafXVelo.name(), "Superchain Velodrome");
@@ -118,14 +120,14 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(leafTokenBridge.xerc20(), address(leafXVelo));
         assertEq(leafTokenBridge.mailbox(), params.mailbox);
         assertEq(address(leafTokenBridge.securityModule()), address(leafIsm));
-        assertEq(ModeFeeSharing(address(leafTokenBridge)).sfs(), modeParams.sfs);
+        assertEq(ModeFeeSharing(address(leafTokenBridge)).sfs(), sfs);
         assertEq(ModeFeeSharing(address(leafTokenBridge)).tokenId(), 558);
 
         assertEq(leafMessageBridge.owner(), params.bridgeOwner);
         assertEq(leafMessageBridge.xerc20(), address(leafXVelo));
         assertEq(leafMessageBridge.voter(), address(leafVoter));
         assertEq(leafMessageBridge.module(), address(leafMessageModule));
-        assertEq(ModeFeeSharing(address(leafMessageBridge)).sfs(), modeParams.sfs);
+        assertEq(ModeFeeSharing(address(leafMessageBridge)).sfs(), sfs);
         assertEq(ModeFeeSharing(address(leafMessageBridge)).tokenId(), 557);
 
         assertEq(leafMessageModule.bridge(), address(leafMessageBridge));
@@ -137,7 +139,7 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(leafRouter.factory(), address(leafPoolFactory));
         assertEq(leafRouter.poolImplementation(), address(leafPoolImplementation));
         assertEq(address(leafRouter.weth()), params.weth);
-        assertEq(ModeFeeSharing(address(leafRouter)).sfs(), modeParams.sfs);
+        assertEq(ModeFeeSharing(address(leafRouter)).sfs(), sfs);
         assertEq(ModeFeeSharing(address(leafRouter)).tokenId(), 554);
     }
 }

@@ -16,7 +16,6 @@ contract DeployBase is DeployBaseFixture {
     using CreateXLibrary for bytes11;
 
     struct ModeDeploymentParameters {
-        address sfs;
         address recipient;
     }
 
@@ -34,10 +33,7 @@ contract DeployBase is DeployBaseFixture {
             mailbox: 0x2f2aFaE1139Ce54feFC03593FeE8AB2aDF4a85A7,
             outputFilename: "mode.json"
         });
-        _modeParams = ModeDeploymentParameters({
-            sfs: 0x8680CEaBcb9b56913c519c069Add6Bc3494B7020,
-            recipient: 0xb8804281fc224a4E597A3f256b53C9Ed3C89B6c3
-        });
+        _modeParams = ModeDeploymentParameters({recipient: 0xb8804281fc224a4E597A3f256b53C9Ed3C89B6c3});
     }
 
     function deploy() internal override {
