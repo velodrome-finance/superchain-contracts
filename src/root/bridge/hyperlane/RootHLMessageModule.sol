@@ -12,7 +12,11 @@ import {
 } from "../../../interfaces/root/bridge/hyperlane/IRootHLMessageModule.sol";
 import {IHookGasEstimator} from "../../../interfaces/root/bridge/hyperlane/IHookGasEstimator.sol";
 import {IRootMessageBridge} from "../../../interfaces/root/bridge/IRootMessageBridge.sol";
+import {IVotingEscrow} from "../../../interfaces/external/IVotingEscrow.sol";
+import {IVoter} from "../../../interfaces/external/IVoter.sol";
 import {IXERC20} from "../../../interfaces/xerc20/IXERC20.sol";
+
+import {VelodromeTimeLibrary} from "../../../libraries/VelodromeTimeLibrary.sol";
 import {GasLimits} from "../../../libraries/GasLimits.sol";
 import {Commands} from "../../../libraries/Commands.sol";
 
@@ -29,6 +33,8 @@ contract RootHLMessageModule is IRootHLMessageModule {
     /// @inheritdoc IRootHLMessageModule
     address public immutable mailbox;
     /// @inheritdoc IRootHLMessageModule
+    address public immutable ve;
+    /// @inheritdoc IRootHLMessageModule
     address public hook;
     /// @inheritdoc IRootHLMessageModule
     mapping(uint256 => uint256) public sendingNonce;
@@ -37,6 +43,7 @@ contract RootHLMessageModule is IRootHLMessageModule {
         bridge = _bridge;
         xerc20 = IRootMessageBridge(_bridge).xerc20();
         mailbox = _mailbox;
+        ve = IVoter(IRootMessageBridge(_bridge).voter()).ve();
     }
 
     /// @inheritdoc IMessageSender
@@ -63,6 +70,12 @@ contract RootHLMessageModule is IRootHLMessageModule {
         bytes memory _metadata = _generateGasMetadata({_command: command, _hook: _hook});
 
         if (command <= Commands.WITHDRAW) {
+            if (block.timestamp > VelodromeTimeLibrary.epochVoteEnd(block.timestamp)) {
+                if (!IVotingEscrow(ve).isApprovedOrOwner({_spender: tx.origin, _tokenId: _message.tokenId()})) {
+                    revert NotApprovedOrOwner();
+                }
+            }
+
             /// @dev If command is deposit/withdraw, copy message into memory to include nonce
             bytes memory message =
                 abi.encodePacked(uint8(command), _message.messageWithoutCommand(), sendingNonce[_chainid]);

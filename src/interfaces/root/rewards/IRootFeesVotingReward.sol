@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 interface IRootFeesVotingReward {
     error AlreadyInitialized();
     error MaxTokensExceeded();
+    error RecipientNotSet();
     error NotAuthorized();
     error InvalidGauge();
-    error RecipientNotSet();
 
     /// @notice Address of root voting rewards factory that created this contract
     function factory() external view returns (address);

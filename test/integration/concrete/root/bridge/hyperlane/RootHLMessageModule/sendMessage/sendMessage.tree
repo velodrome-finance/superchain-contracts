@@ -1,12 +1,21 @@
 SendMessageIntegrationConcreteTest
 ├── When the caller is not bridge
-│   └── It reverts with NotBridge
+│   └── It reverts with {NotBridge}
 └── When the caller is bridge
     ├── When the command is deposit
-    │   ├── It dispatches the message to the mailbox
-    │   ├── It emits the {SentMessage} event
-    │   ├── It should update sendingNonce
-    │   └── It calls receiveMessage on the recipient contract of the same address with the payload
+    │   ├── When timestamp is smaller than or equal to epoch vote end
+    │   │   ├── It dispatches the message to the mailbox
+    │   │   ├── It emits the {SentMessage} event
+    │   │   ├── It should update sendingNonce
+    │   │   └── It calls receiveMessage on the recipient contract of the same address with the payload
+    │   └── When timestamp is greater than epoch vote end
+    │       ├── When tx origin is not approved or owner of token id
+    │       │   └── It reverts with {NotApprovedOrOwner}
+    │       └── When tx origin is approved or owner of token id
+    │           ├── It dispatches the message to the mailbox
+    │           ├── It emits the {SentMessage} event
+    │           ├── It should update sendingNonce
+    │           └── It calls receiveMessage on the recipient contract of the same address with the payload
     ├── When the command is notify
     │   ├── It burns the decoded amount of tokens
     │   ├── It dispatches the message to the mailbox

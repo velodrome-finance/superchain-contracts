@@ -55,14 +55,21 @@ library Commands {
     }
 
     /// @notice Returns the amount encoded in the message
-    /// @dev Assumes message is encoded as (amount, ...)
+    /// @dev Assumes message is encoded as (command, amount, ...)
     /// @param _message The message to be decoded
     function amount(bytes calldata _message) internal pure returns (uint256) {
         return uint256(bytes32(_message[SECOND_OFFSET:SECOND_OFFSET + 32]));
     }
 
+    /// @notice Returns the tokenId encoded in the message
+    /// @dev Assumes message is encoded as (command, uint256, tokenId, ...)
+    /// @param _message The message to be decoded
+    function tokenId(bytes calldata _message) internal pure returns (uint256) {
+        return uint256(bytes32(_message[TOKEN_ID_OFFSET:TOKEN_ID_OFFSET + 32]));
+    }
+
     /// @notice Returns the amount and tokenId encoded in the message
-    /// @dev Assumes message is encoded as (amount, tokenId, ...)
+    /// @dev Assumes message is encoded as (command, amount, tokenId, ...)
     /// @param _message The message to be decoded
     function amountAndTokenId(bytes calldata _message) internal pure returns (uint256, uint256) {
         return (
@@ -82,7 +89,7 @@ library Commands {
     }
 
     /// @notice Returns the parameters necessary for gauge creation, encoded in the message
-    /// @dev Assumes message is encoded as (address, address, address, address, uint24)
+    /// @dev Assumes message is encoded as (command, address, address, address, address, uint24)
     /// @param _message The message to be decoded
     function createGaugeParams(bytes calldata _message)
         internal
@@ -106,18 +113,14 @@ library Commands {
         return uint256(bytes32(_message[NONCE_OFFSET:NONCE_OFFSET + 32]));
     }
 
-    /// @notice Returns the owner encoded in the message
-    /// @dev Assumes message is encoded as (command, address, owner, ...)
+    /// @notice Returns the recipient and tokenId encoded in the message
+    /// @dev Assumes message is encoded as (command, address, tokenId, ...)
     /// @param _message The message to be decoded
-    function owner(bytes calldata _message) internal pure returns (address) {
-        return address(bytes20(_message[SECOND_OFFSET:SECOND_OFFSET + 20]));
-    }
-
-    /// @notice Returns the tokenId encoded in the message
-    /// @dev Assumes message has a tokenId encoded
-    /// @param _message The message to be decoded
-    function tokenId(bytes calldata _message) internal pure returns (uint256) {
-        return uint256(bytes32(_message[THIRD_OFFSET:THIRD_OFFSET + 32]));
+    function recipientAndTokenId(bytes calldata _message) internal pure returns (address, uint256) {
+        return (
+            address(bytes20(_message[SECOND_OFFSET:SECOND_OFFSET + 20])),
+            uint256(bytes32(_message[THIRD_OFFSET:THIRD_OFFSET + 32]))
+        );
     }
 
     /// @notice Returns the token addresses encoded in the message
