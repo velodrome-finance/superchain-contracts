@@ -170,19 +170,19 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit, MintLimits, ISuperchain
     }
 
     /// @inheritdoc ICrosschainERC20
-    function __crosschainMint(address _to, uint256 _amount) external onlySuperchainERC20Bridge {
+    function crosschainMint(address _to, uint256 _amount) external onlySuperchainERC20Bridge {
         _depleteBuffer(msg.sender, _amount);
         _mint(_to, _amount);
 
-        emit CrosschainMinted(_to, _amount);
+        emit CrosschainMint(_to, _amount);
     }
 
     /// @inheritdoc ICrosschainERC20
-    function __crosschainBurn(address _from, uint256 _amount) external onlySuperchainERC20Bridge {
+    function crosschainBurn(address _from, uint256 _amount) external onlySuperchainERC20Bridge {
         _spendAllowance(_from, msg.sender, _amount);
         _replenishBuffer(msg.sender, _amount);
         _burn(_from, _amount);
 
-        emit CrosschainBurnt(_from, _amount);
+        emit CrosschainBurn(_from, _amount);
     }
 }

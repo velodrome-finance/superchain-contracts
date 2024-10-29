@@ -10,4 +10,4 @@ CrosschainBurnUnitConcreteTest
         ├── It decreases the allowance of the caller by the requested amount
         ├── It should emit a {Transfer} event
         ├── It should burn the amount from the user
-        └── It should emit a {CrosschainBurnt} event
+        └── It should emit a {CrosschainBurn} event

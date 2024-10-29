@@ -10,7 +10,7 @@ contract CrosschainMintUnitConcreteTest is XERC20Test {
         // It should revert with {OnlySuperchainERC20Bridge}
         vm.prank(users.charlie);
         vm.expectRevert(ISuperchainERC20.OnlySuperchainERC20Bridge.selector);
-        xVelo.__crosschainMint({_to: users.charlie, _amount: TOKEN_1});
+        xVelo.crosschainMint({_to: users.charlie, _amount: TOKEN_1});
     }
 
     modifier whenCallerIsSuperchainERC20Bridge() {
@@ -24,7 +24,7 @@ contract CrosschainMintUnitConcreteTest is XERC20Test {
         // It should revert with "RateLimited: rate limit hit"
         vm.prank(SUPERCHAIN_ERC20_BRIDGE);
         vm.expectRevert("RateLimited: rate limit hit");
-        xVelo.__crosschainMint({_to: users.alice, _amount: TOKEN_1});
+        xVelo.crosschainMint({_to: users.alice, _amount: TOKEN_1});
     }
 
     function test_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentMintingLimitOfCaller()
@@ -35,7 +35,7 @@ contract CrosschainMintUnitConcreteTest is XERC20Test {
         // It decreases the current minting limit for the caller
         // It should emit a {Transfer} event
         // It should mint the amount to the user
-        // It should emit a {CrosschainMinted} event
+        // It should emit a {CrosschainMint} event
         uint256 mintAmount = TOKEN_1;
         uint256 bufferCap = 10_000 * TOKEN_1;
         uint256 rps = (bufferCap / 2) / DAY;
@@ -53,8 +53,8 @@ contract CrosschainMintUnitConcreteTest is XERC20Test {
         vm.expectEmit(address(xVelo));
         emit IERC20.Transfer({from: address(0), to: users.alice, value: mintAmount});
         vm.expectEmit(address(xVelo));
-        emit ICrosschainERC20.CrosschainMinted({to: users.alice, amount: mintAmount});
-        xVelo.__crosschainMint({_to: users.alice, _amount: mintAmount});
+        emit ICrosschainERC20.CrosschainMint({to: users.alice, amount: mintAmount});
+        xVelo.crosschainMint({_to: users.alice, _amount: mintAmount});
 
         RateLimitMidPoint memory limit = xVelo.rateLimits(SUPERCHAIN_ERC20_BRIDGE);
         assertEq(xVelo.balanceOf(users.alice), mintAmount);

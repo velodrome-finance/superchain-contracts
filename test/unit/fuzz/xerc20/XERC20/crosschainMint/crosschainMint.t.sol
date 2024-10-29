@@ -12,7 +12,7 @@ contract CrosschainMintUnitFuzzTest is XERC20Test {
 
         vm.prank(_user);
         vm.expectRevert(ISuperchainERC20.OnlySuperchainERC20Bridge.selector);
-        xVelo.__crosschainMint({_to: users.charlie, _amount: TOKEN_1});
+        xVelo.crosschainMint({_to: users.charlie, _amount: TOKEN_1});
     }
 
     modifier whenCallerIsSuperchainERC20Bridge() {
@@ -41,7 +41,7 @@ contract CrosschainMintUnitFuzzTest is XERC20Test {
 
         vm.startPrank(SUPERCHAIN_ERC20_BRIDGE);
         vm.expectRevert("RateLimited: rate limit hit");
-        xVelo.__crosschainMint({_to: users.alice, _amount: _mintAmount});
+        xVelo.crosschainMint({_to: users.alice, _amount: _mintAmount});
     }
 
     function testFuzz_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentMintingLimitOfCaller(
@@ -52,7 +52,7 @@ contract CrosschainMintUnitFuzzTest is XERC20Test {
         // It decreases the current minting limit for the caller
         // It should emit a {Transfer} event
         // It should mint the amount to the user
-        // It should emit a {CrosschainMinted} event
+        // It should emit a {CrosschainMint} event
         // require: _mintAmount <= _bufferCap
         _bufferCap = bound(_bufferCap, xVelo.minBufferCap() + 1, MAX_BUFFER_CAP);
         _mintAmount = bound(_mintAmount, 1, _bufferCap / 2);
@@ -71,8 +71,8 @@ contract CrosschainMintUnitFuzzTest is XERC20Test {
         vm.expectEmit(address(xVelo));
         emit IERC20.Transfer({from: address(0), to: users.alice, value: _mintAmount});
         vm.expectEmit(address(xVelo));
-        emit ICrosschainERC20.CrosschainMinted({to: users.alice, amount: _mintAmount});
-        xVelo.__crosschainMint({_to: users.alice, _amount: _mintAmount});
+        emit ICrosschainERC20.CrosschainMint({to: users.alice, amount: _mintAmount});
+        xVelo.crosschainMint({_to: users.alice, _amount: _mintAmount});
 
         RateLimitMidPoint memory limit = xVelo.rateLimits(SUPERCHAIN_ERC20_BRIDGE);
         assertEq(xVelo.balanceOf(users.alice), _mintAmount);

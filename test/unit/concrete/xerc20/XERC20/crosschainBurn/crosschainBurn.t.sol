@@ -10,7 +10,7 @@ contract CrosschainBurnUnitConcreteTest is XERC20Test {
         // It should revert with {OnlySuperchainERC20Bridge}
         vm.prank(users.charlie);
         vm.expectRevert(ISuperchainERC20.OnlySuperchainERC20Bridge.selector);
-        xVelo.__crosschainBurn({_from: users.charlie, _amount: TOKEN_1});
+        xVelo.crosschainBurn({_from: users.charlie, _amount: TOKEN_1});
     }
 
     modifier whenCallerIsSuperchainERC20Bridge() {
@@ -33,7 +33,7 @@ contract CrosschainBurnUnitConcreteTest is XERC20Test {
         );
 
         vm.startPrank(SUPERCHAIN_ERC20_BRIDGE);
-        xVelo.__crosschainMint({_to: users.alice, _amount: TOKEN_1});
+        xVelo.crosschainMint({_to: users.alice, _amount: TOKEN_1});
         uint256 burnAmount = bufferCap / 2 + TOKEN_1 + 2; // account for minted tokens
 
         vm.startPrank(users.alice);
@@ -41,7 +41,7 @@ contract CrosschainBurnUnitConcreteTest is XERC20Test {
 
         vm.startPrank(SUPERCHAIN_ERC20_BRIDGE);
         vm.expectRevert("RateLimited: buffer cap overflow");
-        xVelo.__crosschainBurn({_from: users.alice, _amount: burnAmount});
+        xVelo.crosschainBurn({_from: users.alice, _amount: burnAmount});
     }
 
     function test_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller()
@@ -53,7 +53,7 @@ contract CrosschainBurnUnitConcreteTest is XERC20Test {
         // It decreases the allowance of the caller by the requested amount
         // It should emit a {Transfer} event
         // It should burn the amount from the user
-        // It should emit a {CrosschainBurnt} event
+        // It should emit a {CrosschainBurn} event
         uint256 burnAmount = TOKEN_1;
         uint256 bufferCap = 10_000 * TOKEN_1;
         uint256 rps = (bufferCap / 2) / DAY;
@@ -67,7 +67,7 @@ contract CrosschainBurnUnitConcreteTest is XERC20Test {
         );
 
         vm.startPrank(SUPERCHAIN_ERC20_BRIDGE);
-        xVelo.__crosschainMint({_to: users.alice, _amount: burnAmount});
+        xVelo.crosschainMint({_to: users.alice, _amount: burnAmount});
 
         vm.startPrank(users.alice);
         xVelo.approve(SUPERCHAIN_ERC20_BRIDGE, burnAmount);
@@ -78,8 +78,8 @@ contract CrosschainBurnUnitConcreteTest is XERC20Test {
         vm.expectEmit(address(xVelo));
         emit IERC20.Transfer({from: users.alice, to: address(0), value: burnAmount});
         vm.expectEmit(address(xVelo));
-        emit ICrosschainERC20.CrosschainBurnt({from: users.alice, amount: burnAmount});
-        xVelo.__crosschainBurn({_from: users.alice, _amount: burnAmount});
+        emit ICrosschainERC20.CrosschainBurn({from: users.alice, amount: burnAmount});
+        xVelo.crosschainBurn({_from: users.alice, _amount: burnAmount});
 
         RateLimitMidPoint memory limit = xVelo.rateLimits(SUPERCHAIN_ERC20_BRIDGE);
         assertEq(xVelo.balanceOf(users.alice), 0);

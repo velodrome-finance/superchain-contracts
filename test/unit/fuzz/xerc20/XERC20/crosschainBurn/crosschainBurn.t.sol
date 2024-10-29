@@ -12,7 +12,7 @@ contract CrosschainBurnUnitFuzzTest is XERC20Test {
 
         vm.prank(_user);
         vm.expectRevert(ISuperchainERC20.OnlySuperchainERC20Bridge.selector);
-        xVelo.__crosschainBurn({_from: _user, _amount: TOKEN_1});
+        xVelo.crosschainBurn({_from: _user, _amount: TOKEN_1});
     }
 
     modifier whenCallerIsSuperchainERC20Bridge() {
@@ -46,7 +46,7 @@ contract CrosschainBurnUnitFuzzTest is XERC20Test {
 
         if (_amountToMint > 0) {
             vm.startPrank(SUPERCHAIN_ERC20_BRIDGE);
-            xVelo.__crosschainMint({_to: users.alice, _amount: _amountToMint});
+            xVelo.crosschainMint({_to: users.alice, _amount: _amountToMint});
         }
 
         deal(address(xVelo), users.alice, _amountToBurn);
@@ -55,7 +55,7 @@ contract CrosschainBurnUnitFuzzTest is XERC20Test {
 
         vm.startPrank(SUPERCHAIN_ERC20_BRIDGE);
         vm.expectRevert("RateLimited: buffer cap overflow");
-        xVelo.__crosschainBurn({_from: users.alice, _amount: _amountToBurn});
+        xVelo.crosschainBurn({_from: users.alice, _amount: _amountToBurn});
     }
 
     function testFuzz_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(
@@ -68,7 +68,7 @@ contract CrosschainBurnUnitFuzzTest is XERC20Test {
         // It decreases the allowance of the caller by the requested amount
         // It should emit a {Transfer} event
         // It should burn the amount from the user
-        // It should emit a {CrosschainBurnt} event
+        // It should emit a {CrosschainBurn} event
         _bufferCap = bound(_bufferCap, xVelo.minBufferCap() + 1, MAX_BUFFER_CAP).toUint112();
         uint256 midPoint = _bufferCap / 2;
         uint256 rps = Math.min(midPoint / DAY, xVelo.maxRateLimitPerSecond());
@@ -87,7 +87,7 @@ contract CrosschainBurnUnitFuzzTest is XERC20Test {
 
         if (_amountToMint > 0) {
             vm.startPrank(SUPERCHAIN_ERC20_BRIDGE);
-            xVelo.__crosschainMint({_to: users.alice, _amount: _amountToMint});
+            xVelo.crosschainMint({_to: users.alice, _amount: _amountToMint});
         }
 
         deal(address(xVelo), users.alice, _amountToBurn);
@@ -103,8 +103,8 @@ contract CrosschainBurnUnitFuzzTest is XERC20Test {
         vm.expectEmit(address(xVelo));
         emit IERC20.Transfer({from: users.alice, to: address(0), value: _amountToBurn});
         vm.expectEmit(address(xVelo));
-        emit ICrosschainERC20.CrosschainBurnt({from: users.alice, amount: _amountToBurn});
-        xVelo.__crosschainBurn({_from: users.alice, _amount: _amountToBurn});
+        emit ICrosschainERC20.CrosschainBurn({from: users.alice, amount: _amountToBurn});
+        xVelo.crosschainBurn({_from: users.alice, _amount: _amountToBurn});
 
         RateLimitMidPoint memory limit = xVelo.rateLimits(SUPERCHAIN_ERC20_BRIDGE);
         assertEq(xVelo.balanceOf(users.alice), 0);

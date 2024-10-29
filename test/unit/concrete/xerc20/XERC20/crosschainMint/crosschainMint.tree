@@ -9,4 +9,4 @@ CrosschainMintUnitConcreteTest
         ├── It decreases the current minting limit for the caller
         ├── It should emit a {Transfer} event
         ├── It should mint the amount to the user
-        └── It should emit a {CrosschainMinted} event
+        └── It should emit a {CrosschainMint} event
