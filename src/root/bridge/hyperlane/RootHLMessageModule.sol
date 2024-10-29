@@ -49,15 +49,29 @@ contract RootHLMessageModule is IRootHLMessageModule {
     /// @inheritdoc IMessageSender
     function quote(uint256 _destinationDomain, bytes calldata _messageBody) external view returns (uint256) {
         address _hook = hook;
-        bytes memory _metadata = _generateGasMetadata({_command: _messageBody.command(), _hook: _hook});
+        uint256 command = _messageBody.command();
+        bytes memory _metadata = _generateGasMetadata({_command: command, _hook: _hook});
 
-        return Mailbox(mailbox).quoteDispatch({
-            destinationDomain: uint32(_destinationDomain),
-            recipientAddress: TypeCasts.addressToBytes32(address(this)),
-            messageBody: _messageBody,
-            metadata: _metadata,
-            hook: IPostDispatchHook(_hook)
-        });
+        if (command <= Commands.WITHDRAW) {
+            /// @dev If command is deposit/withdraw, copy message into memory to include nonce
+            bytes memory message =
+                abi.encodePacked(uint8(command), _messageBody.messageWithoutCommand(), sendingNonce[_destinationDomain]);
+            return Mailbox(mailbox).quoteDispatch({
+                destinationDomain: uint32(_destinationDomain),
+                recipientAddress: TypeCasts.addressToBytes32(address(this)),
+                messageBody: message,
+                metadata: _metadata,
+                hook: IPostDispatchHook(_hook)
+            });
+        } else {
+            return Mailbox(mailbox).quoteDispatch({
+                destinationDomain: uint32(_destinationDomain),
+                recipientAddress: TypeCasts.addressToBytes32(address(this)),
+                messageBody: _messageBody,
+                metadata: _metadata,
+                hook: IPostDispatchHook(_hook)
+            });
+        }
     }
 
     /// @inheritdoc IMessageSender
@@ -65,8 +79,8 @@ contract RootHLMessageModule is IRootHLMessageModule {
         if (msg.sender != bridge) revert NotBridge();
         uint32 domain = uint32(_chainid);
 
-        uint256 command = _message.command();
         address _hook = hook;
+        uint256 command = _message.command();
         bytes memory _metadata = _generateGasMetadata({_command: command, _hook: _hook});
 
         if (command <= Commands.WITHDRAW) {

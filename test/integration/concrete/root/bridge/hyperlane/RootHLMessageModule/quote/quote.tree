@@ -1,3 +1,7 @@
 QuoteIntegrationConcreteTest
-└── When the caller is anyone
-    └── It returns the quote
+├── When the command is deposit
+│   └── It returns the quote for a message encoded with nonce
+├── When the command is withdraw
+│   └── It returns the quote for a message encoded with nonce
+└── When the command is not deposit or withdraw
+    └── It returns the quote for a message encoded without nonce
