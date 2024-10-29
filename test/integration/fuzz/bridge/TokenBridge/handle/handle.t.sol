@@ -44,8 +44,29 @@ contract HandleIntegrationFuzzTest is TokenBridgeTest {
         _;
     }
 
+    function testFuzz_WhenTheOriginChainIsNotARegisteredChain(uint32 _origin)
+        external
+        whenTheCallerIsMailbox
+        whenTheSenderIsBridge
+    {
+        // It should revert with {NotRegistered}
+        vm.expectRevert(IChainRegistry.NotRegistered.selector);
+        leafTokenBridge.handle({
+            _origin: _origin,
+            _sender: sender,
+            _message: abi.encodePacked(users.charlie, uint256(1))
+        });
+    }
+
+    modifier whenTheOriginChainIsARegisteredChain() {
+        vm.prank(users.owner);
+        leafTokenBridge.registerChain({_chainid: root});
+        _;
+    }
+
     function testFuzz_WhenTheRequestedAmountIsHigherThanTheCurrentMintingLimit(uint112 _bufferCap, uint256 _amount)
         external
+        whenTheOriginChainIsARegisteredChain
         whenTheCallerIsMailbox
         whenTheSenderIsBridge
     {
@@ -75,7 +96,7 @@ contract HandleIntegrationFuzzTest is TokenBridgeTest {
     function testFuzz_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentMintingLimit(
         uint112 _bufferCap,
         uint256 _amount
-    ) external whenTheSenderIsBridge {
+    ) external whenTheOriginChainIsARegisteredChain whenTheSenderIsBridge {
         // It should mint tokens to the destination bridge
         // It should emit {ReceivedMessage} event
         _bufferCap = bound(_bufferCap, rootXVelo.minBufferCap() + 1, MAX_BUFFER_CAP).toUint112();

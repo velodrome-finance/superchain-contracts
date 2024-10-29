@@ -84,6 +84,7 @@ contract TokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterchainSecurityMo
     function handle(uint32 _origin, bytes32 _sender, bytes calldata _message) external payable {
         if (msg.sender != mailbox) revert NotMailbox();
         if (_sender != TypeCasts.addressToBytes32(address(this))) revert NotBridge();
+        if (!_chainids.contains({value: _origin})) revert NotRegistered();
 
         (address recipient, uint256 amount) = _message.recipientAndAmount();
 

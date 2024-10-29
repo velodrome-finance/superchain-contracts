@@ -36,8 +36,21 @@ contract HandleIntegrationConcreteTest is TokenBridgeTest {
         _;
     }
 
+    function test_WhenTheOriginChainIsNotARegisteredChain() external whenTheCallerIsMailbox whenTheSenderIsBridge {
+        // It should revert with {NotRegistered}
+        vm.expectRevert(IChainRegistry.NotRegistered.selector);
+        leafTokenBridge.handle({_origin: root, _sender: sender, _message: abi.encodePacked(users.charlie, uint256(1))});
+    }
+
+    modifier whenTheOriginChainIsARegisteredChain() {
+        vm.prank(users.owner);
+        leafTokenBridge.registerChain({_chainid: root});
+        _;
+    }
+
     function test_WhenTheRequestedAmountIsHigherThanTheCurrentMintingLimit()
         external
+        whenTheOriginChainIsARegisteredChain
         whenTheCallerIsMailbox
         whenTheSenderIsBridge
     {
@@ -52,7 +65,11 @@ contract HandleIntegrationConcreteTest is TokenBridgeTest {
         leafTokenBridge.handle{value: TOKEN_1 / 2}({_origin: root, _sender: sender, _message: _message});
     }
 
-    function test_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentMintingLimit() external whenTheSenderIsBridge {
+    function test_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentMintingLimit()
+        external
+        whenTheOriginChainIsARegisteredChain
+        whenTheSenderIsBridge
+    {
         // It should mint tokens to the destination contract
         // It should emit {ReceivedMessage} event
         uint256 amount = TOKEN_1 * 1000;
@@ -84,7 +101,7 @@ contract HandleIntegrationConcreteTest is TokenBridgeTest {
         assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
     }
 
-    function testGas_handle() external whenTheSenderIsBridge {
+    function testGas_handle() external whenTheSenderIsBridge whenTheOriginChainIsARegisteredChain {
         uint256 amount = TOKEN_1 * 1000;
         uint256 bufferCap = amount * 2;
 

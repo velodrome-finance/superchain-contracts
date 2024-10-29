@@ -4,9 +4,12 @@ HandleIntegrationConcreteTest
 └── When the caller is mailbox
     ├── When the sender is not bridge
     │   └── It should revert with {NotBridge}
-    └── When the sender is bridge 
-        ├── When the requested amount is higher than the current minting limit
-        │   └── It should revert with "RateLimited: rate limit hit"
-        └── When the requested amount is less than or equal to the current minting limit
-            ├── It should mint tokens to the destination contract
-            └── It should emit {ReceivedMessage} event
+    └── When the sender is bridge
+        ├── When the origin chain is not a registered chain
+        │   └── It should revert with {NotRegistered}
+        └── When the origin chain is a registered chain
+            ├── When the requested amount is higher than the current minting limit
+            │   └── It should revert with "RateLimited: rate limit hit"
+            └── When the requested amount is less than or equal to the current minting limit
+                ├── It should mint tokens to the destination contract
+                └── It should emit {ReceivedMessage} event

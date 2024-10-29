@@ -30,6 +30,11 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
     modifier whenTheRequestedChainIsARegisteredChain() {
         vm.prank(users.owner);
         rootTokenBridge.registerChain({_chainid: leaf});
+
+        vm.selectFork({forkId: leafId});
+        vm.prank(users.owner);
+        leafTokenBridge.registerChain({_chainid: root});
+        vm.selectFork({forkId: rootId});
         _;
     }
 
