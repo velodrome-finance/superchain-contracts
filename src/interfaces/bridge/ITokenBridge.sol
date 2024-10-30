@@ -30,7 +30,8 @@ interface ITokenBridge {
     function setHook(address _hook) external;
 
     /// @notice Burns xERC20 tokens from the sender and triggers a x-chain transfer
+    /// @param _recipient The address of the recipient on the destination chain
     /// @param _amount The amount of xERC20 tokens to send
     /// @param _chainid The chain id of the destination chain
-    function sendToken(uint256 _amount, uint256 _chainid) external payable;
+    function sendToken(address _recipient, uint256 _amount, uint256 _chainid) external payable;
 }

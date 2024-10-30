@@ -56,14 +56,15 @@ contract TokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterchainSecurityMo
     }
 
     /// @inheritdoc ITokenBridge
-    function sendToken(uint256 _amount, uint256 _chainid) external payable {
+    function sendToken(address _recipient, uint256 _amount, uint256 _chainid) external payable {
         if (_amount == 0) revert ZeroAmount();
+        if (_recipient == address(0)) revert ZeroAddress();
         if (!_chainids.contains({value: _chainid})) revert NotRegistered();
 
         IXERC20(xerc20).burn({_user: msg.sender, _amount: _amount});
 
         uint32 domain = uint32(_chainid);
-        bytes memory message = abi.encodePacked(msg.sender, _amount);
+        bytes memory message = abi.encodePacked(_recipient, _amount);
         Mailbox(mailbox).dispatch{value: msg.value}({
             destinationDomain: domain,
             recipientAddress: TypeCasts.addressToBytes32(address(this)),

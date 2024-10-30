@@ -5,6 +5,7 @@ import "../TokenBridge.t.sol";
 
 contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
     uint256 public amount;
+    address public recipient;
 
     function setUp() public override {
         super.setUp();
@@ -13,7 +14,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
     function test_WhenTheRequestedAmountIsZero() external {
         // It should revert with {ZeroAmount}
         vm.expectRevert(ITokenBridge.ZeroAmount.selector);
-        rootTokenBridge.sendToken({_amount: amount, _chainid: leaf});
+        rootTokenBridge.sendToken({_recipient: recipient, _amount: amount, _chainid: leaf});
     }
 
     modifier whenTheRequestedAmountIsNotZero() {
@@ -21,10 +22,25 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         _;
     }
 
-    function test_WhenTheRequestedChainIsNotARegisteredChain() external whenTheRequestedAmountIsNotZero {
+    function test_WhenTheRecipientIsAddressZero() external whenTheRequestedAmountIsNotZero {
+        // It should revert with {ZeroAddress}
+        vm.expectRevert(ITokenBridge.ZeroAddress.selector);
+        rootTokenBridge.sendToken({_recipient: recipient, _amount: amount, _chainid: leaf});
+    }
+
+    modifier whenTheRecipientIsNotAddressZero() {
+        recipient = address(rootGauge);
+        _;
+    }
+
+    function test_WhenTheRequestedChainIsNotARegisteredChain()
+        external
+        whenTheRequestedAmountIsNotZero
+        whenTheRecipientIsNotAddressZero
+    {
         // It should revert with {NotRegistered}
         vm.expectRevert(IChainRegistry.NotRegistered.selector);
-        rootTokenBridge.sendToken({_amount: amount, _chainid: leaf});
+        rootTokenBridge.sendToken({_recipient: recipient, _amount: amount, _chainid: leaf});
     }
 
     modifier whenTheRequestedChainIsARegisteredChain() {
@@ -41,6 +57,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
     function test_WhenTheRequestedAmountIsHigherThanTheCurrentBurningLimitOfCaller()
         external
         whenTheRequestedAmountIsNotZero
+        whenTheRecipientIsNotAddressZero
         whenTheRequestedChainIsARegisteredChain
     {
         // It should revert with "RateLimited: buffer cap overflow"
@@ -51,7 +68,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         rootXVelo.approve({spender: address(rootTokenBridge), value: amount});
 
         vm.expectRevert("RateLimited: buffer cap overflow");
-        rootTokenBridge.sendToken({_amount: amount, _chainid: leaf});
+        rootTokenBridge.sendToken({_recipient: recipient, _amount: amount, _chainid: leaf});
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller() {
@@ -62,6 +79,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
     function test_WhenTheAmountIsLargerThanTheBalanceOfCaller()
         external
         whenTheRequestedAmountIsNotZero
+        whenTheRecipientIsNotAddressZero
         whenTheRequestedChainIsARegisteredChain
         whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
     {
@@ -76,12 +94,13 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
                 IERC20Errors.ERC20InsufficientBalance.selector, address(rootGauge), amount - 1, amount
             )
         );
-        rootTokenBridge.sendToken({_amount: amount, _chainid: leaf});
+        rootTokenBridge.sendToken({_recipient: recipient, _amount: amount, _chainid: leaf});
     }
 
     function test_WhenTheAmountIsLessThanOrEqualToTheBalanceOfCaller()
         external
         whenTheRequestedAmountIsNotZero
+        whenTheRecipientIsNotAddressZero
         whenTheRequestedChainIsARegisteredChain
         whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
     {
@@ -99,11 +118,11 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
             _destination: leaf,
             _recipient: TypeCasts.addressToBytes32(address(rootTokenBridge)),
             _value: ethAmount,
-            _message: string(abi.encodePacked(address(leafGauge), amount))
+            _message: string(abi.encodePacked(recipient, amount))
         });
-        rootTokenBridge.sendToken{value: ethAmount}({_amount: amount, _chainid: leaf});
+        rootTokenBridge.sendToken{value: ethAmount}({_recipient: recipient, _amount: amount, _chainid: leaf});
 
-        assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
+        assertEq(rootXVelo.balanceOf(recipient), 0);
         assertEq(address(rootTokenBridge).balance, 0);
 
         vm.selectFork({forkId: leafId});
@@ -112,15 +131,16 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
             _origin: root,
             _sender: TypeCasts.addressToBytes32(address(leafTokenBridge)),
             _value: 0,
-            _message: string(abi.encodePacked(address(leafGauge), amount))
+            _message: string(abi.encodePacked(recipient, amount))
         });
         leafMailbox.processNextInboundMessage();
-        assertEq(leafXVelo.balanceOf(address(leafGauge)), amount);
+        assertEq(leafXVelo.balanceOf(recipient), amount);
     }
 
     function testGas_sendToken()
         external
         whenTheRequestedAmountIsNotZero
+        whenTheRecipientIsNotAddressZero
         whenTheRequestedChainIsARegisteredChain
         whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
     {
@@ -131,7 +151,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         vm.startPrank(address(rootGauge));
         rootXVelo.approve({spender: address(rootTokenBridge), value: amount});
 
-        rootTokenBridge.sendToken{value: ethAmount}({_amount: amount, _chainid: leaf});
+        rootTokenBridge.sendToken{value: ethAmount}({_recipient: recipient, _amount: amount, _chainid: leaf});
         snapLastCall("TokenBridge_sendToken");
     }
 }
