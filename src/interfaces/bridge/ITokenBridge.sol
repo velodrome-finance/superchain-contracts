@@ -7,9 +7,16 @@ interface ITokenBridge {
     error NotBridge();
     error ZeroAmount();
     error ZeroAddress();
+    error InsufficientBalance();
 
     event HookSet(address indexed _newHook);
-    event SentMessage(uint32 indexed _destination, bytes32 indexed _recipient, uint256 _value, string _message);
+    event SentMessage(
+        uint32 indexed _destination, bytes32 indexed _recipient, uint256 _value, string _message, string _metadata
+    );
+
+    /// @notice Max gas limit for token bridging transactions
+    /// @dev Can set a different gas limit by using a custom hook
+    function GAS_LIMIT() external view returns (uint256);
 
     /// @notice Returns the address of the xERC20 token that is bridged by this contract
     function xerc20() external view returns (address);

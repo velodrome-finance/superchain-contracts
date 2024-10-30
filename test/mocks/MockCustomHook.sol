@@ -23,6 +23,11 @@ contract MockCustomHook is IPostDispatchHook, IHookGasEstimator {
     function quoteDispatch(bytes calldata metadata, bytes calldata message) external view returns (uint256) {}
 
     /// @inheritdoc IHookGasEstimator
+    function estimateSendTokenGas() external pure returns (uint256) {
+        return 400_000;
+    }
+
+    /// @inheritdoc IHookGasEstimator
     function estimateGas(uint256 _command) external pure returns (uint256) {
         return _command.gasLimit() * 2;
     }
