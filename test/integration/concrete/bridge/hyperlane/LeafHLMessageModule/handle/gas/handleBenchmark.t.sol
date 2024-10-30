@@ -18,13 +18,6 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
         tokenA = new TestERC20("Test Token A", "TTA", 18);
         tokenB = new TestERC20("Test Token B", "TTB", 6); // mimic USDC
 
-        // Notify rewards contracts
-        deal(address(token0), address(leafGauge), TOKEN_1 * 2);
-        deal(address(token1), address(leafGauge), TOKEN_1 * 2);
-        // Using WETH, tokenA & tokenB as Incentive tokens
-        deal(address(weth), address(leafGauge), TOKEN_1);
-        deal(address(tokenA), address(leafGauge), TOKEN_1);
-        deal(address(tokenB), address(leafGauge), TOKEN_1);
         vm.mockCall(
             address(leafVoter),
             abi.encodeWithSelector(IVoter.isWhitelistedToken.selector, address(tokenA)),
@@ -36,30 +29,30 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
             abi.encode(true)
         );
 
-        vm.startPrank(address(leafGauge));
-        token0.approve(address(leafFVR), TOKEN_1);
-        token1.approve(address(leafFVR), TOKEN_1);
-        leafFVR.notifyRewardAmount(address(token0), TOKEN_1);
-        leafFVR.notifyRewardAmount(address(token1), TOKEN_1);
-
-        token0.approve(address(leafIVR), TOKEN_1);
-        token1.approve(address(leafIVR), TOKEN_1);
-        weth.approve(address(leafIVR), TOKEN_1);
-        tokenA.approve(address(leafIVR), TOKEN_1);
-        tokenB.approve(address(leafIVR), TOKEN_1);
-        leafIVR.notifyRewardAmount(address(token0), TOKEN_1);
-        leafIVR.notifyRewardAmount(address(token1), TOKEN_1);
-        leafIVR.notifyRewardAmount(address(weth), TOKEN_1);
-        leafIVR.notifyRewardAmount(address(tokenA), TOKEN_1);
-        leafIVR.notifyRewardAmount(address(tokenB), TOKEN_1);
-        vm.stopPrank();
-
         origin = 10;
         uint256 amountToBridge = TOKEN_1 * 1000;
         setLimits({_rootBufferCap: amountToBridge * 2, _leafBufferCap: amountToBridge * 2});
 
         sender = TypeCasts.addressToBytes32(address(leafMessageModule));
         vm.startPrank(address(leafMailbox));
+    }
+
+    /// @dev Helper to seed rewards into reward contracts across multiple epochs
+    function _seedRewards(address _rewards, address[] memory _tokens, uint256 _numEpochs, uint256 _amount) internal {
+        uint256 length = _tokens.length;
+        for (uint256 i = 0; i < length; i++) {
+            deal(_tokens[i], address(leafGauge), _amount * _numEpochs);
+        }
+        vm.startPrank(address(leafGauge));
+        for (uint256 i = 0; i < _numEpochs; i++) {
+            for (uint256 j = 0; j < length; j++) {
+                IERC20(_tokens[j]).approve(_rewards, _amount);
+                IReward(_rewards).notifyRewardAmount(_tokens[j], _amount);
+            }
+
+            vm.warp(VelodromeTimeLibrary.epochNext(block.timestamp));
+        }
+        vm.stopPrank();
     }
 
     function testGas_Deposit() public {
@@ -100,14 +93,16 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
         leafIVR._deposit({amount: TOKEN_1, tokenId: tokenId});
         vm.stopPrank();
 
-        skipToNextEpoch(1);
-
+        // Using WETH, tokenA & tokenB as Incentive tokens
         address[] memory tokens = new address[](5);
-        tokens[0] = address(token0);
-        tokens[1] = address(token1);
-        tokens[2] = address(weth);
+        tokens[0] = address(weth);
+        tokens[1] = address(token0);
+        tokens[2] = address(token1);
         tokens[3] = address(tokenA);
         tokens[4] = address(tokenB);
+        /// @dev Seed incentives across 10 Epochs
+        _seedRewards({_rewards: address(leafIVR), _tokens: tokens, _numEpochs: 10, _amount: TOKEN_1});
+
         bytes memory message = abi.encodePacked(
             uint8(Commands.GET_INCENTIVES), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens
         );
@@ -124,11 +119,12 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
         leafFVR._deposit({amount: TOKEN_1, tokenId: tokenId});
         vm.stopPrank();
 
-        skipToNextEpoch(1);
-
         address[] memory tokens = new address[](2);
         tokens[0] = address(token0);
         tokens[1] = address(token1);
+        /// @dev Seed fees across 10 Epochs
+        _seedRewards({_rewards: address(leafFVR), _tokens: tokens, _numEpochs: 10, _amount: TOKEN_1});
+
         bytes memory message = abi.encodePacked(
             uint8(Commands.GET_FEES), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens
         );
