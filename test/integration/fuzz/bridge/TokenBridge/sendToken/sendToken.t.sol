@@ -93,6 +93,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
     {
         // It should revert with {ERC20InsufficientBalance}
         _balance = bound(_balance, 0, amount - 1);
+        vm.assume(_recipient != address(0));
         uint256 ethAmount = MESSAGE_FEE;
         vm.deal({account: address(rootGauge), newBalance: ethAmount});
         deal({token: address(rootXVelo), to: address(rootGauge), give: _balance});

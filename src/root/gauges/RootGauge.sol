@@ -69,7 +69,7 @@ contract RootGauge is IRootGauge {
         uint256 maxAmount = IRootGaugeFactory(gaugeFactory).calculateMaxEmissions({_gauge: address(this)});
         /// @dev If emission cap is exceeded, transfer excess emissions back to Minter
         if (_amount > maxAmount) {
-            IERC20(rewardToken).transferFrom(msg.sender, minter, _amount - maxAmount);
+            IERC20(rewardToken).safeTransferFrom(msg.sender, minter, _amount - maxAmount);
             _amount = maxAmount;
         }
 
@@ -85,7 +85,7 @@ contract RootGauge is IRootGauge {
     }
 
     function _notify(uint256 _command, uint256 _amount) internal {
-        IERC20(rewardToken).transferFrom(msg.sender, address(this), _amount);
+        IERC20(rewardToken).safeTransferFrom(msg.sender, address(this), _amount);
 
         IERC20(rewardToken).safeIncreaseAllowance({spender: lockbox, value: _amount});
         IXERC20Lockbox(lockbox).deposit({_amount: _amount});

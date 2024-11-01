@@ -235,10 +235,10 @@ This payload consists of:
 This payload consists of:
 - 1 byte command
 - 20 byte gauge address
-- 32 byte recipient address
+- 20 byte recipient address
 - 32 byte token id
 - 1 byte tokens array length
-- 20 - 100 bytes of token addresses
+- 0 - 160 bytes of token addresses
 
 ##### Create Gauge
 This payload consists of:

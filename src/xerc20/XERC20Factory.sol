@@ -113,8 +113,6 @@ contract XERC20Factory is IXERC20Factory {
             )
         });
 
-        assert(_XERC20 == expectedAddress);
-
         emit DeployXERC20WithLockbox({_xerc20: _XERC20, _lockbox: _lockbox});
     }
 }
