@@ -10,7 +10,7 @@ contract ReviveRootGaugeE2ETest is EmergencyCouncilE2ETest {
         // It should revert with OwnableUnauthorizedAccount
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.charlie));
-        emergencyCouncil.reviveRootGauge(address(rootGauge));
+        emergencyCouncil.reviveRootGauge(gauge);
     }
 
     modifier whenCallerIsOwner() {
@@ -18,20 +18,32 @@ contract ReviveRootGaugeE2ETest is EmergencyCouncilE2ETest {
         _;
     }
 
-    function test_WhenGaugeIsAlive() external whenCallerIsOwner {
-        // It should revert with GaugeAlreadyRevived
-        vm.expectRevert(IVoter.GaugeAlreadyRevived.selector);
-        emergencyCouncil.reviveRootGauge(address(rootGauge));
+    function test_WhenGaugeIsLeafGauge() external whenCallerIsOwner {
+        // It should revert with InvalidGauge
+        vm.expectRevert(abi.encodeWithSelector(IEmergencyCouncil.InvalidGauge.selector));
+        emergencyCouncil.reviveRootGauge(gauge);
     }
 
-    function test_WhenGaugeIsNotAlive() external whenCallerIsOwner {
+    modifier whenGaugeIsNotLeafGauge() {
+        /// @dev Simulate revert to mimic non superchain gauge
+        vm.mockCallRevert({callee: gauge, data: abi.encodeWithSelector(IRootGauge.chainid.selector), revertData: ""});
+        _;
+    }
+
+    function test_WhenGaugeIsAlive() external whenCallerIsOwner whenGaugeIsNotLeafGauge {
+        // It should revert with GaugeAlreadyRevived
+        vm.expectRevert(IVoter.GaugeAlreadyRevived.selector);
+        emergencyCouncil.reviveRootGauge(gauge);
+    }
+
+    function test_WhenGaugeIsNotAlive() external whenCallerIsOwner whenGaugeIsNotLeafGauge {
         // It should set isAlive as true for gauge
         // It should emit a {GaugeRevived} event
-        stdstore.target(address(mockVoter)).sig("isAlive(address)").with_key(address(rootGauge)).checked_write(false);
+        stdstore.target(address(mockVoter)).sig("isAlive(address)").with_key(gauge).checked_write(false);
         vm.expectEmit(address(mockVoter));
-        emit IVoter.GaugeRevived({gauge: address(rootGauge)});
-        emergencyCouncil.reviveRootGauge(address(rootGauge));
+        emit IVoter.GaugeRevived({gauge: gauge});
+        emergencyCouncil.reviveRootGauge(gauge);
 
-        assertEq(mockVoter.isAlive(address(rootGauge)), true);
+        assertEq(mockVoter.isAlive(gauge), true);
     }
 }

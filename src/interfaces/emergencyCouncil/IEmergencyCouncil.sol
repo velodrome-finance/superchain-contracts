@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 interface IEmergencyCouncil {
+    error InvalidGauge();
+
     /// @notice Voter contract
     function voter() external view returns (address);
 

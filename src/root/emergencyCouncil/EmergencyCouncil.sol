@@ -28,13 +28,17 @@ contract EmergencyCouncil is Ownable, IEmergencyCouncil {
     }
 
     /// @inheritdoc IEmergencyCouncil
-    function killRootGauge(address _gauge) public onlyOwner {
-        IVoter(voter).killGauge({_gauge: _gauge});
+    function killRootGauge(address _gauge) external onlyOwner {
+        try IRootGauge(_gauge).chainid() returns (uint256) {
+            revert InvalidGauge();
+        } catch {
+            IVoter(voter).killGauge({_gauge: _gauge});
+        }
     }
 
     /// @inheritdoc IEmergencyCouncil
     function killLeafGauge(address _gauge) external onlyOwner {
-        killRootGauge({_gauge: _gauge});
+        IVoter(voter).killGauge({_gauge: _gauge});
 
         uint256 _chainid = IRootGauge(_gauge).chainid();
 
@@ -43,13 +47,17 @@ contract EmergencyCouncil is Ownable, IEmergencyCouncil {
     }
 
     /// @inheritdoc IEmergencyCouncil
-    function reviveRootGauge(address _gauge) public onlyOwner {
-        IVoter(voter).reviveGauge({_gauge: _gauge});
+    function reviveRootGauge(address _gauge) external onlyOwner {
+        try IRootGauge(_gauge).chainid() returns (uint256) {
+            revert InvalidGauge();
+        } catch {
+            IVoter(voter).reviveGauge({_gauge: _gauge});
+        }
     }
 
     /// @inheritdoc IEmergencyCouncil
     function reviveLeafGauge(address _gauge) external onlyOwner {
-        reviveRootGauge({_gauge: _gauge});
+        IVoter(voter).reviveGauge({_gauge: _gauge});
 
         uint256 _chainid = IRootGauge(_gauge).chainid();
 

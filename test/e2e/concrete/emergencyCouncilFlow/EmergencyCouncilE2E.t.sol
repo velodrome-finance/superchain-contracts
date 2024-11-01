@@ -4,8 +4,11 @@ pragma solidity >=0.8.19 <0.9.0;
 import "test/BaseE2EForkFixture.sol";
 
 abstract contract EmergencyCouncilE2ETest is BaseE2EForkFixture {
+    address gauge;
+
     function setUp() public override {
         super.setUp();
+        gauge = address(rootGauge);
         vm.selectFork({forkId: rootId});
         deal({token: address(weth), to: users.owner, give: MESSAGE_FEE});
         vm.prank(users.owner);
