@@ -343,19 +343,13 @@ contract GaugeFlowE2EConcreteTest is BaseE2EForkFixture {
         checkEmissions(users.bob, address(leafGauge), leafXVelo.balanceOf(users.bob) + expectedEmissions);
 
         // No additional Voter Rewards after timeskip
+        // @dev Bob cannot claim Leaf rewards because his last vote is in current epoch
         checkVotingRewards({
             _tokenId: aliceLock,
             _tokenA: address(token0),
             _tokenB: address(token1),
             _expectedBalanceA: token0.balanceOf(users.alice),
             _expectedBalanceB: token1.balanceOf(users.alice)
-        });
-        checkVotingRewards({
-            _tokenId: bobLock,
-            _tokenA: address(token0),
-            _tokenB: address(token1),
-            _expectedBalanceA: token0.balanceOf(users.bob),
-            _expectedBalanceB: token1.balanceOf(users.bob)
         });
         vm.selectFork({forkId: rootId});
         checkV2VotingRewards({

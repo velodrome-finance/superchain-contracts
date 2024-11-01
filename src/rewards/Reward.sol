@@ -113,34 +113,32 @@ abstract contract Reward is IReward, ReentrancyGuard {
         return lower;
     }
 
-    function _writeCheckpoint(uint256 tokenId, uint256 balance) internal {
+    function _writeCheckpoint(uint256 tokenId, uint256 balance, uint256 timestamp) internal {
         uint256 _nCheckPoints = numCheckpoints[tokenId];
-        uint256 _timestamp = block.timestamp;
 
         if (
             _nCheckPoints > 0
                 && VelodromeTimeLibrary.epochStart(checkpoints[tokenId][_nCheckPoints - 1].timestamp)
-                    == VelodromeTimeLibrary.epochStart(_timestamp)
+                    == VelodromeTimeLibrary.epochStart(timestamp)
         ) {
-            checkpoints[tokenId][_nCheckPoints - 1] = Checkpoint(_timestamp, balance);
+            checkpoints[tokenId][_nCheckPoints - 1] = Checkpoint(timestamp, balance);
         } else {
-            checkpoints[tokenId][_nCheckPoints] = Checkpoint(_timestamp, balance);
+            checkpoints[tokenId][_nCheckPoints] = Checkpoint(timestamp, balance);
             numCheckpoints[tokenId] = _nCheckPoints + 1;
         }
     }
 
-    function _writeSupplyCheckpoint() internal {
+    function _writeSupplyCheckpoint(uint256 timestamp) internal {
         uint256 _nCheckPoints = supplyNumCheckpoints;
-        uint256 _timestamp = block.timestamp;
 
         if (
             _nCheckPoints > 0
                 && VelodromeTimeLibrary.epochStart(supplyCheckpoints[_nCheckPoints - 1].timestamp)
-                    == VelodromeTimeLibrary.epochStart(_timestamp)
+                    == VelodromeTimeLibrary.epochStart(timestamp)
         ) {
-            supplyCheckpoints[_nCheckPoints - 1] = SupplyCheckpoint(_timestamp, totalSupply);
+            supplyCheckpoints[_nCheckPoints - 1] = SupplyCheckpoint(timestamp, totalSupply);
         } else {
-            supplyCheckpoints[_nCheckPoints] = SupplyCheckpoint(_timestamp, totalSupply);
+            supplyCheckpoints[_nCheckPoints] = SupplyCheckpoint(timestamp, totalSupply);
             supplyNumCheckpoints = _nCheckPoints + 1;
         }
     }
@@ -185,27 +183,27 @@ abstract contract Reward is IReward, ReentrancyGuard {
     }
 
     /// @inheritdoc IReward
-    function _deposit(uint256 amount, uint256 tokenId) external nonReentrant {
+    function _deposit(uint256 amount, uint256 tokenId, uint256 timestamp) external nonReentrant {
         if (msg.sender != ILeafMessageBridge(authorized).module()) revert NotAuthorized();
 
         totalSupply += amount;
         balanceOf[tokenId] += amount;
 
-        _writeCheckpoint(tokenId, balanceOf[tokenId]);
-        _writeSupplyCheckpoint();
+        _writeCheckpoint(tokenId, balanceOf[tokenId], timestamp);
+        _writeSupplyCheckpoint(timestamp);
 
         emit Deposit(tokenId, amount);
     }
 
     /// @inheritdoc IReward
-    function _withdraw(uint256 amount, uint256 tokenId) external nonReentrant {
+    function _withdraw(uint256 amount, uint256 tokenId, uint256 timestamp) external nonReentrant {
         if (msg.sender != ILeafMessageBridge(authorized).module()) revert NotAuthorized();
 
         totalSupply -= amount;
         balanceOf[tokenId] -= amount;
 
-        _writeCheckpoint(tokenId, balanceOf[tokenId]);
-        _writeSupplyCheckpoint();
+        _writeCheckpoint(tokenId, balanceOf[tokenId], timestamp);
+        _writeSupplyCheckpoint(timestamp);
 
         emit Withdraw(tokenId, amount);
     }

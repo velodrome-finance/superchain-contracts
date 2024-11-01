@@ -22,25 +22,16 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
     }
 
     modifier whenTheCallerIsBridge() {
-        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
         _;
     }
 
     modifier whenTheCommandIsDeposit() {
         // Create Lock for Alice
-        vm.stopPrank();
         vm.startPrank(users.alice);
         deal(address(rootRewardToken), users.alice, amount);
         rootRewardToken.approve(address(mockEscrow), amount);
         tokenId = mockEscrow.createLock(amount, 4 * 365 * 86400);
 
-        stdstore.target(address(rootMessageModule)).sig(rootMessageModule.sendingNonce.selector).with_key(leaf)
-            .checked_write(1_000);
-
-        vm.selectFork({forkId: leafId});
-        stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
-
-        vm.selectFork({forkId: rootId});
         vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
 
         skipToNextEpoch(0); // warp to start of next epoch
@@ -54,11 +45,11 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
     {
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
-        // It should update sendingNonce
         // It calls receiveMessage on the recipient contract of the same address with the payload
-        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
+        uint40 timestamp = uint40(block.timestamp);
+        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, timestamp);
         bytes memory expectedMessage =
-            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint256(1_000));
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, timestamp);
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
 
         vm.expectEmit(address(rootMessageModule));
@@ -78,16 +69,20 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         });
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
 
-        assertEq(rootMessageModule.sendingNonce(leaf), 1_001);
-
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage();
 
         assertEq(leafFVR.totalSupply(), amount);
         assertEq(leafFVR.balanceOf(tokenId), amount);
+        (uint256 checkpointTs, uint256 checkpointAmount) =
+            leafFVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
+        assertEq(checkpointTs, timestamp);
+        assertEq(checkpointAmount, amount);
         assertEq(leafIVR.totalSupply(), amount);
         assertEq(leafIVR.balanceOf(tokenId), amount);
-        assertEq(leafMessageModule.receivingNonce(), 1_001);
+        (checkpointTs, checkpointAmount) = leafIVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
+        assertEq(checkpointTs, timestamp);
+        assertEq(checkpointAmount, amount);
     }
 
     modifier whenTimestampIsGreaterThanEpochVoteEnd() {
@@ -120,11 +115,11 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
     {
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
-        // It should update sendingNonce
         // It calls receiveMessage on the recipient contract of the same address with the payload
-        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
+        uint40 timestamp = uint40(block.timestamp);
+        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, timestamp);
         bytes memory expectedMessage =
-            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint256(1_000));
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, timestamp);
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
 
         vm.expectEmit(address(rootMessageModule));
@@ -144,8 +139,6 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         });
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
 
-        assertEq(rootMessageModule.sendingNonce(leaf), 1_001);
-
         vm.selectFork({forkId: leafId});
         /// @dev Skip 30 minutes after epoch voting ends
         vm.warp(VelodromeTimeLibrary.epochVoteEnd(block.timestamp) + 30 minutes);
@@ -153,25 +146,24 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
 
         assertEq(leafFVR.totalSupply(), amount);
         assertEq(leafFVR.balanceOf(tokenId), amount);
+        (uint256 checkpointTs, uint256 checkpointAmount) =
+            leafFVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
+        assertEq(checkpointTs, timestamp);
+        assertEq(checkpointAmount, amount);
         assertEq(leafIVR.totalSupply(), amount);
         assertEq(leafIVR.balanceOf(tokenId), amount);
-        assertEq(leafMessageModule.receivingNonce(), 1_001);
+        (checkpointTs, checkpointAmount) = leafIVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
+        assertEq(checkpointTs, timestamp);
+        assertEq(checkpointAmount, amount);
     }
 
     function test_WhenTheCommandIsNotify() external whenTheCallerIsBridge {
         // It burns the decoded amount of tokens
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
-        // It should update sendingNonce
         // It calls receiveMessage on the recipient contract of the same address with the payload
-        vm.selectFork({forkId: rootId});
-        stdstore.target(address(rootMessageModule)).sig(rootMessageModule.sendingNonce.selector).with_key(leaf)
-            .checked_write(1_000);
-        vm.selectFork({forkId: leafId});
-        stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
-
-        vm.selectFork({forkId: rootId});
-
+        uint256 rootTimestamp = block.timestamp;
+        vm.warp({newTimestamp: rootTimestamp});
         deal(address(rootXVelo), address(rootMessageModule), amount);
         setLimits({_rootBufferCap: amount * 2, _leafBufferCap: amount * 2});
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
@@ -195,10 +187,10 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
 
-        assertEq(rootMessageModule.sendingNonce(leaf), 1_000);
         assertEq(rootXVelo.balanceOf(address(rootMessageModule)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: rootTimestamp});
         leafMailbox.processNextInboundMessage();
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);
@@ -212,16 +204,9 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         // It burns the decoded amount of tokens
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
-        // It should update sendingNonce
         // It calls receiveMessage on the recipient contract of the same address with the payload
-        vm.selectFork({forkId: rootId});
-        stdstore.target(address(rootMessageModule)).sig(rootMessageModule.sendingNonce.selector).with_key(leaf)
-            .checked_write(1_000);
-        vm.selectFork({forkId: leafId});
-        stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
-
-        vm.selectFork({forkId: rootId});
-
+        uint256 rootTimestamp = block.timestamp;
+        vm.warp({newTimestamp: rootTimestamp});
         deal(address(rootXVelo), address(rootMessageModule), amount);
         setLimits({_rootBufferCap: amount * 2, _leafBufferCap: amount * 2});
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
@@ -245,10 +230,10 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
 
-        assertEq(rootMessageModule.sendingNonce(leaf), 1_000);
         assertEq(rootXVelo.balanceOf(address(rootMessageModule)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: rootTimestamp});
         leafMailbox.processNextInboundMessage();
 
         assertEq(leafGauge.rewardPerTokenStored(), 0);
@@ -258,22 +243,229 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
     }
 
+    modifier whenTheCommandIsGetIncentives() {
+        // Warp to start of epoch, after distribute window
+        rootStartTime = VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1;
+        vm.warp({newTimestamp: rootStartTime});
+
+        // Create Lock for Alice
+        vm.startPrank(users.alice);
+        deal(address(rootRewardToken), users.alice, amount);
+        rootRewardToken.approve(address(mockEscrow), amount);
+        tokenId = mockEscrow.createLock(amount, 4 * 365 * 86400);
+
+        // Notify rewards contracts
+        vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: rootStartTime});
+        deal(address(token0), address(leafGauge), TOKEN_1);
+        deal(address(token1), address(leafGauge), TOKEN_1);
+        // Using WETH as Incentive token
+        deal(address(weth), address(leafGauge), TOKEN_1);
+
+        vm.startPrank(address(leafGauge));
+        token0.approve(address(leafIVR), TOKEN_1);
+        token1.approve(address(leafIVR), TOKEN_1);
+        weth.approve(address(leafIVR), TOKEN_1);
+        leafIVR.notifyRewardAmount(address(token0), TOKEN_1);
+        leafIVR.notifyRewardAmount(address(token1), TOKEN_1);
+        leafIVR.notifyRewardAmount(address(weth), TOKEN_1);
+
+        // Deposit to vest rewards
+        vm.startPrank(address(leafMessageModule));
+        leafIVR._deposit({amount: amount, tokenId: tokenId, timestamp: block.timestamp});
+
+        vm.selectFork({forkId: rootId});
+        vm.warp({newTimestamp: rootStartTime});
+        address[] memory pools = new address[](1);
+        pools[0] = address(rootPool);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 100;
+        vm.startPrank(users.alice);
+        mockVoter.vote(tokenId, pools, weights); // Vote to update `lastVoted`
+        _;
+    }
+
+    function test_WhenLastVoteIsInCurrentEpoch() external whenTheCallerIsBridge whenTheCommandIsGetIncentives {
+        // It should revert with {AlreadyVotedOrDeposited}
+        assertGe(mockVoter.lastVoted(tokenId), VelodromeTimeLibrary.epochStart(block.timestamp));
+
+        address[] memory tokens = new address[](3);
+        tokens[0] = address(token0);
+        tokens[1] = address(token1);
+        tokens[2] = address(weth);
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.GET_INCENTIVES), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens
+        );
+
+        vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
+        vm.expectRevert(IRootHLMessageModule.AlreadyVotedOrDeposited.selector);
+        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
+        rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+    }
+
+    function test_WhenLastVoteIsNotInCurrentEpoch() external whenTheCallerIsBridge whenTheCommandIsGetIncentives {
+        // It dispatches the message to the mailbox
+        // It emits the {SentMessage} event
+        // It calls receiveMessage on the recipient contract of the same address with the payload
+        uint256 rootTimestamp = VelodromeTimeLibrary.epochNext(block.timestamp) + 1;
+        vm.warp({newTimestamp: rootTimestamp});
+
+        address[] memory tokens = new address[](3);
+        tokens[0] = address(token0);
+        tokens[1] = address(token1);
+        tokens[2] = address(weth);
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.GET_INCENTIVES), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens
+        );
+
+        vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
+        vm.expectEmit(address(rootMessageModule));
+        emit IMessageSender.SentMessage({
+            _destination: leaf,
+            _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
+            _value: ethAmount,
+            _message: string(message),
+            _metadata: string(
+                StandardHookMetadata.formatMetadata({
+                    _msgValue: ethAmount,
+                    _gasLimit: Commands.GET_INCENTIVES.gasLimit(),
+                    _refundAddress: users.alice,
+                    _customMetadata: ""
+                })
+            )
+        });
+        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
+        rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+
+        vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: rootTimestamp});
+        for (uint256 i = 0; i < tokens.length; i++) {
+            vm.expectEmit(address(leafIVR));
+            emit IReward.ClaimRewards({_sender: users.alice, _reward: tokens[i], _amount: TOKEN_1});
+        }
+        leafMailbox.processNextInboundMessage();
+
+        assertEq(leafIVR.lastEarn(address(token0), tokenId), block.timestamp);
+        assertEq(leafIVR.lastEarn(address(token1), tokenId), block.timestamp);
+        assertEq(leafIVR.lastEarn(address(weth), tokenId), block.timestamp);
+
+        assertEq(token0.balanceOf(users.alice), TOKEN_1);
+        assertEq(token1.balanceOf(users.alice), TOKEN_1);
+        assertEq(weth.balanceOf(users.alice), TOKEN_1);
+    }
+
+    modifier whenTheCommandIsGetFees() {
+        // Warp to start of epoch, after distribute window
+        rootStartTime = VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1;
+        vm.warp({newTimestamp: rootStartTime});
+
+        // Create Lock for Alice
+        vm.startPrank(users.alice);
+        deal(address(rootRewardToken), users.alice, amount);
+        rootRewardToken.approve(address(mockEscrow), amount);
+        tokenId = mockEscrow.createLock(amount, 4 * 365 * 86400);
+
+        // Notify rewards contracts
+        vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: rootStartTime});
+        deal(address(token0), address(leafGauge), TOKEN_1);
+        deal(address(token1), address(leafGauge), TOKEN_1);
+
+        vm.startPrank(address(leafGauge));
+        token0.approve(address(leafFVR), TOKEN_1);
+        token1.approve(address(leafFVR), TOKEN_1);
+        leafFVR.notifyRewardAmount(address(token0), TOKEN_1);
+        leafFVR.notifyRewardAmount(address(token1), TOKEN_1);
+
+        // Deposit to vest rewards
+        vm.startPrank(address(leafMessageModule));
+        leafFVR._deposit({amount: amount, tokenId: tokenId, timestamp: block.timestamp});
+
+        vm.selectFork({forkId: rootId});
+        vm.warp({newTimestamp: rootStartTime});
+        address[] memory pools = new address[](1);
+        pools[0] = address(rootPool);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 100;
+        vm.startPrank(users.alice);
+        mockVoter.vote(tokenId, pools, weights); // Vote to update `lastVoted`
+        _;
+    }
+
+    function test_WhenLastVoteIsInCurrentEpoch_() external whenTheCallerIsBridge whenTheCommandIsGetFees {
+        // It should revert with {AlreadyVotedOrDeposited}
+        assertGe(mockVoter.lastVoted(tokenId), VelodromeTimeLibrary.epochStart(block.timestamp));
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(token0);
+        tokens[1] = address(token1);
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.GET_FEES), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens
+        );
+
+        vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
+        vm.expectRevert(IRootHLMessageModule.AlreadyVotedOrDeposited.selector);
+        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
+        rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+    }
+
+    function test_WhenLastVoteIsNotInCurrentEpoch_() external whenTheCallerIsBridge whenTheCommandIsGetFees {
+        // It dispatches the message to the mailbox
+        // It emits the {SentMessage} event
+        // It calls receiveMessage on the recipient contract of the same address with the payload
+        uint256 rootTimestamp = VelodromeTimeLibrary.epochNext(block.timestamp) + 1;
+        vm.warp({newTimestamp: rootTimestamp});
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(token0);
+        tokens[1] = address(token1);
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.GET_FEES), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens
+        );
+
+        vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
+        vm.expectEmit(address(rootMessageModule));
+        emit IMessageSender.SentMessage({
+            _destination: leaf,
+            _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
+            _value: ethAmount,
+            _message: string(message),
+            _metadata: string(
+                StandardHookMetadata.formatMetadata({
+                    _msgValue: ethAmount,
+                    _gasLimit: Commands.GET_FEES.gasLimit(),
+                    _refundAddress: users.alice,
+                    _customMetadata: ""
+                })
+            )
+        });
+        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
+        rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+
+        vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: rootTimestamp});
+        for (uint256 i = 0; i < tokens.length; i++) {
+            vm.expectEmit(address(leafFVR));
+            emit IReward.ClaimRewards({_sender: users.alice, _reward: tokens[i], _amount: TOKEN_1});
+        }
+        leafMailbox.processNextInboundMessage();
+
+        assertEq(leafFVR.lastEarn(address(token0), tokenId), block.timestamp);
+        assertEq(leafFVR.lastEarn(address(token1), tokenId), block.timestamp);
+
+        assertEq(token0.balanceOf(users.alice), TOKEN_1);
+        assertEq(token1.balanceOf(users.alice), TOKEN_1);
+    }
+
     function test_WhenTheCommandIsCreateGauge() external whenTheCallerIsBridge {
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
-        // It shouldn't update sendingNonce
         // It calls receiveMessage on the recipient contract of the same address with the payload
-        vm.selectFork({forkId: rootId});
-        stdstore.target(address(rootMessageModule)).sig(rootMessageModule.sendingNonce.selector).with_key(leaf)
-            .checked_write(1_000);
         vm.selectFork({forkId: leafId});
-        stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
-
         uint24 _poolParam = 1;
         leafPool = Pool(leafPoolFactory.createPool({tokenA: address(token0), tokenB: address(token1), fee: _poolParam}));
 
         vm.selectFork({forkId: rootId});
-
         bytes memory message = abi.encodePacked(
             uint8(Commands.CREATE_GAUGE),
             address(rootPoolFactory),
@@ -286,6 +478,7 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
 
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
 
+        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
             _destination: leaf,
@@ -303,8 +496,6 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         });
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
 
-        assertEq(rootMessageModule.sendingNonce(leaf), 1_000);
-
         vm.selectFork({forkId: leafId});
         leafMailbox.processNextInboundMessage();
 
@@ -313,7 +504,6 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         assertNotEq(leafGauge.feesVotingReward(), address(0));
         assertEq(leafGauge.rewardToken(), address(leafXVelo));
         assertEq(leafGauge.bridge(), address(leafMessageBridge));
-        assertEq(leafMessageModule.receivingNonce(), 1_000);
     }
 
     function testGas_sendMessage()
@@ -322,13 +512,6 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         whenTheCommandIsDeposit
         whenTimestampIsGreaterThanEpochVoteEnd
     {
-        vm.selectFork({forkId: rootId});
-        stdstore.target(address(rootMessageModule)).sig(rootMessageModule.sendingNonce.selector).with_key(leaf)
-            .checked_write(1_000);
-        vm.selectFork({forkId: leafId});
-        stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
-
-        vm.selectFork({forkId: rootId});
         bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
 

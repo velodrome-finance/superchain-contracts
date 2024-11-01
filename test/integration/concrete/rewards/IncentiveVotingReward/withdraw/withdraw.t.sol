@@ -11,7 +11,7 @@ contract WithdrawIntegrationConcreteTest is IncentiveVotingRewardTest {
 
         vm.prank(users.charlie);
         vm.expectRevert(IReward.NotAuthorized.selector);
-        leafIVR._withdraw({amount: amount, tokenId: tokenId});
+        leafIVR._withdraw({amount: amount, tokenId: tokenId, timestamp: block.timestamp});
     }
 
     function test_WhenCallerIsTheModuleSetOnTheBridge() external {
@@ -22,16 +22,20 @@ contract WithdrawIntegrationConcreteTest is IncentiveVotingRewardTest {
         uint256 tokenId = 1;
 
         vm.startPrank(address(leafMessageModule));
-        leafIVR._deposit({amount: amount, tokenId: tokenId});
+        leafIVR._deposit({amount: amount, tokenId: tokenId, timestamp: block.timestamp});
 
         assertEq(leafIVR.totalSupply(), amount);
         assertEq(leafIVR.balanceOf(tokenId), amount);
 
         vm.expectEmit(address(leafIVR));
         emit IReward.Withdraw({_amount: amount, _tokenId: tokenId});
-        leafIVR._withdraw({amount: amount, tokenId: tokenId});
+        leafIVR._withdraw({amount: amount, tokenId: tokenId, timestamp: block.timestamp});
 
         assertEq(leafIVR.totalSupply(), 0);
         assertEq(leafIVR.balanceOf(tokenId), 0);
+        (uint256 timestamp, uint256 checkpointAmount) =
+            leafIVR.checkpoints(tokenId, leafIVR.numCheckpoints(tokenId) - 1);
+        assertEq(timestamp, block.timestamp);
+        assertEq(checkpointAmount, 0);
     }
 }

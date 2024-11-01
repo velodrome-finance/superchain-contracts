@@ -56,29 +56,25 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
     }
 
     function testGas_Deposit() public {
-        stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
-
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory message =
-            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint256(1000));
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint40(block.timestamp));
 
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
         snapLastCall("LeafHLMessageModule_handle_deposit");
     }
 
     function testGas_Withdraw() public {
-        stdstore.target(address(leafMessageModule)).sig("receivingNonce()").checked_write(1_000);
-
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
         bytes memory message =
-            abi.encodePacked(uint8(Commands.WITHDRAW), address(leafGauge), amount, tokenId, uint256(1000));
+            abi.encodePacked(uint8(Commands.WITHDRAW), address(leafGauge), amount, tokenId, uint40(block.timestamp));
 
         vm.stopPrank();
         vm.startPrank(address(leafMessageModule));
-        leafFVR._deposit({amount: amount, tokenId: tokenId});
-        leafIVR._deposit({amount: amount, tokenId: tokenId});
+        leafFVR._deposit({amount: amount, tokenId: tokenId, timestamp: block.timestamp});
+        leafIVR._deposit({amount: amount, tokenId: tokenId, timestamp: block.timestamp});
         vm.stopPrank();
 
         vm.startPrank(address(leafMailbox));
@@ -90,7 +86,7 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
         uint256 tokenId = 1;
         vm.stopPrank();
         vm.startPrank(address(leafMessageModule));
-        leafIVR._deposit({amount: TOKEN_1, tokenId: tokenId});
+        leafIVR._deposit({amount: TOKEN_1, tokenId: tokenId, timestamp: block.timestamp});
         vm.stopPrank();
 
         // Using WETH, tokenA & tokenB as Incentive tokens
@@ -116,7 +112,7 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
         uint256 tokenId = 1;
         vm.stopPrank();
         vm.startPrank(address(leafMessageModule));
-        leafFVR._deposit({amount: TOKEN_1, tokenId: tokenId});
+        leafFVR._deposit({amount: TOKEN_1, tokenId: tokenId, timestamp: block.timestamp});
         vm.stopPrank();
 
         address[] memory tokens = new address[](2);

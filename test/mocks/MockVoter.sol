@@ -10,6 +10,7 @@ import {IRootGauge} from "src/interfaces/root/gauges/IRootGauge.sol";
 import {IRootPool} from "src/interfaces/root/pools/IRootPool.sol";
 import {IRootPoolFactory} from "src/interfaces/root/pools/IRootPoolFactory.sol";
 import {IRootVotingRewardsFactory} from "src/interfaces/root/rewards/IRootVotingRewardsFactory.sol";
+import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
 
 contract MockVoter is IVoter {
     // mock addresses used for testing gauge creation, a copy is stored in Constants.sol
@@ -25,6 +26,7 @@ contract MockVoter is IVoter {
     mapping(address => address) public gaugeToFees;
     mapping(address => address) public gaugeToBribe;
     mapping(address => bool) public isWhitelistedToken;
+    mapping(uint256 => uint256) public lastVoted;
 
     IERC20 internal immutable rewardToken;
     address public immutable factoryRegistry;
@@ -108,7 +110,15 @@ contract MockVoter is IVoter {
         isAlive[gauge] = true;
     }
 
-    function vote(uint256 _tokenId, address[] calldata _poolVote, uint256[] calldata _weights) external override {}
+    function vote(uint256 _tokenId, address[] calldata, /* _poolVote */ uint256[] calldata /* _weights */ )
+        external
+        override
+    {
+        // ensure new epoch since last vote
+        if (VelodromeTimeLibrary.epochStart(block.timestamp) <= lastVoted[_tokenId]) revert AlreadyVotedOrDeposited();
+        if (block.timestamp <= VelodromeTimeLibrary.epochVoteStart(block.timestamp)) revert DistributeWindow();
+        lastVoted[_tokenId] = block.timestamp;
+    }
 
     // function claimRewards(address[] memory _gauges) external override {
     //     uint256 _length = _gauges.length;

@@ -49,7 +49,8 @@ contract RootFeesVotingReward is IRootFeesVotingReward {
 
         _checkRecipient({_recipient: IVotingEscrow(ve).ownerOf(_tokenId)});
 
-        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), gauge, _amount, _tokenId);
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.DEPOSIT), gauge, _amount, _tokenId, uint40(block.timestamp));
         IRootMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
     }
 
@@ -57,7 +58,8 @@ contract RootFeesVotingReward is IRootFeesVotingReward {
     function _withdraw(uint256 _amount, uint256 _tokenId) external {
         if (msg.sender != voter) revert NotAuthorized();
 
-        bytes memory message = abi.encodePacked(uint8(Commands.WITHDRAW), gauge, _amount, _tokenId);
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.WITHDRAW), gauge, _amount, _tokenId, uint40(block.timestamp));
         IRootMessageBridge(bridge).sendMessage({_chainid: chainid, _message: message});
     }
 

@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import {IFactoryRegistry} from "src/interfaces/external/IFactoryRegistry.sol";
 
 interface IVoter {
+    error AlreadyVotedOrDeposited();
+    error DistributeWindow();
     error GaugeAlreadyKilled();
     error GaugeAlreadyRevived();
     error NotEmergencyCouncil();
@@ -30,6 +32,9 @@ interface IVoter {
     function gaugeToFees(address _gauge) external view returns (address);
 
     function gaugeToBribe(address _gauge) external view returns (address);
+
+    /// @dev Nft => Timestamp of last vote (ensures single vote per epoch)
+    function lastVoted(uint256 tokenId) external view returns (uint256);
 
     function createGauge(address _poolFactory, address _pool) external returns (address);
 

@@ -33,8 +33,6 @@ contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecuri
     address public immutable mailbox;
     /// @inheritdoc ILeafHLMessageModule
     IInterchainSecurityModule public securityModule;
-    /// @inheritdoc ILeafHLMessageModule
-    uint256 public receivingNonce;
 
     constructor(address _owner, address _bridge, address _mailbox, address _ism) Ownable(_owner) {
         bridge = _bridge;
@@ -63,26 +61,20 @@ contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecuri
         if (TypeCasts.bytes32ToAddress(_sender) != address(this)) revert NotModule();
 
         uint256 command = _message.command();
-
-        if (command <= Commands.WITHDRAW) {
-            if (_message.nonce() != receivingNonce) revert InvalidNonce();
-            receivingNonce += 1;
-        }
-
         if (command == Commands.DEPOSIT) {
             address gauge = _message.toAddress();
-            (uint256 amount, uint256 tokenId) = _message.amountAndTokenId();
+            (uint256 amount, uint256 tokenId, uint256 timestamp) = _message.voteParams();
             address fvr = ILeafVoter(voter).gaugeToFees({_gauge: gauge});
-            IReward(fvr)._deposit({amount: amount, tokenId: tokenId});
+            IReward(fvr)._deposit({amount: amount, tokenId: tokenId, timestamp: timestamp});
             address ivr = ILeafVoter(voter).gaugeToIncentive({_gauge: gauge});
-            IReward(ivr)._deposit({amount: amount, tokenId: tokenId});
+            IReward(ivr)._deposit({amount: amount, tokenId: tokenId, timestamp: timestamp});
         } else if (command == Commands.WITHDRAW) {
             address gauge = _message.toAddress();
-            (uint256 amount, uint256 tokenId) = _message.amountAndTokenId();
+            (uint256 amount, uint256 tokenId, uint256 timestamp) = _message.voteParams();
             address fvr = ILeafVoter(voter).gaugeToFees({_gauge: gauge});
-            IReward(fvr)._withdraw({amount: amount, tokenId: tokenId});
+            IReward(fvr)._withdraw({amount: amount, tokenId: tokenId, timestamp: timestamp});
             address ivr = ILeafVoter(voter).gaugeToIncentive({_gauge: gauge});
-            IReward(ivr)._withdraw({amount: amount, tokenId: tokenId});
+            IReward(ivr)._withdraw({amount: amount, tokenId: tokenId, timestamp: timestamp});
         } else if (command == Commands.GET_INCENTIVES) {
             address ivr = ILeafVoter(voter).gaugeToIncentive({_gauge: _message.toAddress()});
 

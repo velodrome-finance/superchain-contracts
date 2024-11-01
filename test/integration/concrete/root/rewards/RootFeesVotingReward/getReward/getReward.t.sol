@@ -22,7 +22,7 @@ contract GetRewardIntegrationConcreteTest is RootFeesVotingRewardTest {
 
         // Deposit & Skip to next Epoch to vest rewards
         vm.startPrank(address(leafMessageModule));
-        leafFVR._deposit({amount: TOKEN_1, tokenId: tokenId});
+        leafFVR._deposit({amount: TOKEN_1, tokenId: tokenId, timestamp: block.timestamp});
         vm.stopPrank();
 
         skipToNextEpoch(1);

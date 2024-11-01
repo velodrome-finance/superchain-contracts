@@ -72,7 +72,7 @@ contract GetRewardIntegrationFuzzTest is IncentiveVotingRewardTest {
 
         _amount = bound(_amount, 1, MAX_TOKENS_NOTIFY);
         // Deposit and Skip to next epoch to vest all rewards
-        leafIVR._deposit({amount: _amount, tokenId: tokenId});
+        leafIVR._deposit({amount: _amount, tokenId: tokenId, timestamp: block.timestamp});
 
         skipToNextEpoch(1);
 

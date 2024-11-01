@@ -53,14 +53,15 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
         vm.assume(_caller != address(rootFVR));
 
         uint256 tokenId = 1;
-        bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
+        bytes memory message =
+            abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId, uint40(block.timestamp));
 
         vm.prank(_caller);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.DEPOSIT));
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
-    function testFuzz_WhenTheCallerIsAFeeContractRegisteredOnTheVoter(uint256 _amount)
+    function testFuzz_WhenTheCallerIsAFeeContractRegisteredOnTheVoter(uint256 _amount, uint40 _timestamp)
         external
         whenTheChainIdIsRegistered
         whenTheCommandIsDeposit
@@ -68,7 +69,7 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
         // It dispatches the deposit message to the message module
         amount = bound(_amount, 1, MAX_TOKENS);
         uint256 tokenId = 1;
-        bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
+        bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId, _timestamp);
 
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
@@ -80,8 +81,15 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
 
         assertEq(leafFVR.totalSupply(), amount);
         assertEq(leafFVR.balanceOf(tokenId), amount);
+        (uint256 checkpointTs, uint256 checkpointAmount) =
+            leafFVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
+        assertEq(checkpointTs, _timestamp);
+        assertEq(checkpointAmount, amount);
         assertEq(leafIVR.totalSupply(), amount);
         assertEq(leafIVR.balanceOf(tokenId), amount);
+        (checkpointTs, checkpointAmount) = leafIVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
+        assertEq(checkpointTs, _timestamp);
+        assertEq(checkpointAmount, amount);
     }
 
     modifier whenTheCommandIsWithdraw() {
@@ -98,17 +106,18 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
         vm.assume(_caller != address(rootFVR));
 
         uint256 tokenId = 1;
-        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint40(block.timestamp));
 
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
-        message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
+        message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId, uint40(block.timestamp));
         vm.startPrank(_caller);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.WITHDRAW));
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
-    function testFuzz_WhenTheCallerIsAFeeContractRegisteredOnTheVoter_(uint256 _amount)
+    function testFuzz_WhenTheCallerIsAFeeContractRegisteredOnTheVoter_(uint256 _amount, uint40 _timestamp)
         external
         whenTheChainIdIsRegistered
         whenTheCommandIsWithdraw
@@ -120,11 +129,12 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
 
         _amount = bound(_amount, 1, MAX_TOKENS);
         uint256 tokenId = 1;
-        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), _amount, tokenId);
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), _amount, tokenId, _timestamp);
 
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
-        message = abi.encodePacked(uint8(command), address(leafGauge), _amount, tokenId);
+        message = abi.encodePacked(uint8(command), address(leafGauge), _amount, tokenId, _timestamp);
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
 
@@ -142,8 +152,15 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
 
         assertEq(leafFVR.totalSupply(), 0);
         assertEq(leafFVR.balanceOf(tokenId), 0);
+        (uint256 checkpointTs, uint256 checkpointAmount) =
+            leafFVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
+        assertEq(checkpointTs, _timestamp);
+        assertEq(checkpointAmount, 0);
         assertEq(leafIVR.totalSupply(), 0);
         assertEq(leafIVR.balanceOf(tokenId), 0);
+        (checkpointTs, checkpointAmount) = leafIVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
+        assertEq(checkpointTs, _timestamp);
+        assertEq(checkpointAmount, 0);
     }
 
     modifier whenTheCommandIsCreateGauge() {
@@ -205,7 +222,7 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
         // Deposit into Reward contracts and Skip to next epoch to accrue rewards
         uint256 tokenId = 1;
         vm.prank(address(leafMessageModule));
-        leafIVR._deposit({amount: amount, tokenId: tokenId});
+        leafIVR._deposit({amount: amount, tokenId: tokenId, timestamp: block.timestamp});
         vm.warp(leafStartTime + WEEK + 1);
 
         vm.selectFork({forkId: rootId});
@@ -282,7 +299,7 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
         // Deposit into Reward contracts and Skip to next epoch to accrue rewards
         uint256 tokenId = 1;
         vm.prank(address(leafMessageModule));
-        leafFVR._deposit({amount: amount, tokenId: tokenId});
+        leafFVR._deposit({amount: amount, tokenId: tokenId, timestamp: block.timestamp});
         vm.warp(leafStartTime + WEEK + 1);
 
         skipToNextEpoch(1);

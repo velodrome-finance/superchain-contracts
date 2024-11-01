@@ -229,7 +229,6 @@ This payload consists of:
 - 20 byte gauge address
 - 32 byte amount
 - 32 byte token id
-- 32 byte nonce
 
 ##### Get Incentives & Get Fees
 This payload consists of:
@@ -290,7 +289,6 @@ via different message vendors. Care must be taken in the upgrade process.
 
 #### Root Hyperlane Message Module
 - Supports the sending of messages cross chain via Hyperlane.
-- Deposit and withdraw messages are executed sequentially, enforced by a nonce.
 - For token bridging transactions, the module is given permission to burn tokens on the root chain.
 
 #### Token Bridge

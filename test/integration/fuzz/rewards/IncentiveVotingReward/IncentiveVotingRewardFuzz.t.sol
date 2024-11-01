@@ -28,7 +28,7 @@ contract IncentiveVotingRewardFuzzTest is BaseForkFixture {
     function _deposit(address _user, uint256 _amount) internal {
         uint256 tokenId = _user == users.alice ? 1 : 2;
         vm.prank(address(leafMessageModule));
-        leafIVR._deposit({amount: _amount, tokenId: tokenId});
+        leafIVR._deposit({amount: _amount, tokenId: tokenId, timestamp: block.timestamp});
     }
 
     function _getReward(address _user) internal {

@@ -29,7 +29,7 @@ library Commands {
     uint256 private constant TOKENS_OFFSET = LENGTH_OFFSET + 1;
     // Offset for Deposit/Withdraw
     uint256 private constant TOKEN_ID_OFFSET = ADDRESS_OFFSET + 20 + 32;
-    uint256 private constant NONCE_OFFSET = ADDRESS_OFFSET + 20 + 32 + 32;
+    uint256 private constant TIMESTAMP_OFFSET = TOKEN_ID_OFFSET + 32;
     // Offset for Send Token amount
     uint256 private constant AMOUNT_OFFSET = COMMAND_OFFSET + 20;
 
@@ -68,13 +68,14 @@ library Commands {
         return uint256(bytes32(_message[TOKEN_ID_OFFSET:TOKEN_ID_OFFSET + 32]));
     }
 
-    /// @notice Returns the amount and tokenId encoded in the message
-    /// @dev Assumes message is encoded as (command, amount, tokenId, ...)
+    /// @notice Returns the amount, tokenId and timestamp encoded in the message
+    /// @dev Assumes message is encoded as (command, amount, tokenId, timestamp, ...)
     /// @param _message The message to be decoded
-    function amountAndTokenId(bytes calldata _message) internal pure returns (uint256, uint256) {
+    function voteParams(bytes calldata _message) internal pure returns (uint256, uint256, uint256) {
         return (
             uint256(bytes32(_message[SECOND_OFFSET:SECOND_OFFSET + 32])),
-            uint256(bytes32(_message[TOKEN_ID_OFFSET:TOKEN_ID_OFFSET + 32]))
+            uint256(bytes32(_message[TOKEN_ID_OFFSET:TIMESTAMP_OFFSET])),
+            uint256(uint40(bytes5(_message[TIMESTAMP_OFFSET:TIMESTAMP_OFFSET + 5])))
         );
     }
 
@@ -106,11 +107,11 @@ library Commands {
         );
     }
 
-    /// @notice Returns the nonce encoded in the message
-    /// @dev Assumes message is encoded as (command, address, ..., nonce)
+    /// @notice Returns the tokenId encoded in a reward claiming message
+    /// @dev Assumes message is encoded as (command, address, tokenId, ...)
     /// @param _message The message to be decoded
-    function nonce(bytes calldata _message) internal pure returns (uint256) {
-        return uint256(bytes32(_message[NONCE_OFFSET:NONCE_OFFSET + 32]));
+    function rewardTokenId(bytes calldata _message) internal pure returns (uint256) {
+        return uint256(bytes32(_message[THIRD_OFFSET:THIRD_OFFSET + 32]));
     }
 
     /// @notice Returns the recipient and tokenId encoded in the message

@@ -6,7 +6,6 @@ SendMessageIntegrationConcreteTest
     │   ├── When timestamp is smaller than or equal to epoch vote end
     │   │   ├── It dispatches the message to the mailbox
     │   │   ├── It emits the {SentMessage} event
-    │   │   ├── It should update sendingNonce
     │   │   └── It calls receiveMessage on the recipient contract of the same address with the payload
     │   └── When timestamp is greater than epoch vote end
     │       ├── When tx origin is not approved or owner of token id
@@ -14,22 +13,32 @@ SendMessageIntegrationConcreteTest
     │       └── When tx origin is approved or owner of token id
     │           ├── It dispatches the message to the mailbox
     │           ├── It emits the {SentMessage} event
-    │           ├── It should update sendingNonce
     │           └── It calls receiveMessage on the recipient contract of the same address with the payload
     ├── When the command is notify
     │   ├── It burns the decoded amount of tokens
     │   ├── It dispatches the message to the mailbox
     │   ├── It emits the {SentMessage} event
-    │   ├── It should update sendingNonce
     │   └── It calls receiveMessage on the recipient contract of the same address with the payload
     ├── When the command is notify without claim
     │   ├── It burns the decoded amount of tokens
     │   ├── It dispatches the message to the mailbox
     │   ├── It emits the {SentMessage} event
-    │   ├── It should update sendingNonce
     │   └── It calls receiveMessage on the recipient contract of the same address with the payload
+    ├── When the command is get incentives
+    │   ├── When last vote is in current epoch
+    │   │   └── It should revert with {AlreadyVotedOrDeposited}
+    │   └── When last vote is not in current epoch
+    │       ├── It dispatches the message to the mailbox
+    │       ├── It emits the {SentMessage} event
+    │       └── It calls receiveMessage on the recipient contract of the same address with the payload
+    ├── When the command is get fees
+    │   ├── When last vote is in current epoch_
+    │   │   └── It should revert with {AlreadyVotedOrDeposited}
+    │   └── When last vote is not in current epoch_
+    │       ├── It dispatches the message to the mailbox
+    │       ├── It emits the {SentMessage} event
+    │       └── It calls receiveMessage on the recipient contract of the same address with the payload
     └── When the command is createGauge
         ├── It dispatches the message to the mailbox
         ├── It emits the {SentMessage} event
-        ├── It shouldn't update sendingNonce
         └── It calls receiveMessage on the recipient contract of the same address with the payload

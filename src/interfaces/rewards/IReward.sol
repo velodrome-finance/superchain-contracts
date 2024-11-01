@@ -73,13 +73,15 @@ interface IReward {
     /// @dev Internal notation used as only callable internally by `authorized.module()`.
     /// @param amount Vote weight to deposit
     /// @param tokenId Token ID of weight to deposit
-    function _deposit(uint256 amount, uint256 tokenId) external;
+    /// @param timestamp Timestamp of deposit
+    function _deposit(uint256 amount, uint256 tokenId, uint256 timestamp) external;
 
     /// @notice Withdraw an amount from the rewards contract associated to a veNFT
     /// @dev Internal notation used as only callable internally by `authorized.module()`.
     /// @param amount Vote weight to withdraw
     /// @param tokenId Token ID of weight to withdraw
-    function _withdraw(uint256 amount, uint256 tokenId) external;
+    /// @param timestamp Timestamp of withdraw
+    function _withdraw(uint256 amount, uint256 tokenId, uint256 timestamp) external;
 
     /// @notice Claim the rewards earned by a veNFT staker
     /// @param _recipient  Address of reward recipient

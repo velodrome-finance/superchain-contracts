@@ -65,7 +65,7 @@ contract GetRewardIntegrationConcreteTest is IncentiveVotingRewardTest {
         // It should emit a {ClaimRewards} event
 
         // Deposit and Skip to next epoch to vest all rewards
-        leafIVR._deposit({amount: TOKEN_1, tokenId: tokenId});
+        leafIVR._deposit({amount: TOKEN_1, tokenId: tokenId, timestamp: block.timestamp});
 
         skipToNextEpoch(1);
 

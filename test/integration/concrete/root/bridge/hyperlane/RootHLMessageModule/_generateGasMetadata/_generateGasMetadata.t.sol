@@ -21,8 +21,7 @@ contract GenerateGasMetadataIntegrationConcreteTest is RootHLMessageModuleTest {
     function test_WhenThereIsNoCustomHookSet() external {
         // It should fetch the gas limit for the command from the library
         bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
-        bytes memory expectedMessage =
-            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint256(0));
+        bytes memory expectedMessage = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
 
         uint256 expectedGasLimit = Commands.DEPOSIT.gasLimit();
         string memory expectedMetadata = string(
@@ -52,8 +51,7 @@ contract GenerateGasMetadataIntegrationConcreteTest is RootHLMessageModuleTest {
         rootMessageModule.setHook({_hook: address(hook)});
 
         bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
-        bytes memory expectedMessage =
-            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint256(0));
+        bytes memory expectedMessage = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
 
         /// @dev MockCustomHook returns twice the gas limit
         uint256 expectedGasLimit = Commands.DEPOSIT.gasLimit() * 2;

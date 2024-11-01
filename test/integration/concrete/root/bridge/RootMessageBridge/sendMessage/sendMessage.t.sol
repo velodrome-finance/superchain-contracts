@@ -75,9 +75,10 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         whenTheCommandIsDeposit
     {
         // It dispatches the deposit message to the message module
-        uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
+        uint256 amount = TOKEN_1 * 1000;
+        uint40 timestamp = uint40(block.timestamp);
+        bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId, timestamp);
 
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
@@ -89,8 +90,15 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
         assertEq(leafFVR.totalSupply(), amount);
         assertEq(leafFVR.balanceOf(tokenId), amount);
+        (uint256 checkpointTs, uint256 checkpointAmount) =
+            leafFVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
+        assertEq(checkpointTs, timestamp);
+        assertEq(checkpointAmount, amount);
         assertEq(leafIVR.totalSupply(), amount);
         assertEq(leafIVR.balanceOf(tokenId), amount);
+        (checkpointTs, checkpointAmount) = leafIVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
+        assertEq(checkpointTs, timestamp);
+        assertEq(checkpointAmount, amount);
     }
 
     modifier whenTheCommandIsWithdraw() {
@@ -106,11 +114,12 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         // It should revert with {NotAuthorized}
         uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint40(block.timestamp));
 
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
-        message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
+        message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId, uint40(block.timestamp));
         vm.startPrank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(IRootMessageBridge.NotAuthorized.selector, Commands.WITHDRAW));
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
@@ -126,13 +135,14 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         vm.prank(users.alice);
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
 
-        uint256 amount = TOKEN_1 * 1000;
         uint256 tokenId = 1;
-        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
+        uint256 amount = TOKEN_1 * 1000;
+        uint40 timestamp = uint40(block.timestamp);
+        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, timestamp);
 
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
-        message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId);
+        message = abi.encodePacked(uint8(command), address(leafGauge), amount, tokenId, timestamp);
         vm.prank({msgSender: address(rootFVR), txOrigin: users.alice});
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
 
@@ -150,8 +160,15 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
         assertEq(leafFVR.totalSupply(), 0);
         assertEq(leafFVR.balanceOf(tokenId), 0);
+        (uint256 checkpointTs, uint256 checkpointAmount) =
+            leafFVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
+        assertEq(checkpointTs, timestamp);
+        assertEq(checkpointAmount, 0);
         assertEq(leafIVR.totalSupply(), 0);
         assertEq(leafIVR.balanceOf(tokenId), 0);
+        (checkpointTs, checkpointAmount) = leafIVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
+        assertEq(checkpointTs, timestamp);
+        assertEq(checkpointAmount, 0);
     }
 
     modifier whenTheCommandIsCreateGauge() {
@@ -236,7 +253,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         // Deposit into Reward contracts and Skip to next epoch to accrue rewards
         uint256 tokenId = 1;
         vm.prank(address(leafMessageModule));
-        leafIVR._deposit({amount: TOKEN_1, tokenId: tokenId});
+        leafIVR._deposit({amount: TOKEN_1, tokenId: tokenId, timestamp: block.timestamp});
 
         skipToNextEpoch(1);
 
@@ -309,7 +326,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         // Deposit into Reward contracts and Skip to next epoch to accrue rewards
         uint256 tokenId = 1;
         vm.prank(address(leafMessageModule));
-        leafFVR._deposit({amount: TOKEN_1, tokenId: tokenId});
+        leafFVR._deposit({amount: TOKEN_1, tokenId: tokenId, timestamp: block.timestamp});
 
         skipToNextEpoch(1);
 

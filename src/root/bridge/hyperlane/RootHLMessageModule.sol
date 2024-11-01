@@ -33,17 +33,19 @@ contract RootHLMessageModule is IRootHLMessageModule {
     /// @inheritdoc IRootHLMessageModule
     address public immutable mailbox;
     /// @inheritdoc IRootHLMessageModule
+    address public immutable voter;
+    /// @inheritdoc IRootHLMessageModule
     address public immutable ve;
     /// @inheritdoc IRootHLMessageModule
     address public hook;
-    /// @inheritdoc IRootHLMessageModule
-    mapping(uint256 => uint256) public sendingNonce;
 
     constructor(address _bridge, address _mailbox) {
         bridge = _bridge;
         xerc20 = IRootMessageBridge(_bridge).xerc20();
         mailbox = _mailbox;
-        ve = IVoter(IRootMessageBridge(_bridge).voter()).ve();
+        address _voter = IRootMessageBridge(_bridge).voter();
+        voter = _voter;
+        ve = IVoter(_voter).ve();
     }
 
     /// @inheritdoc IMessageSender
@@ -52,26 +54,13 @@ contract RootHLMessageModule is IRootHLMessageModule {
         uint256 command = _messageBody.command();
         bytes memory _metadata = _generateGasMetadata({_command: command, _hook: _hook});
 
-        if (command <= Commands.WITHDRAW) {
-            /// @dev If command is deposit/withdraw, copy message into memory to include nonce
-            bytes memory message =
-                abi.encodePacked(uint8(command), _messageBody.messageWithoutCommand(), sendingNonce[_destinationDomain]);
-            return Mailbox(mailbox).quoteDispatch({
-                destinationDomain: uint32(_destinationDomain),
-                recipientAddress: TypeCasts.addressToBytes32(address(this)),
-                messageBody: message,
-                metadata: _metadata,
-                hook: IPostDispatchHook(_hook)
-            });
-        } else {
-            return Mailbox(mailbox).quoteDispatch({
-                destinationDomain: uint32(_destinationDomain),
-                recipientAddress: TypeCasts.addressToBytes32(address(this)),
-                messageBody: _messageBody,
-                metadata: _metadata,
-                hook: IPostDispatchHook(_hook)
-            });
-        }
+        return Mailbox(mailbox).quoteDispatch({
+            destinationDomain: uint32(_destinationDomain),
+            recipientAddress: TypeCasts.addressToBytes32(address(this)),
+            messageBody: _messageBody,
+            metadata: _metadata,
+            hook: IPostDispatchHook(_hook)
+        });
     }
 
     /// @inheritdoc IMessageSender
@@ -89,50 +78,30 @@ contract RootHLMessageModule is IRootHLMessageModule {
                     revert NotApprovedOrOwner();
                 }
             }
-
-            /// @dev If command is deposit/withdraw, copy message into memory to include nonce
-            bytes memory message =
-                abi.encodePacked(uint8(command), _message.messageWithoutCommand(), sendingNonce[_chainid]);
-            sendingNonce[_chainid] += 1;
-
-            Mailbox(mailbox).dispatch{value: msg.value}({
-                destinationDomain: domain,
-                recipientAddress: TypeCasts.addressToBytes32(address(this)),
-                messageBody: message,
-                metadata: _metadata,
-                hook: IPostDispatchHook(_hook)
-            });
-
-            emit SentMessage({
-                _destination: domain,
-                _recipient: TypeCasts.addressToBytes32(address(this)),
-                _value: msg.value,
-                _message: string(message),
-                _metadata: string(_metadata)
-            });
-        } else {
-            /// @dev Remaining commands are parsed as calldata
-            if (command <= Commands.NOTIFY_WITHOUT_CLAIM) {
-                uint256 amount = _message.amount();
-                IXERC20(xerc20).burn({_user: address(this), _amount: amount});
+        } else if (command <= Commands.NOTIFY_WITHOUT_CLAIM) {
+            uint256 amount = _message.amount();
+            IXERC20(xerc20).burn({_user: address(this), _amount: amount});
+        } else if (command <= Commands.GET_FEES) {
+            if (VelodromeTimeLibrary.epochStart(block.timestamp) <= IVoter(voter).lastVoted(_message.rewardTokenId())) {
+                revert AlreadyVotedOrDeposited();
             }
-
-            Mailbox(mailbox).dispatch{value: msg.value}({
-                destinationDomain: domain,
-                recipientAddress: TypeCasts.addressToBytes32(address(this)),
-                messageBody: _message,
-                metadata: _metadata,
-                hook: IPostDispatchHook(_hook)
-            });
-
-            emit SentMessage({
-                _destination: domain,
-                _recipient: TypeCasts.addressToBytes32(address(this)),
-                _value: msg.value,
-                _message: string(_message),
-                _metadata: string(_metadata)
-            });
         }
+
+        Mailbox(mailbox).dispatch{value: msg.value}({
+            destinationDomain: domain,
+            recipientAddress: TypeCasts.addressToBytes32(address(this)),
+            messageBody: _message,
+            metadata: _metadata,
+            hook: IPostDispatchHook(_hook)
+        });
+
+        emit SentMessage({
+            _destination: domain,
+            _recipient: TypeCasts.addressToBytes32(address(this)),
+            _value: msg.value,
+            _message: string(_message),
+            _metadata: string(_metadata)
+        });
     }
 
     /// @inheritdoc IRootHLMessageModule

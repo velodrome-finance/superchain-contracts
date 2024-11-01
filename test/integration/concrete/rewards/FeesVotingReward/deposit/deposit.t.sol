@@ -10,7 +10,7 @@ contract DepositIntegrationConcreteTest is FeesVotingRewardTest {
         uint256 tokenId = 1;
         vm.prank(users.charlie);
         vm.expectRevert(IReward.NotAuthorized.selector);
-        leafFVR._deposit({amount: amount, tokenId: tokenId});
+        leafFVR._deposit({amount: amount, tokenId: tokenId, timestamp: block.timestamp});
     }
 
     function test_WhenCallerIsTheModuleSetOnTheBridge() external {
@@ -23,9 +23,13 @@ contract DepositIntegrationConcreteTest is FeesVotingRewardTest {
         vm.prank(address(leafMessageModule));
         vm.expectEmit(address(leafFVR));
         emit IReward.Deposit({_amount: amount, _tokenId: tokenId});
-        leafFVR._deposit({amount: amount, tokenId: tokenId});
+        leafFVR._deposit({amount: amount, tokenId: tokenId, timestamp: block.timestamp});
 
         assertEq(leafFVR.totalSupply(), amount);
         assertEq(leafFVR.balanceOf(tokenId), amount);
+        (uint256 timestamp, uint256 checkpointAmount) =
+            leafFVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
+        assertEq(timestamp, block.timestamp);
+        assertEq(checkpointAmount, amount);
     }
 }

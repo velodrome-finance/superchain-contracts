@@ -26,7 +26,7 @@ contract GetRewardIntegrationConcreteTest is RootIncentiveVotingRewardTest {
 
         // Deposit & Skip to next Epoch to vest rewards
         vm.startPrank(address(leafMessageModule));
-        leafIVR._deposit({amount: TOKEN_1, tokenId: tokenId});
+        leafIVR._deposit({amount: TOKEN_1, tokenId: tokenId, timestamp: block.timestamp});
         vm.stopPrank();
 
         skipToNextEpoch(1);
