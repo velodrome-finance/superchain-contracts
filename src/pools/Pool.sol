@@ -5,7 +5,6 @@ import {Math} from "@openzeppelin5/contracts/utils/math/Math.sol";
 import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC20} from "@openzeppelin5/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin5/contracts/token/ERC20/IERC20.sol";
-import {ERC20Permit} from "@openzeppelin5/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import {ReentrancyGuard} from "@openzeppelin5/contracts/utils/ReentrancyGuard.sol";
 
 import {IPool} from "../interfaces/pools/IPool.sol";
@@ -41,7 +40,7 @@ import {PoolFees} from "./PoolFees.sol";
 /// @title Pool
 /// @author velodrome.finance
 /// @notice Velodrome V2 token pool, either stable or volatile
-contract Pool is IPool, ERC20Permit, ReentrancyGuard {
+contract Pool is IPool, ERC20, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     string private _name;
@@ -97,7 +96,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     /// @inheritdoc IPool
     mapping(address => uint256) public claimable1;
 
-    constructor() ERC20("", "") ERC20Permit("") {}
+    constructor() ERC20("", "") {}
 
     /// @inheritdoc IPool
     function initialize(address _token0, address _token1, bool _stable) public virtual {
