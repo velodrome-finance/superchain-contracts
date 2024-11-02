@@ -18,10 +18,17 @@ contract SetDefaultCapIntegrationFuzzTest is RootGaugeFactoryTest {
         _;
     }
 
+    function testFuzz_WhenDefaultCapIsGreaterThanMaxBps(uint256 _defaultCap) external whenCallerIsTheEmissionAdmin {
+        // It should revert with {MaximumCapExceeded}
+        _defaultCap = bound(_defaultCap, 10_001, type(uint256).max);
+        vm.expectRevert(IRootGaugeFactory.MaximumCapExceeded.selector);
+        rootGaugeFactory.setDefaultCap({_defaultCap: _defaultCap});
+    }
+
     function testFuzz_WhenDefaultCapIsNotZero(uint256 _defaultCap) external whenCallerIsTheEmissionAdmin {
         // It should set the new default cap for gauges
         // It should emit a {DefaultCapSet} event
-        _defaultCap = bound(_defaultCap, 1, type(uint256).max);
+        _defaultCap = bound(_defaultCap, 1, 10_000);
 
         vm.expectEmit(address(rootGaugeFactory));
         emit IRootGaugeFactory.DefaultCapSet({_newDefaultCap: _defaultCap});

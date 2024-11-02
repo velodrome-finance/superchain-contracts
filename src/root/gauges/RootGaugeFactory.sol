@@ -176,6 +176,7 @@ contract RootGaugeFactory is IRootGaugeFactory {
     function setEmissionCap(address _gauge, uint256 _emissionCap) external {
         if (msg.sender != emissionAdmin) revert NotAuthorized();
         if (_gauge == address(0)) revert ZeroAddress();
+        if (_emissionCap > MAX_BPS) revert MaximumCapExceeded();
         _emissionCaps[_gauge] = _emissionCap;
         emit EmissionCapSet({_gauge: _gauge, _newEmissionCap: _emissionCap});
     }
@@ -184,6 +185,7 @@ contract RootGaugeFactory is IRootGaugeFactory {
     function setDefaultCap(uint256 _defaultCap) external {
         if (msg.sender != emissionAdmin) revert NotAuthorized();
         if (_defaultCap == 0) revert ZeroDefaultCap();
+        if (_defaultCap > MAX_BPS) revert MaximumCapExceeded();
         defaultCap = _defaultCap;
         emit DefaultCapSet({_newDefaultCap: _defaultCap});
     }

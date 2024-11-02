@@ -18,13 +18,25 @@ contract SetEmissionCapIntegrationFuzzTest is RootGaugeFactoryTest {
         _;
     }
 
-    function testFuzz_WhenGaugeIsNotTheZeroAddress(address _gauge, uint256 _emissionCap)
+    function test_WhenEmissionCapIsGreaterThanMaxBps(address _gauge, uint256 _emissionCap)
+        external
+        whenCallerIsTheEmissionAdmin
+    {
+        // It should revert with {MaximumCapExceeded}
+        vm.assume(_gauge != address(0));
+        _emissionCap = bound(_emissionCap, 10_001, type(uint256).max);
+        vm.expectRevert(IRootGaugeFactory.MaximumCapExceeded.selector);
+        rootGaugeFactory.setEmissionCap({_gauge: _gauge, _emissionCap: _emissionCap});
+    }
+
+    function testFuzz_WhenEmissionCapIsLessOrEqualToMaxBps(address _gauge, uint256 _emissionCap)
         external
         whenCallerIsTheEmissionAdmin
     {
         // It should set the new emission cap for the gauge
         // It should emit a {EmissionCapSet} event
         vm.assume(_gauge != address(0));
+        _emissionCap = bound(_emissionCap, 0, 10_000);
 
         vm.expectEmit(address(rootGaugeFactory));
         emit IRootGaugeFactory.EmissionCapSet({_gauge: _gauge, _newEmissionCap: _emissionCap});

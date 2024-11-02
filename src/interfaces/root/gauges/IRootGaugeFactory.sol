@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IRootGaugeFactory {
+    error MaximumCapExceeded();
     error ZeroDefaultCap();
     error NotAuthorized();
     error ZeroAddress();
