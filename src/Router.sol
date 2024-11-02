@@ -113,6 +113,8 @@ contract Router is IRouter {
             address pool = poolFor(routes[i].from, routes[i].to, routes[i].stable);
             if (IPoolFactory(factory).isPool(pool)) {
                 amounts[i + 1] = IPool(pool).getAmountOut(amounts[i], routes[i].from);
+            } else {
+                revert InvalidPath();
             }
         }
     }
