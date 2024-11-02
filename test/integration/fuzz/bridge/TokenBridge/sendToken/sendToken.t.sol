@@ -34,6 +34,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
         // It should revert with {InsufficientBalance}
         _msgValue = bound(_msgValue, 0, MESSAGE_FEE - 1);
         vm.deal({account: address(rootGauge), newBalance: MESSAGE_FEE});
+        vm.assume(_recipient != address(0));
 
         vm.expectRevert(ITokenBridge.InsufficientBalance.selector);
         rootTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: TOKEN_1, _chainid: leaf});
