@@ -34,6 +34,7 @@ contract MockVoter is IVoter {
     address public immutable governor;
     address public immutable minter;
     mapping(address => uint256) public claimable;
+    mapping(address => bool) public isGauge;
 
     address public emergencyCouncil;
 
@@ -91,6 +92,7 @@ contract MockVoter is IVoter {
         gaugeToBribe[gauge] = bribeVotingReward;
         isWhitelistedToken[rewards[0]] = true;
         isWhitelistedToken[rewards[1]] = true;
+        isGauge[gauge] = true;
         return gauge;
     }
 

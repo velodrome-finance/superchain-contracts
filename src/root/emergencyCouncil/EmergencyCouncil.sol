@@ -48,6 +48,9 @@ contract EmergencyCouncil is Ownable, IEmergencyCouncil {
 
     /// @inheritdoc IEmergencyCouncil
     function reviveRootGauge(address _gauge) external onlyOwner {
+        if (!IVoter(voter).isGauge({_gauge: _gauge})) {
+            revert InvalidGauge();
+        }
         try IRootGauge(_gauge).chainid() returns (uint256) {
             revert InvalidGauge();
         } catch {
@@ -57,6 +60,9 @@ contract EmergencyCouncil is Ownable, IEmergencyCouncil {
 
     /// @inheritdoc IEmergencyCouncil
     function reviveLeafGauge(address _gauge) external onlyOwner {
+        if (!IVoter(voter).isGauge({_gauge: _gauge})) {
+            revert InvalidGauge();
+        }
         IVoter(voter).reviveGauge({_gauge: _gauge});
 
         uint256 _chainid = IRootGauge(_gauge).chainid();

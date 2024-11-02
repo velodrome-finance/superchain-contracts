@@ -11,7 +11,7 @@ contract ReviveLeafGaugeE2ETest is EmergencyCouncilE2ETest {
         // It should revert with OwnableUnauthorizedAccount
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.charlie));
-        emergencyCouncil.reviveLeafGauge(address(leafGauge));
+        emergencyCouncil.reviveLeafGauge(gauge);
     }
 
     modifier whenCallerIsOwner() {
@@ -19,24 +19,35 @@ contract ReviveLeafGaugeE2ETest is EmergencyCouncilE2ETest {
         _;
     }
 
-    function test_WhenGaugeIsAlive() external whenCallerIsOwner {
+    function test_WhenGaugeIsNotAGauge() external whenCallerIsOwner {
+        // It should revert with InvalidGauge
+        vm.expectRevert(IEmergencyCouncil.InvalidGauge.selector);
+        emergencyCouncil.reviveLeafGauge(gauge);
+    }
+
+    modifier whenGaugeIsAGauge() {
+        gauge = address(rootGauge);
+        _;
+    }
+
+    function test_WhenGaugeIsAlive() external whenCallerIsOwner whenGaugeIsAGauge {
         // It should revert with GaugeAlreadyRevived
         vm.expectRevert(IVoter.GaugeAlreadyRevived.selector);
         emergencyCouncil.reviveLeafGauge(address(leafGauge));
     }
 
-    function test_WhenGaugeIsNotAlive() external whenCallerIsOwner {
+    function test_WhenGaugeIsNotAlive() external whenCallerIsOwner whenGaugeIsAGauge {
         // It should set isAlive as true for gauge
         // It should emit a {GaugeRevived} event
         // It should set isAlive as true for gauge on leaf voter
         // It should add gauge tokens to set of whitelisted tokens
         // It should emit a {GaugeRevived} event
 
-        bytes memory message = abi.encodePacked(uint8(Commands.REVIVE_GAUGE), address(leafGauge));
+        bytes memory message = abi.encodePacked(uint8(Commands.REVIVE_GAUGE), gauge);
 
-        stdstore.target(address(mockVoter)).sig("isAlive(address)").with_key(address(leafGauge)).checked_write(false);
+        stdstore.target(address(mockVoter)).sig("isAlive(address)").with_key(gauge).checked_write(false);
         vm.expectEmit(address(mockVoter));
-        emit IVoter.GaugeRevived({gauge: address(leafGauge)});
+        emit IVoter.GaugeRevived({gauge: gauge});
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
             _destination: leaf,
@@ -52,17 +63,17 @@ contract ReviveLeafGaugeE2ETest is EmergencyCouncilE2ETest {
                 })
             )
         });
-        emergencyCouncil.reviveLeafGauge(address(leafGauge));
+        emergencyCouncil.reviveLeafGauge(gauge);
 
-        assertEq(mockVoter.isAlive(address(leafGauge)), true);
+        assertEq(mockVoter.isAlive(gauge), true);
 
         vm.selectFork({forkId: leafId});
-        stdstore.target(address(leafVoter)).sig("isAlive(address)").with_key(address(leafGauge)).checked_write(false);
+        stdstore.target(address(leafVoter)).sig("isAlive(address)").with_key(gauge).checked_write(false);
         vm.expectEmit(address(leafVoter));
-        emit IVoter.GaugeRevived({gauge: address(leafGauge)});
+        emit IVoter.GaugeRevived({gauge: gauge});
         leafMailbox.processNextInboundMessage();
 
-        assertTrue(leafVoter.isAlive(address(leafGauge)));
+        assertTrue(leafVoter.isAlive(gauge));
         assertTrue(leafVoter.isWhitelistedToken(address(token0)));
         assertTrue(leafVoter.isWhitelistedToken(address(token1)));
     }

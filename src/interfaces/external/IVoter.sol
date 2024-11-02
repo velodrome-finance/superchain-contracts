@@ -29,6 +29,8 @@ interface IVoter {
 
     function gauges(address _pool) external view returns (address);
 
+    function isGauge(address _gauge) external view returns (bool);
+
     function gaugeToFees(address _gauge) external view returns (address);
 
     function gaugeToBribe(address _gauge) external view returns (address);

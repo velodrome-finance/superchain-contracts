@@ -6,9 +6,8 @@ import "test/BaseE2EForkFixture.sol";
 abstract contract EmergencyCouncilE2ETest is BaseE2EForkFixture {
     address gauge;
 
-    function setUp() public override {
+    function setUp() public virtual override {
         super.setUp();
-        gauge = address(rootGauge);
         vm.selectFork({forkId: rootId});
         deal({token: address(weth), to: users.owner, give: MESSAGE_FEE});
         vm.prank(users.owner);

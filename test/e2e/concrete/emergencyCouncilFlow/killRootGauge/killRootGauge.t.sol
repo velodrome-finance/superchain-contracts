@@ -6,6 +6,11 @@ import "../EmergencyCouncilE2E.t.sol";
 contract KillRootGaugeE2ETest is EmergencyCouncilE2ETest {
     using stdStorage for StdStorage;
 
+    function setUp() public override {
+        super.setUp();
+        gauge = address(rootGauge);
+    }
+
     function test_WhenCallerIsNotOwner() external {
         // It should revert with OwnableUnauthorizedAccount
         vm.prank(users.charlie);
