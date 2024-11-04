@@ -18,13 +18,10 @@ contract EmergencyCouncil is Ownable, IEmergencyCouncil {
     address public immutable voter;
     /// @inheritdoc IEmergencyCouncil
     address public immutable votingEscrow;
-    /// @inheritdoc IEmergencyCouncil
-    address public immutable bridge;
 
-    constructor(address _owner, address _voter, address _bridge) Ownable(_owner) {
+    constructor(address _owner, address _voter) Ownable(_owner) {
         voter = _voter;
         votingEscrow = IVoter(_voter).ve();
-        bridge = _bridge;
     }
 
     /// @inheritdoc IEmergencyCouncil
@@ -40,10 +37,11 @@ contract EmergencyCouncil is Ownable, IEmergencyCouncil {
     function killLeafGauge(address _gauge) external onlyOwner {
         IVoter(voter).killGauge({_gauge: _gauge});
 
-        uint256 _chainid = IRootGauge(_gauge).chainid();
+        address bridge = IRootGauge(_gauge).bridge();
+        uint256 chainid = IRootGauge(_gauge).chainid();
 
         bytes memory message = abi.encodePacked(uint8(Commands.KILL_GAUGE), _gauge);
-        IRootMessageBridge(bridge).sendMessage({_chainid: uint32(_chainid), _message: message});
+        IRootMessageBridge(bridge).sendMessage({_chainid: uint32(chainid), _message: message});
     }
 
     /// @inheritdoc IEmergencyCouncil
@@ -65,10 +63,11 @@ contract EmergencyCouncil is Ownable, IEmergencyCouncil {
         }
         IVoter(voter).reviveGauge({_gauge: _gauge});
 
-        uint256 _chainid = IRootGauge(_gauge).chainid();
+        address bridge = IRootGauge(_gauge).bridge();
+        uint256 chainid = IRootGauge(_gauge).chainid();
 
         bytes memory message = abi.encodePacked(uint8(Commands.REVIVE_GAUGE), _gauge);
-        IRootMessageBridge(bridge).sendMessage({_chainid: uint32(_chainid), _message: message});
+        IRootMessageBridge(bridge).sendMessage({_chainid: uint32(chainid), _message: message});
     }
 
     /// @inheritdoc IEmergencyCouncil

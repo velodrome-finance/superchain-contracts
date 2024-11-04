@@ -185,11 +185,7 @@ abstract contract DeployRootBaseFixture is DeployFixture {
         );
         checkAddress({_entropy: GAUGE_FACTORY_ENTROPY, _output: address(rootGaugeFactory)});
 
-        emergencyCouncil = new EmergencyCouncil({
-            _owner: _params.emergencyCouncilOwner,
-            _voter: _params.voter,
-            _bridge: address(rootMessageBridge)
-        });
+        emergencyCouncil = new EmergencyCouncil({_owner: _params.emergencyCouncilOwner, _voter: _params.voter});
     }
 
     function params() external view returns (RootDeploymentParameters memory) {

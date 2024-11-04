@@ -18,6 +18,5 @@ abstract contract EmergencyCouncilE2ETest is BaseE2EForkFixture {
         assertEq(emergencyCouncil.owner(), users.owner);
         assertEq(emergencyCouncil.voter(), address(mockVoter));
         assertEq(emergencyCouncil.votingEscrow(), address(mockEscrow));
-        assertEq(emergencyCouncil.bridge(), address(rootMessageBridge));
     }
 }

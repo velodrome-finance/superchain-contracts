@@ -10,9 +10,6 @@ interface IEmergencyCouncil {
     /// @notice VotingEscrow contract
     function votingEscrow() external view returns (address);
 
-    /// @notice Bridge contract used to communicate x-chain
-    function bridge() external view returns (address);
-
     /// @notice Kills a gauge. The gauge will not receive any new emissions and cannot be deposited into.
     ///         Can still withdraw from gauge.
     /// @dev Throws if not called by owner.

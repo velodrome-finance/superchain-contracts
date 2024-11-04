@@ -140,6 +140,5 @@ contract OptimismDeployRootBaseTest is BaseFixture {
         assertEq(emergencyCouncil.owner(), params.emergencyCouncilOwner);
         assertEq(emergencyCouncil.voter(), params.voter);
         assertEq(emergencyCouncil.votingEscrow(), IVoter(params.voter).ve());
-        assertEq(emergencyCouncil.bridge(), address(rootMessageBridge));
     }
 }

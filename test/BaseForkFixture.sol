@@ -340,8 +340,7 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
             })
         );
 
-        emergencyCouncil =
-            new EmergencyCouncil({_owner: users.owner, _voter: address(mockVoter), _bridge: address(rootMessageBridge)});
+        emergencyCouncil = new EmergencyCouncil({_owner: users.owner, _voter: address(mockVoter)});
         vm.startPrank(mockVoter.emergencyCouncil());
         mockVoter.setEmergencyCouncil(address(emergencyCouncil));
         vm.stopPrank();
