@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.19 <0.9.0;
 
 import {ERC20} from "@openzeppelin5/contracts/token/ERC20/ERC20.sol";
@@ -39,6 +39,7 @@ import {RateLimitMidPoint} from "../libraries/rateLimits/RateLimitMidpointCommon
 */
 
 /// @title XERC20 with CrosschainERC20 support
+/// @author Lunar Enterprise Ventures, Ltd., velodrome.finance
 /// @notice Extension of ERC20 for bridged tokens
 contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit, MintLimits, ISuperchainERC20 {
     using SafeCast for uint256;

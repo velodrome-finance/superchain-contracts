@@ -1,0 +1,56 @@
+This product bundles the constant product liquidity pool and router
+implementations which are available under the GNU General Public License v3.0.
+For details, see
+* src/pools
+* src/Router.sol
+* LICENSE.GPL3
+
+
+This product bundles the XERC20 implementation which is available under the
+GNU General Public License v3.0. For details, see
+* src/xerc20/XERC20.sol
+* src/xerc20/XERC20Factory.sol
+* src/xerc20/XERC20Lockbox.sol
+* src/xerc20/extensions/
+* LICENSE.GPL3
+
+
+This product bundles the MODE Sequencer Fee Sharing implementation which is
+available under the GNU General Public License v3.0. For details, see
+* src/extensions/
+* LICENSE.GPL3
+
+
+This product bundles the MintLimits library which is available under the
+3-Clause BSD License. For details, see
+* libraries/rateLimits
+* src/xerc20/MintLimits.sol
+* LICENSE.BSD
+
+
+This product bundles the VelodromeTimeLibrary library which is available under
+the MIT License. For details, see
+* src/libraries/VelodromeTimeLibrary.sol
+* LICENSE.MIT
+
+
+This product bundles interfaces for external smart contracts which are
+available under the MIT License. For details, see
+* src/interfaces/
+* LICENSE.MIT
+
+
+This product bundles the ExcessivelySafeCall library which is available under
+the MIT License. For details, see
+* lib/ExcessivelySafeCall
+* LICENSE.MIT
+
+
+This product bundles the CreateX interface which is available under
+the GNU Affero General Public License v3.0. For details, see
+* lib/createX
+
+
+This product bundles the OpenZeppelin library which is available under
+the MIT license. For details, see
+* lib/openzeppelin-contracts

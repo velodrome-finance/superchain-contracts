@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.19 <0.9.0;
 
 import {Math} from "@openzeppelin5/contracts/utils/math/Math.sol";
@@ -36,7 +36,7 @@ import {IWETH} from "./interfaces/external/IWETH.sol";
 */
 
 /// @title Velodrome Superchain Router
-/// @author velodrome.finance
+/// @author velodrome.finance, Solidly, Uniswap Labs, @pegahcarter
 /// @notice Supports adding and removing liquidity from v2 pools
 contract Router is IRouter {
     /// @inheritdoc IRouter

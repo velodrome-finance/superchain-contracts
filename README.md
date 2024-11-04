@@ -1,4 +1,4 @@
-# Superchain Contracts
+# Velodrome Superchain Contracts
 
 ## Installation
 
@@ -65,3 +65,8 @@ e.g:
 
 The xERC20 implementation in this repository adheres to the standard but deviates slightly in the following way:
 - The lockbox has no support for native tokens. Other code related to this functionality has been removed.
+
+## Licensing
+
+This project follows the [Apache Foundation](https://infra.apache.org/licensing-howto.html)
+guideline for licensing. See LICENSE and NOTICE files.

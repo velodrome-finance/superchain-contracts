@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.19 <0.9.0;
 
 import {Clones} from "@openzeppelin5/contracts/proxy/Clones.sol";
@@ -34,7 +34,7 @@ import {IPool} from "../interfaces/pools/IPool.sol";
 */
 
 /// @title PoolFactory
-/// @author velodrome.finance
+/// @author velodrome.finance, Solidly, Uniswap Labs
 /// @notice Velodrome V2 pool factory
 contract PoolFactory is IPoolFactory {
     using ExcessivelySafeCall for address;
