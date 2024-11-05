@@ -7,7 +7,7 @@ import {ModePool} from "src/pools/extensions/ModePool.sol";
 import {ModeLeafVoter} from "src/voter/extensions/ModeLeafVoter.sol";
 import {ModePoolFactory} from "src/pools/extensions/ModePoolFactory.sol";
 import {ModeTokenBridge} from "src/bridge/extensions/ModeTokenBridge.sol";
-import {ModeXERC20Factory} from "src/xerc20/extensions/ModeXERC20Factory.sol";
+import {XERC20Factory} from "src/xerc20/XERC20Factory.sol";
 import {ModeLeafGaugeFactory} from "src/gauges/extensions/ModeLeafGaugeFactory.sol";
 import {ModeLeafMessageBridge} from "src/bridge/extensions/ModeLeafMessageBridge.sol";
 import {ModeLeafHLMessageModule} from "src/bridge/extensions/hyperlane/ModeLeafHLMessageModule.sol";
@@ -37,15 +37,14 @@ contract DeployPartialBase is DeployPartialBaseFixture {
     function deploy() internal override {
         address _deployer = deployer;
 
-        leafXFactory = ModeXERC20Factory(
+        leafXFactory = XERC20Factory(
             cx.deployCreate3({
                 salt: XERC20_FACTORY_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
-                    type(ModeXERC20Factory).creationCode,
+                    type(XERC20Factory).creationCode,
                     abi.encode(
                         _params.tokenAdmin, // xerc20 owner
-                        address(0), // erc20 address
-                        _modeParams.recipient // sfs nft recipient
+                        address(0) // erc20 address
                     )
                 )
             })

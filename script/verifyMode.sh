@@ -32,8 +32,6 @@ ISM="0x0000000000000000000000000000000000000000"
 ADDRESS_ZERO="0x0000000000000000000000000000000000000000"
 RECIPIENT="0xb8804281fc224a4E597A3f256b53C9Ed3C89B6c3"
 SFS="0x8680CEaBcb9b56913c519c069Add6Bc3494B7020"
-# ModeXERC20Factory.tokenId
-TOKEN_ID=
 
 # ENV Variables
 source .env
@@ -91,17 +89,16 @@ forge verify-contract \
     --constructor-args $(cast ae "constructor(address)()" $LEAF_MESSAGE_BRIDGE $RECIPIENT) \
     --compiler-version "v0.8.27"
 
-# ModeXERC20Factory
+# XERC20Factory
 forge verify-contract \
     $LEAF_X_FACTORY \
-    src/xerc20/extensions/ModeXERC20Factory.sol:ModeXERC20Factory \
+    src/xerc20/extensions/XERC20Factory.sol:XERC20Factory \
     --chain-id $CHAIN_ID \
     --num-of-optimizations 200 \
     --watch \
-    --constructor-args $(cast ae "constructor(address,address,address)()" $TOKEN_ADMIN $ADDRESS_ZERO $RECIPIENT) \
+    --constructor-args $(cast ae "constructor(address,address,address)()" $TOKEN_ADMIN $ADDRESS_ZERO) \
     --compiler-version "v0.8.27" \
     --libraries src/libraries/rateLimits/RateLimitMidpointCommonLibrary.sol:RateLimitMidpointCommonLibrary:$RATE_LIMIT_LIBRARY
-
 
 # XERC20
 forge verify-contract \
@@ -110,7 +107,7 @@ forge verify-contract \
     --chain-id $CHAIN_ID \
     --num-of-optimizations 200 \
     --watch \
-    --constructor-args $(cast ae "constructor(string,string,address,address)()" "Superchain Velodrome" "XVELO" $TOKEN_ADMIN $ADDRESS_ZERO $SFS $TOKEN_ID) \
+    --constructor-args $(cast ae "constructor(string,string,address,address)()" "Superchain Velodrome" "XVELO" $TOKEN_ADMIN $ADDRESS_ZERO) \
     --compiler-version "v0.8.27" \
     --libraries src/libraries/rateLimits/RateLimitMidpointCommonLibrary.sol:RateLimitMidpointCommonLibrary:$RATE_LIMIT_LIBRARY
 

@@ -104,7 +104,7 @@ contract ModeDeployPartialBaseTest is BaseFixture {
 
         assertEq(leafVoter.bridge(), address(leafMessageBridge));
         assertEq(ModeFeeSharing(address(leafVoter)).sfs(), sfs);
-        assertEq(ModeFeeSharing(address(leafVoter)).tokenId(), 554);
+        assertEq(ModeFeeSharing(address(leafVoter)).tokenId(), 553);
 
         assertEq(leafXFactory.owner(), params.tokenAdmin);
         assertEq(leafXFactory.name(), "Superchain Velodrome");
@@ -113,8 +113,6 @@ contract ModeDeployPartialBaseTest is BaseFixture {
         assertEq(leafXFactory.LOCKBOX_ENTROPY(), LOCKBOX_ENTROPY);
         assertEq(leafXFactory.owner(), params.tokenAdmin);
         assertEq(leafXFactory.erc20(), address(0));
-        assertEq(ModeFeeSharing(address(leafXFactory)).sfs(), sfs);
-        assertEq(ModeFeeSharing(address(leafXFactory)).tokenId(), 553);
 
         assertEq(leafXVelo.name(), "Superchain Velodrome");
         assertEq(leafXVelo.symbol(), "XVELO");
@@ -126,14 +124,14 @@ contract ModeDeployPartialBaseTest is BaseFixture {
         assertEq(leafTokenBridge.mailbox(), params.mailbox);
         assertEq(address(leafTokenBridge.securityModule()), address(leafIsm));
         assertEq(ModeFeeSharing(address(leafTokenBridge)).sfs(), sfs);
-        assertEq(ModeFeeSharing(address(leafTokenBridge)).tokenId(), 556);
+        assertEq(ModeFeeSharing(address(leafTokenBridge)).tokenId(), 555);
 
         assertEq(leafMessageBridge.owner(), params.bridgeOwner);
         assertEq(leafMessageBridge.xerc20(), address(leafXVelo));
         assertEq(leafMessageBridge.voter(), address(leafVoter));
         assertEq(leafMessageBridge.module(), address(leafMessageModule));
         assertEq(ModeFeeSharing(address(leafMessageBridge)).sfs(), sfs);
-        assertEq(ModeFeeSharing(address(leafMessageBridge)).tokenId(), 555);
+        assertEq(ModeFeeSharing(address(leafMessageBridge)).tokenId(), 554);
 
         assertEq(leafMessageModule.bridge(), address(leafMessageBridge));
         assertEq(leafMessageModule.xerc20(), address(leafXVelo));
