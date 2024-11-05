@@ -1,0 +1,5 @@
+SetEmergencyCouncilE2ETest
+├── When caller is not owner
+│   └── It should revert with {OwnableUnauthorizedAccount}
+└── When caller is owner
+    └── It should set the new emergency council

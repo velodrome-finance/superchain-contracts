@@ -45,7 +45,13 @@ interface IEmergencyCouncil {
     function setPoolSymbol(address _pool, string memory _symbol) external;
 
     /// @notice Set Managed NFT state. Inactive NFTs cannot be deposited into.
+    /// @dev Throws if not called by emergency council
     /// @param _mTokenId managed nft state to set
     /// @param _state true => inactive, false => active
     function setManagedState(uint256 _mTokenId, bool _state) external;
+
+    /// @notice Set new emergency council on Voter
+    /// @dev Throws if not called by owner.
+    /// @param _council Address of the emergency council to be set
+    function setEmergencyCouncil(address _council) external;
 }

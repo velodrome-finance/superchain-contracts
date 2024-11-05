@@ -3,13 +3,13 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 
-import {IVoter} from "../../interfaces/external/IVoter.sol";
-import {IRootMessageBridge} from "../../root/bridge/RootMessageBridge.sol";
 import {IEmergencyCouncil} from "../../interfaces/emergencyCouncil/IEmergencyCouncil.sol";
-import {Commands} from "../../libraries/Commands.sol";
-import {IPool} from "../../interfaces/pools/IPool.sol";
+import {IRootMessageBridge} from "../../root/bridge/RootMessageBridge.sol";
 import {IVotingEscrow} from "../../interfaces/external/IVotingEscrow.sol";
 import {IRootGauge} from "../../interfaces/root/gauges/IRootGauge.sol";
+import {IVoter} from "../../interfaces/external/IVoter.sol";
+import {IPool} from "../../interfaces/pools/IPool.sol";
+import {Commands} from "../../libraries/Commands.sol";
 
 /// @title Emergency Council
 /// @notice Contains logic for managing emergency council actions across superchain
@@ -80,7 +80,13 @@ contract EmergencyCouncil is Ownable, IEmergencyCouncil {
         IPool(_pool).setSymbol({__symbol: _symbol});
     }
 
+    /// @inheritdoc IEmergencyCouncil
     function setManagedState(uint256 _mTokenId, bool _state) external onlyOwner {
         IVotingEscrow(votingEscrow).setManagedState({_mTokenId: _mTokenId, _state: _state});
+    }
+
+    /// @inheritdoc IEmergencyCouncil
+    function setEmergencyCouncil(address _council) external onlyOwner {
+        IVoter(voter).setEmergencyCouncil({_emergencyCouncil: _council});
     }
 }

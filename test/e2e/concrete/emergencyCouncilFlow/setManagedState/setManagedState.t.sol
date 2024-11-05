@@ -4,8 +4,6 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../EmergencyCouncilE2E.t.sol";
 
 contract SetManagedStateE2ETest is EmergencyCouncilE2ETest {
-    using stdStorage for StdStorage;
-
     uint256 mTokenId = 20264;
 
     function test_WhenCallerIsNotOwner() external {
