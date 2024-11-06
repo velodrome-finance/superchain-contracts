@@ -7,7 +7,6 @@ import {ModePool} from "src/pools/extensions/ModePool.sol";
 import {ModeLeafVoter} from "src/voter/extensions/ModeLeafVoter.sol";
 import {ModePoolFactory} from "src/pools/extensions/ModePoolFactory.sol";
 import {ModeTokenBridge} from "src/bridge/extensions/ModeTokenBridge.sol";
-import {XERC20Factory} from "src/xerc20/XERC20Factory.sol";
 import {ModeLeafGaugeFactory} from "src/gauges/extensions/ModeLeafGaugeFactory.sol";
 import {ModeLeafMessageBridge} from "src/bridge/extensions/ModeLeafMessageBridge.sol";
 import {ModeLeafHLMessageModule} from "src/bridge/extensions/hyperlane/ModeLeafHLMessageModule.sol";

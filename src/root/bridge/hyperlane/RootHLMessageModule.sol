@@ -12,7 +12,6 @@ import {
 } from "../../../interfaces/root/bridge/hyperlane/IRootHLMessageModule.sol";
 import {IHookGasEstimator} from "../../../interfaces/root/bridge/hyperlane/IHookGasEstimator.sol";
 import {IRootMessageBridge} from "../../../interfaces/root/bridge/IRootMessageBridge.sol";
-import {IVotingEscrow} from "../../../interfaces/external/IVotingEscrow.sol";
 import {IVoter} from "../../../interfaces/external/IVoter.sol";
 import {IXERC20} from "../../../interfaces/xerc20/IXERC20.sol";
 
@@ -35,17 +34,13 @@ contract RootHLMessageModule is IRootHLMessageModule {
     /// @inheritdoc IRootHLMessageModule
     address public immutable voter;
     /// @inheritdoc IRootHLMessageModule
-    address public immutable ve;
-    /// @inheritdoc IRootHLMessageModule
     address public hook;
 
     constructor(address _bridge, address _mailbox) {
         bridge = _bridge;
         xerc20 = IRootMessageBridge(_bridge).xerc20();
         mailbox = _mailbox;
-        address _voter = IRootMessageBridge(_bridge).voter();
-        voter = _voter;
-        ve = IVoter(_voter).ve();
+        voter = IRootMessageBridge(_bridge).voter();
     }
 
     /// @inheritdoc IMessageSender
@@ -72,17 +67,11 @@ contract RootHLMessageModule is IRootHLMessageModule {
         uint256 command = _message.command();
         bytes memory _metadata = _generateGasMetadata({_command: command, _hook: _hook});
 
-        if (command <= Commands.WITHDRAW) {
-            if (block.timestamp > VelodromeTimeLibrary.epochVoteEnd(block.timestamp)) {
-                if (!IVotingEscrow(ve).isApprovedOrOwner({_spender: tx.origin, _tokenId: _message.tokenId()})) {
-                    revert NotApprovedOrOwner();
-                }
-            }
-        } else if (command <= Commands.NOTIFY_WITHOUT_CLAIM) {
+        if (command <= Commands.NOTIFY_WITHOUT_CLAIM) {
             uint256 amount = _message.amount();
             IXERC20(xerc20).burn({_user: address(this), _amount: amount});
         } else if (command <= Commands.GET_FEES) {
-            if (VelodromeTimeLibrary.epochStart(block.timestamp) <= IVoter(voter).lastVoted(_message.rewardTokenId())) {
+            if (VelodromeTimeLibrary.epochStart(block.timestamp) <= IVoter(voter).lastVoted(_message.tokenId())) {
                 revert AlreadyVotedOrDeposited();
             }
         }

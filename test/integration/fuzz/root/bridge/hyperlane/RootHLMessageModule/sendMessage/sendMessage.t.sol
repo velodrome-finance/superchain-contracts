@@ -31,30 +31,27 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         _;
     }
 
-    modifier whenTheCommandIsDeposit(uint256 _amount) {
-        amount = bound(_amount, 1, MAX_TOKENS);
-        // Create Lock for Alice
-        vm.startPrank(users.alice);
-        deal(address(rootRewardToken), users.alice, amount);
-        rootRewardToken.approve(address(mockEscrow), amount);
-        tokenId = mockEscrow.createLock(amount, MAX_TIME);
-        vm.stopPrank();
-        _;
-    }
-
-    function testFuzz_WhenTimestampIsSmallerThanOrEqualToEpochVoteEnd(
-        address _caller,
-        uint256 _amount,
-        uint256 _timestamp
-    ) external whenTheCallerIsBridge whenTheCommandIsDeposit(_amount) {
+    function testFuzz_WhenTheCommandIsDeposit(address _caller, uint256 _amount, uint256 _timestamp)
+        external
+        whenTheCallerIsBridge
+    {
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
         // It calls receiveMessage on the recipient contract of the same address with the payload
+        amount = bound(_amount, 1, MAX_TOKENS);
         _timestamp = bound(
             _timestamp,
             VelodromeTimeLibrary.epochStart(block.timestamp),
             VelodromeTimeLibrary.epochVoteEnd(block.timestamp)
         );
+
+        // Create Lock for Alice & Timeskip
+        vm.startPrank(users.alice);
+        deal(address(rootRewardToken), users.alice, amount);
+        rootRewardToken.approve(address(mockEscrow), amount);
+        tokenId = mockEscrow.createLock(amount, MAX_TIME);
+        vm.stopPrank();
+
         vm.warp(_timestamp);
 
         bytes memory message =
@@ -95,92 +92,6 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         assertEq(leafIVR.balanceOf(tokenId), amount);
         (checkpointTs, checkpointAmount) = leafIVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
         assertEq(checkpointTs, _timestamp);
-        assertEq(checkpointAmount, amount);
-    }
-
-    modifier whenTimestampIsGreaterThanEpochVoteEnd(uint256 _timestamp) {
-        /// @dev Skip somewhere after epoch voting ends
-        timestamp = bound(
-            _timestamp,
-            VelodromeTimeLibrary.epochVoteEnd(block.timestamp) + 1,
-            VelodromeTimeLibrary.epochNext(block.timestamp) - 1
-        );
-        vm.warp(timestamp);
-        _;
-    }
-
-    function testFuzz_WhenTxOriginIsNotApprovedOrOwnerOfTokenId(address _caller, uint256 _amount, uint256 _timestamp)
-        external
-        whenTheCallerIsBridge
-        whenTheCommandIsDeposit(_amount)
-        whenTimestampIsGreaterThanEpochVoteEnd(_timestamp)
-    {
-        // It reverts with {NotApprovedOrOwner}
-        vm.assume(_caller != users.alice);
-
-        bytes memory message =
-            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint40(_timestamp));
-        vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
-
-        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: _caller});
-        assertGt(block.timestamp, VelodromeTimeLibrary.epochVoteEnd(block.timestamp));
-        vm.expectRevert(IRootHLMessageModule.NotApprovedOrOwner.selector);
-        rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
-    }
-
-    function testFuzz_WhenTxOriginIsApprovedOrOwnerOfTokenId(address _caller, uint256 _amount, uint256 _timestamp)
-        external
-        whenTheCallerIsBridge
-        whenTheCommandIsDeposit(_amount)
-        whenTimestampIsGreaterThanEpochVoteEnd(_timestamp)
-    {
-        // It dispatches the message to the mailbox
-        // It emits the {SentMessage} event
-        // It calls receiveMessage on the recipient contract of the same address with the payload
-        vm.assume(_caller != address(0));
-        if (_caller != users.alice) {
-            vm.prank(users.alice);
-            mockEscrow.approve({to: _caller, tokenId: tokenId});
-        }
-
-        bytes memory message =
-            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint40(timestamp));
-        bytes memory expectedMessage =
-            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint40(timestamp));
-        vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
-
-        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: _caller});
-        vm.expectEmit(address(rootMessageModule));
-        emit IMessageSender.SentMessage({
-            _destination: leaf,
-            _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
-            _value: ethAmount,
-            _message: string(expectedMessage),
-            _metadata: string(
-                StandardHookMetadata.formatMetadata({
-                    _msgValue: ethAmount,
-                    _gasLimit: Commands.DEPOSIT.gasLimit(),
-                    _refundAddress: _caller,
-                    _customMetadata: ""
-                })
-            )
-        });
-        rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
-
-        vm.selectFork({forkId: leafId});
-        vm.warp(timestamp);
-        leafMailbox.processNextInboundMessage();
-
-        assertEq(leafFVR.totalSupply(), amount);
-        assertEq(leafFVR.balanceOf(tokenId), amount);
-        (uint256 checkpointTs, uint256 checkpointAmount) =
-            leafFVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
-        assertEq(checkpointTs, timestamp);
-        assertEq(checkpointAmount, amount);
-        assertEq(leafIVR.totalSupply(), amount);
-        assertEq(leafIVR.balanceOf(tokenId), amount);
-        (checkpointTs, checkpointAmount) = leafIVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
-        assertEq(checkpointTs, timestamp);
         assertEq(checkpointAmount, amount);
     }
 

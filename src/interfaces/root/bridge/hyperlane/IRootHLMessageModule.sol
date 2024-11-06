@@ -5,7 +5,6 @@ import {IMessageSender} from "../IMessageSender.sol";
 
 interface IRootHLMessageModule is IMessageSender {
     error AlreadyVotedOrDeposited();
-    error NotApprovedOrOwner();
     error NotBridgeOwner();
 
     event HookSet(address indexed _newHook);
@@ -21,9 +20,6 @@ interface IRootHLMessageModule is IMessageSender {
 
     /// @notice Returns the address of the voter contract that sets voting power
     function voter() external view returns (address);
-
-    /// @notice Returns the address of the voting escrow contract that manages locked tokens
-    function ve() external view returns (address);
 
     /// @notice Returns the address of the hook contract used after dispatching a message
     /// @dev If set to zero address, default hook will be used instead

@@ -56,7 +56,7 @@ forge verify-contract \
     --chain-id $CHAIN_ID \
     --num-of-optimizations 200 \
     --watch \
-    --constructor-args $(cast ae "constructor(address,address,address,address)()" $LEAF_POOL_IMPLEMENTATION $POOL_ADMIN $PAUSER $FEE_MANAGER $RECIPIENT) \
+    --constructor-args $(cast ae "constructor(address,address,address,address,address)()" $LEAF_POOL_IMPLEMENTATION $POOL_ADMIN $PAUSER $FEE_MANAGER $RECIPIENT) \
     --compiler-version "v0.8.27"
 
 # ModeLeafGaugeFactory
@@ -86,7 +86,7 @@ forge verify-contract \
     --chain-id $CHAIN_ID \
     --num-of-optimizations 200 \
     --watch \
-    --constructor-args $(cast ae "constructor(address)()" $LEAF_MESSAGE_BRIDGE $RECIPIENT) \
+    --constructor-args $(cast ae "constructor(address,address)()" $LEAF_MESSAGE_BRIDGE $RECIPIENT) \
     --compiler-version "v0.8.27"
 
 # XERC20Factory

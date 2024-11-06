@@ -25,7 +25,11 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         _;
     }
 
-    modifier whenTheCommandIsDeposit() {
+    function test_WhenTheCommandIsDeposit() external whenTheCallerIsBridge {
+        // It dispatches the message to the mailbox
+        // It emits the {SentMessage} event
+        // It calls receiveMessage on the recipient contract of the same address with the payload
+
         // Create Lock for Alice
         vm.startPrank(users.alice);
         deal(address(rootRewardToken), users.alice, amount);
@@ -35,17 +39,7 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
 
         skipToNextEpoch(0); // warp to start of next epoch
-        _;
-    }
 
-    function test_WhenTimestampIsSmallerThanOrEqualToEpochVoteEnd()
-        external
-        whenTheCallerIsBridge
-        whenTheCommandIsDeposit
-    {
-        // It dispatches the message to the mailbox
-        // It emits the {SentMessage} event
-        // It calls receiveMessage on the recipient contract of the same address with the payload
         uint40 timestamp = uint40(block.timestamp);
         bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, timestamp);
         bytes memory expectedMessage =
@@ -70,78 +64,6 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
 
         vm.selectFork({forkId: leafId});
-        leafMailbox.processNextInboundMessage();
-
-        assertEq(leafFVR.totalSupply(), amount);
-        assertEq(leafFVR.balanceOf(tokenId), amount);
-        (uint256 checkpointTs, uint256 checkpointAmount) =
-            leafFVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
-        assertEq(checkpointTs, timestamp);
-        assertEq(checkpointAmount, amount);
-        assertEq(leafIVR.totalSupply(), amount);
-        assertEq(leafIVR.balanceOf(tokenId), amount);
-        (checkpointTs, checkpointAmount) = leafIVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
-        assertEq(checkpointTs, timestamp);
-        assertEq(checkpointAmount, amount);
-    }
-
-    modifier whenTimestampIsGreaterThanEpochVoteEnd() {
-        /// @dev Skip 30 minutes after epoch voting ends
-        vm.warp(VelodromeTimeLibrary.epochVoteEnd(block.timestamp) + 30 minutes);
-        _;
-    }
-
-    function test_WhenTxOriginIsNotApprovedOrOwnerOfTokenId()
-        external
-        whenTheCallerIsBridge
-        whenTheCommandIsDeposit
-        whenTimestampIsGreaterThanEpochVoteEnd
-    {
-        // It reverts with {NotApprovedOrOwner}
-        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
-        vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
-
-        vm.stopPrank();
-        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.charlie});
-        vm.expectRevert(IRootHLMessageModule.NotApprovedOrOwner.selector);
-        rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
-    }
-
-    function test_WhenTxOriginIsApprovedOrOwnerOfTokenId()
-        external
-        whenTheCallerIsBridge
-        whenTheCommandIsDeposit
-        whenTimestampIsGreaterThanEpochVoteEnd
-    {
-        // It dispatches the message to the mailbox
-        // It emits the {SentMessage} event
-        // It calls receiveMessage on the recipient contract of the same address with the payload
-        uint40 timestamp = uint40(block.timestamp);
-        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, timestamp);
-        bytes memory expectedMessage =
-            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, timestamp);
-        vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
-
-        vm.expectEmit(address(rootMessageModule));
-        emit IMessageSender.SentMessage({
-            _destination: leaf,
-            _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
-            _value: ethAmount,
-            _message: string(expectedMessage),
-            _metadata: string(
-                StandardHookMetadata.formatMetadata({
-                    _msgValue: ethAmount,
-                    _gasLimit: Commands.DEPOSIT.gasLimit(),
-                    _refundAddress: users.alice,
-                    _customMetadata: ""
-                })
-            )
-        });
-        rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
-
-        vm.selectFork({forkId: leafId});
-        /// @dev Skip 30 minutes after epoch voting ends
-        vm.warp(VelodromeTimeLibrary.epochVoteEnd(block.timestamp) + 30 minutes);
         leafMailbox.processNextInboundMessage();
 
         assertEq(leafFVR.totalSupply(), amount);
@@ -506,15 +428,11 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         assertEq(leafGauge.bridge(), address(leafMessageBridge));
     }
 
-    function testGas_sendMessage()
-        external
-        whenTheCallerIsBridge
-        whenTheCommandIsDeposit
-        whenTimestampIsGreaterThanEpochVoteEnd
-    {
-        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
+    function testGas_sendMessage() external whenTheCallerIsBridge {
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
 
+        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
+        bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
         snapLastCall("RootHLMessageModule_sendMessage_deposit");
     }

@@ -78,15 +78,17 @@ contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecuri
         } else if (command == Commands.GET_INCENTIVES) {
             address ivr = ILeafVoter(voter).gaugeToIncentive({_gauge: _message.toAddress()});
 
-            (address recipient, uint256 tokenId) = _message.recipientAndTokenId();
+            address owner = _message.owner();
+            uint256 tokenId = _message.tokenId();
             address[] memory tokens = _message.tokens();
-            IReward(ivr).getReward({_recipient: recipient, _tokenId: tokenId, _tokens: tokens});
+            IReward(ivr).getReward({_recipient: owner, _tokenId: tokenId, _tokens: tokens});
         } else if (command == Commands.GET_FEES) {
             address fvr = ILeafVoter(voter).gaugeToFees({_gauge: _message.toAddress()});
 
-            (address recipient, uint256 tokenId) = _message.recipientAndTokenId();
+            address owner = _message.owner();
+            uint256 tokenId = _message.tokenId();
             address[] memory tokens = _message.tokens();
-            IReward(fvr).getReward({_recipient: recipient, _tokenId: tokenId, _tokens: tokens});
+            IReward(fvr).getReward({_recipient: owner, _tokenId: tokenId, _tokens: tokens});
         } else if (command == Commands.CREATE_GAUGE) {
             (
                 address poolFactory,
