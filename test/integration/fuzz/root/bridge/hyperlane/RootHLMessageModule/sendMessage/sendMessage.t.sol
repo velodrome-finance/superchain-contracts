@@ -201,10 +201,44 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         _;
     }
 
+    function testFuzz_WhenTimestampIsGreaterThanEpochVoteEnd(uint256 _amount, uint256 _timestamp)
+        external
+        whenTheCallerIsBridge
+        whenTheCommandIsGetIncentives(_amount)
+    {
+        // It should revert with {SpecialVotingWindow}
+
+        // Warp to start of epoch, before voting starts
+        _timestamp = bound(
+            _timestamp,
+            VelodromeTimeLibrary.epochVoteEnd(block.timestamp) + 2,
+            VelodromeTimeLibrary.epochNext(block.timestamp) - 1
+        );
+        vm.warp({newTimestamp: _timestamp});
+
+        address[] memory tokens = new address[](3);
+        tokens[0] = address(token0);
+        tokens[1] = address(token1);
+        tokens[2] = address(weth);
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.GET_INCENTIVES), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens
+        );
+
+        vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
+        vm.expectRevert(IRootHLMessageModule.SpecialVotingWindow.selector);
+        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
+        rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+    }
+
+    modifier whenTimestampIsSmallerThanOrEqualToEpochVoteEnd() {
+        _;
+    }
+
     function testFuzz_WhenTimestampIsSmallerThanOrEqualToEpochVoteStart(uint256 _amount, uint256 _timestamp)
         external
         whenTheCallerIsBridge
         whenTheCommandIsGetIncentives(_amount)
+        whenTimestampIsSmallerThanOrEqualToEpochVoteEnd
     {
         // It should revert with {DistributeWindow}
 
@@ -214,6 +248,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
             VelodromeTimeLibrary.epochStart(block.timestamp),
             VelodromeTimeLibrary.epochVoteStart(block.timestamp)
         );
+        vm.warp({newTimestamp: _timestamp});
 
         address[] memory tokens = new address[](3);
         tokens[0] = address(token0);
@@ -230,11 +265,11 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
     }
 
     modifier whenTimestampIsGreaterThanEpochVoteStart(uint256 _timestamp) {
-        // Warp to after distribute window & before next epoch
+        // Warp to after distribute window & before blackout window
         rootStartTime = bound(
             _timestamp,
             VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1,
-            VelodromeTimeLibrary.epochNext(block.timestamp) - 1
+            VelodromeTimeLibrary.epochVoteEnd(block.timestamp)
         );
 
         // Notify rewards contracts
@@ -272,6 +307,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         external
         whenTheCallerIsBridge
         whenTheCommandIsGetIncentives(TOKEN_1)
+        whenTimestampIsSmallerThanOrEqualToEpochVoteEnd
         whenTimestampIsGreaterThanEpochVoteStart(_timestamp)
     {
         // It should revert with {AlreadyVotedOrDeposited}
@@ -295,15 +331,16 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         external
         whenTheCallerIsBridge
         whenTheCommandIsGetIncentives(_amount)
+        whenTimestampIsSmallerThanOrEqualToEpochVoteEnd
         whenTimestampIsGreaterThanEpochVoteStart(0)
     {
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
         // It calls receiveMessage on the recipient contract of the same address with the payload
 
-        // Skip to next epoch, after distribute window
+        // Skip to next epoch, after distribute window & before blackout window
         uint256 epochNext = VelodromeTimeLibrary.epochNext(block.timestamp) + 1 hours + 1;
-        _timestamp = bound(_timestamp, epochNext, VelodromeTimeLibrary.epochNext(epochNext) - 1);
+        _timestamp = bound(_timestamp, epochNext, VelodromeTimeLibrary.epochVoteEnd(epochNext));
         vm.warp({newTimestamp: _timestamp});
 
         address[] memory tokens = new address[](3);
@@ -364,10 +401,43 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         _;
     }
 
+    function testFuzz_WhenTimestampIsGreaterThanEpochVoteEnd_(uint256 _amount, uint256 _timestamp)
+        external
+        whenTheCallerIsBridge
+        whenTheCommandIsGetIncentives(_amount)
+    {
+        // It should revert with {SpecialVotingWindow}
+
+        // Warp to start of epoch, before voting starts
+        _timestamp = bound(
+            _timestamp,
+            VelodromeTimeLibrary.epochVoteEnd(block.timestamp) + 2,
+            VelodromeTimeLibrary.epochNext(block.timestamp) - 1
+        );
+        vm.warp({newTimestamp: _timestamp});
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(token0);
+        tokens[1] = address(token1);
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.GET_FEES), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens
+        );
+
+        vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
+        vm.expectRevert(IRootHLMessageModule.SpecialVotingWindow.selector);
+        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
+        rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+    }
+
+    modifier whenTimestampIsSmallerThanOrEqualToEpochVoteEnd_() {
+        _;
+    }
+
     function testFuzz_WhenTimestampIsSmallerThanOrEqualToEpochVoteStart_(uint256 _amount, uint256 _timestamp)
         external
         whenTheCallerIsBridge
         whenTheCommandIsGetIncentives(_amount)
+        whenTimestampIsSmallerThanOrEqualToEpochVoteEnd_
     {
         // It should revert with {DistributeWindow}
 
@@ -377,6 +447,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
             VelodromeTimeLibrary.epochStart(block.timestamp),
             VelodromeTimeLibrary.epochVoteStart(block.timestamp)
         );
+        vm.warp({newTimestamp: _timestamp});
 
         address[] memory tokens = new address[](2);
         tokens[0] = address(token0);
@@ -392,11 +463,11 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
     }
 
     modifier whenTimestampIsGreaterThanEpochVoteStart_(uint256 _timestamp) {
-        // Warp to after distribute window & before next epoch
+        // Warp to after distribute window & before blackout window
         rootStartTime = bound(
             _timestamp,
             VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1,
-            VelodromeTimeLibrary.epochNext(block.timestamp) - 1
+            VelodromeTimeLibrary.epochVoteEnd(block.timestamp)
         );
 
         // Notify rewards contracts
@@ -430,6 +501,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         external
         whenTheCallerIsBridge
         whenTheCommandIsGetFees(TOKEN_1)
+        whenTimestampIsSmallerThanOrEqualToEpochVoteEnd_
         whenTimestampIsGreaterThanEpochVoteStart_(_timestamp)
     {
         // It should revert with {AlreadyVotedOrDeposited}
@@ -452,15 +524,16 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         external
         whenTheCallerIsBridge
         whenTheCommandIsGetFees(_amount)
+        whenTimestampIsSmallerThanOrEqualToEpochVoteEnd_
         whenTimestampIsGreaterThanEpochVoteStart_(_timestamp)
     {
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
         // It calls receiveMessage on the recipient contract of the same address with the payload
 
-        // Skip to next epoch, after distribute window
+        // Skip to next epoch, after distribute window & before blackout window
         uint256 epochNext = VelodromeTimeLibrary.epochNext(block.timestamp) + 1 hours + 1;
-        _timestamp = bound(_timestamp, epochNext, VelodromeTimeLibrary.epochNext(epochNext) - 1);
+        _timestamp = bound(_timestamp, epochNext, VelodromeTimeLibrary.epochVoteEnd(epochNext));
         vm.warp({newTimestamp: _timestamp});
 
         address[] memory tokens = new address[](2);

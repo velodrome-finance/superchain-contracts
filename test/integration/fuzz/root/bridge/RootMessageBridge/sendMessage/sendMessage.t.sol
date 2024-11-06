@@ -256,7 +256,7 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
         leafStartTime = bound(
             _timestamp,
             VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1,
-            VelodromeTimeLibrary.epochNext(block.timestamp) - 1
+            VelodromeTimeLibrary.epochVoteEnd(block.timestamp)
         );
         vm.warp({newTimestamp: leafStartTime});
 
@@ -343,7 +343,7 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
         leafStartTime = bound(
             _timestamp,
             VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1,
-            VelodromeTimeLibrary.epochNext(block.timestamp) - 1
+            VelodromeTimeLibrary.epochVoteEnd(block.timestamp)
         );
         vm.warp({newTimestamp: leafStartTime});
 
