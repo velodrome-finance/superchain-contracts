@@ -194,10 +194,11 @@ contract GaugeFlowE2EFuzzTest is BaseE2EForkFixture {
         });
 
         // Timeskip and check accrued Rewards
-        timeskip1 = bound(timeskip1, 0, WEEK - 1);
+        timeskip1 = bound(timeskip1, 0, WEEK - (1 hours + 1) - 1);
         skipTime(timeskip1);
 
         // Check Emissions accrued after timeskip
+        timeskip1 = timeskip1 + 1 hours + 1; // account for Distribute Window
         uint256 ratePerToken = (v2Gauge.rewardRate() * timeskip1 * PRECISION) / v2Gauge.totalSupply();
         uint256 expectedEmissions = (ratePerToken * v2Gauge.balanceOf(users.alice)) / PRECISION;
         checkEmissions(users.alice, address(v2Gauge), expectedEmissions);
@@ -321,9 +322,6 @@ contract GaugeFlowE2EFuzzTest is BaseE2EForkFixture {
         _stakeLiquidity({_owner: users.bob, _pool: address(v2Pool), _gauge: address(v2Gauge)});
         checkEmissions(users.bob, address(v2Gauge), 0); // No emissions on deposit
 
-        // Skip Distribute Window
-        skipTime(1 hours + 1);
-
         // Bob Votes in same Pools
         vm.selectFork({forkId: rootId});
         _depositGas({_user: users.bob, _amount: MESSAGE_FEE});
@@ -338,10 +336,12 @@ contract GaugeFlowE2EFuzzTest is BaseE2EForkFixture {
 
         // Check Alice & Bob emissions on Leaf
         timeskip2 = timeskip2 + 1 hours + 1; // account for Distribute Window
-        ratePerToken = (leafGauge.rewardRate() * timeskip2 * PRECISION) / leafGauge.totalSupply();
 
+        ratePerToken = leafGauge.rewardPerToken() - leafGauge.userRewardPerTokenPaid(users.alice);
         expectedEmissions = (ratePerToken * leafGauge.balanceOf(users.alice)) / PRECISION;
         checkEmissions(users.alice, address(leafGauge), leafXVelo.balanceOf(users.alice) + expectedEmissions);
+
+        ratePerToken = leafGauge.rewardPerToken() - leafGauge.userRewardPerTokenPaid(users.bob);
         expectedEmissions = (ratePerToken * leafGauge.balanceOf(users.bob)) / PRECISION;
         checkEmissions(users.bob, address(leafGauge), leafXVelo.balanceOf(users.bob) + expectedEmissions);
 
@@ -373,10 +373,12 @@ contract GaugeFlowE2EFuzzTest is BaseE2EForkFixture {
 
         // Check Alice & Bob emissions on Root
         vm.selectFork({forkId: rootId});
-        ratePerToken = (v2Gauge.rewardRate() * timeskip2 * PRECISION) / v2Gauge.totalSupply();
 
+        ratePerToken = v2Gauge.rewardPerToken() - v2Gauge.userRewardPerTokenPaid(users.alice);
         expectedEmissions = (ratePerToken * v2Gauge.balanceOf(users.alice)) / PRECISION;
         checkEmissions(users.alice, address(v2Gauge), rootRewardToken.balanceOf(users.alice) + expectedEmissions);
+
+        ratePerToken = v2Gauge.rewardPerToken() - v2Gauge.userRewardPerTokenPaid(users.bob);
         expectedEmissions = (ratePerToken * v2Gauge.balanceOf(users.bob)) / PRECISION;
         checkEmissions(users.bob, address(v2Gauge), rootRewardToken.balanceOf(users.bob) + expectedEmissions);
 
@@ -391,19 +393,23 @@ contract GaugeFlowE2EFuzzTest is BaseE2EForkFixture {
         skipToNextEpoch(0);
 
         // Check Alice & Bob emissions on Root
-        ratePerToken = (v2Gauge.rewardRate() * (WEEK - timeskip2) * PRECISION) / v2Gauge.totalSupply();
 
+        ratePerToken = v2Gauge.rewardPerToken() - v2Gauge.userRewardPerTokenPaid(users.alice);
         expectedEmissions = (ratePerToken * v2Gauge.balanceOf(users.alice)) / PRECISION;
         checkEmissions(users.alice, address(v2Gauge), rootRewardToken.balanceOf(users.alice) + expectedEmissions);
+
+        ratePerToken = v2Gauge.rewardPerToken() - v2Gauge.userRewardPerTokenPaid(users.bob);
         expectedEmissions = (ratePerToken * v2Gauge.balanceOf(users.bob)) / PRECISION;
         checkEmissions(users.bob, address(v2Gauge), rootRewardToken.balanceOf(users.bob) + expectedEmissions);
 
         // Check Alice & Bob emissions on Leaf
         vm.selectFork({forkId: leafId});
-        ratePerToken = (leafGauge.rewardRate() * (WEEK - timeskip2) * PRECISION) / leafGauge.totalSupply();
 
+        ratePerToken = leafGauge.rewardPerToken() - leafGauge.userRewardPerTokenPaid(users.alice);
         expectedEmissions = (ratePerToken * leafGauge.balanceOf(users.alice)) / PRECISION;
         checkEmissions(users.alice, address(leafGauge), leafXVelo.balanceOf(users.alice) + expectedEmissions);
+
+        ratePerToken = leafGauge.rewardPerToken() - leafGauge.userRewardPerTokenPaid(users.bob);
         expectedEmissions = (ratePerToken * leafGauge.balanceOf(users.bob)) / PRECISION;
         checkEmissions(users.bob, address(leafGauge), leafXVelo.balanceOf(users.bob) + expectedEmissions);
 
@@ -492,23 +498,27 @@ contract GaugeFlowE2EFuzzTest is BaseE2EForkFixture {
         });
 
         // Timeskip and check accrued Rewards
-        timeskip4 = bound(timeskip4, 0, WEEK - timeskip3);
+        timeskip4 = bound(timeskip4, 0, WEEK - (1 hours + 1) - timeskip3);
         skipTime(timeskip4);
 
         // Check Alice & Bob emissions on Root
-        ratePerToken = (v2Gauge.rewardRate() * timeskip4 * PRECISION) / v2Gauge.totalSupply();
 
+        ratePerToken = v2Gauge.rewardPerToken() - v2Gauge.userRewardPerTokenPaid(users.alice);
         expectedEmissions = (ratePerToken * v2Gauge.balanceOf(users.alice)) / PRECISION;
         checkEmissions(users.alice, address(v2Gauge), rootRewardToken.balanceOf(users.alice) + expectedEmissions);
+
+        ratePerToken = v2Gauge.rewardPerToken() - v2Gauge.userRewardPerTokenPaid(users.bob);
         expectedEmissions = (ratePerToken * v2Gauge.balanceOf(users.bob)) / PRECISION;
         checkEmissions(users.bob, address(v2Gauge), rootRewardToken.balanceOf(users.bob) + expectedEmissions);
 
         // Check Alice & Bob emissions on Leaf
         vm.selectFork({forkId: leafId});
-        ratePerToken = (leafGauge.rewardRate() * timeskip4 * PRECISION) / leafGauge.totalSupply();
 
+        ratePerToken = leafGauge.rewardPerToken() - leafGauge.userRewardPerTokenPaid(users.alice);
         expectedEmissions = (ratePerToken * leafGauge.balanceOf(users.alice)) / PRECISION;
         checkEmissions(users.alice, address(leafGauge), leafXVelo.balanceOf(users.alice) + expectedEmissions);
+
+        ratePerToken = leafGauge.rewardPerToken() - leafGauge.userRewardPerTokenPaid(users.bob);
         expectedEmissions = (ratePerToken * leafGauge.balanceOf(users.bob)) / PRECISION;
         checkEmissions(users.bob, address(leafGauge), leafXVelo.balanceOf(users.bob) + expectedEmissions);
 
@@ -604,6 +614,10 @@ contract GaugeFlowE2EFuzzTest is BaseE2EForkFixture {
         uint256 _expectedBalanceB
     ) internal {
         vm.selectFork({forkId: rootId});
+        // Skip distribute window
+        vm.warp({newTimestamp: VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1});
+        uint256 rootTimestamp = block.timestamp;
+
         address owner = mockEscrow.ownerOf(_tokenId);
         address[] memory tokens = new address[](2);
         tokens[0] = _tokenA;
@@ -616,6 +630,7 @@ contract GaugeFlowE2EFuzzTest is BaseE2EForkFixture {
 
         // Process both Claims on Leaf Chain
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: rootTimestamp});
         leafMailbox.processNextInboundMessage();
         leafMailbox.processNextInboundMessage();
 
@@ -632,6 +647,8 @@ contract GaugeFlowE2EFuzzTest is BaseE2EForkFixture {
         uint256 _expectedBalanceB
     ) internal {
         vm.selectFork({forkId: rootId});
+        // Skip distribute window
+        vm.warp({newTimestamp: VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1});
         address owner = mockEscrow.ownerOf(_tokenId);
         address[] memory tokens = new address[](2);
         tokens[0] = _tokenA;

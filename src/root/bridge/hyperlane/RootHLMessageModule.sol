@@ -71,6 +71,7 @@ contract RootHLMessageModule is IRootHLMessageModule {
             uint256 amount = _message.amount();
             IXERC20(xerc20).burn({_user: address(this), _amount: amount});
         } else if (command <= Commands.GET_FEES) {
+            if (block.timestamp <= VelodromeTimeLibrary.epochVoteStart(block.timestamp)) revert DistributeWindow();
             if (VelodromeTimeLibrary.epochStart(block.timestamp) <= IVoter(voter).lastVoted(_message.tokenId())) {
                 revert AlreadyVotedOrDeposited();
             }

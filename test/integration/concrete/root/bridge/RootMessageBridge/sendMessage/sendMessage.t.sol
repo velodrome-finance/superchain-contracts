@@ -283,6 +283,9 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         whenTheCommandIsGetIncentives
     {
         // It dispatches the get incentives message to the message module
+        uint256 timestamp = VelodromeTimeLibrary.epochNext(block.timestamp) + 1 hours + 1;
+        vm.warp({newTimestamp: timestamp});
+
         uint256 tokenId = 1;
         address[] memory tokens = new address[](3);
         tokens[0] = address(token0);
@@ -297,6 +300,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         assertEq(weth.balanceOf(users.alice), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: timestamp});
         assertEq(token0.balanceOf(users.alice), 0);
         assertEq(token1.balanceOf(users.alice), 0);
         assertEq(weth.balanceOf(users.alice), 0);
@@ -356,6 +360,9 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         whenTheCommandIsGetFees
     {
         // It dispatches the get fees message to the message module
+        uint256 timestamp = VelodromeTimeLibrary.epochNext(block.timestamp) + 1 hours + 1;
+        vm.warp({newTimestamp: timestamp});
+
         uint256 tokenId = 1;
         address[] memory tokens = new address[](2);
         tokens[0] = address(token0);
@@ -369,6 +376,7 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
         assertEq(weth.balanceOf(users.alice), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: timestamp});
         assertEq(token0.balanceOf(users.alice), 0);
         assertEq(token1.balanceOf(users.alice), 0);
 

@@ -4,7 +4,6 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../RootHLMessageModule.t.sol";
 
 contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
-    using stdStorage for StdStorage;
     using GasLimits for uint256;
 
     uint256 public tokenId = 1;
@@ -166,8 +165,8 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
     }
 
     modifier whenTheCommandIsGetIncentives() {
-        // Warp to start of epoch, after distribute window
-        rootStartTime = VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1;
+        // Warp to start of epoch
+        rootStartTime = VelodromeTimeLibrary.epochStart(block.timestamp) + 1;
         vm.warp({newTimestamp: rootStartTime});
 
         // Create Lock for Alice
@@ -175,6 +174,35 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         deal(address(rootRewardToken), users.alice, amount);
         rootRewardToken.approve(address(mockEscrow), amount);
         tokenId = mockEscrow.createLock(amount, 4 * 365 * 86400);
+        _;
+    }
+
+    function test_WhenTimestampIsSmallerThanOrEqualToEpochVoteStart()
+        external
+        whenTheCallerIsBridge
+        whenTheCommandIsGetIncentives
+    {
+        // It should revert with {DistributeWindow}
+        assertLe(block.timestamp, VelodromeTimeLibrary.epochVoteStart(block.timestamp));
+
+        address[] memory tokens = new address[](3);
+        tokens[0] = address(token0);
+        tokens[1] = address(token1);
+        tokens[2] = address(weth);
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.GET_INCENTIVES), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens
+        );
+
+        vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
+        vm.expectRevert(IRootHLMessageModule.DistributeWindow.selector);
+        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
+        rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+    }
+
+    modifier whenTimestampIsGreaterThanEpochVoteStart() {
+        // Warp to after distribute window
+        rootStartTime = VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1;
+        vm.warp({newTimestamp: rootStartTime});
 
         // Notify rewards contracts
         vm.selectFork({forkId: leafId});
@@ -207,7 +235,12 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         _;
     }
 
-    function test_WhenLastVoteIsInCurrentEpoch() external whenTheCallerIsBridge whenTheCommandIsGetIncentives {
+    function test_WhenLastVoteIsInCurrentEpoch()
+        external
+        whenTheCallerIsBridge
+        whenTheCommandIsGetIncentives
+        whenTimestampIsGreaterThanEpochVoteStart
+    {
         // It should revert with {AlreadyVotedOrDeposited}
         assertGe(mockVoter.lastVoted(tokenId), VelodromeTimeLibrary.epochStart(block.timestamp));
 
@@ -225,11 +258,18 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
-    function test_WhenLastVoteIsNotInCurrentEpoch() external whenTheCallerIsBridge whenTheCommandIsGetIncentives {
+    function test_WhenLastVoteIsNotInCurrentEpoch()
+        external
+        whenTheCallerIsBridge
+        whenTheCommandIsGetIncentives
+        whenTimestampIsGreaterThanEpochVoteStart
+    {
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
         // It calls receiveMessage on the recipient contract of the same address with the payload
-        uint256 rootTimestamp = VelodromeTimeLibrary.epochNext(block.timestamp) + 1;
+
+        // Skip to next epoch, after distribute window
+        uint256 rootTimestamp = VelodromeTimeLibrary.epochNext(block.timestamp) + 1 hours + 1;
         vm.warp({newTimestamp: rootTimestamp});
 
         address[] memory tokens = new address[](3);
@@ -277,8 +317,8 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
     }
 
     modifier whenTheCommandIsGetFees() {
-        // Warp to start of epoch, after distribute window
-        rootStartTime = VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1;
+        // Warp to start of epoch
+        rootStartTime = VelodromeTimeLibrary.epochStart(block.timestamp) + 1;
         vm.warp({newTimestamp: rootStartTime});
 
         // Create Lock for Alice
@@ -286,6 +326,34 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         deal(address(rootRewardToken), users.alice, amount);
         rootRewardToken.approve(address(mockEscrow), amount);
         tokenId = mockEscrow.createLock(amount, 4 * 365 * 86400);
+        _;
+    }
+
+    function test_WhenTimestampIsSmallerThanOrEqualToEpochVoteStart_()
+        external
+        whenTheCallerIsBridge
+        whenTheCommandIsGetFees
+    {
+        // It should revert with {DistributeWindow}
+        assertLe(block.timestamp, VelodromeTimeLibrary.epochVoteStart(block.timestamp));
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(token0);
+        tokens[1] = address(token1);
+        bytes memory message = abi.encodePacked(
+            uint8(Commands.GET_FEES), address(leafGauge), users.alice, tokenId, uint8(tokens.length), tokens
+        );
+
+        vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
+        vm.expectRevert(IRootHLMessageModule.DistributeWindow.selector);
+        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
+        rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
+    }
+
+    modifier whenTimestampIsGreaterThanEpochVoteStart_() {
+        // Warp to after distribute window
+        rootStartTime = VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1;
+        vm.warp({newTimestamp: rootStartTime});
 
         // Notify rewards contracts
         vm.selectFork({forkId: leafId});
@@ -314,7 +382,12 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         _;
     }
 
-    function test_WhenLastVoteIsInCurrentEpoch_() external whenTheCallerIsBridge whenTheCommandIsGetFees {
+    function test_WhenLastVoteIsInCurrentEpoch_()
+        external
+        whenTheCallerIsBridge
+        whenTheCommandIsGetFees
+        whenTimestampIsGreaterThanEpochVoteStart_
+    {
         // It should revert with {AlreadyVotedOrDeposited}
         assertGe(mockVoter.lastVoted(tokenId), VelodromeTimeLibrary.epochStart(block.timestamp));
 
@@ -331,11 +404,18 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
-    function test_WhenLastVoteIsNotInCurrentEpoch_() external whenTheCallerIsBridge whenTheCommandIsGetFees {
+    function test_WhenLastVoteIsNotInCurrentEpoch_()
+        external
+        whenTheCallerIsBridge
+        whenTheCommandIsGetFees
+        whenTimestampIsGreaterThanEpochVoteStart_
+    {
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
         // It calls receiveMessage on the recipient contract of the same address with the payload
-        uint256 rootTimestamp = VelodromeTimeLibrary.epochNext(block.timestamp) + 1;
+
+        // Skip to next epoch, after distribute window
+        uint256 rootTimestamp = VelodromeTimeLibrary.epochNext(block.timestamp) + 1 hours + 1;
         vm.warp({newTimestamp: rootTimestamp});
 
         address[] memory tokens = new address[](2);

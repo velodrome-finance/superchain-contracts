@@ -5,6 +5,7 @@ import {IMessageSender} from "../IMessageSender.sol";
 
 interface IRootHLMessageModule is IMessageSender {
     error AlreadyVotedOrDeposited();
+    error DistributeWindow();
     error NotBridgeOwner();
 
     event HookSet(address indexed _newHook);

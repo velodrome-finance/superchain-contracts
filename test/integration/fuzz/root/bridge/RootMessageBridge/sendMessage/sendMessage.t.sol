@@ -247,12 +247,19 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
-    function testFuzz_WhenTheCallerIsAnIncentiveContractRegisteredOnTheVoter(uint256 _amount)
+    function testFuzz_WhenTheCallerIsAnIncentiveContractRegisteredOnTheVoter(uint256 _amount, uint256 _timestamp)
         external
         whenTheChainIdIsRegistered
         whenTheCommandIsGetIncentives(_amount)
     {
         // It dispatches the get incentives message to the message module
+        leafStartTime = bound(
+            _timestamp,
+            VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1,
+            VelodromeTimeLibrary.epochNext(block.timestamp) - 1
+        );
+        vm.warp({newTimestamp: leafStartTime});
+
         uint256 tokenId = 1;
         address[] memory tokens = new address[](3);
         tokens[0] = address(token0);
@@ -267,6 +274,7 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
         assertEq(weth.balanceOf(users.alice), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         assertEq(token0.balanceOf(users.alice), 0);
         assertEq(token1.balanceOf(users.alice), 0);
         assertEq(weth.balanceOf(users.alice), 0);
@@ -326,12 +334,19 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
         rootMessageBridge.sendMessage({_chainid: leaf, _message: message});
     }
 
-    function testFuzz_WhenTheCallerIsAFeesContractRegisteredOnTheVoter(uint256 _amount)
+    function testFuzz_WhenTheCallerIsAFeesContractRegisteredOnTheVoter(uint256 _amount, uint256 _timestamp)
         external
         whenTheChainIdIsRegistered
         whenTheCommandIsGetFees(_amount)
     {
         // It dispatches the get fees message to the message module
+        leafStartTime = bound(
+            _timestamp,
+            VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1,
+            VelodromeTimeLibrary.epochNext(block.timestamp) - 1
+        );
+        vm.warp({newTimestamp: leafStartTime});
+
         uint256 tokenId = 1;
         address[] memory tokens = new address[](2);
         tokens[0] = address(token0);
@@ -345,6 +360,7 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
         assertEq(weth.balanceOf(users.alice), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         assertEq(token0.balanceOf(users.alice), 0);
         assertEq(token1.balanceOf(users.alice), 0);
 

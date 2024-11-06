@@ -29,7 +29,7 @@ contract GetRewardIntegrationConcreteTest is RootIncentiveVotingRewardTest {
         leafIVR._deposit({amount: TOKEN_1, tokenId: tokenId, timestamp: block.timestamp});
         vm.stopPrank();
 
-        skipToNextEpoch(1);
+        skipToNextEpoch(1 hours + 1);
 
         vm.selectFork({forkId: rootId});
         vm.prank(users.alice);
@@ -284,6 +284,9 @@ contract GetRewardIntegrationConcreteTest is RootIncentiveVotingRewardTest {
     }
 
     function testGas_RootIncentiveVotingReward_getReward() external whenCallerIsApprovedOrOwnerOfTokenId {
+        // Skip distribute window
+        vm.warp({newTimestamp: VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1});
+
         address[] memory tokens = new address[](3);
         tokens[0] = address(token0);
         tokens[1] = address(token1);
