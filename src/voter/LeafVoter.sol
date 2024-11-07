@@ -5,13 +5,38 @@ import {ReentrancyGuard} from "@openzeppelin5/contracts/utils/ReentrancyGuard.so
 import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
 
 import {IVotingRewardsFactory} from "../interfaces/rewards/IVotingRewardsFactory.sol";
-import {ILeafGaugeFactory} from "../interfaces/gauges/ILeafGaugeFactory.sol";
 import {ILeafMessageBridge} from "../interfaces/bridge/ILeafMessageBridge.sol";
+import {ILeafGaugeFactory} from "../interfaces/gauges/ILeafGaugeFactory.sol";
 import {ILeafGauge} from "../interfaces/gauges/ILeafGauge.sol";
 import {IReward} from "../interfaces/rewards/IReward.sol";
 import {IPoolFactory} from "../interfaces/pools/IPoolFactory.sol";
 import {IPool} from "../interfaces/pools/IPool.sol";
 import {ILeafVoter} from "../interfaces/voter/ILeafVoter.sol";
+
+/*
+
+██╗   ██╗███████╗██╗      ██████╗ ██████╗ ██████╗  ██████╗ ███╗   ███╗███████╗
+██║   ██║██╔════╝██║     ██╔═══██╗██╔══██╗██╔══██╗██╔═══██╗████╗ ████║██╔════╝
+██║   ██║█████╗  ██║     ██║   ██║██║  ██║██████╔╝██║   ██║██╔████╔██║█████╗
+╚██╗ ██╔╝██╔══╝  ██║     ██║   ██║██║  ██║██╔══██╗██║   ██║██║╚██╔╝██║██╔══╝
+ ╚████╔╝ ███████╗███████╗╚██████╔╝██████╔╝██║  ██║╚██████╔╝██║ ╚═╝ ██║███████╗
+  ╚═══╝  ╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
+
+███████╗██╗   ██╗██████╗ ███████╗██████╗  ██████╗██╗  ██╗ █████╗ ██╗███╗   ██╗
+██╔════╝██║   ██║██╔══██╗██╔════╝██╔══██╗██╔════╝██║  ██║██╔══██╗██║████╗  ██║
+███████╗██║   ██║██████╔╝█████╗  ██████╔╝██║     ███████║███████║██║██╔██╗ ██║
+╚════██║██║   ██║██╔═══╝ ██╔══╝  ██╔══██╗██║     ██╔══██║██╔══██║██║██║╚██╗██║
+███████║╚██████╔╝██║     ███████╗██║  ██║╚██████╗██║  ██║██║  ██║██║██║ ╚████║
+╚══════╝ ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝
+
+██╗     ███████╗ █████╗ ███████╗██╗   ██╗ ██████╗ ████████╗███████╗██████╗
+██║     ██╔════╝██╔══██╗██╔════╝██║   ██║██╔═══██╗╚══██╔══╝██╔════╝██╔══██╗
+██║     █████╗  ███████║█████╗  ██║   ██║██║   ██║   ██║   █████╗  ██████╔╝
+██║     ██╔══╝  ██╔══██║██╔══╝  ╚██╗ ██╔╝██║   ██║   ██║   ██╔══╝  ██╔══██╗
+███████╗███████╗██║  ██║██║      ╚████╔╝ ╚██████╔╝   ██║   ███████╗██║  ██║
+╚══════╝╚══════╝╚═╝  ╚═╝╚═╝       ╚═══╝   ╚═════╝    ╚═╝   ╚══════╝╚═╝  ╚═╝
+
+*/
 
 /// @title Velodrome Superchain Voter
 /// @author velodrome.finance

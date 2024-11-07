@@ -10,6 +10,9 @@ import {IVoter} from "../../interfaces/external/IVoter.sol";
 
 import {Commands} from "../../libraries/Commands.sol";
 
+/// @title Velodrome Superchain Root Fees Reward Contract
+/// @notice Reward contract that forwards messages to the corresponding contracts on the leaf chain
+/// @dev Deposit and Withdraw update voting weights on both the Fees & Incentives contracts on Leaf
 contract RootFeesVotingReward is IRootFeesVotingReward {
     /// @inheritdoc IRootFeesVotingReward
     address public immutable factory;

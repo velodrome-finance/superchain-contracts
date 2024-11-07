@@ -17,7 +17,7 @@ import {Commands} from "../../libraries/Commands.sol";
 import {IXERC20} from "../../interfaces/xerc20/IXERC20.sol";
 import {ISpecifiesInterchainSecurityModule} from "../../interfaces/external/ISpecifiesInterchainSecurityModule.sol";
 
-/// @title Hyperlane Token Bridge
+/// @title Leaf Hyperlane Message Module
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
 contract LeafHLMessageModule is ILeafHLMessageModule, ISpecifiesInterchainSecurityModule, Ownable {
     using SafeERC20 for IERC20;

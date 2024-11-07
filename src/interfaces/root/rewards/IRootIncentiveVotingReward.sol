@@ -36,11 +36,13 @@ interface IRootIncentiveVotingReward {
     function initialize(address _gauge) external;
 
     /// @notice Deposits voting power to leaf contract corresponding to gauge
+    /// @dev Not implemented as deposits are handled by the Fees contract
     /// @param _amount Amount of voting power to deposit
     /// @param _tokenId token id to deposit voting power to
     function _deposit(uint256 _amount, uint256 _tokenId) external;
 
     /// @notice Withdraws voting power from leaf contract corresponding to gauge
+    /// @dev Not implemented as withdraws are handled by the Fees contract
     /// @param _amount Amount of voting power to withdraw
     /// @param _tokenId token id to withdraw voting power from
     function _withdraw(uint256 _amount, uint256 _tokenId) external;

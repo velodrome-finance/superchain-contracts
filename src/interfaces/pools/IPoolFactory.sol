@@ -91,7 +91,7 @@ interface IPoolFactory {
     /// @param stable .
     function createPool(address tokenA, address tokenB, bool stable) external returns (address pool);
 
-    /// @notice Support for v3-style pools which wraps around createPool(tokena,tokenB,stable)
+    /// @notice Support for v3-style pools which wraps around createPool(tokenA,tokenB,stable)
     /// @dev fee is converted to stable boolean
     /// @dev token order does not matter
     /// @param tokenA .

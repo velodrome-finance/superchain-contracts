@@ -88,7 +88,7 @@ interface ILeafVoter {
     /// @param _gauge .
     function killGauge(address _gauge) external;
 
-    /// @notice Revives a killed gauge. Gauge will can receive emissions and deposits again.
+    /// @notice Revives a killed gauge. Gauge will be able to receive emissions and deposits again.
     /// @dev Only callable by Message Bridge
     ///      Throws if gauge is not killed.
     /// @param _gauge .

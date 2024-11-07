@@ -96,12 +96,14 @@ interface ILeafGauge {
     /// @param _amount .
     function withdraw(uint256 _amount) external;
 
-    /// @dev Notifies gauge of gauge rewards. Assumes gauge reward tokens is 18 decimals.
-    ///      If not 18 decimals, rewardRate may have rounding issues.
+    /// @notice Notifies gauge of gauge rewards. Assumes gauge reward tokens is 18 decimals.
+    /// @dev If not 18 decimals, rewardRate may have rounding issues.
+    /// @param amount Amount of rewards to be deposited into gauge
     function notifyRewardAmount(uint256 amount) external;
 
-    /// @dev Notifies gauge of gauge rewards without distributing its fees.
-    ///      Assumes gauge reward tokens is 18 decimals.
+    /// @notice Notifies gauge of gauge rewards without distributing its fees.
+    /// @dev Assumes gauge reward tokens is 18 decimals.
     ///      If not 18 decimals, rewardRate may have rounding issues.
+    /// @param amount Amount of rewards to be deposited into gauge
     function notifyRewardWithoutClaim(uint256 amount) external;
 }

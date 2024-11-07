@@ -10,6 +10,8 @@ import {IVoter} from "../../interfaces/external/IVoter.sol";
 
 import {Commands} from "../../libraries/Commands.sol";
 
+/// @title Velodrome Superchain Root Incentive Reward Contract
+/// @notice Reward contract that forwards claim messages to the corresponding Incentives contract on the leaf chain
 contract RootIncentiveVotingReward is IRootIncentiveVotingReward {
     /// @inheritdoc IRootIncentiveVotingReward
     address public immutable factory;

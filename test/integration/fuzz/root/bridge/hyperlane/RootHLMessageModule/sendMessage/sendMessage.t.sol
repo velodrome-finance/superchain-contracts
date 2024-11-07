@@ -208,7 +208,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
     {
         // It should revert with {SpecialVotingWindow}
 
-        // Warp to start of epoch, before voting starts
+        // Warp to start of epoch, after voting ends
         _timestamp = bound(
             _timestamp,
             VelodromeTimeLibrary.epochVoteEnd(block.timestamp) + 2,
@@ -408,7 +408,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
     {
         // It should revert with {SpecialVotingWindow}
 
-        // Warp to start of epoch, before voting starts
+        // Warp to start of epoch, after voting ends
         _timestamp = bound(
             _timestamp,
             VelodromeTimeLibrary.epochVoteEnd(block.timestamp) + 2,

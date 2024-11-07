@@ -19,7 +19,7 @@ import {VelodromeTimeLibrary} from "../../../libraries/VelodromeTimeLibrary.sol"
 import {GasLimits} from "../../../libraries/GasLimits.sol";
 import {Commands} from "../../../libraries/Commands.sol";
 
-/// @title Hyperlane Token Bridge
+/// @title Root Hyperlane Message Module
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
 contract RootHLMessageModule is IRootHLMessageModule {
     using GasLimits for uint256;

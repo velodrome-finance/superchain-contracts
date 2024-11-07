@@ -5,6 +5,8 @@ import {IFeeModule, ICustomFeeModule} from "../interfaces/fees/ICustomFeeModule.
 import {IPoolFactory} from "../interfaces/pools/IPoolFactory.sol";
 import {IPool} from "../interfaces/pools/IPool.sol";
 
+/// @title Velodrome Superchain Custom Fee Module
+/// @notice Used to set custom fees on Velodrome Pools
 contract CustomFeeModule is ICustomFeeModule {
     /// @inheritdoc IFeeModule
     IPoolFactory public immutable factory;

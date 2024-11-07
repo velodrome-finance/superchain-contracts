@@ -37,8 +37,10 @@ interface IRootGauge {
     function left() external view returns (uint256);
 
     /// @notice Used by voter to deposit rewards to the gauge
+    /// @param _amount Amount of rewards to be deposited into gauge
     function notifyRewardAmount(uint256 _amount) external;
 
     /// @notice Used by notify admin to deposit rewards to the gauge without distributing fees
+    /// @param _amount Amount of rewards to be deposited into gauge
     function notifyRewardWithoutClaim(uint256 _amount) external;
 }

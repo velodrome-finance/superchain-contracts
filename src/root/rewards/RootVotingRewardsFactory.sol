@@ -6,6 +6,8 @@ import {IRootVotingRewardsFactory} from "../../interfaces/root/rewards/IRootVoti
 import {RootIncentiveVotingReward} from "./RootIncentiveVotingReward.sol";
 import {RootFeesVotingReward} from "./RootFeesVotingReward.sol";
 
+/// @title Velodrome Superchain Root Voting Rewards Factory
+/// @notice Creates root voting rewards contracts that forward messages to the corresponding reward contracts on the leaf chain
 contract RootVotingRewardsFactory is IRootVotingRewardsFactory {
     /// @inheritdoc IRootVotingRewardsFactory
     address public immutable bridge;

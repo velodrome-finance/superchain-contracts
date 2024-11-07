@@ -6,7 +6,8 @@ import {IVotingRewardsFactory} from "../interfaces/rewards/IVotingRewardsFactory
 import {IncentiveVotingReward} from "./IncentiveVotingReward.sol";
 import {FeesVotingReward} from "./FeesVotingReward.sol";
 
-/// @notice Creates voting rewards contracts for v2 style pools
+/// @title Velodrome Superchain Voting Rewards Factory
+/// @notice Creates voting rewards contracts for Velodrome pools
 contract VotingRewardsFactory is IVotingRewardsFactory {
     /// @inheritdoc IVotingRewardsFactory
     address public immutable voter;

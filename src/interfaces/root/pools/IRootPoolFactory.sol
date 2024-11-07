@@ -25,7 +25,7 @@ interface IRootPoolFactory {
     /// @return Array of pool addresses
     function allPools() external view returns (address[] memory);
 
-    /// @notice returns the number of pools created from this factory
+    /// @notice Returns the number of pools created from this factory
     function allPoolsLength() external view returns (uint256);
 
     /// @notice Return address of pool created by this factory
