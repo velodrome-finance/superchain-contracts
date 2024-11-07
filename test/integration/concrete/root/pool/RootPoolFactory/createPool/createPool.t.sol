@@ -71,20 +71,22 @@ contract CreatePoolIntegrationConcreteTest is RootPoolFactoryTest {
         // It creates the pool using Create2
         // It populates the getPool mapping in both directions
         // It adds the pool to the list of all pools
-        // It emits {PoolCreated}
-        address pool = rootPoolFactory.createPool({
-            chainid: _chainid,
-            tokenA: address(tokenA),
-            tokenB: address(tokenB),
-            stable: true
-        });
-
+        // It emits {RootPoolCreated}
         (address token0, address token1) =
             tokenA < tokenB ? (address(tokenA), address(tokenB)) : (address(tokenB), address(tokenA));
         address expected = Clones.predictDeterministicAddress({
             implementation: rootPoolFactory.implementation(),
             salt: keccak256(abi.encodePacked(_chainid, token0, token1, true)),
             deployer: address(rootPoolFactory)
+        });
+
+        vm.expectEmit(address(rootPoolFactory));
+        emit IRootPoolFactory.RootPoolCreated(token0, token1, true, expected, rootPoolFactory.allPoolsLength() + 1);
+        address pool = rootPoolFactory.createPool({
+            chainid: _chainid,
+            tokenA: address(tokenA),
+            tokenB: address(tokenB),
+            stable: true
         });
 
         assertEq(pool, expected);

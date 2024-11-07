@@ -14,4 +14,4 @@ CreatePoolIntegrationConcreteTest
                 ├── It creates the pool using Create2
                 ├── It populates the getPool mapping in both directions
                 ├── It adds the pool to the list of all pools
-                └── It emits {PoolCreated}
+                └── It emits {RootPoolCreated}

@@ -69,6 +69,6 @@ contract RootPoolFactory is IRootPoolFactory {
         _getPool[chainid][token0][token1][stable] = pool;
         _getPool[chainid][token1][token0][stable] = pool; // populate mapping in the reverse direction
         _allPools.push(pool);
-        emit PoolCreated({token0: token0, token1: token1, stable: stable, pool: pool, length: _allPools.length});
+        emit RootPoolCreated({token0: token0, token1: token1, stable: stable, pool: pool, length: _allPools.length});
     }
 }

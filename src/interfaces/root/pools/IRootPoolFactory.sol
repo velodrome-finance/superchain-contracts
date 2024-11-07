@@ -6,7 +6,7 @@ interface IRootPoolFactory {
     error PoolAlreadyExists();
     error ZeroAddress();
 
-    event PoolCreated(
+    event RootPoolCreated(
         address indexed token0, address indexed token1, bool indexed stable, address pool, uint256 length
     );
 
