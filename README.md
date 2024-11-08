@@ -27,18 +27,25 @@ Run the following commands to check that the CreateX factory has the correct cod
 [[ $(cast keccak $(cast code 0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed --rpc-url {RPC_URL})) == "0xbd8a7ea8cfca7b4e5f5041d7d4b17bc317c5ce42cfbc42066a00cf26b43eb53f" ]] && echo "Hash Matches" || echo "Hash Does Not Match"
 ```
 
-Sample scripting commands, using optimism as an example. We assume blockscout is the default verifier:
+Deploy Root contracts first:
 
 ```
-forge script script/deployParameters/optimism/DeployBase.s.sol:DeployBase --slow --rpc-url optimism -vvvv
-forge script script/deployParameters/optimism/DeployStaking.s.sol:DeployStaking --slow --rpc-url optimism -vvvv
+forge script script/deployParameters/optimism/DeployRootBase.s.sol:DeployRootBase --slow --rpc-url optimism -vvvv
+forge script script/deployParameters/optimism/DeployRootBase.s.sol:DeployRootBase --slow --rpc-url optimism --broadcast --verify -vvvv
 ```
 
-With broadcast:
+Deploy Leaf contracts next:
 
 ```
-forge script script/deployParameters/optimism/DeployBase.s.sol:DeployBase --slow --rpc-url optimism --broadcast --verify --verifier blockscout --verifier-url https://optimism.blockscout.com/api\? -vvvv
-forge script script/deployParameters/optimism/DeployStaking.s.sol:DeployStaking --slow --rpc-url optimism --broadcast --verify --verifier blockscout --verifier-url https://optimism.blockscout.com/api\? -vvvv
+forge script script/deployPartial/deployParameters/mode/DeployPartialBase.s.sol:DeployPartialBase --slow --rpc-url mode -vvvv
+forge script script/deployPartial/deployParameters/mode/DeployPartialBase.s.sol:DeployPartialBase --slow --rpc-url mode --broadcast --verify --verifier blockscout --verifier-url https://explorer.mode.network/api\? -vvvv
+```
+
+Run the bash scripts (after updating them) to verify contracts.
+
+```
+bash script/verifyRoot.sh
+bash script/verifyLeaf.sh
 ```
 
 If there is a verification failure, simply remove `--broadcast` and add `--resume`.

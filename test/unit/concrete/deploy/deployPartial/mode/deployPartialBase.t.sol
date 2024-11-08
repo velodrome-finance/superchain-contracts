@@ -2,7 +2,7 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import "test/BaseFixture.sol";
-import {DeployPartialBase} from "script/deployPartial/deployParameters/mode/DeployPartialBase.sol";
+import {DeployPartialBase} from "script/deployPartial/deployParameters/mode/DeployPartialBase.s.sol";
 
 import {ModeFeeSharing} from "src/extensions/ModeFeeSharing.sol";
 

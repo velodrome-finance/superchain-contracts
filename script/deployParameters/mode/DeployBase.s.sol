@@ -23,12 +23,12 @@ contract DeployBase is DeployBaseFixture {
     function setUp() public override {
         _params = DeployBaseFixture.DeploymentParameters({
             weth: 0x4200000000000000000000000000000000000006,
-            poolAdmin: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
-            pauser: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
-            feeManager: 0xA6074AcC04DeAb343881882c896555A1Ba2E9d46,
-            tokenAdmin: 0x0000000000000000000000000000000000000001,
-            bridgeOwner: 0x0000000000000000000000000000000000000001,
-            moduleOwner: 0x0000000000000000000000000000000000000001,
+            poolAdmin: 0xe915AEf46E1bd9b9eD2D9FE571AE9b5afbDE571b,
+            pauser: 0xe915AEf46E1bd9b9eD2D9FE571AE9b5afbDE571b,
+            feeManager: 0xe915AEf46E1bd9b9eD2D9FE571AE9b5afbDE571b,
+            tokenAdmin: 0xe915AEf46E1bd9b9eD2D9FE571AE9b5afbDE571b,
+            bridgeOwner: 0xe915AEf46E1bd9b9eD2D9FE571AE9b5afbDE571b,
+            moduleOwner: 0xe915AEf46E1bd9b9eD2D9FE571AE9b5afbDE571b,
             mailbox: 0x2f2aFaE1139Ce54feFC03593FeE8AB2aDF4a85A7,
             outputFilename: "mode.json"
         });

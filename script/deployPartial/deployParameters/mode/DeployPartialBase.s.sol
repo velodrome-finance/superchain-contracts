@@ -22,9 +22,9 @@ contract DeployPartialBase is DeployPartialBaseFixture {
 
     function setUp() public override {
         _params = DeployPartialBaseFixture.DeploymentParameters({
-            tokenAdmin: 0x0000000000000000000000000000000000000001,
-            bridgeOwner: 0x0000000000000000000000000000000000000001,
-            moduleOwner: 0x0000000000000000000000000000000000000001,
+            tokenAdmin: 0xe915AEf46E1bd9b9eD2D9FE571AE9b5afbDE571b,
+            bridgeOwner: 0xe915AEf46E1bd9b9eD2D9FE571AE9b5afbDE571b,
+            moduleOwner: 0xe915AEf46E1bd9b9eD2D9FE571AE9b5afbDE571b,
             mailbox: 0x2f2aFaE1139Ce54feFC03593FeE8AB2aDF4a85A7,
             inputFilename: "mode.json",
             outputFilename: "mode.json"
