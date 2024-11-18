@@ -14,6 +14,7 @@ fs_permissions = [{ access = "read-write", path = "./"}]
 runs = 256
 
 [rpc_endpoints]
+lisk = "${LISK_RPC_URL}"
 mode = "${MODE_RPC_URL}"
 bob = "${BOB_RPC_URL}"
 optimism = "${OPTIMISM_RPC_URL}"

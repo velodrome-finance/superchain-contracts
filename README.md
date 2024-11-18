@@ -41,6 +41,11 @@ forge script script/deployPartial/deployParameters/mode/DeployPartialBase.s.sol:
 forge script script/deployPartial/deployParameters/mode/DeployPartialBase.s.sol:DeployPartialBase --slow --rpc-url mode --broadcast --verify --verifier blockscout --verifier-url https://explorer.mode.network/api\? -vvvv
 ```
 
+```
+forge script script/deployParameters/lisk/DeployBase.s.sol:DeployBase --slow --rpc-url lisk -vvvv
+forge script script/deployParameters/lisk/DeployBase.s.sol:DeployBase --slow --rpc-url lisk --broadcast --verify --verifier blockscout --verifier-url https://blockscout.lisk.com/api\? -vvvv
+```
+
 Run the bash scripts (after updating them) to verify contracts.
 
 ```
