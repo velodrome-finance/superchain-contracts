@@ -46,6 +46,11 @@ forge script script/deployParameters/lisk/DeployBase.s.sol:DeployBase --slow --r
 forge script script/deployParameters/lisk/DeployBase.s.sol:DeployBase --slow --rpc-url lisk --broadcast --verify --verifier blockscout --verifier-url https://blockscout.lisk.com/api\? -vvvv
 ```
 
+```
+forge script script/deployParameters/fraxtal/DeployBase.s.sol:DeployBase --slow --rpc-url fraxtal -vvvv
+forge script script/deployParameters/fraxtal/DeployBase.s.sol:DeployBase --slow --rpc-url fraxtal --broadcast --verify -vvvv
+```
+
 Run the bash scripts (after updating them) to verify contracts.
 
 ```
