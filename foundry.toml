@@ -24,3 +24,4 @@ optimism = "${OPTIMISM_RPC_URL}"
 mode = { key = "${MODE_ETHERSCAN_API_KEY}", url = "${MODE_ETHERSCAN_VERIFIER_URL}" }
 optimism = { key = "${OPTIMISM_ETHERSCAN_API_KEY}", url = "${OPTIMISM_ETHERSCAN_VERIFIER_URL}"}
 fraxtal = { key = "${FRAXTAL_ETHERSCAN_API_KEY}", url = "${FRAXTAL_ETHERSCAN_VERIFIER_URL}"}
+lisk = { key = "${LISK_ETHERSCAN_API_KEY}", url = "${LISK_ETHERSCAN_VERIFIER_URL}"}

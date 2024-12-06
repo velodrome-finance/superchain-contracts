@@ -1,5 +1,11 @@
 # Velodrome Superchain Contracts
 
+Core smart contracts for the Velodrome Superchain. This includes the Superchain
+specific contracts (message passing, xERC20, etc) as well as the base v2 contracts.
+
+For information on specific contracts, see `SPECIFICATION.md.`. Integrators should
+refer to the integrators section below.
+
 ## Installation
 
 This repository depends on:
@@ -16,6 +22,8 @@ forge b
 
 forge t -vv
 ```
+
+This repository uses `forge fmt` to format code and bulloak for test layouts.
 
 ## Deployment
 
@@ -36,54 +44,55 @@ forge script script/deployParameters/optimism/DeployRootBase.s.sol:DeployRootBas
 
 Deploy Leaf contracts next:
 
-```
-forge script script/deployPartial/deployParameters/mode/DeployPartialBase.s.sol:DeployPartialBase --slow --rpc-url mode -vvvv
-forge script script/deployPartial/deployParameters/mode/DeployPartialBase.s.sol:DeployPartialBase --slow --rpc-url mode --broadcast --verify --verifier blockscout --verifier-url https://explorer.mode.network/api\? -vvvv
-```
+Replace `leaf` with the chain you are deploying to.
 
 ```
-forge script script/deployParameters/lisk/DeployBase.s.sol:DeployBase --slow --rpc-url lisk -vvvv
-forge script script/deployParameters/lisk/DeployBase.s.sol:DeployBase --slow --rpc-url lisk --broadcast --verify --verifier blockscout --verifier-url https://blockscout.lisk.com/api\? -vvvv
-```
-
-```
-forge script script/deployParameters/fraxtal/DeployBase.s.sol:DeployBase --slow --rpc-url fraxtal -vvvv
-forge script script/deployParameters/fraxtal/DeployBase.s.sol:DeployBase --slow --rpc-url fraxtal --broadcast --verify -vvvv
-```
-
-Run the bash scripts (after updating them) to verify contracts.
-
-```
-bash script/verifyRoot.sh
-bash script/verifyLeaf.sh
+forge script script/deployParameters/leaf/DeployBase.s.sol:DeployBase --slow --rpc-url leaf -vvvv
+forge script script/deployParameters/leaf/DeployBase.s.sol:DeployBase --slow --rpc-url leaf --broadcast --verify -vvvv
 ```
 
 If there is a verification failure, simply remove `--broadcast` and add `--resume`.
 
-```
-forge script script/deployParameters/optimism/DeployBase.s.sol:DeployBase --slow --rpc-url optimism --resume --verify --verifier blockscout --verifier-url https://optimism.blockscout.com/api\? -vvvv
-forge script script/deployParameters/optimism/DeployStaking.s.sol:DeployStaking --slow --rpc-url optimism --resume --verify --verifier blockscout --verifier-url https://optimism.blockscout.com/api\? -vvvv
-```
-
 ## Verification
 
-For etherscan-like verifications, fill out `foundry.toml`.
+For verifications, fill out the verifier config in `foundry.toml`.
 
-For blockscout verifications, append the following after `--verify`.
+For blockscout verifications, append `--verifier blockscout` after `--verify`
 
-```
---verifier blockscout --verifier-url {BASE_URL}/api\?
+## Integrators
 
-e.g: 
---verifier blockscout --verifier-url https://explorer.mode.network/api\?
-```
+Existing contracts that manage nfts that vote on Velodrome must add support for additional logic in 
+order to be able to participate in Superchain Velodrome.
+
+Some additional information for developers building contracts that interact with Superchain Velodrome:
+- Contracts that wish to vote for a certain chain must explicitly set a rewards recipient for that chain by calling `setRecipient` on
+ the `RootVotingRewardsFactory` contract.
+- Users interacting with smart contracts that are voting cross chain must approve a small amount of
+ WETH to the `RootMessageBridge` as payment for gas.
+- The token bridge may be sunset in the future in favor of alternate token bridging mechanisms.
+    - The interface will remain the same, but the implementation will change and be deployed as a new contract.
 
 ## xERC20
 
-The xERC20 implementation in this repository adheres to the standard but deviates slightly in the following way:
-- The lockbox has no support for native tokens. Other code related to this functionality has been removed.
+The xERC20 implementation in this repository has been modified lightly from 
+the moonwell xERC20 implementation to support native Superchain interop in the future.
 
 ## Licensing
 
 This project follows the [Apache Foundation](https://infra.apache.org/licensing-howto.html)
 guideline for licensing. See LICENSE and NOTICE files.
+
+## Bug Bounty
+Velodrome has a live bug bounty hosted on ([Immunefi](https://immunefi.com/bounty/velodromefinance/)).
+
+## Deployments
+
+| Chain      | Addresses          | Deployment Commit |
+|------------|--------------------|-------------------|
+| Optimism   | [Addresses](https://github.com/velodrome-finance/superchain-contracts/blob/main/deployment-addresses/optimism.json)           | [v1.0](https://github.com/velodrome-finance/superchain-contracts/commit/a739cdd788673d5fb08736e456fd8ec15d262dc7)      |
+| Mode       | [Addresses](https://github.com/velodrome-finance/superchain-contracts/blob/main/deployment-addresses/mode.json)           | [v1.0](https://github.com/velodrome-finance/superchain-contracts/commit/a739cdd788673d5fb08736e456fd8ec15d262dc7)      |
+| Lisk       | [Addresses](https://github.com/velodrome-finance/superchain-contracts/blob/main/deployment-addresses/lisk.json)           | [v1.0](https://github.com/velodrome-finance/superchain-contracts/commit/a739cdd788673d5fb08736e456fd8ec15d262dc7)      |
+| Fraxtal    | [Addresses](https://github.com/velodrome-finance/superchain-contracts/blob/main/deployment-addresses/fraxtal.json)           | [v1.0](https://github.com/velodrome-finance/superchain-contracts/commit/a739cdd788673d5fb08736e456fd8ec15d262dc7)      | 
+
+Optimism contains the root deployment contracts, and these factory addresses are 
+used by all leaf chains.

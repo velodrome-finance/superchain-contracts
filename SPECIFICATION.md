@@ -294,6 +294,7 @@ via different message vendors. Care must be taken in the upgrade process.
 #### Token Bridge
 - Supports the sending of tokens cross chain via Hyperlane.
 - Fees are paid for in native ETH. 
+- The token bridge may be sunset in the future in favor of alternate token bridging mechanisms.
 
 #### Root Pool Factory
 - Supports the creation of pools on the root chain for tokens on other chains. 
