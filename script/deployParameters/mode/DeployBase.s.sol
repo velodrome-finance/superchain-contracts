@@ -55,13 +55,17 @@ contract DeployBase is DeployBaseFixture {
                         address(leafPoolImplementation), // pool implementation
                         _params.poolAdmin, // pool admin
                         _params.pauser, // pauser
-                        _params.feeManager, // fee manager
+                        _deployer, // fee manager
                         _modeParams.recipient // sfs nft recipient
                     )
                 )
             })
         );
         checkAddress({_entropy: POOL_FACTORY_ENTROPY, _output: address(leafPoolFactory)});
+
+        leafFeeModule = new CustomFeeModule({_factory: address(leafPoolFactory)});
+        leafPoolFactory.setFeeModule({_feeModule: address(leafFeeModule)});
+        leafPoolFactory.setFeeManager({_feeManager: _params.feeManager});
 
         leafRouter = ModeRouter(
             payable(

@@ -214,20 +214,20 @@ abstract contract DeployRootBaseFixture is DeployFixture {
         if (isTest) return;
         string memory root = vm.projectRoot();
         string memory path = string(abi.encodePacked(root, "/deployment-addresses/", _params.outputFilename));
-        vm.writeJson(vm.serializeAddress("", "rootPoolImplementation: ", address(rootPoolImplementation)), path);
-        vm.writeJson(vm.serializeAddress("", "rootPoolFactory: ", address(rootPoolFactory)), path);
-        vm.writeJson(vm.serializeAddress("", "rootGaugeFactory: ", address(rootGaugeFactory)), path);
-        vm.writeJson(vm.serializeAddress("", "rootVotingRewardsFactory: ", address(rootVotingRewardsFactory)), path);
+        vm.writeJson(vm.serializeAddress("", "rootPoolImplementation", address(rootPoolImplementation)), path);
+        vm.writeJson(vm.serializeAddress("", "rootPoolFactory", address(rootPoolFactory)), path);
+        vm.writeJson(vm.serializeAddress("", "rootGaugeFactory", address(rootGaugeFactory)), path);
+        vm.writeJson(vm.serializeAddress("", "rootVotingRewardsFactory", address(rootVotingRewardsFactory)), path);
 
-        vm.writeJson(vm.serializeAddress("", "rootXFactory: ", address(rootXFactory)), path);
-        vm.writeJson(vm.serializeAddress("", "rootXVelo: ", address(rootXVelo)), path);
-        vm.writeJson(vm.serializeAddress("", "rootLockbox: ", address(rootLockbox)), path);
+        vm.writeJson(vm.serializeAddress("", "rootXFactory", address(rootXFactory)), path);
+        vm.writeJson(vm.serializeAddress("", "rootXVelo", address(rootXVelo)), path);
+        vm.writeJson(vm.serializeAddress("", "rootLockbox", address(rootLockbox)), path);
 
-        vm.writeJson(vm.serializeAddress("", "rootTokenBridge: ", address(rootTokenBridge)), path);
-        vm.writeJson(vm.serializeAddress("", "rootMessageBridge: ", address(rootMessageBridge)), path);
-        vm.writeJson(vm.serializeAddress("", "rootMessageModule: ", address(rootMessageModule)), path);
+        vm.writeJson(vm.serializeAddress("", "rootTokenBridge", address(rootTokenBridge)), path);
+        vm.writeJson(vm.serializeAddress("", "rootMessageBridge", address(rootMessageBridge)), path);
+        vm.writeJson(vm.serializeAddress("", "rootMessageModule", address(rootMessageModule)), path);
 
-        vm.writeJson(vm.serializeAddress("", "emergencyCouncil: ", address(emergencyCouncil)), path);
-        vm.writeJson(vm.serializeAddress("", "ism: ", address(ism)), path);
+        vm.writeJson(vm.serializeAddress("", "emergencyCouncil", address(emergencyCouncil)), path);
+        vm.writeJson(vm.serializeAddress("", "ism", address(ism)), path);
     }
 }

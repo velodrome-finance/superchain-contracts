@@ -212,18 +212,18 @@ abstract contract DeployPartialBaseFixture is DeployFixture {
         /// @dev This might overwrite an existing output file
         vm.writeJson(vm.serializeAddress("", "leafPoolImplementation", address(leafPoolImplementation)), path);
         vm.writeJson(vm.serializeAddress("", "leafPoolFactory", address(leafPoolFactory)), path);
-        vm.writeJson(vm.serializeAddress("", "leafGaugeFactory: ", address(leafGaugeFactory)), path);
-        vm.writeJson(vm.serializeAddress("", "leafVotingRewardsFactory: ", address(leafVotingRewardsFactory)), path);
-        vm.writeJson(vm.serializeAddress("", "leafVoter: ", address(leafVoter)), path);
+        vm.writeJson(vm.serializeAddress("", "leafGaugeFactory", address(leafGaugeFactory)), path);
+        vm.writeJson(vm.serializeAddress("", "leafVotingRewardsFactory", address(leafVotingRewardsFactory)), path);
+        vm.writeJson(vm.serializeAddress("", "leafVoter", address(leafVoter)), path);
 
-        vm.writeJson(vm.serializeAddress("", "leafXFactory: ", address(leafXFactory)), path);
-        vm.writeJson(vm.serializeAddress("", "leafXVelo: ", address(leafXVelo)), path);
+        vm.writeJson(vm.serializeAddress("", "leafXFactory", address(leafXFactory)), path);
+        vm.writeJson(vm.serializeAddress("", "leafXVelo", address(leafXVelo)), path);
 
-        vm.writeJson(vm.serializeAddress("", "leafTokenBridge: ", address(leafTokenBridge)), path);
-        vm.writeJson(vm.serializeAddress("", "leafMessageBridge: ", address(leafMessageBridge)), path);
-        vm.writeJson(vm.serializeAddress("", "leafMessageModule: ", address(leafMessageModule)), path);
+        vm.writeJson(vm.serializeAddress("", "leafTokenBridge", address(leafTokenBridge)), path);
+        vm.writeJson(vm.serializeAddress("", "leafMessageBridge", address(leafMessageBridge)), path);
+        vm.writeJson(vm.serializeAddress("", "leafMessageModule", address(leafMessageModule)), path);
 
-        vm.writeJson(vm.serializeAddress("", "leafRouter: ", address(leafRouter)), path);
-        vm.writeJson(vm.serializeAddress("", "ism: ", address(ism)), path);
+        vm.writeJson(vm.serializeAddress("", "leafRouter", address(leafRouter)), path);
+        vm.writeJson(vm.serializeAddress("", "ism", address(ism)), path);
     }
 }

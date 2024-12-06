@@ -7,6 +7,7 @@ import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/II
 
 import {VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
 import {LeafGaugeFactory} from "src/gauges/LeafGaugeFactory.sol";
+import {CustomFeeModule} from "src/fees/CustomFeeModule.sol";
 import {PoolFactory} from "src/pools/PoolFactory.sol";
 import {Pool} from "src/pools/Pool.sol";
 import {Router} from "src/Router.sol";
@@ -45,6 +46,7 @@ abstract contract DeployBaseFixture is DeployFixture {
     // leaf-only contracts
     PoolFactory public leafPoolFactory;
     Pool public leafPoolImplementation;
+    CustomFeeModule public leafFeeModule;
     LeafGaugeFactory public leafGaugeFactory;
     LeafVoter public leafVoter;
     VotingRewardsFactory public leafVotingRewardsFactory;
@@ -77,12 +79,16 @@ abstract contract DeployBaseFixture is DeployFixture {
                         address(leafPoolImplementation), // pool implementation
                         _params.poolAdmin, // pool admin
                         _params.pauser, // pauser
-                        _params.feeManager // fee manager
+                        _deployer // fee manager
                     )
                 )
             })
         );
         checkAddress({_entropy: POOL_FACTORY_ENTROPY, _output: address(leafPoolFactory)});
+
+        leafFeeModule = new CustomFeeModule({_factory: address(leafPoolFactory)});
+        leafPoolFactory.setFeeModule({_feeModule: address(leafFeeModule)});
+        leafPoolFactory.setFeeManager({_feeManager: _params.feeManager});
 
         leafRouter = Router(
             payable(
@@ -220,6 +226,7 @@ abstract contract DeployBaseFixture is DeployFixture {
     function logParams() internal view override {
         console.log("leafPoolImplementation: ", address(leafPoolImplementation));
         console.log("leafPoolFactory: ", address(leafPoolFactory));
+        console.log("leafFeeModule: ", address(leafFeeModule));
         console.log("leafGaugeFactory: ", address(leafGaugeFactory));
         console.log("leafVotingRewardsFactory: ", address(leafVotingRewardsFactory));
         console.log("leafVoter: ", address(leafVoter));
@@ -242,18 +249,19 @@ abstract contract DeployBaseFixture is DeployFixture {
         /// @dev This might overwrite an existing output file
         vm.writeJson(vm.serializeAddress("", "leafPoolImplementation", address(leafPoolImplementation)), path);
         vm.writeJson(vm.serializeAddress("", "leafPoolFactory", address(leafPoolFactory)), path);
-        vm.writeJson(vm.serializeAddress("", "leafGaugeFactory: ", address(leafGaugeFactory)), path);
-        vm.writeJson(vm.serializeAddress("", "leafVotingRewardsFactory: ", address(leafVotingRewardsFactory)), path);
-        vm.writeJson(vm.serializeAddress("", "leafVoter: ", address(leafVoter)), path);
+        vm.writeJson(vm.serializeAddress("", "leafFeeModule", address(leafFeeModule)), path);
+        vm.writeJson(vm.serializeAddress("", "leafGaugeFactory", address(leafGaugeFactory)), path);
+        vm.writeJson(vm.serializeAddress("", "leafVotingRewardsFactory", address(leafVotingRewardsFactory)), path);
+        vm.writeJson(vm.serializeAddress("", "leafVoter", address(leafVoter)), path);
 
-        vm.writeJson(vm.serializeAddress("", "leafXFactory: ", address(leafXFactory)), path);
-        vm.writeJson(vm.serializeAddress("", "leafXVelo: ", address(leafXVelo)), path);
+        vm.writeJson(vm.serializeAddress("", "leafXFactory", address(leafXFactory)), path);
+        vm.writeJson(vm.serializeAddress("", "leafXVelo", address(leafXVelo)), path);
 
-        vm.writeJson(vm.serializeAddress("", "leafTokenBridge: ", address(leafTokenBridge)), path);
-        vm.writeJson(vm.serializeAddress("", "leafMessageBridge: ", address(leafMessageBridge)), path);
-        vm.writeJson(vm.serializeAddress("", "leafMessageModule: ", address(leafMessageModule)), path);
+        vm.writeJson(vm.serializeAddress("", "leafTokenBridge", address(leafTokenBridge)), path);
+        vm.writeJson(vm.serializeAddress("", "leafMessageBridge", address(leafMessageBridge)), path);
+        vm.writeJson(vm.serializeAddress("", "leafMessageModule", address(leafMessageModule)), path);
 
-        vm.writeJson(vm.serializeAddress("", "leafRouter: ", address(leafRouter)), path);
-        vm.writeJson(vm.serializeAddress("", "ism: ", address(ism)), path);
+        vm.writeJson(vm.serializeAddress("", "leafRouter", address(leafRouter)), path);
+        vm.writeJson(vm.serializeAddress("", "ism", address(ism)), path);
     }
 }

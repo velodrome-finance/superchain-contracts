@@ -21,6 +21,7 @@ contract BobDeployBaseTest is BaseFixture {
     // leaf-only contracts
     PoolFactory public leafPoolFactory;
     Pool public leafPoolImplementation;
+    CustomFeeModule public leafFeeModule;
     LeafGaugeFactory public leafGaugeFactory;
     LeafVoter public leafVoter;
     VotingRewardsFactory public leafVotingRewardsFactory;
@@ -42,6 +43,7 @@ contract BobDeployBaseTest is BaseFixture {
 
         leafPoolImplementation = deploy.leafPoolImplementation();
         leafPoolFactory = deploy.leafPoolFactory();
+        leafFeeModule = deploy.leafFeeModule();
         leafGaugeFactory = deploy.leafGaugeFactory();
         leafVotingRewardsFactory = deploy.leafVotingRewardsFactory();
         leafVoter = deploy.leafVoter();
@@ -60,6 +62,7 @@ contract BobDeployBaseTest is BaseFixture {
 
         assertNotEq(address(leafPoolImplementation), address(0));
         assertNotEq(address(leafPoolFactory), address(0));
+        assertNotEq(address(leafFeeModule), address(0));
 
         assertNotEq(address(leafGaugeFactory), address(0));
         assertNotEq(address(leafVotingRewardsFactory), address(0));
@@ -76,12 +79,15 @@ contract BobDeployBaseTest is BaseFixture {
         assertNotEq(address(leafRouter), address(0));
 
         assertEq(leafPoolFactory.implementation(), address(leafPoolImplementation));
+        assertEq(leafPoolFactory.feeModule(), address(leafFeeModule));
         assertEq(leafPoolFactory.poolAdmin(), params.poolAdmin);
         assertEq(leafPoolFactory.pauser(), params.pauser);
         assertEq(leafPoolFactory.feeManager(), params.feeManager);
         assertEq(leafPoolFactory.isPaused(), false);
         assertEq(leafPoolFactory.stableFee(), 5);
         assertEq(leafPoolFactory.volatileFee(), 30);
+
+        assertEq(address(leafFeeModule.factory()), address(leafPoolFactory));
 
         assertEq(leafGaugeFactory.voter(), address(leafVoter));
         assertEq(leafGaugeFactory.xerc20(), address(leafXVelo));
