@@ -79,9 +79,9 @@ contract BobDeployPartialBaseTest is BaseFixture {
         // assertNotEq(address(leafIsm), address(0));
         assertNotEq(address(leafRouter), address(0));
 
-        assertEq(address(leafPoolImplementation), vm.parseJsonAddress(addresses, ".poolImplementation"));
-        assertEq(address(leafPoolFactory), vm.parseJsonAddress(addresses, ".poolFactory"));
-        assertEq(address(leafRouter), vm.parseJsonAddress(addresses, ".router"));
+        assertEq(address(leafPoolImplementation), vm.parseJsonAddress(addresses, ".leafPoolImplementation"));
+        assertEq(address(leafPoolFactory), vm.parseJsonAddress(addresses, ".leafPoolFactory"));
+        assertEq(address(leafRouter), vm.parseJsonAddress(addresses, ".leafRouter"));
 
         assertEq(leafPoolFactory.implementation(), address(leafPoolImplementation));
         assertEq(leafPoolFactory.isPaused(), false);

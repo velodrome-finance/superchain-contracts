@@ -60,9 +60,9 @@ abstract contract DeployPartialBaseFixture is DeployFixture {
         addresses = vm.readFile(path);
 
         /// @dev Use contracts from existing deployment
-        leafPoolImplementation = Pool(vm.parseJsonAddress(addresses, ".poolImplementation"));
-        leafPoolFactory = PoolFactory(vm.parseJsonAddress(addresses, ".poolFactory"));
-        leafRouter = Router(payable(vm.parseJsonAddress(addresses, ".router")));
+        leafPoolImplementation = Pool(vm.parseJsonAddress(addresses, ".leafPoolImplementation"));
+        leafPoolFactory = PoolFactory(vm.parseJsonAddress(addresses, ".leafPoolFactory"));
+        leafRouter = Router(payable(vm.parseJsonAddress(addresses, ".leafRouter")));
     }
 
     /// @dev Override if deploying extensions
