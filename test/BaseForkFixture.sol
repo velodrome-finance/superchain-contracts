@@ -97,7 +97,6 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
 
     DeployBase public deployLeaf;
     DeployBase.DeploymentParameters public leafParams;
-    DeployBase.ModeDeploymentParameters public modeParams;
 
     DeployRootBase public deployRoot;
     DeployRootBase.RootDeploymentParameters public rootParams;
@@ -139,6 +138,7 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
 
     // leaf variables
     uint32 public leaf = 34443; // leaf chain id
+    uint32 public leafDomain = 1000034443; // leaf domain
     uint256 public leafId; // leaf fork id (used by foundry)
     uint256 public leafStartTime; // leaf fork start time (set to start of epoch for simplicity)
 
@@ -320,7 +320,7 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
         vm.stopPrank();
 
         vm.startPrank(users.deployer2);
-        leafMailbox = new MultichainMockMailbox(leaf);
+        leafMailbox = new MultichainMockMailbox(leafDomain);
         leafIsm = new TestIsm();
         vm.stopPrank();
 
@@ -378,13 +378,14 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
         vm.startPrank(users.alice);
         weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
 
-        rootMailbox.addRemoteMailbox(leaf, leafMailbox);
-        rootMailbox.setDomainForkId({_domain: leaf, _forkId: leafId});
+        rootMailbox.addRemoteMailbox({_domain: leafDomain, _mailbox: leafMailbox});
+        rootMailbox.setDomainForkId({_domain: leafDomain, _forkId: leafId});
 
         // set up root pool & gauge
         vm.startPrank(users.owner);
         rootMessageBridge.addModule({_module: address(rootMessageModule)});
         rootMessageBridge.registerChain({_chainid: leaf, _module: address(rootMessageModule)});
+        rootMessageModule.setDomain({_chainid: leaf, _domain: leafDomain});
 
         rootPool = RootPool(
             rootPoolFactory.createPool({chainid: leaf, tokenA: address(token0), tokenB: address(token1), stable: false})

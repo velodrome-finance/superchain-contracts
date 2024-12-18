@@ -35,6 +35,8 @@ contract RootHLMessageModule is IRootHLMessageModule {
     address public immutable voter;
     /// @inheritdoc IRootHLMessageModule
     address public hook;
+    /// @inheritdoc IRootHLMessageModule
+    mapping(uint256 => uint32) public domains;
 
     constructor(address _bridge, address _mailbox) {
         bridge = _bridge;
@@ -58,10 +60,18 @@ contract RootHLMessageModule is IRootHLMessageModule {
         });
     }
 
+    /// @inheritdoc IRootHLMessageModule
+    function setDomain(uint256 _chainid, uint32 _domain) external {
+        if (msg.sender != Ownable(bridge).owner()) revert NotBridgeOwner();
+        domains[_chainid] = _domain;
+        emit DomainSet({_chainid: _chainid, _domain: _domain});
+    }
+
     /// @inheritdoc IMessageSender
     function sendMessage(uint256 _chainid, bytes calldata _message) external payable override {
         if (msg.sender != bridge) revert NotBridge();
-        uint32 domain = uint32(_chainid);
+        uint32 domain = domains[_chainid];
+        if (domain == 0) domain = uint32(_chainid);
 
         address _hook = hook;
         uint256 command = _message.command();

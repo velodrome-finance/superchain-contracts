@@ -63,7 +63,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: _caller});
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
-            _destination: leaf,
+            _destination: leafDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
             _message: string(expectedMessage),
@@ -112,7 +112,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY), address(leafGauge), _amount);
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
-            _destination: leaf,
+            _destination: leafDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
             _message: string(message),
@@ -158,7 +158,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY_WITHOUT_CLAIM), address(leafGauge), _amount);
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
-            _destination: leaf,
+            _destination: leafDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
             _message: string(message),
@@ -354,7 +354,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
-            _destination: leaf,
+            _destination: leafDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
             _message: string(message),
@@ -546,7 +546,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
-            _destination: leaf,
+            _destination: leafDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
             _message: string(message),

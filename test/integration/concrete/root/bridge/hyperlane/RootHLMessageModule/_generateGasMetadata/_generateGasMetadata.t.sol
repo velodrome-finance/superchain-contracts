@@ -36,7 +36,7 @@ contract GenerateGasMetadataIntegrationConcreteTest is RootHLMessageModuleTest {
         vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
-            _destination: leaf,
+            _destination: leafDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
             _message: string(expectedMessage),
@@ -67,7 +67,7 @@ contract GenerateGasMetadataIntegrationConcreteTest is RootHLMessageModuleTest {
         vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
-            _destination: leaf,
+            _destination: leafDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
             _message: string(expectedMessage),

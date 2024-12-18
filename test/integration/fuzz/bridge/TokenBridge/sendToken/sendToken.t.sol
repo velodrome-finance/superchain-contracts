@@ -16,7 +16,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
 
     modifier whenTheRequestedChainIsARegisteredChain() {
         vm.prank(users.owner);
-        rootTokenBridge.registerChain({_chainid: leaf});
+        rootTokenBridge.registerChain({_chainid: leafDomain});
 
         vm.selectFork({forkId: leafId});
         vm.prank(users.owner);
@@ -37,7 +37,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
         vm.assume(_recipient != address(0));
 
         vm.expectRevert(ITokenBridge.InsufficientBalance.selector);
-        rootTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: TOKEN_1, _chainid: leaf});
+        rootTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: TOKEN_1, _chainid: leafDomain});
     }
 
     modifier whenTheMsgValueIsGreaterThanOrEqualToQuotedFee() {
@@ -69,7 +69,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
         rootXVelo.approve({spender: address(rootTokenBridge), value: amount});
 
         vm.expectRevert("RateLimited: buffer cap overflow");
-        rootTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: leaf});
+        rootTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: leafDomain});
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(uint256 _bufferCap, uint256 _amount) {
@@ -105,7 +105,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
         vm.expectRevert(
             abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, address(rootGauge), _balance, amount)
         );
-        rootTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: leaf});
+        rootTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: leafDomain});
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheBalanceOfCaller() {
@@ -144,7 +144,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
 
         vm.expectEmit(address(rootTokenBridge));
         emit ITokenBridge.SentMessage({
-            _destination: leaf,
+            _destination: leafDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootTokenBridge)),
             _value: MESSAGE_FEE,
             _message: string(abi.encodePacked(_recipient, amount)),
@@ -157,7 +157,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
                 })
             )
         });
-        rootTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: amount, _chainid: leaf});
+        rootTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: amount, _chainid: leafDomain});
 
         assertEq(rootXVelo.balanceOf(users.alice), _balance - amount);
         assertEq(users.alice.balance, _msgValue - MESSAGE_FEE);
