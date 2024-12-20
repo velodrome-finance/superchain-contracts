@@ -74,10 +74,10 @@ import {IVotingEscrow, MockVotingEscrow} from "test/mocks/MockVotingEscrow.sol";
 import {IFactoryRegistry, MockFactoryRegistry} from "test/mocks/MockFactoryRegistry.sol";
 import {TestConstants} from "test/utils/TestConstants.sol";
 import {Users} from "test/utils/Users.sol";
+import {TestDeployLeaf} from "test/utils/TestDeployLeaf.sol";
+import {TestDeployRoot} from "test/utils/TestDeployRoot.sol";
 
-import {DeployBase} from "script/deployParameters/mode/DeployBase.s.sol";
 import {DeployRootBaseFixture} from "script/root/01_DeployRootBaseFixture.s.sol";
-import {DeployRootBase} from "script/deployParameters/optimism/DeployRootBase.s.sol";
 import {DeployBaseFixture} from "script/01_DeployBaseFixture.s.sol";
 
 abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
@@ -95,11 +95,11 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
     // contracts in {root/leaf}-only contracts run different code (but all code on each leaf chain will run the same code w/ different args)
     // contracts in {root}-only mocks are mock contracts and not part of the superchain deployment
 
-    DeployBase public deployLeaf;
-    DeployBase.DeploymentParameters public leafParams;
+    TestDeployLeaf public deployLeaf;
+    TestDeployLeaf.DeploymentParameters public leafParams;
 
-    DeployRootBase public deployRoot;
-    DeployRootBase.RootDeploymentParameters public rootParams;
+    TestDeployRoot public deployRoot;
+    TestDeployRoot.RootDeploymentParameters public rootParams;
 
     // root variables
     uint32 public root = 10; // root chain id
@@ -238,11 +238,6 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
         assertEq(token1.decimals(), 6);
         vm.stopPrank();
 
-        deployRoot = new DeployRootBase();
-        deployRoot.setUp();
-        stdstore.target(address(deployRoot)).sig("deployer()").checked_write(users.owner);
-        stdstore.target(address(deployRoot)).sig("isTest()").checked_write(true);
-
         rootParams = DeployRootBaseFixture.RootDeploymentParameters({
             weth: address(weth),
             voter: address(mockVoter),
@@ -256,7 +251,8 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
             mailbox: address(rootMailbox),
             outputFilename: "optimism.json"
         });
-        deployRoot.setParams(rootParams);
+        deployRoot = new TestDeployRoot(rootParams);
+        stdstore.target(address(deployRoot)).sig("deployer()").checked_write(users.owner);
 
         deployRoot.run();
 
@@ -324,11 +320,6 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
         leafIsm = new TestIsm();
         vm.stopPrank();
 
-        deployLeaf = new DeployBase();
-        deployLeaf.setUp();
-        stdstore.target(address(deployLeaf)).sig("deployer()").checked_write(users.owner);
-        stdstore.target(address(deployLeaf)).sig("isTest()").checked_write(true);
-
         leafParams = DeployBaseFixture.DeploymentParameters({
             weth: address(weth),
             poolAdmin: users.owner,
@@ -340,7 +331,8 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
             mailbox: address(leafMailbox),
             outputFilename: "mode.json"
         });
-        deployLeaf.setParams(leafParams);
+        deployLeaf = new TestDeployLeaf(leafParams);
+        stdstore.target(address(deployLeaf)).sig("deployer()").checked_write(users.owner);
 
         deployLeaf.run();
 

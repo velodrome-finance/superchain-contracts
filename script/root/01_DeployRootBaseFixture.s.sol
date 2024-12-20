@@ -192,11 +192,6 @@ abstract contract DeployRootBaseFixture is DeployFixture {
         return _params;
     }
 
-    /// @dev Used by tests to set the deployment parameters
-    function setParams(RootDeploymentParameters memory _params_) external {
-        _params = _params_;
-    }
-
     function logParams() internal view override {
         console.log("rootPoolImplementation: ", address(rootPoolImplementation));
         console.log("rootPoolFactory: ", address(rootPoolFactory));
