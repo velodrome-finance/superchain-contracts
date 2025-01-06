@@ -75,7 +75,13 @@ import {IFactoryRegistry, MockFactoryRegistry} from "test/mocks/MockFactoryRegis
 import {TestConstants} from "test/utils/TestConstants.sol";
 import {Users} from "test/utils/Users.sol";
 
+import {DeployBase} from "script/deployParameters/mode/DeployBase.s.sol";
+import {DeployRootBaseFixture} from "script/root/01_DeployRootBaseFixture.s.sol";
+import {DeployRootBase} from "script/deployParameters/optimism/DeployRootBase.s.sol";
+import {DeployBaseFixture} from "script/01_DeployBaseFixture.s.sol";
+
 abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
+    using stdStorage for StdStorage;
     using SafeCast for uint256;
 
     // anything prefixed with root is deployed on the root chain
@@ -88,6 +94,13 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
     // contracts in {root/leaf} superchain contracts run identical code (with different constructor / initialization args)
     // contracts in {root/leaf}-only contracts run different code (but all code on each leaf chain will run the same code w/ different args)
     // contracts in {root}-only mocks are mock contracts and not part of the superchain deployment
+
+    DeployBase public deployLeaf;
+    DeployBase.DeploymentParameters public leafParams;
+    DeployBase.ModeDeploymentParameters public modeParams;
+
+    DeployRootBase public deployRoot;
+    DeployRootBase.RootDeploymentParameters public rootParams;
 
     // root variables
     uint32 public root = 10; // root chain id
@@ -179,13 +192,11 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
     function setUpPreCommon() public virtual {
         vm.startPrank(users.owner);
         rootId = vm.createSelectFork({urlOrAlias: "optimism", blockNumber: 123316800});
-        deployCreateX();
         weth = IWETH(0x4200000000000000000000000000000000000006);
         rootStartTime = VelodromeTimeLibrary.epochStart(block.timestamp);
         vm.warp({newTimestamp: rootStartTime});
 
         leafId = vm.createSelectFork({urlOrAlias: "mode", blockNumber: 11032400});
-        deployCreateX();
         weth = IWETH(0x4200000000000000000000000000000000000006);
 
         leafStartTime = rootStartTime;
@@ -225,122 +236,44 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
         TestERC20 tokenB = new TestERC20("Test Token B", "TTB", 6); // mimic USDC
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         assertEq(token1.decimals(), 6);
+        vm.stopPrank();
 
-        rootMessageBridge = RootMessageBridge(
-            payable(CreateXLibrary.computeCreate3Address({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}))
-        );
-        rootPoolImplementation = RootPool(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: POOL_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(type(RootPool).creationCode)
-            })
-        );
-        rootPoolFactory = RootPoolFactory(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: POOL_FACTORY_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(RootPoolFactory).creationCode,
-                    abi.encode(
-                        address(rootPoolImplementation), // root pool implementation
-                        address(rootMessageBridge) // message bridge
-                    )
-                )
-            })
-        );
+        deployRoot = new DeployRootBase();
+        deployRoot.setUp();
+        stdstore.target(address(deployRoot)).sig("deployer()").checked_write(users.owner);
+        stdstore.target(address(deployRoot)).sig("isTest()").checked_write(true);
 
-        rootXFactory = XERC20Factory(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: XERC20_FACTORY_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(XERC20Factory).creationCode,
-                    abi.encode(
-                        users.owner, // xerc20 owner address
-                        address(rootRewardToken) // erc20 address
-                    )
-                )
-            })
-        );
+        rootParams = DeployRootBaseFixture.RootDeploymentParameters({
+            weth: address(weth),
+            voter: address(mockVoter),
+            velo: address(rootRewardToken),
+            tokenAdmin: users.owner,
+            bridgeOwner: users.owner,
+            emergencyCouncilOwner: users.owner,
+            notifyAdmin: users.owner,
+            emissionAdmin: users.owner,
+            defaultCap: 100,
+            mailbox: address(rootMailbox),
+            outputFilename: "optimism.json"
+        });
+        deployRoot.setParams(rootParams);
 
-        (address _xVelo, address _lockbox) = rootXFactory.deployXERC20WithLockbox();
-        rootXVelo = XERC20(_xVelo);
-        rootLockbox = XERC20Lockbox(_lockbox);
+        deployRoot.run();
 
-        rootMessageBridge = RootMessageBridge(
-            payable(
-                cx.deployCreate3({
-                    salt: CreateXLibrary.calculateSalt({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
-                    initCode: abi.encodePacked(
-                        type(RootMessageBridge).creationCode,
-                        abi.encode(
-                            users.owner, // message bridge owner
-                            address(rootXVelo), // xerc20 address
-                            address(mockVoter), // mock root voter
-                            address(weth) // weth contract
-                        )
-                    )
-                })
-            )
-        );
-        rootMessageModule = RootHLMessageModule(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(RootHLMessageModule).creationCode,
-                    abi.encode(
-                        address(rootMessageBridge), // root message bridge
-                        address(rootMailbox) // root mailbox
-                    )
-                )
-            })
-        );
-        rootTokenBridge = TokenBridge(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(TokenBridge).creationCode,
-                    abi.encode(
-                        users.owner, // bridge owner
-                        address(rootXVelo), // xerc20 address
-                        address(rootMailbox), // mailbox
-                        address(rootIsm) // security module
-                    )
-                )
-            })
-        );
+        rootXFactory = deployRoot.rootXFactory();
+        rootXVelo = deployRoot.rootXVelo();
+        rootTokenBridge = deployRoot.rootTokenBridge();
+        rootMessageBridge = deployRoot.rootMessageBridge();
+        rootMessageModule = deployRoot.rootMessageModule();
 
-        rootVotingRewardsFactory = RootVotingRewardsFactory(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: REWARDS_FACTORY_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(RootVotingRewardsFactory).creationCode,
-                    abi.encode(
-                        address(rootMessageBridge) // message bridge
-                    )
-                )
-            })
-        );
+        emergencyCouncil = deployRoot.emergencyCouncil();
 
-        rootGaugeFactory = RootGaugeFactory(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: GAUGE_FACTORY_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(RootGaugeFactory).creationCode,
-                    abi.encode(
-                        address(mockVoter), // voter address
-                        address(rootXVelo), // xerc20 address
-                        address(rootLockbox), // lockbox address
-                        address(rootMessageBridge), // message bridge address
-                        address(rootPoolFactory), // pool factory address
-                        address(rootVotingRewardsFactory), // voting rewards factory
-                        users.owner, // notify admin
-                        users.owner, // emission admin
-                        100 // 1% default cap
-                    )
-                )
-            })
-        );
+        rootLockbox = deployRoot.rootLockbox();
+        rootPoolImplementation = deployRoot.rootPoolImplementation();
+        rootPoolFactory = deployRoot.rootPoolFactory();
+        rootGaugeFactory = deployRoot.rootGaugeFactory();
+        rootVotingRewardsFactory = deployRoot.rootVotingRewardsFactory();
 
-        emergencyCouncil = new EmergencyCouncil({_owner: users.owner, _voter: address(mockVoter)});
         vm.startPrank(mockVoter.emergencyCouncil());
         mockVoter.setEmergencyCouncil(address(emergencyCouncil));
         vm.stopPrank();
@@ -391,146 +324,38 @@ abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
         leafIsm = new TestIsm();
         vm.stopPrank();
 
-        vm.startPrank(users.deployer);
-        leafPoolImplementation = Pool(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: POOL_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(type(Pool).creationCode)
-            })
-        );
-        leafPoolFactory = PoolFactory(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: POOL_FACTORY_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(PoolFactory).creationCode,
-                    abi.encode(
-                        address(leafPoolImplementation), // pool implementation
-                        users.owner, // pool admin
-                        users.owner, // pauser
-                        users.feeManager // fee manager
-                    )
-                )
-            })
-        );
-        leafRouter = Router(
-            payable(
-                cx.deployCreate3({
-                    salt: CreateXLibrary.calculateSalt({_entropy: ROUTER_ENTROPY, _deployer: users.deployer}),
-                    initCode: abi.encodePacked(
-                        type(Router).creationCode,
-                        abi.encode(
-                            address(leafPoolFactory), // pool factory
-                            address(weth) // weth contract
-                        )
-                    )
-                })
-            )
-        );
+        deployLeaf = new DeployBase();
+        deployLeaf.setUp();
+        stdstore.target(address(deployLeaf)).sig("deployer()").checked_write(users.owner);
+        stdstore.target(address(deployLeaf)).sig("isTest()").checked_write(true);
 
-        leafXFactory = XERC20Factory(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: XERC20_FACTORY_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(XERC20Factory).creationCode,
-                    abi.encode(
-                        users.owner, // xerc20 owner address
-                        address(0)
-                    )
-                )
-            })
-        );
+        leafParams = DeployBaseFixture.DeploymentParameters({
+            weth: address(weth),
+            poolAdmin: users.owner,
+            pauser: users.owner,
+            feeManager: users.owner,
+            tokenAdmin: users.owner,
+            bridgeOwner: users.owner,
+            moduleOwner: users.owner,
+            mailbox: address(leafMailbox),
+            outputFilename: "mode.json"
+        });
+        deployLeaf.setParams(leafParams);
 
-        leafMessageBridge = LeafMessageBridge(
-            CreateXLibrary.computeCreate3Address({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer})
-        );
-        leafVoter = LeafVoter(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: VOTER_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(LeafVoter).creationCode,
-                    abi.encode(
-                        address(leafMessageBridge) // message bridge
-                    )
-                )
-            })
-        );
+        deployLeaf.run();
 
-        leafXVelo = XERC20(leafXFactory.deployXERC20());
+        leafXFactory = deployLeaf.leafXFactory();
+        leafXVelo = deployLeaf.leafXVelo();
+        leafRouter = deployLeaf.leafRouter();
+        leafTokenBridge = deployLeaf.leafTokenBridge();
+        leafMessageBridge = deployLeaf.leafMessageBridge();
+        leafMessageModule = deployLeaf.leafMessageModule();
 
-        leafMessageModule = LeafHLMessageModule(
-            CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer})
-        );
-        leafMessageBridge = LeafMessageBridge(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(LeafMessageBridge).creationCode,
-                    abi.encode(
-                        users.owner, // message bridge owner
-                        address(leafXVelo), // xerc20 address
-                        address(leafVoter), // leaf voter
-                        address(leafMessageModule) // message module
-                    )
-                )
-            })
-        );
-        leafMessageModule = LeafHLMessageModule(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(LeafHLMessageModule).creationCode,
-                    abi.encode(
-                        users.owner, // leaf module owner
-                        address(leafMessageBridge), // leaf message bridge
-                        address(leafMailbox), // leaf mailbox
-                        address(leafIsm) // leaf security module
-                    )
-                )
-            })
-        );
-        leafTokenBridge = TokenBridge(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: TOKEN_BRIDGE_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(TokenBridge).creationCode,
-                    abi.encode(
-                        users.owner, // bridge owner
-                        address(leafXVelo), // xerc20 address
-                        address(leafMailbox), // mailbox
-                        address(leafIsm) // security module
-                    )
-                )
-            })
-        );
-
-        leafGaugeFactory = LeafGaugeFactory(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: GAUGE_FACTORY_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(LeafGaugeFactory).creationCode,
-                    abi.encode(
-                        address(leafVoter), // voter address
-                        address(leafXVelo), // xerc20 address
-                        address(leafMessageBridge) // bridge address
-                    )
-                )
-            })
-        );
-
-        leafVotingRewardsFactory = VotingRewardsFactory(
-            cx.deployCreate3({
-                salt: CreateXLibrary.calculateSalt({_entropy: REWARDS_FACTORY_ENTROPY, _deployer: users.deployer}),
-                initCode: abi.encodePacked(
-                    type(VotingRewardsFactory).creationCode,
-                    abi.encode(
-                        address(leafVoter), // voter address
-                        address(leafMessageBridge) // bridge address
-                    )
-                )
-            })
-        );
-
-        vm.stopPrank();
+        leafPoolFactory = deployLeaf.leafPoolFactory();
+        leafPoolImplementation = deployLeaf.leafPoolImplementation();
+        leafGaugeFactory = deployLeaf.leafGaugeFactory();
+        leafVoter = deployLeaf.leafVoter();
+        leafVotingRewardsFactory = deployLeaf.leafVotingRewardsFactory();
 
         vm.label({account: address(leafMailbox), newLabel: "Leaf Mailbox"});
         vm.label({account: address(leafIsm), newLabel: "Leaf ISM"});
