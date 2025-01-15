@@ -8,7 +8,7 @@ LEAF_MESSAGE_BRIDGE="0xF278761576f45472bdD721EACA19317cE159c011"
 ADDRESS_ZERO="0x0000000000000000000000000000000000000000"
 
 # Script Parameters
-CHAIN_NAME=
+CHAIN_NAME="MODE"
 
 # Load Env Variables
 source .env
@@ -32,7 +32,7 @@ if [ -z "${RPC_URL}" ] || [ -z "${ETHERSCAN_VERIFIER_URL}" ]; then
 fi
 
 # Fetch Pool with Gauge for Verification
-CHAIN_ID=$(cast chain-id --rpc-url $RPC_URL)
+CHAIN_ID=34443
 ALL_POOLS_LENGTH=$(cast call $LEAF_POOL_FACTORY "allPoolsLength()(uint256)" --rpc-url $RPC_URL)
 
 # Iterate through pools in factory to fetch a Leaf Gauge
@@ -52,65 +52,25 @@ if [[ "$LEAF_GAUGE" == "$ADDRESS_ZERO" ]]; then
 fi
 
 # Verification Parameters
-REWARDS_0=$(cast call $LEAF_POOL "token0()(address)" --rpc-url $RPC_URL)
-REWARDS_1=$(cast call $LEAF_POOL "token1()(address)" --rpc-url $RPC_URL)
-
-LEAF_FEES=$(cast call $LEAF_VOTER "gaugeToFees(address)(address)" $LEAF_GAUGE --rpc-url $RPC_URL)
-LEAF_INCENTIVE=$(cast call $LEAF_VOTER "gaugeToIncentive(address)(address)" $LEAF_GAUGE --rpc-url $RPC_URL)
-
 LEAF_GAUGE_STAKING_TOKEN=$(cast call $LEAF_GAUGE "stakingToken()(address)" --rpc-url $RPC_URL)
-LEAF_FEES=$(cast call $LEAF_GAUGE "feesVotingReward()(address)" --rpc-url $RPC_URL)
 LEAF_GAUGE_REWARD_TOKEN=$(cast call $LEAF_GAUGE "rewardToken()(address)" --rpc-url $RPC_URL)
+LEAF_FEES=$(cast call $LEAF_GAUGE "feesVotingReward()(address)" --rpc-url $RPC_URL)
 LEAF_GAUGE_IS_POOL=$(cast call $LEAF_GAUGE "isPool()(bool)" --rpc-url $RPC_URL)
 
-# LeafGauge
+# ModeLeafGauge
 forge verify-contract \
     $LEAF_GAUGE \
-    src/gauges/LeafGauge.sol:LeafGauge \
+    src/gauges/extensions/ModeLeafGauge.sol:ModeLeafGauge \
     --chain-id $CHAIN_ID \
     --num-of-optimizations 200 \
     --watch \
     --constructor-args $(cast ae "constructor(address,address,address,address,address,bool)()" \
-    $LEAF_GAUGE_STAKING_TOKEN \
-    $LEAF_FEES \
-    $LEAF_GAUGE_REWARD_TOKEN \
-    $LEAF_VOTER \
-    $LEAF_MESSAGE_BRIDGE \
-    $LEAF_GAUGE_IS_POOL \
-    ) \
-    --compiler-version "v0.8.27" \
-    --verifier blockscout \
-    --verifier-url $ETHERSCAN_VERIFIER_URL \
-    ${ETHERSCAN_API_KEY:+--etherscan-api-key $ETHERSCAN_API_KEY}
-
-# LeafFees
-forge verify-contract \
-    $LEAF_FEES \
-    src/rewards/FeesVotingReward.sol:FeesVotingReward \
-    --chain-id $CHAIN_ID \
-    --num-of-optimizations 200 \
-    --watch \
-    --constructor-args $(cast ae "constructor(address,address,address[]memory)()" \
-    $LEAF_VOTER \
-    $LEAF_MESSAGE_BRIDGE \
-    "[$REWARDS_0, $REWARDS_1]" \
-    ) \
-    --compiler-version "v0.8.27" \
-    --verifier blockscout \
-    --verifier-url $ETHERSCAN_VERIFIER_URL \
-    ${ETHERSCAN_API_KEY:+--etherscan-api-key $ETHERSCAN_API_KEY}
-
-# LeafIncentives
-forge verify-contract \
-    $LEAF_INCENTIVE \
-    src/rewards/IncentiveVotingReward.sol:IncentiveVotingReward \
-    --chain-id $CHAIN_ID \
-    --num-of-optimizations 200 \
-    --watch \
-    --constructor-args $(cast ae "constructor(address,address,address[]memory)()" \
-    $LEAF_VOTER \
-    $LEAF_MESSAGE_BRIDGE \
-    "[$REWARDS_0, $REWARDS_1]" \
+        $LEAF_GAUGE_STAKING_TOKEN \
+        $LEAF_FEES \
+        $LEAF_GAUGE_REWARD_TOKEN \
+        $LEAF_VOTER \
+        $LEAF_MESSAGE_BRIDGE \
+        $LEAF_GAUGE_IS_POOL \
     ) \
     --compiler-version "v0.8.27" \
     --verifier blockscout \
