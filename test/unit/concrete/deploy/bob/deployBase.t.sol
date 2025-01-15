@@ -27,7 +27,7 @@ contract BobDeployBaseTest is BaseFixture {
     VotingRewardsFactory public leafVotingRewardsFactory;
 
     function setUp() public override {
-        vm.createSelectFork({urlOrAlias: "bob", blockNumber: 1323496});
+        vm.createSelectFork({urlOrAlias: "bob", blockNumber: 3225130});
 
         deploy = new DeployBase();
         // this runs automatically when you run the script, but must be called manually in the test
