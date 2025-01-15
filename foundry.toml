@@ -6,6 +6,8 @@ solc_version = "0.8.27"
 show_progress = true
 no-match-test = "testGas"
 no-match-contract = "GaugeFlowE2EFuzzTest"
+optimizer = true
+optimizer_runs = 200
 
 ffi = true
 fs_permissions = [{ access = "read-write", path = "./"}]
