@@ -23,6 +23,7 @@ bob = "${BOB_RPC_URL}"
 optimism = "${OPTIMISM_RPC_URL}"
 metal = "${METAL_RPC_URL}"
 ink = "${INK_RPC_URL}"
+soneium = "${SONEIUM_RPC_URL}"
 
 [etherscan]
 mode = { key = "${MODE_ETHERSCAN_API_KEY}", url = "${MODE_ETHERSCAN_VERIFIER_URL}" }
@@ -31,3 +32,4 @@ fraxtal = { key = "${FRAXTAL_ETHERSCAN_API_KEY}", url = "${FRAXTAL_ETHERSCAN_VER
 lisk = { key = "${LISK_ETHERSCAN_API_KEY}", url = "${LISK_ETHERSCAN_VERIFIER_URL}"}
 metal = { key = "NA", url = "${METAL_ETHERSCAN_VERIFIER_URL}"}
 ink = { key = "NA", url = "${INK_ETHERSCAN_VERIFIER_URL}"}
+soneium = { key = "NA", url = "${SONEIUM_ETHERSCAN_VERIFIER_URL}"}
