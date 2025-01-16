@@ -124,6 +124,6 @@ contract AddBridgeUnitConcreteTest is XERC20Test {
         xVelo.addBridge(
             MintLimits.RateLimitMidPointInfo({bridge: bridge, bufferCap: bufferCap, rateLimitPerSecond: rps})
         );
-        snapLastCall("XERC20_addBridge");
+        vm.snapshotGasLastCall("XERC20_addBridge");
     }
 }

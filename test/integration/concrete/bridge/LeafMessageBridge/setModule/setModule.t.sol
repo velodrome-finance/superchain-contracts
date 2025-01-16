@@ -54,6 +54,6 @@ contract SetModuleIntegrationConcreteTest is LeafMessageBridgeTest {
 
         vm.prank(users.owner);
         leafMessageBridge.setModule({_module: module});
-        snapLastCall("LeafMessageBridge_setModule");
+        vm.snapshotGasLastCall("LeafMessageBridge_setModule");
     }
 }

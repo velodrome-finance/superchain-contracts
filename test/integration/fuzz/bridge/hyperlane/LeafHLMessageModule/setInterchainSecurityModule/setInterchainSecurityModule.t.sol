@@ -32,6 +32,6 @@ contract SetInterchainSecurityModuleIntegrationFuzzTest is LeafHLMessageModuleTe
     function testGas_setInterchainSecurityModule() external {
         vm.prank(users.owner);
         leafMessageModule.setInterchainSecurityModule({_ism: address(1)});
-        snapLastCall("LeafHLMessageModule_setInterchainSecurityModule");
+        vm.snapshotGasLastCall("LeafHLMessageModule_setInterchainSecurityModule");
     }
 }

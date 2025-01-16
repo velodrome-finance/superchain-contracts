@@ -139,6 +139,6 @@ contract SetBufferCapUnitConcreteTest is XERC20Test {
 
         vm.startPrank(users.owner);
         xVelo.setBufferCap({_bridge: bridge, _newBufferCap: bufferCap});
-        snapLastCall("XERC20_setBufferCap");
+        vm.snapshotGasLastCall("XERC20_setBufferCap");
     }
 }

@@ -559,6 +559,6 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
 
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootGauge.notifyRewardAmount({_amount: amount});
-        snapLastCall("RootGauge_notifyRewardAmount");
+        vm.snapshotGasLastCall("RootGauge_notifyRewardAmount");
     }
 }

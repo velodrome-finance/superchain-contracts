@@ -120,6 +120,6 @@ contract HandleIntegrationConcreteTest is TokenBridgeTest {
 
         vm.prank(address(leafMailbox));
         leafTokenBridge.handle{value: TOKEN_1 / 2}({_origin: root, _sender: sender, _message: _message});
-        snapLastCall("TokenBridge_handle");
+        vm.snapshotGasLastCall("TokenBridge_handle");
     }
 }

@@ -71,6 +71,6 @@ contract DeployXERC20WithLockboxUnitConcreteTest is XERC20FactoryTest {
 
     function testGas_deployXERC20WithLockbox() external givenXERC20NotYetDeployed {
         xFactory.deployXERC20WithLockbox();
-        snapLastCall("XERC20Factory_deployXERC20WithLockbox");
+        vm.snapshotGasLastCall("XERC20Factory_deployXERC20WithLockbox");
     }
 }

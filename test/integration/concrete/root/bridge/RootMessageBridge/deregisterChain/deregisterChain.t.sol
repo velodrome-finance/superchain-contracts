@@ -59,6 +59,6 @@ contract DeregisterChainIntegrationConcreteTest is RootMessageBridgeTest {
         rootMessageBridge.registerChain({_chainid: chainid, _module: address(rootMessageModule)});
 
         rootMessageBridge.deregisterChain({_chainid: chainid});
-        snapLastCall("RootMessageBridge_deregisterChain");
+        vm.snapshotGasLastCall("RootMessageBridge_deregisterChain");
     }
 }

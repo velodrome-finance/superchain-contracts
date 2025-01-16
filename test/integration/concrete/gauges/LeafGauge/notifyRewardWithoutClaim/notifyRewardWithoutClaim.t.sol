@@ -118,6 +118,6 @@ contract NotifyRewardWithoutClaimIntegrationConcreteTest is BaseForkFixture {
     {
         uint256 amount = TOKEN_1 * 1000;
         leafGauge.notifyRewardWithoutClaim({_amount: amount});
-        snapLastCall("LeafGauge_notifyRewardWithoutClaim");
+        vm.snapshotGasLastCall("LeafGauge_notifyRewardWithoutClaim");
     }
 }

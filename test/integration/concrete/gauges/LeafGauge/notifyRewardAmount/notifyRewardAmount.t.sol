@@ -122,6 +122,6 @@ contract NotifyRewardAmountIntegrationConcreteTest is BaseForkFixture {
     {
         uint256 amount = TOKEN_1 * 1000;
         leafGauge.notifyRewardAmount({_amount: amount});
-        snapLastCall("LeafGauge_notifyRewardAmount");
+        vm.snapshotGasLastCall("LeafGauge_notifyRewardAmount");
     }
 }

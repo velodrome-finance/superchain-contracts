@@ -88,6 +88,6 @@ contract RegisterChainIntegrationConcreteTest is RootMessageBridgeTest {
         whenTheModuleIsAddedToTheRegistry
     {
         rootMessageBridge.registerChain({_chainid: leaf, _module: address(rootMessageModule)});
-        snapLastCall("RootMessageBridge_registerChain");
+        vm.snapshotGasLastCall("RootMessageBridge_registerChain");
     }
 }

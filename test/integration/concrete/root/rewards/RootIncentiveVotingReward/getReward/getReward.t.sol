@@ -294,6 +294,6 @@ contract GetRewardIntegrationConcreteTest is RootIncentiveVotingRewardTest {
 
         vm.prank({msgSender: users.bob, txOrigin: users.bob});
         rootIVR.getReward({_tokenId: tokenId, _tokens: tokens});
-        snapLastCall("RootIncentiveVotingReward_getReward");
+        vm.snapshotGasLastCall("RootIncentiveVotingReward_getReward");
     }
 }

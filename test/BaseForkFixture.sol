@@ -10,7 +10,6 @@ import {IWETH} from "src/interfaces/external/IWETH.sol";
 import {ISpecifiesInterchainSecurityModule} from "src/interfaces/external/ISpecifiesInterchainSecurityModule.sol";
 
 import {Test, stdStorage, StdStorage} from "forge-std/src/Test.sol";
-import {GasSnapshot} from "forge-gas-snapshot/GasSnapshot.sol";
 import {Clones} from "@openzeppelin5/contracts/proxy/Clones.sol";
 import {Math} from "@openzeppelin5/contracts/utils/math/Math.sol";
 import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
@@ -80,7 +79,7 @@ import {TestDeployRoot} from "test/utils/TestDeployRoot.sol";
 import {DeployRootBaseFixture} from "script/root/01_DeployRootBaseFixture.s.sol";
 import {DeployBaseFixture} from "script/01_DeployBaseFixture.s.sol";
 
-abstract contract BaseForkFixture is Test, TestConstants, GasSnapshot {
+abstract contract BaseForkFixture is Test, TestConstants {
     using stdStorage for StdStorage;
     using SafeCast for uint256;
 

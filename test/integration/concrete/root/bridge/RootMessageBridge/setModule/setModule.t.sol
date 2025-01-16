@@ -74,6 +74,6 @@ contract SetModuleIntegrationConcreteTest is RootMessageBridgeTest {
         rootMessageBridge.registerChain({_chainid: 1, _module: address(1)});
 
         rootMessageBridge.setModule({_chainid: 1, _module: address(rootMessageModule)});
-        snapLastCall("RootMessageBridge_setModule");
+        vm.snapshotGasLastCall("RootMessageBridge_setModule");
     }
 }

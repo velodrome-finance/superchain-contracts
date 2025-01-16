@@ -565,6 +565,6 @@ contract SendMessageIntegrationConcreteTest is RootHLMessageModuleTest {
         vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
         bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
-        snapLastCall("RootHLMessageModule_sendMessage_deposit");
+        vm.snapshotGasLastCall("RootHLMessageModule_sendMessage_deposit");
     }
 }

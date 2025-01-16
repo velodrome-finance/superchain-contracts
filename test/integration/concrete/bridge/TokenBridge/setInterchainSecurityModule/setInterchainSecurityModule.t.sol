@@ -31,6 +31,6 @@ contract SetInterchainSecurityModuleIntegrationConcreteTest is TokenBridgeTest {
     function testGas_setInterchainSecurityModule() external {
         vm.prank(users.owner);
         leafTokenBridge.setInterchainSecurityModule({_ism: address(1)});
-        snapLastCall("TokenBridge_setInterchainSecurityModule");
+        vm.snapshotGasLastCall("TokenBridge_setInterchainSecurityModule");
     }
 }

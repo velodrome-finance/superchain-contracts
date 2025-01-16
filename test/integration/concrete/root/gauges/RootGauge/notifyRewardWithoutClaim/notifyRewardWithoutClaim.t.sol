@@ -153,6 +153,6 @@ contract NotifyRewardWithoutClaimIntegrationConcreteTest is RootGaugeTest {
 
         vm.prank({msgSender: users.owner, txOrigin: users.alice});
         rootGauge.notifyRewardWithoutClaim({_amount: amount});
-        snapLastCall("RootGauge_notifyRewardWithoutClaim");
+        vm.snapshotGasLastCall("RootGauge_notifyRewardWithoutClaim");
     }
 }

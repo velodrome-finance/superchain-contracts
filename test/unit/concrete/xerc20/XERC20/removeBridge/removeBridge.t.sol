@@ -52,6 +52,6 @@ contract RemoveBridgeUnitConcreteTest is XERC20Test {
         );
 
         xVelo.removeBridge(bridge);
-        snapLastCall("XERC20_removeBridge");
+        vm.snapshotGasLastCall("XERC20_removeBridge");
     }
 }

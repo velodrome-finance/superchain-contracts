@@ -264,6 +264,6 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         rootXVelo.approve({spender: address(rootTokenBridge), value: amount});
 
         rootTokenBridge.sendToken{value: ethAmount}({_recipient: recipient, _amount: amount, _chainid: leafDomain});
-        snapLastCall("TokenBridge_sendToken");
+        vm.snapshotGasLastCall("TokenBridge_sendToken");
     }
 }

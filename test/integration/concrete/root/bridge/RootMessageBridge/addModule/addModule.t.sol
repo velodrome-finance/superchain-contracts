@@ -50,6 +50,6 @@ contract AddModuleIntegrationConcreteTest is RootMessageBridgeTest {
 
     function testGas_addModule() external whenTheCallerIsOwner {
         rootMessageBridge.addModule({_module: address(rootMessageModule)});
-        snapLastCall("RootMessageBridge_addModule");
+        vm.snapshotGasLastCall("RootMessageBridge_addModule");
     }
 }

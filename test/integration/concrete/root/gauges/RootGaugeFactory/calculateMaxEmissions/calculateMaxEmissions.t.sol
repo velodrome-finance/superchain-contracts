@@ -85,6 +85,6 @@ contract CalculateMaxEmissionsIntegrationConcreteTest is RootGaugeFactoryTest {
         stdstore.target(address(minter)).sig("activePeriod()").checked_write(rootGaugeFactory.TAIL_START_TIMESTAMP());
 
         rootGaugeFactory.calculateMaxEmissions({_gauge: address(rootGauge)});
-        snapLastCall("RootGaugeFactory_calculateMaxEmissions");
+        vm.snapshotGasLastCall("RootGaugeFactory_calculateMaxEmissions");
     }
 }

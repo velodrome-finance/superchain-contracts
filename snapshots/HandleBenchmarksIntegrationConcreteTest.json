@@ -1,0 +1,11 @@
+{
+  "LeafHLMessageModule_handle_createGauge": "4637940",
+  "LeafHLMessageModule_handle_deposit": "414388",
+  "LeafHLMessageModule_handle_getFees": "269982",
+  "LeafHLMessageModule_handle_getIncentives": "586371",
+  "LeafHLMessageModule_handle_killGauge": "75003",
+  "LeafHLMessageModule_handle_notifyRewardAmount": "232905",
+  "LeafHLMessageModule_handle_notifyRewardWithoutClaim": "211522",
+  "LeafHLMessageModule_handle_reviveGauge": "153747",
+  "LeafHLMessageModule_handle_withdraw": "99698"
+}
