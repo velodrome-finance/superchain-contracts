@@ -9,7 +9,6 @@ contract SetHookIntegrationConcreteTest is TokenBridgeTest {
     function setUp() public virtual override {
         super.setUp();
 
-        vm.selectFork({forkId: rootId});
         hook = new MockCustomHook();
     }
 
@@ -17,17 +16,17 @@ contract SetHookIntegrationConcreteTest is TokenBridgeTest {
         // It should revert with {OwnableUnauthorizedAccount}
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.charlie));
-        rootTokenBridge.setHook({_hook: address(hook)});
+        leafTokenBridge.setHook({_hook: address(hook)});
     }
 
     function test_WhenTheCallerIsOwner() external {
         // It should set new hook
         // It should emit {HookSet} event
-        vm.prank(rootTokenBridge.owner());
-        vm.expectEmit(address(rootTokenBridge));
+        vm.prank(leafTokenBridge.owner());
+        vm.expectEmit(address(leafTokenBridge));
         emit ITokenBridge.HookSet({_newHook: address(hook)});
-        rootTokenBridge.setHook({_hook: address(hook)});
+        leafTokenBridge.setHook({_hook: address(hook)});
 
-        assertEq(rootTokenBridge.hook(), address(hook));
+        assertEq(leafTokenBridge.hook(), address(hook));
     }
 }

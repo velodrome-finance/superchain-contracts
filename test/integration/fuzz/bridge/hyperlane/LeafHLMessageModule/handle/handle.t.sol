@@ -36,7 +36,7 @@ contract HandleIntegrationFuzzTest is LeafHLMessageModuleTest {
 
     function testFuzz_WhenTheOriginIsNotRoot(uint32 _origin) external whenTheCallerIsMailbox {
         // It should revert with {NotRoot}
-        vm.assume(_origin != root);
+        vm.assume(_origin != rootDomain);
         vm.expectRevert(IHLHandler.NotRoot.selector);
         leafMessageModule.handle({
             _origin: _origin,

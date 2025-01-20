@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../TokenBridge.t.sol";
+import "../RootTokenBridge.t.sol";
 
-contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
+contract SendTokenIntegrationFuzzTest is RootTokenBridgeTest {
     uint256 public amount;
 
     modifier whenTheRequestedAmountIsNotZero() {
@@ -16,12 +16,12 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
 
     modifier whenTheRequestedChainIsARegisteredChain() {
         vm.prank(users.owner);
-        leafTokenBridge.registerChain({_chainid: root});
-
-        vm.selectFork({forkId: rootId});
-        vm.prank(users.owner);
         rootTokenBridge.registerChain({_chainid: leafDomain});
+
         vm.selectFork({forkId: leafId});
+        vm.prank(users.owner);
+        leafTokenBridge.registerChain({_chainid: root});
+        vm.selectFork({forkId: rootId});
         _;
     }
 
@@ -33,11 +33,11 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
     {
         // It should revert with {InsufficientBalance}
         _msgValue = bound(_msgValue, 0, MESSAGE_FEE - 1);
-        vm.deal({account: address(leafGauge), newBalance: MESSAGE_FEE});
+        vm.deal({account: address(rootGauge), newBalance: MESSAGE_FEE});
         vm.assume(_recipient != address(0));
 
         vm.expectRevert(ITokenBridge.InsufficientBalance.selector);
-        leafTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: TOKEN_1, _chainid: root});
+        rootTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: TOKEN_1, _chainid: leafDomain});
     }
 
     modifier whenTheMsgValueIsGreaterThanOrEqualToQuotedFee() {
@@ -56,24 +56,24 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
         whenTheMsgValueIsGreaterThanOrEqualToQuotedFee
     {
         // It should revert with "RateLimited: buffer cap overflow"
-        _bufferCap = bound(_bufferCap, leafXVelo.minBufferCap() + 1, MAX_BUFFER_CAP);
+        _bufferCap = bound(_bufferCap, rootXVelo.minBufferCap() + 1, MAX_BUFFER_CAP);
         amount = bound(_amount, _bufferCap / 2 + 2, type(uint256).max / 2); // increment by 2 to account for rounding
         vm.assume(_recipient != address(0));
 
         uint256 ethAmount = MESSAGE_FEE;
-        vm.deal({account: address(leafGauge), newBalance: ethAmount});
-        deal({token: address(leafXVelo), to: address(leafGauge), give: amount});
+        vm.deal({account: address(rootGauge), newBalance: ethAmount});
+        deal({token: address(rootRewardToken), to: address(rootGauge), give: amount});
         setLimits({_rootBufferCap: _bufferCap, _leafBufferCap: _bufferCap});
 
-        vm.startPrank(address(leafGauge));
-        leafXVelo.approve({spender: address(leafTokenBridge), value: amount});
+        vm.startPrank(address(rootGauge));
+        rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});
 
         vm.expectRevert("RateLimited: buffer cap overflow");
-        leafTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: root});
+        rootTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: leafDomain});
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(uint256 _bufferCap, uint256 _amount) {
-        _bufferCap = bound(_bufferCap, leafXVelo.minBufferCap() + 1, MAX_BUFFER_CAP);
+        _bufferCap = bound(_bufferCap, rootXVelo.minBufferCap() + 1, MAX_BUFFER_CAP);
         amount = bound(_amount, WEEK, _bufferCap / 2);
         setLimits({_rootBufferCap: _bufferCap, _leafBufferCap: _bufferCap});
         _;
@@ -96,16 +96,16 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
         _balance = bound(_balance, 0, amount - 1);
         vm.assume(_recipient != address(0));
         uint256 ethAmount = MESSAGE_FEE;
-        vm.deal({account: address(leafGauge), newBalance: ethAmount});
-        deal({token: address(leafXVelo), to: address(leafGauge), give: _balance});
+        vm.deal({account: address(rootGauge), newBalance: ethAmount});
+        deal({token: address(rootRewardToken), to: address(rootGauge), give: _balance});
 
-        vm.startPrank(address(leafGauge));
-        leafXVelo.approve({spender: address(leafTokenBridge), value: amount});
+        vm.startPrank(address(rootGauge));
+        rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});
 
         vm.expectRevert(
-            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, address(leafGauge), _balance, amount)
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, address(rootGauge), _balance, amount)
         );
-        leafTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: root});
+        rootTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: leafDomain});
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheBalanceOfCaller() {
@@ -127,56 +127,55 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
         whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(_bufferCap, _amount)
         whenTheAmountIsLessThanOrEqualToTheBalanceOfCaller
     {
-        // It burns the caller's tokens
-        // It dispatches a message to the destination mailbox
+        // It pulls the caller's tokens
+        // It wraps to xerc20
+        // It burns the newly minted xerc20 tokens
+        // It dispatches a message to the destination mailbox using default quote
         // It refunds any excess value
         // It emits a {SentMessage} event
-        // It sends the amount of unwrapped tokens to the caller on the destination chain
+        // It mints the amount of tokens to the caller on the destination chain
         _msgValue = bound(_msgValue, MESSAGE_FEE, MAX_TOKENS);
         _balance = bound(_balance, amount, type(uint256).max / 2);
         vm.assume(_recipient != address(0));
 
         vm.deal({account: users.alice, newBalance: _msgValue});
-        deal({token: address(leafXVelo), to: users.alice, give: _balance});
+        deal({token: address(rootRewardToken), to: users.alice, give: _balance});
 
         vm.startPrank(users.alice);
-        leafXVelo.approve({spender: address(leafTokenBridge), value: amount});
+        rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});
 
-        vm.expectEmit(address(leafTokenBridge));
+        vm.expectEmit(address(rootTokenBridge));
         emit ITokenBridge.SentMessage({
-            _destination: rootDomain,
-            _recipient: TypeCasts.addressToBytes32(address(leafTokenBridge)),
+            _destination: leafDomain,
+            _recipient: TypeCasts.addressToBytes32(address(rootTokenBridge)),
             _value: MESSAGE_FEE,
             _message: string(abi.encodePacked(_recipient, amount)),
             _metadata: string(
                 StandardHookMetadata.formatMetadata({
                     _msgValue: _msgValue,
-                    _gasLimit: leafTokenBridge.GAS_LIMIT(),
+                    _gasLimit: rootTokenBridge.GAS_LIMIT(),
                     _refundAddress: users.alice,
                     _customMetadata: ""
                 })
             )
         });
-        leafTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: amount, _chainid: root});
+        rootTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: amount, _chainid: leafDomain});
 
-        assertEq(leafXVelo.balanceOf(users.alice), _balance - amount);
+        assertEq(rootXVelo.balanceOf(users.alice), 0);
+        assertApproxEqAbs(rootRewardToken.balanceOf(users.alice), _balance - amount, 1e18);
         assertEq(users.alice.balance, _msgValue - MESSAGE_FEE);
-        assertEq(address(leafTokenBridge).balance, 0);
+        assertEq(address(rootTokenBridge).balance, 0);
 
-        vm.selectFork({forkId: rootId});
-        // deal tokens to allow unwrapping xerc20
-        deal({token: address(rootRewardToken), to: address(rootLockbox), give: amount});
-
-        vm.expectEmit(address(rootTokenBridge));
+        vm.selectFork({forkId: leafId});
+        vm.expectEmit(address(leafTokenBridge));
         emit IHLHandler.ReceivedMessage({
-            _origin: leafDomain,
-            _sender: TypeCasts.addressToBytes32(address(rootTokenBridge)),
+            _origin: rootDomain,
+            _sender: TypeCasts.addressToBytes32(address(leafTokenBridge)),
             _value: 0,
             _message: string(abi.encodePacked(_recipient, amount))
         });
-        rootMailbox.processNextInboundMessage();
-        assertEq(rootXVelo.balanceOf(_recipient), 0);
-        assertEq(rootRewardToken.balanceOf(_recipient), amount);
+        leafMailbox.processNextInboundMessage();
+        assertEq(leafXVelo.balanceOf(_recipient), amount);
     }
 
     function testFuzz_WhenThereIsACustomHookSet() external {}

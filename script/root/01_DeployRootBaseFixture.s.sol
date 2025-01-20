@@ -17,7 +17,7 @@ import {XERC20} from "src/xerc20/XERC20.sol";
 import {EmergencyCouncil} from "src/root/emergencyCouncil/EmergencyCouncil.sol";
 import {RootHLMessageModule} from "src/root/bridge/hyperlane/RootHLMessageModule.sol";
 import {RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
-import {TokenBridge} from "src/bridge/TokenBridge.sol";
+import {RootTokenBridge} from "src/root/bridge/RootTokenBridge.sol";
 
 abstract contract DeployRootBaseFixture is DeployFixture {
     using CreateXLibrary for bytes11;
@@ -39,7 +39,7 @@ abstract contract DeployRootBaseFixture is DeployFixture {
     // root superchain contracts
     XERC20Factory public rootXFactory;
     XERC20 public rootXVelo;
-    TokenBridge public rootTokenBridge;
+    RootTokenBridge public rootTokenBridge;
     RootMessageBridge public rootMessageBridge;
     RootHLMessageModule public rootMessageModule;
 
@@ -135,11 +135,11 @@ abstract contract DeployRootBaseFixture is DeployFixture {
         );
         checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _output: address(rootMessageModule)});
 
-        rootTokenBridge = TokenBridge(
+        rootTokenBridge = RootTokenBridge(
             cx.deployCreate3({
                 salt: TOKEN_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
-                    type(TokenBridge).creationCode,
+                    type(RootTokenBridge).creationCode,
                     abi.encode(
                         _params.bridgeOwner, // bridge owner
                         address(rootXVelo), // xerc20 address

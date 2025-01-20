@@ -8,7 +8,7 @@ contract DeregisterChainIntegrationConcreteTest is TokenBridgeTest {
         // It reverts with {OwnableUnauthorizedAccount}
         vm.prank(users.charlie);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.charlie));
-        rootTokenBridge.deregisterChain({_chainid: 10});
+        leafTokenBridge.deregisterChain({_chainid: 10});
     }
 
     modifier whenTheCallerIsTheOwner() {
@@ -21,20 +21,20 @@ contract DeregisterChainIntegrationConcreteTest is TokenBridgeTest {
         uint256 chainid = block.chainid;
 
         vm.expectRevert(IChainRegistry.NotRegistered.selector);
-        rootTokenBridge.deregisterChain({_chainid: chainid});
+        leafTokenBridge.deregisterChain({_chainid: chainid});
     }
 
     function test_WhenTheChainIsRegistered() external whenTheCallerIsTheOwner {
         // It deregisters the chain id
         // It emits the {ChainRegistered} event
         uint256 chainid = 100;
-        rootTokenBridge.registerChain({_chainid: chainid});
+        leafTokenBridge.registerChain({_chainid: chainid});
 
-        vm.expectEmit(address(rootTokenBridge));
+        vm.expectEmit(address(leafTokenBridge));
         emit IChainRegistry.ChainDeregistered({_chainid: chainid});
-        rootTokenBridge.deregisterChain({_chainid: chainid});
+        leafTokenBridge.deregisterChain({_chainid: chainid});
 
-        uint256[] memory chainids = rootTokenBridge.chainids();
+        uint256[] memory chainids = leafTokenBridge.chainids();
         assertEq(chainids.length, 0);
     }
 }

@@ -40,6 +40,7 @@ import {IPool, Pool} from "src/pools/Pool.sol";
 import {IRouter, Router} from "src/Router.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {ITokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
+import {RootTokenBridge} from "src/root/bridge/RootTokenBridge.sol";
 import {ILeafMessageBridge, LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
 import {IRootMessageBridge, RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
 import {IHLHandler} from "src/interfaces/bridge/hyperlane/IHLHandler.sol";
@@ -102,13 +103,14 @@ abstract contract BaseForkFixture is Test, TestConstants {
 
     // root variables
     uint32 public root = 10; // root chain id
+    uint32 public rootDomain = 10; // root domain
     uint256 public rootId; // root fork id (used by foundry)
     uint256 public rootStartTime; // root fork start time (set to start of epoch for simplicity)
 
     // root superchain contracts
     XERC20Factory public rootXFactory;
     XERC20 public rootXVelo;
-    TokenBridge public rootTokenBridge;
+    RootTokenBridge public rootTokenBridge;
     RootMessageBridge public rootMessageBridge;
     RootHLMessageModule public rootMessageModule;
 
@@ -209,7 +211,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
 
         // deploy root mocks
         vm.startPrank(users.owner);
-        rootMailbox = new MultichainMockMailbox(root);
+        rootMailbox = new MultichainMockMailbox(rootDomain);
         rootIsm = new TestIsm();
         rootRewardToken = new TestERC20("Reward Token", "RWRD", 18);
         minter = IMinter(vm.parseJsonAddress(addresses, ".Minter"));
@@ -393,6 +395,15 @@ abstract contract BaseForkFixture is Test, TestConstants {
         vm.stopPrank();
 
         vm.selectFork({forkId: leafId});
+        // mock calls to dispatch
+        vm.mockCall({
+            callee: address(leafMailbox),
+            data: abi.encode(bytes4(keccak256("quoteDispatch(uint32,bytes32,bytes,bytes,address)"))),
+            returnData: abi.encode(MESSAGE_FEE)
+        });
+        leafMailbox.addRemoteMailbox({_domain: rootDomain, _mailbox: rootMailbox});
+        leafMailbox.setDomainForkId({_domain: rootDomain, _forkId: rootId});
+
         // set up leaf pool & gauge by processing pending `createGauge` message in mailbox
         leafMailbox.processNextInboundMessage();
         leafPool = Pool(leafPoolFactory.getPool({tokenA: address(token0), tokenB: address(token1), stable: false}));

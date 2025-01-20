@@ -4,11 +4,6 @@ pragma solidity >=0.8.19 <0.9.0;
 import "../TokenBridge.t.sol";
 
 contract SetInterchainSecurityModuleIntegrationConcreteTest is TokenBridgeTest {
-    function setUp() public override {
-        super.setUp();
-        vm.selectFork({forkId: leafId});
-    }
-
     function test_WhenTheCallerIsNotTheOwner() external {
         // It reverts with {OwnableUnauthorizedAccount}
         vm.prank(users.charlie);

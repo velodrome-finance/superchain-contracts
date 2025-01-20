@@ -23,7 +23,7 @@ abstract contract BaseE2EForkFixture is BaseForkFixture {
     function deployRootDependencies() public virtual override {
         // set up root v2 dependencies
         vm.startPrank(users.owner);
-        rootMailbox = new MultichainMockMailbox(root);
+        rootMailbox = new MultichainMockMailbox(rootDomain);
         rootIsm = new TestIsm();
         vm.stopPrank();
 
