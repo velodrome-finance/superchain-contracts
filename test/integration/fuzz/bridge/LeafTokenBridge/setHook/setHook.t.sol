@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../TokenBridge.t.sol";
+import "../LeafTokenBridge.t.sol";
 
-contract SetHookIntegrationFuzzTest is TokenBridgeTest {
+contract SetHookIntegrationFuzzTest is LeafTokenBridgeTest {
     MockCustomHook public hook;
 
     function testFuzz_WhenTheCallerIsNotOwner(address _caller) external {

@@ -178,10 +178,10 @@ forge verify-contract \
     ${ETHERSCAN_API_KEY:+--etherscan-api-key $ETHERSCAN_API_KEY} \
     --libraries src/libraries/rateLimits/RateLimitMidpointCommonLibrary.sol:RateLimitMidpointCommonLibrary:$RATE_LIMIT_LIBRARY
 
-# TokenBridge
+# LeafTokenBridge
 forge verify-contract \
     $LEAF_TOKEN_BRIDGE \
-    src/bridge/TokenBridge.sol:TokenBridge \
+    src/bridge/LeafTokenBridge.sol:LeafTokenBridge \
     --chain-id $CHAIN_ID \
     --num-of-optimizations 200 \
     --watch \

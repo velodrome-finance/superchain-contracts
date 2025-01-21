@@ -16,7 +16,7 @@ import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {IFeeModule, ICustomFeeModule, CustomFeeModule} from "src/fees/CustomFeeModule.sol";
 import {IRouter, Router} from "src/Router.sol";
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
-import {ITokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
+import {ITokenBridge, LeafTokenBridge} from "src/bridge/LeafTokenBridge.sol";
 import {ICrosschainERC20, ISuperchainERC20, IXERC20, XERC20} from "src/xerc20/XERC20.sol";
 import {IXERC20Lockbox, XERC20Lockbox} from "src/xerc20/XERC20Lockbox.sol";
 import {IXERC20Factory, XERC20Factory} from "src/xerc20/XERC20Factory.sol";
@@ -48,7 +48,7 @@ abstract contract BaseFixture is Test, TestConstants {
 
     // leaf superchain contracts
     Router public router;
-    TokenBridge public tokenBridge;
+    LeafTokenBridge public tokenBridge;
     LeafMessageBridge public messageBridge;
     LeafHLMessageModule public messageModule;
 

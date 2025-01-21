@@ -15,7 +15,7 @@ contract BobDeployPartialBaseTest is BaseFixture {
     XERC20Factory public leafXFactory;
     XERC20 public leafXVelo;
     Router public leafRouter;
-    TokenBridge public leafTokenBridge;
+    LeafTokenBridge public leafTokenBridge;
     LeafMessageBridge public leafMessageBridge;
     LeafHLMessageModule public leafMessageModule;
 

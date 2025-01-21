@@ -13,7 +13,7 @@ import {RootPoolFactory} from "src/root/pools/RootPoolFactory.sol";
 import {RootGaugeFactory} from "src/root/gauges/RootGaugeFactory.sol";
 import {RootVotingRewardsFactory} from "src/root/rewards/RootVotingRewardsFactory.sol";
 
-import {TokenBridge} from "src/bridge/TokenBridge.sol";
+import {RootTokenBridge} from "src/root/bridge/RootTokenBridge.sol";
 import {RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
 import {EmergencyCouncil} from "src/root/emergencyCouncil/EmergencyCouncil.sol";
 import {RootHLMessageModule} from "src/root/bridge/hyperlane/RootHLMessageModule.sol";
@@ -34,7 +34,7 @@ contract OptimismDeployRootBaseTest is BaseFixture {
     XERC20 public rootXVelo;
     XERC20Lockbox public rootLockbox;
 
-    TokenBridge public rootTokenBridge;
+    RootTokenBridge public rootTokenBridge;
     RootMessageBridge public rootMessageBridge;
     RootHLMessageModule public rootMessageModule;
 

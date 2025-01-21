@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../TokenBridge.t.sol";
+import "../LeafTokenBridge.t.sol";
 
-contract DeregisterChainIntegrationConcreteTest is TokenBridgeTest {
+contract DeregisterChainIntegrationConcreteTest is LeafTokenBridgeTest {
     function test_WhenTheCallerIsNotTheOwner() external {
         // It reverts with {OwnableUnauthorizedAccount}
         vm.prank(users.charlie);

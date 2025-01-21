@@ -39,7 +39,7 @@ import {ILeafGaugeFactory, LeafGaugeFactory} from "src/gauges/LeafGaugeFactory.s
 import {IPool, Pool} from "src/pools/Pool.sol";
 import {IRouter, Router} from "src/Router.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
-import {ITokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
+import {ITokenBridge, LeafTokenBridge} from "src/bridge/LeafTokenBridge.sol";
 import {RootTokenBridge} from "src/root/bridge/RootTokenBridge.sol";
 import {ILeafMessageBridge, LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
 import {IRootMessageBridge, RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
@@ -147,7 +147,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
     XERC20Factory public leafXFactory;
     XERC20 public leafXVelo;
     Router public leafRouter;
-    TokenBridge public leafTokenBridge;
+    LeafTokenBridge public leafTokenBridge;
     LeafMessageBridge public leafMessageBridge;
     LeafHLMessageModule public leafMessageModule;
 

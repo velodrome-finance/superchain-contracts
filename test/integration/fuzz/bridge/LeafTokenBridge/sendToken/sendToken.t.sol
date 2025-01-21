@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../TokenBridge.t.sol";
+import "../LeafTokenBridge.t.sol";
 
-contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
+contract SendTokenIntegrationFuzzTest is LeafTokenBridgeTest {
     uint256 public amount;
 
     modifier whenTheRequestedAmountIsNotZero() {
@@ -16,7 +16,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
 
     modifier whenTheRequestedChainIsARegisteredChain() {
         vm.prank(users.owner);
-        leafTokenBridge.registerChain({_chainid: root});
+        leafTokenBridge.registerChain({_chainid: rootDomain});
 
         vm.selectFork({forkId: rootId});
         vm.prank(users.owner);
@@ -37,7 +37,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
         vm.assume(_recipient != address(0));
 
         vm.expectRevert(ITokenBridge.InsufficientBalance.selector);
-        leafTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: TOKEN_1, _chainid: root});
+        leafTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: TOKEN_1, _chainid: rootDomain});
     }
 
     modifier whenTheMsgValueIsGreaterThanOrEqualToQuotedFee() {
@@ -69,7 +69,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
         leafXVelo.approve({spender: address(leafTokenBridge), value: amount});
 
         vm.expectRevert("RateLimited: buffer cap overflow");
-        leafTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: root});
+        leafTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: rootDomain});
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(uint256 _bufferCap, uint256 _amount) {
@@ -105,7 +105,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
         vm.expectRevert(
             abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, address(leafGauge), _balance, amount)
         );
-        leafTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: root});
+        leafTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: rootDomain});
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheBalanceOfCaller() {
@@ -157,7 +157,7 @@ contract SendTokenIntegrationFuzzTest is TokenBridgeTest {
                 })
             )
         });
-        leafTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: amount, _chainid: root});
+        leafTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: amount, _chainid: rootDomain});
 
         assertEq(leafXVelo.balanceOf(users.alice), _balance - amount);
         assertEq(users.alice.balance, _msgValue - MESSAGE_FEE);

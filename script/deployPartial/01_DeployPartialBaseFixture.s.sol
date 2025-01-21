@@ -16,7 +16,7 @@ import {XERC20} from "src/xerc20/XERC20.sol";
 
 import {LeafHLMessageModule} from "src/bridge/hyperlane/LeafHLMessageModule.sol";
 import {LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
-import {TokenBridge} from "src/bridge/TokenBridge.sol";
+import {LeafTokenBridge} from "src/bridge/LeafTokenBridge.sol";
 import {LeafVoter} from "src/voter/LeafVoter.sol";
 
 abstract contract DeployPartialBaseFixture is DeployFixture {
@@ -35,7 +35,7 @@ abstract contract DeployPartialBaseFixture is DeployFixture {
     XERC20Factory public leafXFactory;
     XERC20 public leafXVelo;
     Router public leafRouter;
-    TokenBridge public leafTokenBridge;
+    LeafTokenBridge public leafTokenBridge;
     LeafMessageBridge public leafMessageBridge;
     LeafHLMessageModule public leafMessageModule;
 
@@ -136,11 +136,11 @@ abstract contract DeployPartialBaseFixture is DeployFixture {
         );
         checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _output: address(leafMessageModule)});
 
-        leafTokenBridge = TokenBridge(
+        leafTokenBridge = LeafTokenBridge(
             cx.deployCreate3({
                 salt: TOKEN_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
-                    type(TokenBridge).creationCode,
+                    type(LeafTokenBridge).creationCode,
                     abi.encode(
                         _params.bridgeOwner, // bridge owner
                         address(leafXVelo), // xerc20 address

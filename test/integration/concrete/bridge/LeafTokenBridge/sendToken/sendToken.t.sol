@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../TokenBridge.t.sol";
+import "../LeafTokenBridge.t.sol";
 
-contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
+contract SendTokenIntegrationConcreteTest is LeafTokenBridgeTest {
     uint256 public amount;
     address public recipient;
 
     function test_WhenTheRequestedAmountIsZero() external {
         // It should revert with {ZeroAmount}
         vm.expectRevert(ITokenBridge.ZeroAmount.selector);
-        leafTokenBridge.sendToken({_recipient: recipient, _amount: amount, _chainid: root});
+        leafTokenBridge.sendToken({_recipient: recipient, _amount: amount, _chainid: rootDomain});
     }
 
     modifier whenTheRequestedAmountIsNotZero() {
@@ -26,7 +26,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
     function test_WhenTheRecipientIsAddressZero() external whenTheRequestedAmountIsNotZero {
         // It should revert with {ZeroAddress}
         vm.expectRevert(ITokenBridge.ZeroAddress.selector);
-        leafTokenBridge.sendToken({_recipient: recipient, _amount: amount, _chainid: root});
+        leafTokenBridge.sendToken({_recipient: recipient, _amount: amount, _chainid: rootDomain});
     }
 
     modifier whenTheRecipientIsNotAddressZero() {
@@ -41,12 +41,12 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
     {
         // It should revert with {NotRegistered}
         vm.expectRevert(IChainRegistry.NotRegistered.selector);
-        leafTokenBridge.sendToken({_recipient: recipient, _amount: amount, _chainid: root});
+        leafTokenBridge.sendToken({_recipient: recipient, _amount: amount, _chainid: rootDomain});
     }
 
     modifier whenTheRequestedChainIsARegisteredChain() {
         vm.prank(users.owner);
-        leafTokenBridge.registerChain({_chainid: root});
+        leafTokenBridge.registerChain({_chainid: rootDomain});
 
         vm.selectFork({forkId: rootId});
         vm.prank(users.owner);
@@ -66,7 +66,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         vm.deal({account: address(leafGauge), newBalance: ethAmount});
 
         vm.expectRevert(ITokenBridge.InsufficientBalance.selector);
-        leafTokenBridge.sendToken{value: ethAmount - 1}({_recipient: recipient, _amount: amount, _chainid: root});
+        leafTokenBridge.sendToken{value: ethAmount - 1}({_recipient: recipient, _amount: amount, _chainid: rootDomain});
     }
 
     modifier whenTheMsgValueIsGreaterThanOrEqualToQuotedFee() {
@@ -90,7 +90,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         leafXVelo.approve({spender: address(leafTokenBridge), value: amount});
 
         vm.expectRevert("RateLimited: buffer cap overflow");
-        leafTokenBridge.sendToken{value: ethAmount}({_recipient: recipient, _amount: amount, _chainid: root});
+        leafTokenBridge.sendToken{value: ethAmount}({_recipient: recipient, _amount: amount, _chainid: rootDomain});
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller() {
@@ -119,7 +119,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
                 IERC20Errors.ERC20InsufficientBalance.selector, address(leafGauge), amount - 1, amount
             )
         );
-        leafTokenBridge.sendToken{value: ethAmount}({_recipient: recipient, _amount: amount, _chainid: root});
+        leafTokenBridge.sendToken{value: ethAmount}({_recipient: recipient, _amount: amount, _chainid: rootDomain});
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheBalanceOfCaller() {
@@ -150,7 +150,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
 
         vm.expectEmit(address(leafTokenBridge));
         emit ITokenBridge.SentMessage({
-            _destination: root,
+            _destination: rootDomain,
             _recipient: TypeCasts.addressToBytes32(address(leafTokenBridge)),
             _value: ethAmount,
             _message: string(abi.encodePacked(recipient, amount)),
@@ -166,7 +166,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         leafTokenBridge.sendToken{value: ethAmount + leftoverEth}({
             _recipient: recipient,
             _amount: amount,
-            _chainid: root
+            _chainid: rootDomain
         });
 
         assertEq(leafXVelo.balanceOf(users.alice), 0);
@@ -214,7 +214,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
 
         vm.expectEmit(address(leafTokenBridge));
         emit ITokenBridge.SentMessage({
-            _destination: root,
+            _destination: rootDomain,
             _recipient: TypeCasts.addressToBytes32(address(leafTokenBridge)),
             _value: ethAmount,
             _message: string(abi.encodePacked(recipient, amount)),
@@ -230,7 +230,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         leafTokenBridge.sendToken{value: ethAmount + leftoverEth}({
             _recipient: recipient,
             _amount: amount,
-            _chainid: root
+            _chainid: rootDomain
         });
 
         assertEq(leafXVelo.balanceOf(users.alice), 0);
@@ -266,7 +266,7 @@ contract SendTokenIntegrationConcreteTest is TokenBridgeTest {
         vm.startPrank(users.alice);
         leafXVelo.approve({spender: address(leafTokenBridge), value: amount});
 
-        leafTokenBridge.sendToken{value: ethAmount}({_recipient: recipient, _amount: amount, _chainid: root});
+        leafTokenBridge.sendToken{value: ethAmount}({_recipient: recipient, _amount: amount, _chainid: rootDomain});
         vm.snapshotGasLastCall("TokenBridge_sendToken");
     }
 }

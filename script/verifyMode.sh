@@ -111,10 +111,10 @@ forge verify-contract \
     --compiler-version "v0.8.27" \
     --libraries src/libraries/rateLimits/RateLimitMidpointCommonLibrary.sol:RateLimitMidpointCommonLibrary:$RATE_LIMIT_LIBRARY
 
-# ModeTokenBridge
+# ModeLeafTokenBridge
 forge verify-contract \
     $LEAF_TOKEN_BRIDGE \
-    src/bridge/extensions/ModeTokenBridge.sol:ModeTokenBridge \
+    src/bridge/extensions/ModeLeafTokenBridge.sol:ModeLeafTokenBridge \
     --chain-id $CHAIN_ID \
     --num-of-optimizations 200 \
     --watch \

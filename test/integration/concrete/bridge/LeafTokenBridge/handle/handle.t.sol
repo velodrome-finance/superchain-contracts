@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../TokenBridge.t.sol";
+import "../LeafTokenBridge.t.sol";
 
-contract HandleIntegrationConcreteTest is TokenBridgeTest {
+contract HandleIntegrationConcreteTest is LeafTokenBridgeTest {
     using SafeCast for uint256;
 
     bytes32 sender = TypeCasts.addressToBytes32(users.charlie);
@@ -51,7 +51,7 @@ contract HandleIntegrationConcreteTest is TokenBridgeTest {
 
     modifier whenTheOriginChainIsARegisteredChain() {
         vm.prank(users.owner);
-        leafTokenBridge.registerChain({_chainid: root});
+        leafTokenBridge.registerChain({_chainid: rootDomain});
         _;
     }
 

@@ -11,7 +11,7 @@ import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
 import {IRootTokenBridge} from "../../interfaces/root/bridge/IRootTokenBridge.sol";
 import {IXERC20} from "../../interfaces/xerc20/IXERC20.sol";
 import {IXERC20Lockbox} from "../../interfaces/xerc20/IXERC20Lockbox.sol";
-import {TokenBridge} from "../../bridge/TokenBridge.sol";
+import {BaseTokenBridge} from "../../bridge/BaseTokenBridge.sol";
 
 import {Commands} from "../../libraries/Commands.sol";
 
@@ -38,19 +38,18 @@ import {Commands} from "../../libraries/Commands.sol";
 
 /// @title Velodrome Superchain Root Token Bridge
 /// @notice General Purpose Token Bridge
-contract RootTokenBridge is TokenBridge, IRootTokenBridge {
+contract RootTokenBridge is BaseTokenBridge, IRootTokenBridge {
     using EnumerableSet for EnumerableSet.UintSet;
     using SafeERC20 for IERC20;
     using Commands for bytes;
 
     /// @inheritdoc IRootTokenBridge
     IXERC20Lockbox public immutable lockbox;
-
     /// @inheritdoc IRootTokenBridge
     IERC20 public immutable erc20;
 
     constructor(address _owner, address _xerc20, address _mailbox, address _ism)
-        TokenBridge(_owner, _xerc20, _mailbox, _ism)
+        BaseTokenBridge(_owner, _xerc20, _mailbox, _ism)
     {
         lockbox = IXERC20Lockbox(IXERC20(_xerc20).lockbox());
         erc20 = lockbox.ERC20();
@@ -60,7 +59,7 @@ contract RootTokenBridge is TokenBridge, IRootTokenBridge {
     function sendToken(address _recipient, uint256 _amount, uint256 _chainid)
         external
         payable
-        override(TokenBridge, IRootTokenBridge)
+        override(BaseTokenBridge, IRootTokenBridge)
     {
         if (_amount == 0) revert ZeroAmount();
         if (_recipient == address(0)) revert ZeroAddress();
@@ -109,7 +108,7 @@ contract RootTokenBridge is TokenBridge, IRootTokenBridge {
     function handle(uint32 _origin, bytes32 _sender, bytes calldata _message)
         external
         payable
-        override(TokenBridge, IRootTokenBridge)
+        override(BaseTokenBridge, IRootTokenBridge)
     {
         if (msg.sender != mailbox) revert NotMailbox();
         if (_sender != TypeCasts.addressToBytes32(address(this))) revert NotBridge();
