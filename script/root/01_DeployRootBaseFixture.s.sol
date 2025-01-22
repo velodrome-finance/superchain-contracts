@@ -143,7 +143,7 @@ abstract contract DeployRootBaseFixture is DeployFixture {
                     abi.encode(
                         _params.bridgeOwner, // bridge owner
                         address(rootXVelo), // xerc20 address
-                        _params.mailbox, // mailbox
+                        address(rootMessageModule), // message module
                         address(ism) // security module
                     )
                 )

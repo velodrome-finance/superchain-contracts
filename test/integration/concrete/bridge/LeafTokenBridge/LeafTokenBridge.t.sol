@@ -9,7 +9,7 @@ abstract contract LeafTokenBridgeTest is BaseForkFixture {
         vm.selectFork({forkId: leafId});
     }
 
-    function test_InitialState() public {
+    function test_InitialState() public view {
         assertEq(leafTokenBridge.owner(), users.owner);
         assertEq(leafTokenBridge.xerc20(), address(leafXVelo));
         assertEq(leafTokenBridge.mailbox(), address(leafMailbox));

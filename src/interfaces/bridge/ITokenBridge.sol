@@ -37,6 +37,7 @@ interface ITokenBridge {
     function setHook(address _hook) external;
 
     /// @notice Burns xERC20 tokens from the sender and triggers a x-chain transfer
+    /// @dev If bridging from/to Root, ERC20 tokens are wrapped into xERC20 for bridging and unwrapped back when received.
     /// @param _recipient The address of the recipient on the destination chain
     /// @param _amount The amount of xERC20 tokens to send
     /// @param _chainid The chain id of the destination chain

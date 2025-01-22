@@ -16,7 +16,7 @@ contract SendTokenIntegrationFuzzTest is RootTokenBridgeTest {
 
     modifier whenTheRequestedChainIsARegisteredChain() {
         vm.prank(users.owner);
-        rootTokenBridge.registerChain({_chainid: leafDomain});
+        rootTokenBridge.registerChain({_chainid: leaf});
 
         vm.selectFork({forkId: leafId});
         vm.prank(users.owner);
@@ -37,7 +37,7 @@ contract SendTokenIntegrationFuzzTest is RootTokenBridgeTest {
         vm.assume(_recipient != address(0));
 
         vm.expectRevert(ITokenBridge.InsufficientBalance.selector);
-        rootTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: TOKEN_1, _chainid: leafDomain});
+        rootTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: TOKEN_1, _chainid: leaf});
     }
 
     modifier whenTheMsgValueIsGreaterThanOrEqualToQuotedFee() {
@@ -69,7 +69,7 @@ contract SendTokenIntegrationFuzzTest is RootTokenBridgeTest {
         rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});
 
         vm.expectRevert("RateLimited: buffer cap overflow");
-        rootTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: leafDomain});
+        rootTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: leaf});
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller(uint256 _bufferCap, uint256 _amount) {
@@ -105,7 +105,7 @@ contract SendTokenIntegrationFuzzTest is RootTokenBridgeTest {
         vm.expectRevert(
             abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, address(rootGauge), _balance, amount)
         );
-        rootTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: leafDomain});
+        rootTokenBridge.sendToken{value: ethAmount}({_recipient: _recipient, _amount: amount, _chainid: leaf});
     }
 
     modifier whenTheAmountIsLessThanOrEqualToTheBalanceOfCaller() {
@@ -130,7 +130,7 @@ contract SendTokenIntegrationFuzzTest is RootTokenBridgeTest {
         // It pulls the caller's tokens
         // It wraps to xerc20
         // It burns the newly minted xerc20 tokens
-        // It dispatches a message to the destination mailbox using default quote
+        // It dispatches a message to the destination mailbox using default quote & chain as domain
         // It refunds any excess value
         // It emits a {SentMessage} event
         // It mints the amount of tokens to the caller on the destination chain
@@ -159,7 +159,7 @@ contract SendTokenIntegrationFuzzTest is RootTokenBridgeTest {
                 })
             )
         });
-        rootTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: amount, _chainid: leafDomain});
+        rootTokenBridge.sendToken{value: _msgValue}({_recipient: _recipient, _amount: amount, _chainid: leaf});
 
         assertEq(rootXVelo.balanceOf(users.alice), 0);
         assertApproxEqAbs(rootRewardToken.balanceOf(users.alice), _balance - amount, 1e18);

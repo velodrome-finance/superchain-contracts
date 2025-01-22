@@ -39,7 +39,17 @@ contract HandleIntegrationConcreteTest is RootTokenBridgeTest {
         _;
     }
 
-    function test_WhenTheOriginChainIsNotARegisteredChain() external whenTheCallerIsMailbox whenTheSenderIsBridge {
+    modifier whenTheOriginDomainIsLinkedToAChainid() {
+        assertNotEq(rootMessageModule.chains(leafDomain), 0);
+        _;
+    }
+
+    function test_WhenTheChainidOfOriginIsNotARegisteredChain()
+        external
+        whenTheCallerIsMailbox
+        whenTheSenderIsBridge
+        whenTheOriginDomainIsLinkedToAChainid
+    {
         // It should revert with {NotRegistered}
         vm.expectRevert(IChainRegistry.NotRegistered.selector);
         rootTokenBridge.handle({
@@ -49,17 +59,18 @@ contract HandleIntegrationConcreteTest is RootTokenBridgeTest {
         });
     }
 
-    modifier whenTheOriginChainIsARegisteredChain() {
-        vm.prank(users.owner);
-        rootTokenBridge.registerChain({_chainid: leafDomain});
+    modifier whenTheChainidOfOriginIsARegisteredChain() {
+        vm.startPrank(users.owner);
+        rootTokenBridge.registerChain({_chainid: leaf});
         _;
     }
 
     function test_WhenTheRequestedAmountIsHigherThanTheCurrentMintingLimit()
         external
-        whenTheOriginChainIsARegisteredChain
         whenTheCallerIsMailbox
         whenTheSenderIsBridge
+        whenTheOriginDomainIsLinkedToAChainid
+        whenTheChainidOfOriginIsARegisteredChain
     {
         // It should revert with "RateLimited: rate limit hit"
         uint256 amount = TOKEN_1;
@@ -68,14 +79,17 @@ contract HandleIntegrationConcreteTest is RootTokenBridgeTest {
 
         bytes memory _message = abi.encodePacked(address(rootGauge), amount);
 
+        vm.startPrank(address(rootMailbox));
         vm.expectRevert("RateLimited: rate limit hit");
         rootTokenBridge.handle{value: TOKEN_1 / 2}({_origin: leafDomain, _sender: sender, _message: _message});
     }
 
     function test_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentMintingLimit()
         external
-        whenTheOriginChainIsARegisteredChain
+        whenTheCallerIsMailbox
         whenTheSenderIsBridge
+        whenTheOriginDomainIsLinkedToAChainid
+        whenTheChainidOfOriginIsARegisteredChain
     {
         // It should mint tokens
         // It should unwrap the newly minted xerc20 tokens
@@ -85,7 +99,7 @@ contract HandleIntegrationConcreteTest is RootTokenBridgeTest {
         uint256 bufferCap = amount * 2;
         deal({token: address(rootRewardToken), to: address(rootLockbox), give: amount});
 
-        vm.prank(users.owner);
+        vm.startPrank(users.owner);
         rootXVelo.addBridge(
             MintLimits.RateLimitMidPointInfo({
                 bridge: address(rootTokenBridge),
@@ -98,7 +112,7 @@ contract HandleIntegrationConcreteTest is RootTokenBridgeTest {
 
         bytes memory _message = abi.encodePacked(address(rootGauge), amount);
 
-        vm.prank(address(rootMailbox));
+        vm.startPrank(address(rootMailbox));
         vm.expectEmit(address(rootTokenBridge));
         emit IHLHandler.ReceivedMessage({
             _origin: leafDomain,
@@ -108,16 +122,75 @@ contract HandleIntegrationConcreteTest is RootTokenBridgeTest {
         });
         rootTokenBridge.handle{value: TOKEN_1 / 2}({_origin: leafDomain, _sender: sender, _message: _message});
 
-        assertEq(rootXVelo.balanceOf(address(leafGauge)), 0);
-        assertEq(rootRewardToken.balanceOf(address(leafGauge)), amount);
+        assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
+        assertEq(rootRewardToken.balanceOf(address(rootGauge)), amount);
     }
 
-    function testGas_handle() external whenTheSenderIsBridge whenTheOriginChainIsARegisteredChain {
+    modifier whenTheOriginDomainIsNotLinkedToAChainid() {
+        vm.startPrank(rootMessageBridge.owner());
+        rootMessageModule.setDomain({_chainid: leaf, _domain: 0});
+        // @dev if domain not linked to chain, domain should be equal to chainid
+        leafDomain = leaf;
+
+        vm.startPrank(address(rootMailbox));
+        assertEq(rootMessageModule.chains(leaf), 0);
+        _;
+    }
+
+    function test_WhenTheOriginDomainIsNotARegisteredChain()
+        external
+        whenTheCallerIsMailbox
+        whenTheSenderIsBridge
+        whenTheOriginDomainIsNotLinkedToAChainid
+    {
+        // It should revert with {NotRegistered}
+        vm.expectRevert(IChainRegistry.NotRegistered.selector);
+        rootTokenBridge.handle({
+            _origin: leafDomain,
+            _sender: sender,
+            _message: abi.encodePacked(users.charlie, uint256(1))
+        });
+    }
+
+    modifier whenTheOriginDomainIsARegisteredChain() {
+        vm.startPrank(users.owner);
+        rootTokenBridge.registerChain({_chainid: leaf});
+        _;
+    }
+
+    function test_WhenTheRequestedAmountIsHigherThanTheCurrentMintingLimit_()
+        external
+        whenTheCallerIsMailbox
+        whenTheSenderIsBridge
+        whenTheOriginDomainIsNotLinkedToAChainid
+        whenTheOriginDomainIsARegisteredChain
+    {
+        // It should revert with "RateLimited: rate limit hit"
+        uint256 amount = TOKEN_1;
+
+        vm.deal(address(rootMailbox), TOKEN_1);
+
+        bytes memory _message = abi.encodePacked(address(rootGauge), amount);
+
+        vm.startPrank(address(rootMailbox));
+        vm.expectRevert("RateLimited: rate limit hit");
+        rootTokenBridge.handle{value: TOKEN_1 / 2}({_origin: leafDomain, _sender: sender, _message: _message});
+    }
+
+    function test_WhenTheRequestedAmountIsLessThanOrEqualToTheCurrentMintingLimit_()
+        external
+        whenTheCallerIsMailbox
+        whenTheSenderIsBridge
+        whenTheOriginDomainIsNotLinkedToAChainid
+        whenTheOriginDomainIsARegisteredChain
+    {
+        // It should mint tokens to the destination contract
+        // It should emit {ReceivedMessage} event
         uint256 amount = TOKEN_1 * 1000;
         uint256 bufferCap = amount * 2;
         deal({token: address(rootRewardToken), to: address(rootLockbox), give: amount});
 
-        vm.prank(users.owner);
+        vm.startPrank(users.owner);
         rootXVelo.addBridge(
             MintLimits.RateLimitMidPointInfo({
                 bridge: address(rootTokenBridge),
@@ -130,7 +203,45 @@ contract HandleIntegrationConcreteTest is RootTokenBridgeTest {
 
         bytes memory _message = abi.encodePacked(address(rootGauge), amount);
 
-        vm.prank(address(rootMailbox));
+        vm.startPrank(address(rootMailbox));
+        vm.expectEmit(address(rootTokenBridge));
+        emit IHLHandler.ReceivedMessage({
+            _origin: leafDomain,
+            _sender: sender,
+            _value: TOKEN_1 / 2,
+            _message: string(_message)
+        });
+        rootTokenBridge.handle{value: TOKEN_1 / 2}({_origin: leafDomain, _sender: sender, _message: _message});
+
+        assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
+        assertEq(rootRewardToken.balanceOf(address(rootGauge)), amount);
+    }
+
+    function testGas_handle()
+        external
+        whenTheCallerIsMailbox
+        whenTheSenderIsBridge
+        whenTheOriginDomainIsNotLinkedToAChainid
+        whenTheOriginDomainIsARegisteredChain
+    {
+        uint256 amount = TOKEN_1 * 1000;
+        uint256 bufferCap = amount * 2;
+        deal({token: address(rootRewardToken), to: address(rootLockbox), give: amount});
+
+        vm.startPrank(users.owner);
+        rootXVelo.addBridge(
+            MintLimits.RateLimitMidPointInfo({
+                bridge: address(rootTokenBridge),
+                bufferCap: bufferCap.toUint112(),
+                rateLimitPerSecond: (bufferCap / DAY).toUint128()
+            })
+        );
+
+        vm.deal(address(rootMailbox), TOKEN_1);
+
+        bytes memory _message = abi.encodePacked(address(rootGauge), amount);
+
+        vm.startPrank(address(rootMailbox));
         rootTokenBridge.handle{value: TOKEN_1 / 2}({_origin: leafDomain, _sender: sender, _message: _message});
         vm.snapshotGasLastCall("RootTokenBridge_handle");
     }

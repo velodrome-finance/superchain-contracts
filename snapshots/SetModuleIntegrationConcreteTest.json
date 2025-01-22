@@ -1,4 +1,5 @@
 {
   "LeafMessageBridge_setModule": "30505",
-  "RootMessageBridge_setModule": "35272"
+  "RootMessageBridge_setModule": "35272",
+  "RootTokenBridge_setModule": "30629"
 }

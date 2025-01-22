@@ -20,7 +20,7 @@ contract SendTokenIntegrationFuzzTest is LeafTokenBridgeTest {
 
         vm.selectFork({forkId: rootId});
         vm.prank(users.owner);
-        rootTokenBridge.registerChain({_chainid: leafDomain});
+        rootTokenBridge.registerChain({_chainid: leaf});
         vm.selectFork({forkId: leafId});
         _;
     }

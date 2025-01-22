@@ -4,13 +4,14 @@ pragma solidity >=0.8.19 <0.9.0;
 import "test/BaseForkFixture.sol";
 
 abstract contract RootTokenBridgeTest is BaseForkFixture {
-    function test_InitialState() public {
+    function test_InitialState() public view {
         assertEq(address(rootTokenBridge.lockbox()), address(rootLockbox));
         assertEq(address(rootTokenBridge.erc20()), address(rootRewardToken));
         assertEq(rootTokenBridge.owner(), users.owner);
         assertEq(rootTokenBridge.xerc20(), address(rootXVelo));
         assertEq(rootTokenBridge.mailbox(), address(rootMailbox));
         assertEq(rootTokenBridge.hook(), address(0));
+        assertEq(rootTokenBridge.module(), address(rootMessageModule));
         assertEq(address(rootTokenBridge.securityModule()), address(0));
         assertEq(address(rootTokenBridge).balance, 0);
 

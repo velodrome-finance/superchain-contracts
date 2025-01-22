@@ -59,7 +59,7 @@ contract HandleIntegrationFuzzTest is RootTokenBridgeTest {
 
     modifier whenTheOriginChainIsARegisteredChain() {
         vm.prank(users.owner);
-        rootTokenBridge.registerChain({_chainid: leafDomain});
+        rootTokenBridge.registerChain({_chainid: leaf});
         _;
     }
 

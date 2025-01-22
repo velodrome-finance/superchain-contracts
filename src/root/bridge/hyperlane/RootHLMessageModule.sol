@@ -37,6 +37,8 @@ contract RootHLMessageModule is IRootHLMessageModule {
     address public hook;
     /// @inheritdoc IRootHLMessageModule
     mapping(uint256 => uint32) public domains;
+    /// @inheritdoc IRootHLMessageModule
+    mapping(uint32 => uint256) public chains;
 
     constructor(address _bridge, address _mailbox) {
         bridge = _bridge;
@@ -63,7 +65,13 @@ contract RootHLMessageModule is IRootHLMessageModule {
     /// @inheritdoc IRootHLMessageModule
     function setDomain(uint256 _chainid, uint32 _domain) external {
         if (msg.sender != Ownable(bridge).owner()) revert NotBridgeOwner();
+        if (_chainid == 0) revert InvalidChainID();
+        if (chains[_domain] != 0) revert DomainAlreadyAssigned();
+        delete chains[domains[_chainid]];
         domains[_chainid] = _domain;
+        if (_domain != 0) {
+            chains[_domain] = _chainid;
+        }
         emit DomainSet({_chainid: _chainid, _domain: _domain});
     }
 

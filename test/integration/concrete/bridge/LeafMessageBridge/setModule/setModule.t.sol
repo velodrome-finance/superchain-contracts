@@ -29,8 +29,8 @@ contract SetModuleIntegrationConcreteTest is LeafMessageBridgeTest {
             new LeafHLMessageModule({
                 _owner: users.owner,
                 _bridge: address(leafMessageBridge),
-                _mailbox: address(rootMailbox),
-                _ism: address(rootIsm)
+                _mailbox: address(leafMailbox),
+                _ism: address(leafIsm)
             })
         );
 
@@ -47,8 +47,8 @@ contract SetModuleIntegrationConcreteTest is LeafMessageBridgeTest {
             new LeafHLMessageModule({
                 _owner: users.owner,
                 _bridge: address(leafMessageBridge),
-                _mailbox: address(rootMailbox),
-                _ism: address(rootIsm)
+                _mailbox: address(leafMailbox),
+                _ism: address(leafIsm)
             })
         );
 

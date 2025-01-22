@@ -40,7 +40,7 @@ import {IPool, Pool} from "src/pools/Pool.sol";
 import {IRouter, Router} from "src/Router.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {ITokenBridge, LeafTokenBridge} from "src/bridge/LeafTokenBridge.sol";
-import {RootTokenBridge} from "src/root/bridge/RootTokenBridge.sol";
+import {IRootTokenBridge, RootTokenBridge} from "src/root/bridge/RootTokenBridge.sol";
 import {ILeafMessageBridge, LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
 import {IRootMessageBridge, RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
 import {IHLHandler} from "src/interfaces/bridge/hyperlane/IHLHandler.sol";
