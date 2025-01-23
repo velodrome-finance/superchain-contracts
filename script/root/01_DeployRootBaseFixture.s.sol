@@ -123,7 +123,7 @@ abstract contract DeployRootBaseFixture is DeployFixture {
 
         rootMessageModule = RootHLMessageModule(
             cx.deployCreate3({
-                salt: HL_MESSAGE_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
+                salt: HL_MESSAGE_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(RootHLMessageModule).creationCode,
                     abi.encode(
@@ -133,11 +133,11 @@ abstract contract DeployRootBaseFixture is DeployFixture {
                 )
             })
         );
-        checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _output: address(rootMessageModule)});
+        checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY_V2, _output: address(rootMessageModule)});
 
         rootTokenBridge = RootTokenBridge(
             cx.deployCreate3({
-                salt: TOKEN_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
+                salt: TOKEN_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(RootTokenBridge).creationCode,
                     abi.encode(
@@ -149,7 +149,7 @@ abstract contract DeployRootBaseFixture is DeployFixture {
                 )
             })
         );
-        checkAddress({_entropy: TOKEN_BRIDGE_ENTROPY, _output: address(rootTokenBridge)});
+        checkAddress({_entropy: TOKEN_BRIDGE_ENTROPY_V2, _output: address(rootTokenBridge)});
 
         rootVotingRewardsFactory = RootVotingRewardsFactory(
             cx.deployCreate3({

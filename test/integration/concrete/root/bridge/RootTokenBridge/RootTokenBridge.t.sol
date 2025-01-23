@@ -7,11 +7,11 @@ abstract contract RootTokenBridgeTest is BaseForkFixture {
     function test_InitialState() public view {
         assertEq(address(rootTokenBridge.lockbox()), address(rootLockbox));
         assertEq(address(rootTokenBridge.erc20()), address(rootRewardToken));
+        assertEq(rootTokenBridge.module(), address(rootMessageModule));
         assertEq(rootTokenBridge.owner(), users.owner);
         assertEq(rootTokenBridge.xerc20(), address(rootXVelo));
         assertEq(rootTokenBridge.mailbox(), address(rootMailbox));
         assertEq(rootTokenBridge.hook(), address(0));
-        assertEq(rootTokenBridge.module(), address(rootMessageModule));
         assertEq(address(rootTokenBridge.securityModule()), address(0));
         assertEq(address(rootTokenBridge).balance, 0);
 

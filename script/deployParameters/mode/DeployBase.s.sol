@@ -118,7 +118,7 @@ contract DeployBase is DeployBaseFixture {
         leafXVelo = XERC20(leafXFactory.deployXERC20());
 
         leafMessageModule = ModeLeafHLMessageModule(
-            CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: _deployer})
+            CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY_V2, _deployer: _deployer})
         );
         leafMessageBridge = ModeLeafMessageBridge(
             cx.deployCreate3({
@@ -139,7 +139,7 @@ contract DeployBase is DeployBaseFixture {
 
         leafMessageModule = ModeLeafHLMessageModule(
             cx.deployCreate3({
-                salt: HL_MESSAGE_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
+                salt: HL_MESSAGE_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(ModeLeafHLMessageModule).creationCode,
                     abi.encode(
@@ -151,11 +151,11 @@ contract DeployBase is DeployBaseFixture {
                 )
             })
         );
-        checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _output: address(leafMessageModule)});
+        checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY_V2, _output: address(leafMessageModule)});
 
         leafTokenBridge = ModeLeafTokenBridge(
             cx.deployCreate3({
-                salt: TOKEN_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
+                salt: TOKEN_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(ModeLeafTokenBridge).creationCode,
                     abi.encode(
@@ -168,7 +168,7 @@ contract DeployBase is DeployBaseFixture {
                 )
             })
         );
-        checkAddress({_entropy: TOKEN_BRIDGE_ENTROPY, _output: address(leafTokenBridge)});
+        checkAddress({_entropy: TOKEN_BRIDGE_ENTROPY_V2, _output: address(leafTokenBridge)});
 
         leafGaugeFactory = ModeLeafGaugeFactory(
             cx.deployCreate3({

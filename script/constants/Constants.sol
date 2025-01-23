@@ -25,4 +25,6 @@ abstract contract Constants {
 
     // used previously, no longer usable
     bytes11 public constant HL_MESSAGE_BRIDGE_ENTROPY_V1_5 = 0x0010000000000000000023;
+    bytes11 public constant HL_MESSAGE_BRIDGE_ENTROPY_V2 = 0x0020000000000000000023;
+    bytes11 public constant TOKEN_BRIDGE_ENTROPY_V2 = 0x0020000000000000000014;
 }

@@ -139,7 +139,7 @@ abstract contract DeployBaseFixture is DeployFixture {
         leafXVelo = XERC20(leafXFactory.deployXERC20());
 
         leafMessageModule = LeafHLMessageModule(
-            CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: _deployer})
+            CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY_V2, _deployer: _deployer})
         );
         leafMessageBridge = LeafMessageBridge(
             cx.deployCreate3({
@@ -159,7 +159,7 @@ abstract contract DeployBaseFixture is DeployFixture {
 
         leafMessageModule = LeafHLMessageModule(
             cx.deployCreate3({
-                salt: HL_MESSAGE_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
+                salt: HL_MESSAGE_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(LeafHLMessageModule).creationCode,
                     abi.encode(
@@ -171,11 +171,11 @@ abstract contract DeployBaseFixture is DeployFixture {
                 )
             })
         );
-        checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _output: address(leafMessageModule)});
+        checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY_V2, _output: address(leafMessageModule)});
 
         leafTokenBridge = LeafTokenBridge(
             cx.deployCreate3({
-                salt: TOKEN_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
+                salt: TOKEN_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(LeafTokenBridge).creationCode,
                     abi.encode(
@@ -187,7 +187,7 @@ abstract contract DeployBaseFixture is DeployFixture {
                 )
             })
         );
-        checkAddress({_entropy: TOKEN_BRIDGE_ENTROPY, _output: address(leafTokenBridge)});
+        checkAddress({_entropy: TOKEN_BRIDGE_ENTROPY_V2, _output: address(leafTokenBridge)});
 
         leafGaugeFactory = LeafGaugeFactory(
             cx.deployCreate3({
