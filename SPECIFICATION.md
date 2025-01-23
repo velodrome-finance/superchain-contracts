@@ -290,9 +290,12 @@ via different message vendors. Care must be taken in the upgrade process.
 #### Root Hyperlane Message Module
 - Supports the sending of messages cross chain via Hyperlane.
 - For token bridging transactions, the module is given permission to burn tokens on the root chain.
+- Supports registering a custom mailbox domain for a chain. Only the message bridge owner can set custom domains.
 
 #### Root Token Bridge
 - Supports the sending of tokens cross chain via Hyperlane.
+- Custom domains for each chain are stored in the message module.
+- Supports setting a new message module. Only the owner can update the address of the module.
 - Sending tokens from root chain receives the underlying erc20 token, wraps to xerc20 and sends it cross chain.
 - Receiving tokens from leaf chain receives the xerc20 token, unwraps to erc20 and sends it to the recipient.
 - Fees are paid for in native ETH. 
@@ -368,7 +371,7 @@ root chain.
 - Lightly modified to support the recording of vote weights from the root chain.
 - Lightly modified to support the collection of rewards from the root chain.
 
-#### Token Bridge
+#### Leaf Token Bridge
 - Supports the sending of tokens cross chain via Hyperlane.
 - Sending and receiving tokens uses the xerc20 and sends it cross chain.
 - Fees are paid for in native ETH.
