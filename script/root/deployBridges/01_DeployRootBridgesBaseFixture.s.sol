@@ -7,6 +7,7 @@ import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/II
 
 import {RootHLMessageModule} from "src/root/bridge/hyperlane/RootHLMessageModule.sol";
 import {RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
+import {RootEscrowTokenBridge} from "src/root/bridge/RootEscrowTokenBridge.sol";
 import {RootTokenBridge} from "src/root/bridge/RootTokenBridge.sol";
 
 import {XERC20} from "src/xerc20/XERC20.sol";
@@ -22,7 +23,7 @@ abstract contract DeployRootBridgesBaseFixture is DeployFixture {
 
     // root superchain contracts
     XERC20 public rootXVelo;
-    RootTokenBridge public rootTokenBridge;
+    RootEscrowTokenBridge public rootTokenBridge;
     RootMessageBridge public rootMessageBridge;
     RootHLMessageModule public rootMessageModule;
 
@@ -63,11 +64,11 @@ abstract contract DeployRootBridgesBaseFixture is DeployFixture {
         );
         checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY_V2, _output: address(rootMessageModule)});
 
-        rootTokenBridge = RootTokenBridge(
+        rootTokenBridge = RootEscrowTokenBridge(
             cx.deployCreate3({
                 salt: TOKEN_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
-                    type(RootTokenBridge).creationCode,
+                    type(RootEscrowTokenBridge).creationCode,
                     abi.encode(
                         _params.bridgeOwner, // bridge owner
                         address(rootXVelo), // xerc20 address

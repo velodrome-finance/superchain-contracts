@@ -40,7 +40,9 @@ import {IPool, Pool} from "src/pools/Pool.sol";
 import {IRouter, Router} from "src/Router.sol";
 import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {ITokenBridge, LeafTokenBridge} from "src/bridge/LeafTokenBridge.sol";
+import {ILeafEscrowTokenBridge, LeafEscrowTokenBridge} from "src/bridge/LeafEscrowTokenBridge.sol";
 import {IRootTokenBridge, RootTokenBridge} from "src/root/bridge/RootTokenBridge.sol";
+import {IRootEscrowTokenBridge, RootEscrowTokenBridge} from "src/root/bridge/RootEscrowTokenBridge.sol";
 import {ILeafMessageBridge, LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
 import {IRootMessageBridge, RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
 import {IHLHandler} from "src/interfaces/bridge/hyperlane/IHLHandler.sol";
@@ -216,7 +218,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootRewardToken = new TestERC20("Reward Token", "RWRD", 18);
         minter = IMinter(vm.parseJsonAddress(addresses, ".Minter"));
         mockFactoryRegistry = new MockFactoryRegistry();
-        mockEscrow = new MockVotingEscrow();
+        mockEscrow = new MockVotingEscrow(address(rootRewardToken));
         mockVoter = new MockVoter({
             _rewardToken: address(rootRewardToken),
             _factoryRegistry: address(mockFactoryRegistry),

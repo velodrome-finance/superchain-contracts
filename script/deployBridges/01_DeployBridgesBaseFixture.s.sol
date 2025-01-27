@@ -7,7 +7,7 @@ import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/II
 
 import {LeafHLMessageModule} from "src/bridge/hyperlane/LeafHLMessageModule.sol";
 import {LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
-import {LeafTokenBridge} from "src/bridge/LeafTokenBridge.sol";
+import {LeafEscrowTokenBridge} from "src/bridge/LeafEscrowTokenBridge.sol";
 
 import {XERC20} from "src/xerc20/XERC20.sol";
 
@@ -23,7 +23,7 @@ abstract contract DeployBridgesBaseFixture is DeployFixture {
 
     // leaf superchain contracts
     XERC20 public leafXVelo;
-    LeafTokenBridge public leafTokenBridge;
+    LeafEscrowTokenBridge public leafTokenBridge;
     LeafMessageBridge public leafMessageBridge;
     LeafHLMessageModule public leafMessageModule;
 
@@ -50,11 +50,11 @@ abstract contract DeployBridgesBaseFixture is DeployFixture {
     function deploy() internal virtual override {
         address _deployer = deployer;
 
-        leafTokenBridge = LeafTokenBridge(
+        leafTokenBridge = LeafEscrowTokenBridge(
             cx.deployCreate3({
                 salt: TOKEN_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
-                    type(LeafTokenBridge).creationCode,
+                    type(LeafEscrowTokenBridge).creationCode,
                     abi.encode(
                         _params.bridgeOwner, // bridge owner
                         address(leafXVelo), // xerc20 address

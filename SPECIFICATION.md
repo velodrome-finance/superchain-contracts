@@ -298,6 +298,16 @@ via different message vendors. Care must be taken in the upgrade process.
 - Supports setting a new message module. Only the owner can update the address of the module.
 - Sending tokens from root chain receives the underlying erc20 token, wraps to xerc20 and sends it cross chain.
 - Receiving tokens from leaf chain receives the xerc20 token, unwraps to erc20 and sends it to the recipient.
+- Fees are paid for in native ETH.
+- The token bridge may be sunset in the future in favor of alternate token bridging mechanisms.
+
+#### Root Escrow Token Bridge
+- Supports the sending of tokens cross chain via Hyperlane.
+- Sending tokens from root chain receives the underlying erc20 token, wraps to xerc20 and sends it cross chain.
+- Receiving tokens from leaf chain receives the xerc20 token and unwraps to erc20. If the command is send token,
+it sends the unwrapped tokens to the recipient. If the command is send and lock, it adds the unwrapped tokens to the
+lock with the intended lock id. If it's not possible to deposit in the lock, it sends the unwrapped tokens
+to the user on root chain.
 - Fees are paid for in native ETH. 
 - The token bridge may be sunset in the future in favor of alternate token bridging mechanisms.
 
@@ -374,6 +384,16 @@ root chain.
 #### Leaf Token Bridge
 - Supports the sending of tokens cross chain via Hyperlane.
 - Sending and receiving tokens uses the xerc20 and sends it cross chain.
+- Fees are paid for in native ETH.
+- The token bridge may be sunset in the future in favor of alternate token bridging mechanisms.
+
+#### Escrow Token Bridge
+- Supports the sending of tokens cross chain via Hyperlane.
+- Sending and receiving tokens uses the xerc20 and sends it cross chain.
+- Sending tokens can be done in 2 ways: send token and send token and lock. The first will
+simply send unwrapped tokens to the recipient on root chain. The second will add the unwrapped tokens
+to the lock with the intended lock id on root chain. If it's not possible to deposit in the lock,
+it sends the unwrapped tokens to the user on root chain.
 - Fees are paid for in native ETH.
 - The token bridge may be sunset in the future in favor of alternate token bridging mechanisms.
 

@@ -18,6 +18,7 @@ import {EmergencyCouncil} from "src/root/emergencyCouncil/EmergencyCouncil.sol";
 import {RootHLMessageModule} from "src/root/bridge/hyperlane/RootHLMessageModule.sol";
 import {RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
 import {RootTokenBridge} from "src/root/bridge/RootTokenBridge.sol";
+import {RootEscrowTokenBridge} from "src/root/bridge/RootEscrowTokenBridge.sol";
 
 abstract contract DeployRootBaseFixture is DeployFixture {
     using CreateXLibrary for bytes11;
@@ -139,7 +140,7 @@ abstract contract DeployRootBaseFixture is DeployFixture {
             cx.deployCreate3({
                 salt: TOKEN_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
-                    type(RootTokenBridge).creationCode,
+                    type(RootEscrowTokenBridge).creationCode,
                     abi.encode(
                         _params.bridgeOwner, // bridge owner
                         address(rootXVelo), // xerc20 address

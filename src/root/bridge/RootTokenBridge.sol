@@ -53,6 +53,7 @@ contract RootTokenBridge is BaseTokenBridge, IRootTokenBridge {
     IXERC20Lockbox public immutable lockbox;
     /// @inheritdoc IRootTokenBridge
     IERC20 public immutable erc20;
+
     /// @inheritdoc IRootTokenBridge
     address public module;
 
@@ -116,7 +117,7 @@ contract RootTokenBridge is BaseTokenBridge, IRootTokenBridge {
     }
 
     /// @inheritdoc IHLHandler
-    function handle(uint32 _origin, bytes32 _sender, bytes calldata _message) external payable override {
+    function handle(uint32 _origin, bytes32 _sender, bytes calldata _message) external payable virtual override {
         if (msg.sender != mailbox) revert NotMailbox();
         if (_sender != TypeCasts.addressToBytes32(address(this))) revert NotBridge();
         uint256 chainid = IRootHLMessageModule(module).chains({_domain: _origin});

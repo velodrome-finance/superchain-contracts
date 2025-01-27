@@ -50,43 +50,9 @@ contract LeafTokenBridge is BaseTokenBridge {
 
     /// @inheritdoc ITokenBridge
     function sendToken(address _recipient, uint256 _amount, uint256 _chainid) external payable override {
-        if (_amount == 0) revert ZeroAmount();
-        if (_recipient == address(0)) revert ZeroAddress();
-        if (!_chainids.contains({value: _chainid})) revert NotRegistered();
-
-        address _hook = hook;
-        uint32 domain = uint32(_chainid);
         bytes memory message = abi.encodePacked(_recipient, _amount);
-        bytes memory metadata = _generateGasMetadata({_hook: _hook});
-        uint256 fee = Mailbox(mailbox).quoteDispatch({
-            destinationDomain: domain,
-            recipientAddress: TypeCasts.addressToBytes32(address(this)),
-            messageBody: message,
-            metadata: metadata,
-            hook: IPostDispatchHook(_hook)
-        });
-        if (fee > msg.value) revert InsufficientBalance();
 
-        IXERC20(xerc20).burn({_user: msg.sender, _amount: _amount});
-
-        Mailbox(mailbox).dispatch{value: fee}({
-            destinationDomain: domain,
-            recipientAddress: TypeCasts.addressToBytes32(address(this)),
-            messageBody: message,
-            metadata: metadata,
-            hook: IPostDispatchHook(_hook)
-        });
-
-        uint256 leftover = msg.value - fee;
-        if (leftover > 0) payable(msg.sender).transfer(leftover);
-
-        emit SentMessage({
-            _destination: domain,
-            _recipient: TypeCasts.addressToBytes32(address(this)),
-            _value: fee,
-            _message: string(message),
-            _metadata: string(metadata)
-        });
+        _send({_amount: _amount, _recipient: _recipient, _chainid: _chainid, _message: message});
     }
 
     /// @inheritdoc IHLHandler
@@ -100,5 +66,45 @@ contract LeafTokenBridge is BaseTokenBridge {
         IXERC20(xerc20).mint({_user: recipient, _amount: amount});
 
         emit ReceivedMessage({_origin: _origin, _sender: _sender, _value: msg.value, _message: string(_message)});
+    }
+
+    function _send(uint256 _amount, address _recipient, uint256 _chainid, bytes memory _message) internal {
+        if (_amount == 0) revert ZeroAmount();
+        if (_recipient == address(0)) revert ZeroAddress();
+        if (!_chainids.contains({value: _chainid})) revert NotRegistered();
+
+        uint32 domain = uint32(_chainid);
+
+        address _hook = hook;
+        bytes memory metadata = _generateGasMetadata({_hook: _hook});
+        uint256 fee = Mailbox(mailbox).quoteDispatch({
+            destinationDomain: domain,
+            recipientAddress: TypeCasts.addressToBytes32(address(this)),
+            messageBody: _message,
+            metadata: metadata,
+            hook: IPostDispatchHook(_hook)
+        });
+        if (fee > msg.value) revert InsufficientBalance();
+
+        IXERC20(xerc20).burn({_user: msg.sender, _amount: _amount});
+
+        Mailbox(mailbox).dispatch{value: fee}({
+            destinationDomain: domain,
+            recipientAddress: TypeCasts.addressToBytes32(address(this)),
+            messageBody: _message,
+            metadata: metadata,
+            hook: IPostDispatchHook(_hook)
+        });
+
+        uint256 leftover = msg.value - fee;
+        if (leftover > 0) payable(msg.sender).transfer(leftover);
+
+        emit SentMessage({
+            _destination: domain,
+            _recipient: TypeCasts.addressToBytes32(address(this)),
+            _value: fee,
+            _message: string(_message),
+            _metadata: string(metadata)
+        });
     }
 }

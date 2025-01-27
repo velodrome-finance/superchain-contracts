@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "../../01_DeployBridgesBaseFixture.s.sol";
 
-import {ModeLeafTokenBridge} from "src/bridge/extensions/ModeLeafTokenBridge.sol";
+import {ModeLeafEscrowTokenBridge} from "src/bridge/extensions/ModeLeafEscrowTokenBridge.sol";
 import {ModeLeafHLMessageModule} from "src/bridge/extensions/hyperlane/ModeLeafHLMessageModule.sol";
 
 contract DeployBridgesBase is DeployBridgesBaseFixture {
@@ -29,11 +29,11 @@ contract DeployBridgesBase is DeployBridgesBaseFixture {
     function deploy() internal virtual override {
         address _deployer = deployer;
 
-        leafTokenBridge = ModeLeafTokenBridge(
+        leafTokenBridge = ModeLeafEscrowTokenBridge(
             cx.deployCreate3({
                 salt: TOKEN_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
-                    type(ModeLeafTokenBridge).creationCode,
+                    type(ModeLeafEscrowTokenBridge).creationCode,
                     abi.encode(
                         _params.bridgeOwner, // bridge owner
                         address(leafXVelo), // xerc20 address

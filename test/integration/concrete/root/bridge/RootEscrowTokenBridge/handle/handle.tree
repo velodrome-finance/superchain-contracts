@@ -1,0 +1,59 @@
+HandleIntegrationConcreteTest
+├── When the caller is not mailbox
+│   └── It should revert with {NotMailbox}
+└── When the caller is mailbox
+    ├── When the sender is not bridge
+    │   └── It should revert with {NotBridge}
+    └── When the sender is bridge
+        ├── When the origin domain is linked to a chainid
+        │   ├── When the chainid of origin is not a registered chain
+        │   │   └── It should revert with {NotRegistered}
+        │   └── When the chainid of origin is a registered chain
+        │       ├── When the requested amount is higher than the current minting limit
+        │       │   └── It should revert with "RateLimited: rate limit hit"
+        │       └── When the requested amount is less than or equal to the current minting limit
+        │           ├── When the message length is send token length
+        │           │   ├── It should mint tokens
+        │           │   ├── It should unwrap the newly minted xerc20 tokens
+        │           │   ├── It should send the unwrapped tokens to the recipient contract
+        │           │   └── It should emit {ReceivedMessage} event
+        │           ├── When the message length is send token and lock length
+        │           │   ├── When the tokenId is valid
+        │           │   │   ├── It should mint tokens
+        │           │   │   ├── It should unwrap the newly minted xerc20 tokens
+        │           │   │   ├── It deposit the unwrapped tokens to the lock with the given tokenId
+        │           │   │   └── It should emit {ReceivedMessage} event
+        │           │   └── When the tokenId is not valid
+        │           │       ├── It should mint tokens
+        │           │       ├── It should unwrap the newly minted xerc20 tokens
+        │           │       ├── It should leave zero allowance of token bridge to the escrow contract
+        │           │       ├── It should send the unwrapped tokens to the recipient contract
+        │           │       └── It should emit {ReceivedMessage} event
+        │           └── When the message length is invalid
+        │               └── It should revert with {InvalidCommand}
+        └── When the origin domain is not linked to a chainid
+            ├── When the origin domain is not a registered chain
+            │   └── It should revert with {NotRegistered}
+            └── When the origin domain is a registered chain
+                ├── When the requested amount is higher than the current minting limit_
+                │   └── It should revert with "RateLimited: rate limit hit"
+                └── When the requested amount is less than or equal to the current minting limit_
+                    ├── When the message length is send token length_
+                    │   ├── It should mint tokens
+                    │   ├── It should unwrap the newly minted xerc20 tokens
+                    │   ├── It should send the unwrapped tokens to the recipient contract
+                    │   └── It should emit {ReceivedMessage} event
+                    ├── When the message length is send token and lock length_
+                    │   ├── When the tokenId is valid_
+                    │   │   ├── It should mint tokens
+                    │   │   ├── It should unwrap the newly minted xerc20 tokens
+                    │   │   ├── It deposit the unwrapped tokens to the lock with the given tokenId
+                    │   │   └── It should emit {ReceivedMessage} event
+                    │   └── When the tokenId is not valid_
+                    │       ├── It should mint tokens
+                    │       ├── It should unwrap the newly minted xerc20 tokens
+                    │       ├── It should leave zero allowance of token bridge to the escrow contract
+                    │       ├── It should send the unwrapped tokens to the recipient contract
+                    │       └── It should emit {ReceivedMessage} event
+                    └── When the message length is invalid_
+                        └── It should revert with {InvalidCommand}
