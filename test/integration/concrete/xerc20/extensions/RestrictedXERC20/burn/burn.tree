@@ -1,0 +1,8 @@
+BurnIntegrationConcreteTest
+├── When the requested amount is higher than the current burning limit of caller
+│   └── It should revert with "RateLimited: buffer cap overflow"
+└── When the requested amount is less than or equal to the current burning limit of caller
+    ├── It burns the requested amount of tokens
+    ├── It decreases the current burning limit for the caller
+    ├── It decreases the allowance of the caller by the requested amount
+    └── It should emit a {Transfer} event

@@ -28,6 +28,7 @@ import {GasLimits} from "src/libraries/GasLimits.sol";
 import {VelodromeTimeLibrary} from "src/libraries/VelodromeTimeLibrary.sol";
 import {XERC20Factory} from "src/xerc20/XERC20Factory.sol";
 import {IXERC20, XERC20} from "src/xerc20/XERC20.sol";
+import {RateLimitMidPoint} from "src/libraries/rateLimits/RateLimitMidpointCommonLibrary.sol";
 import {XERC20Lockbox} from "src/xerc20/XERC20Lockbox.sol";
 import {IRootPool, RootPool} from "src/root/pools/RootPool.sol";
 import {IRootPoolFactory, RootPoolFactory} from "src/root/pools/RootPoolFactory.sol";
@@ -45,6 +46,9 @@ import {IRootTokenBridge, RootTokenBridge} from "src/root/bridge/RootTokenBridge
 import {IRootEscrowTokenBridge, RootEscrowTokenBridge} from "src/root/bridge/RootEscrowTokenBridge.sol";
 import {ILeafMessageBridge, LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
 import {IRootMessageBridge, RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
+import {RootRestrictedTokenBridge} from "src/root/bridge/RootRestrictedTokenBridge.sol";
+import {LeafRestrictedTokenBridge} from "src/bridge/LeafRestrictedTokenBridge.sol";
+
 import {IHLHandler} from "src/interfaces/bridge/hyperlane/IHLHandler.sol";
 import {ILeafHLMessageModule, LeafHLMessageModule} from "src/bridge/hyperlane/LeafHLMessageModule.sol";
 import {IVotingRewardsFactory, VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
@@ -67,6 +71,9 @@ import {IReward} from "src/interfaces/rewards/IReward.sol";
 
 import {IEmergencyCouncil, EmergencyCouncil} from "src/root/emergencyCouncil/EmergencyCouncil.sol";
 
+import {RestrictedXERC20Factory} from "src/xerc20/extensions/RestrictedXERC20Factory.sol";
+import {IRestrictedXERC20, RestrictedXERC20} from "src/xerc20/extensions/RestrictedXERC20.sol";
+
 import {CreateX} from "test/mocks/CreateX.sol";
 import {TestERC20} from "test/mocks/TestERC20.sol";
 import {Mailbox, MultichainMockMailbox} from "test/mocks/MultichainMockMailbox.sol";
@@ -78,9 +85,13 @@ import {TestConstants} from "test/utils/TestConstants.sol";
 import {Users} from "test/utils/Users.sol";
 import {TestDeployLeaf} from "test/utils/TestDeployLeaf.sol";
 import {TestDeployRoot} from "test/utils/TestDeployRoot.sol";
+import {TestDeployRestrictedXERC20Root} from "test/utils/TestDeployRestrictedXERC20Root.sol";
+import {TestDeployRestrictedXERC20Leaf} from "test/utils/TestDeployRestrictedXERC20Leaf.sol";
 
 import {DeployRootBaseFixture} from "script/root/01_DeployRootBaseFixture.s.sol";
 import {DeployBaseFixture} from "script/01_DeployBaseFixture.s.sol";
+import {DeployRootRestrictedXERC20} from "script/restrictedXERC20/01_DeployRootRestrictedXERC20.sol";
+import {DeployLeafRestrictedXERC20} from "script/restrictedXERC20/01_DeployLeafRestrictedXERC20.sol";
 
 abstract contract BaseForkFixture is Test, TestConstants {
     using stdStorage for StdStorage;
@@ -103,6 +114,12 @@ abstract contract BaseForkFixture is Test, TestConstants {
     TestDeployRoot public deployRoot;
     TestDeployRoot.RootDeploymentParameters public rootParams;
 
+    TestDeployRestrictedXERC20Root public deployRestrictedRoot;
+    TestDeployRestrictedXERC20Root.RestrictedXERC20DeploymentParams public rootRestrictedParams;
+
+    TestDeployRestrictedXERC20Leaf public deployRestrictedLeaf;
+    TestDeployRestrictedXERC20Leaf.RestrictedXERC20DeploymentParams public leafRestrictedParams;
+
     // root variables
     uint32 public root = 10; // root chain id
     uint32 public rootDomain = 10; // root domain
@@ -118,6 +135,11 @@ abstract contract BaseForkFixture is Test, TestConstants {
 
     EmergencyCouncil public emergencyCouncil;
 
+    // restricted rewards contracts
+    RestrictedXERC20Factory public rootRestrictedXFactory;
+    RestrictedXERC20 public rootRestrictedRewardToken;
+    RootRestrictedTokenBridge public rootRestrictedTokenBridge;
+
     // root-only contracts
     XERC20Lockbox public rootLockbox;
     RootPool public rootPoolImplementation;
@@ -131,8 +153,12 @@ abstract contract BaseForkFixture is Test, TestConstants {
     RootIncentiveVotingReward public rootIVR;
     IMinter public minter;
 
+    // restricted rewards lockbox contract
+    XERC20Lockbox public rootRestrictedRewardLockbox;
+
     // root-only mocks
     IERC20 public rootRewardToken;
+    IERC20 public rootIncentiveToken; // used to test restricted rewards
     IVoter public mockVoter;
     IVotingEscrow public mockEscrow;
     IFactoryRegistry public mockFactoryRegistry;
@@ -152,6 +178,10 @@ abstract contract BaseForkFixture is Test, TestConstants {
     LeafTokenBridge public leafTokenBridge;
     LeafMessageBridge public leafMessageBridge;
     LeafHLMessageModule public leafMessageModule;
+
+    RestrictedXERC20Factory public leafRestrictedXFactory;
+    RestrictedXERC20 public leafRestrictedRewardToken;
+    LeafRestrictedTokenBridge public leafRestrictedTokenBridge;
 
     // leaf-only contracts
     Pool public leafPoolImplementation;
@@ -226,6 +256,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
             _governor: users.owner,
             _minter: address(minter)
         });
+        rootIncentiveToken = new TestERC20("Incentive Token", "INCNT", 18);
         vm.stopPrank();
     }
 
@@ -255,7 +286,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
             outputFilename: "optimism.json"
         });
         deployRoot = new TestDeployRoot(rootParams);
-        stdstore.target(address(deployRoot)).sig("deployer()").checked_write(users.owner);
+        stdstore.target(address(deployRoot)).sig("deployer()").checked_write(users.deployer);
 
         deployRoot.run();
 
@@ -272,6 +303,23 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootPoolFactory = deployRoot.rootPoolFactory();
         rootGaugeFactory = deployRoot.rootGaugeFactory();
         rootVotingRewardsFactory = deployRoot.rootVotingRewardsFactory();
+
+        rootRestrictedParams = DeployRootRestrictedXERC20.RestrictedXERC20DeploymentParams({
+            owner: users.owner,
+            incentiveToken: address(rootIncentiveToken),
+            module: address(rootMessageModule),
+            ism: address(rootIsm),
+            outputFilename: "optimism-xop.json"
+        });
+        deployRestrictedRoot = new TestDeployRestrictedXERC20Root(rootRestrictedParams);
+        stdstore.target(address(deployRestrictedRoot)).sig("deployer()").checked_write(users.deployer);
+
+        deployRestrictedRoot.run();
+
+        rootRestrictedXFactory = deployRestrictedRoot.rootRestrictedXFactory();
+        rootRestrictedRewardToken = deployRestrictedRoot.rootRestrictedRewardToken();
+        rootRestrictedRewardLockbox = deployRestrictedRoot.rootRestrictedRewardLockbox();
+        rootRestrictedTokenBridge = deployRestrictedRoot.rootRestrictedTokenBridge();
 
         vm.startPrank(mockVoter.emergencyCouncil());
         mockVoter.setEmergencyCouncil(address(emergencyCouncil));
@@ -301,6 +349,11 @@ abstract contract BaseForkFixture is Test, TestConstants {
         vm.label({account: address(rootMessageBridge), newLabel: "Message Bridge"});
         vm.label({account: address(rootMessageModule), newLabel: "Message Module"});
         vm.label({account: address(rootVotingRewardsFactory), newLabel: "Voting Rewards Factory"});
+
+        vm.label({account: address(rootRestrictedXFactory), newLabel: "Root Restricted X Factory"});
+        vm.label({account: address(rootRestrictedRewardToken), newLabel: "Root Restricted Reward Token"});
+        vm.label({account: address(rootRestrictedRewardLockbox), newLabel: "Root Restricted Reward Lockbox"});
+        vm.label({account: address(rootRestrictedTokenBridge), newLabel: "Root Restricted Token Bridge"});
 
         vm.label({account: address(emergencyCouncil), newLabel: "Emergency Council"});
     }
@@ -335,7 +388,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
             outputFilename: "mode.json"
         });
         deployLeaf = new TestDeployLeaf(leafParams);
-        stdstore.target(address(deployLeaf)).sig("deployer()").checked_write(users.owner);
+        stdstore.target(address(deployLeaf)).sig("deployer()").checked_write(users.deployer);
 
         deployLeaf.run();
 
@@ -352,10 +405,29 @@ abstract contract BaseForkFixture is Test, TestConstants {
         leafVoter = deployLeaf.leafVoter();
         leafVotingRewardsFactory = deployLeaf.leafVotingRewardsFactory();
 
+        leafRestrictedParams = DeployLeafRestrictedXERC20.RestrictedXERC20DeploymentParams({
+            owner: users.owner,
+            mailbox: address(leafMailbox),
+            ism: address(leafIsm),
+            outputFilename: "mode-xop.json"
+        });
+        deployRestrictedLeaf = new TestDeployRestrictedXERC20Leaf(leafRestrictedParams);
+        stdstore.target(address(deployRestrictedLeaf)).sig("deployer()").checked_write(users.deployer);
+
+        deployRestrictedLeaf.run();
+
+        leafRestrictedXFactory = deployRestrictedLeaf.leafRestrictedXFactory();
+        leafRestrictedRewardToken = deployRestrictedLeaf.leafRestrictedRewardToken();
+        leafRestrictedTokenBridge = deployRestrictedLeaf.leafRestrictedTokenBridge();
+
         vm.label({account: address(leafMailbox), newLabel: "Leaf Mailbox"});
         vm.label({account: address(leafIsm), newLabel: "Leaf ISM"});
         vm.label({account: address(leafVoter), newLabel: "Leaf Voter"});
         vm.label({account: address(leafVotingRewardsFactory), newLabel: "Leaf Voting Rewards Factory"});
+
+        vm.label({account: address(leafRestrictedXFactory), newLabel: "Leaf Restricted X Factory"});
+        vm.label({account: address(leafRestrictedRewardToken), newLabel: "Leaf Restricted Reward Token"});
+        vm.label({account: address(leafRestrictedTokenBridge), newLabel: "Leaf Restricted Token Bridge"});
     }
 
     // Any set up required to link the contracts across the two chains

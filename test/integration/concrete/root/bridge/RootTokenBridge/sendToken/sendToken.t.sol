@@ -134,6 +134,7 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
 
         vm.selectFork({forkId: leafId});
 
+        vm.startPrank(users.deployer);
         // Deploy mock mailbox with leaf chainid as domain
         MultichainMockMailbox leafMailboxDefaultChainid = new MultichainMockMailbox(leaf);
         // Mock `mailbox.process()` to process messages using leaf chainid as domain
@@ -141,6 +142,7 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
             address(leafMailbox), address(leafMailboxDefaultChainid), abi.encodeWithSelector(Mailbox.process.selector)
         );
 
+        vm.startPrank(rootMessageBridge.owner());
         vm.selectFork({forkId: rootId});
         _;
     }
