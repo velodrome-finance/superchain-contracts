@@ -12,8 +12,12 @@ contract RegisterChainIntegrationConcreteTest is RootMessageBridgeTest {
             _voter: address(mockVoter),
             _weth: address(weth)
         });
-        rootMessageModule =
-            new RootHLMessageModule({_bridge: address(rootMessageBridge), _mailbox: address(rootMailbox)});
+        rootMessageModule = new RootHLMessageModule({
+            _bridge: address(rootMessageBridge),
+            _mailbox: address(rootMailbox),
+            _commands: defaultCommands,
+            _gasLimits: defaultGasLimits
+        });
     }
 
     function test_WhenTheCallerIsNotOwner() external {

@@ -25,8 +25,14 @@ contract SetModuleIntegrationConcreteTest is RootTokenBridgeTest {
     function test_WhenModuleIsNotZeroAddress() external whenCallerIsOwner {
         // It sets new module
         // It emits {ModuleSet}
-        address module =
-            address(new RootHLMessageModule({_bridge: address(rootMessageBridge), _mailbox: address(rootMailbox)}));
+        address module = address(
+            new RootHLMessageModule({
+                _bridge: address(rootMessageBridge),
+                _mailbox: address(rootMailbox),
+                _commands: defaultCommands,
+                _gasLimits: defaultGasLimits
+            })
+        );
 
         vm.prank(users.owner);
         vm.expectEmit(address(rootTokenBridge));
@@ -37,8 +43,14 @@ contract SetModuleIntegrationConcreteTest is RootTokenBridgeTest {
     }
 
     function testGas_setModule() external whenCallerIsOwner {
-        address module =
-            address(new RootHLMessageModule({_bridge: address(rootMessageBridge), _mailbox: address(rootMailbox)}));
+        address module = address(
+            new RootHLMessageModule({
+                _bridge: address(rootMessageBridge),
+                _mailbox: address(rootMailbox),
+                _commands: defaultCommands,
+                _gasLimits: defaultGasLimits
+            })
+        );
 
         vm.prank(users.owner);
         rootTokenBridge.setModule({_module: module});

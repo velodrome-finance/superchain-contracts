@@ -234,9 +234,8 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
         vm.deal({account: users.alice, newBalance: ethAmount + leftoverEth});
         deal({token: address(rootRewardToken), to: users.alice, give: amount});
 
-        address hook = address(new MockCustomHook());
         vm.startPrank(rootTokenBridge.owner());
-        rootTokenBridge.setHook({_hook: address(hook)});
+        rootTokenBridge.setHook({_hook: address(rootHook)});
 
         vm.startPrank(users.alice);
         rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});
@@ -310,9 +309,8 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
         vm.startPrank(users.alice);
         rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});
 
-        address hook = address(new MockCustomHook());
         vm.startPrank(rootTokenBridge.owner());
-        rootTokenBridge.setHook({_hook: address(hook)});
+        rootTokenBridge.setHook({_hook: address(rootHook)});
 
         vm.startPrank(users.alice);
         rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});

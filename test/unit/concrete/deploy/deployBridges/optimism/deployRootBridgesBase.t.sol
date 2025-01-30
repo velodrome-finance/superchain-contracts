@@ -11,6 +11,7 @@ import {RootTokenBridge} from "src/root/bridge/RootTokenBridge.sol";
 
 contract DeployRootBridgesBaseTest is BaseFixture {
     using stdStorage for StdStorage;
+    using GasLimits for uint256;
 
     string public addresses;
     DeployRootBridgesBase public deploy;
@@ -80,5 +81,16 @@ contract DeployRootBridgesBaseTest is BaseFixture {
         assertEq(rootMessageModule.mailbox(), params.mailbox);
         assertEq(rootMessageModule.voter(), rootMessageBridge.voter());
         assertEq(rootMessageModule.hook(), address(0));
+
+        assertEq(rootMessageModule.owner(), params.bridgeOwner);
+        assertEq(rootMessageModule.gasLimit(Commands.DEPOSIT), Commands.DEPOSIT.gasLimit());
+        assertEq(rootMessageModule.gasLimit(Commands.WITHDRAW), Commands.WITHDRAW.gasLimit());
+        assertEq(rootMessageModule.gasLimit(Commands.GET_INCENTIVES), Commands.GET_INCENTIVES.gasLimit());
+        assertEq(rootMessageModule.gasLimit(Commands.GET_FEES), Commands.GET_FEES.gasLimit());
+        assertEq(rootMessageModule.gasLimit(Commands.CREATE_GAUGE), Commands.CREATE_GAUGE.gasLimit());
+        assertEq(rootMessageModule.gasLimit(Commands.NOTIFY), Commands.NOTIFY.gasLimit());
+        assertEq(rootMessageModule.gasLimit(Commands.NOTIFY_WITHOUT_CLAIM), Commands.NOTIFY_WITHOUT_CLAIM.gasLimit());
+        assertEq(rootMessageModule.gasLimit(Commands.KILL_GAUGE), Commands.KILL_GAUGE.gasLimit());
+        assertEq(rootMessageModule.gasLimit(Commands.REVIVE_GAUGE), Commands.REVIVE_GAUGE.gasLimit());
     }
 }

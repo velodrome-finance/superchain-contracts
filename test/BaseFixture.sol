@@ -30,6 +30,8 @@ import {ILeafVoter, LeafVoter} from "src/voter/LeafVoter.sol";
 import {IVotingRewardsFactory, VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
 import {CreateXLibrary} from "src/libraries/CreateXLibrary.sol";
 import {MintLimits} from "src/xerc20/MintLimits.sol";
+import {Commands} from "src/libraries/Commands.sol";
+import {GasLimits} from "src/libraries/GasLimits.sol";
 
 import {Users} from "test/utils/Users.sol";
 import {TestConstants} from "test/utils/TestConstants.sol";

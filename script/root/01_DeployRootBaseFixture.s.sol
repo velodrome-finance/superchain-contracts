@@ -20,8 +20,12 @@ import {RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
 import {RootTokenBridge} from "src/root/bridge/RootTokenBridge.sol";
 import {RootEscrowTokenBridge} from "src/root/bridge/RootEscrowTokenBridge.sol";
 
+import {Commands} from "src/libraries/Commands.sol";
+import {GasLimits} from "src/libraries/GasLimits.sol";
+
 abstract contract DeployRootBaseFixture is DeployFixture {
     using CreateXLibrary for bytes11;
+    using GasLimits for uint256;
 
     struct RootDeploymentParameters {
         address weth;
@@ -129,7 +133,9 @@ abstract contract DeployRootBaseFixture is DeployFixture {
                     type(RootHLMessageModule).creationCode,
                     abi.encode(
                         address(rootMessageBridge), // root message bridge
-                        _params.mailbox // root mailbox
+                        _params.mailbox, // root mailbox
+                        defaultCommands, // commands for gas router
+                        defaultGasLimits // gas limits for gas router
                     )
                 )
             })

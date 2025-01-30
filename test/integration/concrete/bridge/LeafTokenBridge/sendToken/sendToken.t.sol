@@ -205,7 +205,7 @@ contract SendTokenIntegrationConcreteTest is LeafTokenBridgeTest {
         vm.deal({account: users.alice, newBalance: ethAmount + leftoverEth});
         deal({token: address(leafXVelo), to: users.alice, give: amount});
 
-        address hook = address(new MockCustomHook());
+        address hook = address(new MockCustomHook(users.owner, defaultCommands, defaultGasLimits));
         vm.prank(leafTokenBridge.owner());
         leafTokenBridge.setHook({_hook: address(hook)});
 

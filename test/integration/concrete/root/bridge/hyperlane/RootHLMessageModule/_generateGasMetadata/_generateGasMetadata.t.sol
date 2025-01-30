@@ -6,7 +6,6 @@ import "../RootHLMessageModule.t.sol";
 contract GenerateGasMetadataIntegrationConcreteTest is RootHLMessageModuleTest {
     using GasLimits for uint256;
 
-    MockCustomHook public hook;
     uint256 public constant tokenId = 1;
     uint256 public constant ethAmount = TOKEN_1;
     uint256 public constant amount = TOKEN_1 * 1000;
@@ -14,7 +13,6 @@ contract GenerateGasMetadataIntegrationConcreteTest is RootHLMessageModuleTest {
     function setUp() public virtual override {
         super.setUp();
 
-        hook = new MockCustomHook();
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
     }
 
@@ -48,7 +46,7 @@ contract GenerateGasMetadataIntegrationConcreteTest is RootHLMessageModuleTest {
     function test_WhenThereIsACustomHookSet() external {
         // It should fetch the gas limit for the command from the custom hook
         vm.prank(rootMessageBridge.owner());
-        rootMessageModule.setHook({_hook: address(hook)});
+        rootMessageModule.setHook({_hook: address(rootHook)});
 
         bytes memory message = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);
         bytes memory expectedMessage = abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId);

@@ -15,14 +15,14 @@ import {IRootMessageBridge} from "../../../interfaces/root/bridge/IRootMessageBr
 import {IVoter} from "../../../interfaces/external/IVoter.sol";
 import {IXERC20} from "../../../interfaces/xerc20/IXERC20.sol";
 
+import {GasRouter} from "./GasRouter.sol";
+
 import {VelodromeTimeLibrary} from "../../../libraries/VelodromeTimeLibrary.sol";
-import {GasLimits} from "../../../libraries/GasLimits.sol";
 import {Commands} from "../../../libraries/Commands.sol";
 
 /// @title Root Hyperlane Message Module
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
-contract RootHLMessageModule is IRootHLMessageModule {
-    using GasLimits for uint256;
+contract RootHLMessageModule is IRootHLMessageModule, GasRouter {
     using Commands for bytes;
 
     /// @inheritdoc IRootHLMessageModule
@@ -40,7 +40,9 @@ contract RootHLMessageModule is IRootHLMessageModule {
     /// @inheritdoc IRootHLMessageModule
     mapping(uint32 => uint256) public chains;
 
-    constructor(address _bridge, address _mailbox) {
+    constructor(address _bridge, address _mailbox, uint256[] memory _commands, uint256[] memory _gasLimits)
+        GasRouter(Ownable(_bridge).owner(), _commands, _gasLimits)
+    {
         bridge = _bridge;
         xerc20 = IRootMessageBridge(_bridge).xerc20();
         mailbox = _mailbox;
@@ -123,7 +125,7 @@ contract RootHLMessageModule is IRootHLMessageModule {
     function _generateGasMetadata(uint256 _command, address _hook) internal view returns (bytes memory) {
         /// @dev If custom hook is set, it should be used to estimate gas
         uint256 gasLimit =
-            _hook == address(0) ? _command.gasLimit() : IHookGasEstimator(_hook).estimateGas({_command: _command});
+            _hook == address(0) ? gasLimit[_command] : IHookGasEstimator(_hook).estimateGas({_command: _command});
         return StandardHookMetadata.formatMetadata({
             _msgValue: msg.value,
             _gasLimit: gasLimit,

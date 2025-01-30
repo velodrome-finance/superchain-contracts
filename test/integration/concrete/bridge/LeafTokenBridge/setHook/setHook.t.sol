@@ -9,7 +9,7 @@ contract SetHookIntegrationConcreteTest is LeafTokenBridgeTest {
     function setUp() public virtual override {
         super.setUp();
 
-        hook = new MockCustomHook();
+        hook = new MockCustomHook(users.owner, defaultCommands, defaultGasLimits);
     }
 
     function test_WhenTheCallerIsNotOwner() external {

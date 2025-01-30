@@ -60,6 +60,7 @@ import {
     IRootHLMessageModule,
     RootHLMessageModule
 } from "src/root/bridge/hyperlane/RootHLMessageModule.sol";
+import {IGasRouter} from "src/interfaces/root/bridge/hyperlane/IGasRouter.sol";
 
 import {IRootVotingRewardsFactory, RootVotingRewardsFactory} from "src/root/rewards/RootVotingRewardsFactory.sol";
 import {IRootIncentiveVotingReward, RootIncentiveVotingReward} from "src/root/rewards/RootIncentiveVotingReward.sol";
@@ -163,6 +164,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
     IVotingEscrow public mockEscrow;
     IFactoryRegistry public mockFactoryRegistry;
     MultichainMockMailbox public rootMailbox;
+    MockCustomHook public rootHook;
     TestIsm public rootIsm;
 
     // leaf variables
@@ -207,6 +209,20 @@ abstract contract BaseForkFixture is Test, TestConstants {
 
     // common variables
     Users internal users;
+
+    // Gas Router default commands and gas limits
+    uint256[] defaultCommands = [
+        Commands.DEPOSIT,
+        Commands.WITHDRAW,
+        Commands.GET_INCENTIVES,
+        Commands.GET_FEES,
+        Commands.CREATE_GAUGE,
+        Commands.NOTIFY,
+        Commands.NOTIFY_WITHOUT_CLAIM,
+        Commands.KILL_GAUGE,
+        Commands.REVIVE_GAUGE
+    ];
+    uint256[] defaultGasLimits = [281_000, 75_000, 650_000, 300_000, 6_710_000, 280_000, 233_000, 83_000, 169_000];
 
     /// @dev Fixed fee used for x-chain message quotes
     uint256 public constant MESSAGE_FEE = 1 ether / 10_000; // 0.0001 ETH
@@ -257,6 +273,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
             _minter: address(minter)
         });
         rootIncentiveToken = new TestERC20("Incentive Token", "INCNT", 18);
+        rootHook = new MockCustomHook(users.owner, defaultCommands, defaultGasLimits);
         vm.stopPrank();
     }
 
