@@ -46,8 +46,8 @@ import {IRootTokenBridge, RootTokenBridge} from "src/root/bridge/RootTokenBridge
 import {IRootEscrowTokenBridge, RootEscrowTokenBridge} from "src/root/bridge/RootEscrowTokenBridge.sol";
 import {ILeafMessageBridge, LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
 import {IRootMessageBridge, RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
-import {RootRestrictedTokenBridge} from "src/root/bridge/RootRestrictedTokenBridge.sol";
-import {LeafRestrictedTokenBridge} from "src/bridge/LeafRestrictedTokenBridge.sol";
+import {IRootRestrictedTokenBridge, RootRestrictedTokenBridge} from "src/root/bridge/RootRestrictedTokenBridge.sol";
+import {ILeafRestrictedTokenBridge, LeafRestrictedTokenBridge} from "src/bridge/LeafRestrictedTokenBridge.sol";
 
 import {IHLHandler} from "src/interfaces/bridge/hyperlane/IHLHandler.sol";
 import {ILeafHLMessageModule, LeafHLMessageModule} from "src/bridge/hyperlane/LeafHLMessageModule.sol";
@@ -426,6 +426,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
             owner: users.owner,
             mailbox: address(leafMailbox),
             ism: address(leafIsm),
+            voter: address(leafVoter),
             outputFilename: "mode-xop.json"
         });
         deployRestrictedLeaf = new TestDeployRestrictedXERC20Leaf(leafRestrictedParams);
@@ -458,9 +459,9 @@ abstract contract BaseForkFixture is Test, TestConstants {
         });
 
         // fund alice for gauge creation below
-        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE * 2});
+        deal({token: address(weth), to: users.alice, give: MESSAGE_FEE * 3});
         vm.startPrank(users.alice);
-        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 2});
+        weth.approve({spender: address(rootMessageBridge), value: MESSAGE_FEE * 3});
 
         rootMailbox.addRemoteMailbox({_domain: leafDomain, _mailbox: leafMailbox});
         rootMailbox.setDomainForkId({_domain: leafDomain, _forkId: leafId});
@@ -569,6 +570,41 @@ abstract contract BaseForkFixture is Test, TestConstants {
             MintLimits.RateLimitMidPointInfo({
                 bufferCap: leafBufferCap,
                 bridge: address(leafMessageModule),
+                rateLimitPerSecond: rps
+            })
+        );
+
+        vm.selectFork({forkId: activeFork});
+        vm.stopPrank();
+    }
+
+    /// @dev Helper function that adds root & leaf bridge limits for restricted tokens
+    function setLimitsRestricted(uint256 _rootBufferCap, uint256 _leafBufferCap) internal {
+        vm.stopPrank();
+        uint256 activeFork = vm.activeFork();
+
+        vm.startPrank(users.owner);
+        vm.selectFork({forkId: rootId});
+
+        uint112 rootBufferCap = _rootBufferCap.toUint112();
+        // replenish limits in 1 day, avoid max rate limit per second
+        uint128 rps = Math.min((rootBufferCap / 2) / DAY, rootRestrictedRewardToken.maxRateLimitPerSecond()).toUint128();
+        rootRestrictedRewardToken.addBridge(
+            MintLimits.RateLimitMidPointInfo({
+                bufferCap: rootBufferCap,
+                bridge: address(rootRestrictedTokenBridge),
+                rateLimitPerSecond: rps
+            })
+        );
+
+        vm.selectFork({forkId: leafId});
+        uint112 leafBufferCap = _leafBufferCap.toUint112();
+        // replenish limits in 1 day, avoid max rate limit per second
+        rps = Math.min((leafBufferCap / 2) / DAY, leafRestrictedRewardToken.maxRateLimitPerSecond()).toUint128();
+        leafRestrictedRewardToken.addBridge(
+            MintLimits.RateLimitMidPointInfo({
+                bufferCap: leafBufferCap,
+                bridge: address(leafRestrictedTokenBridge),
                 rateLimitPerSecond: rps
             })
         );

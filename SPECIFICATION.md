@@ -414,3 +414,62 @@ all chains.
 
 The XERC20 implementation has also been lightly modified to support [SuperchainERC20](https://github.com/ethereum-optimism/specs/blob/main/specs/interop/token-bridging.md). A sample implementation is available [here](https://github.com/defi-wonderland/optimism/blob/develop/packages/contracts-bedrock/src/L2/SuperchainERC20.sol). This interface is
 also rate limited as per XERC20.
+
+## XOP
+
+### RestrictedXERC20
+
+The purpose of XOP is to provide a limited token that can be used as an incentive on gauges across the
+Superchain. It will be available to use on both Velodrome Superchain and Aerodrome reward contracts.
+
+On optimism, the token's usage is unrestricted. On the superchain (ex-Base), the following invariants 
+are maintained:
+- Only the token bridge and rewards contracts can be whitelisted, and can transfer XOP to other addresses.
+- The token bridge is only able to send XOP to rewards contracts. 
+- Recipients of rewards can only do one thing, which is to bridge the XOP back to optimism. 
+- XOP cannot be used for anything else. 
+
+On base, the following invariants are maintained:
+- Only the token bridge and rewards contracts can be whitelisted, and can transfer XOP to other addresses.
+- The token bridge is able to send XOP to both rewards contracts and normal addresses. 
+- Recipients of rewards can only do one thing, which is to bridge the XOP back to optimism. 
+- XOP cannot be used for anything else. 
+
+XOP has been implemented as a restricted XERC20. RestrictedXERC20 is an extension of XERC20 with the
+following changes:
+- Mints and burns are not restricted. 
+- Transfers are initially restricted to the token bridge.
+- Any addresses the token bridge transfers to are whitelisted.
+- Transfers can be made from whitelisted addresses to other addresses.
+- Otherwise, transfers revert.
+
+### RestrictedTokenBridge
+
+The restricted token bridge extends the token bridge to provide additional funcionality for use with 
+XOP. 
+
+#### RootRestrictedTokenBridge
+Superchain:
+- Allows users to deposit XOP into rewards contracts attached to a live gauge on the superchain.
+- The recipient must be a valid superchain gauge, with a chainid that matches the chainid of the 
+destination. 
+
+Base:
+- Allows users to deposit XOP into rewards contracts on base.
+- If the recipient is not a registered gauge, the rewards are sent to the recipient instead. 
+
+#### LeafRestrictedTokenBridge
+Superchain:
+- Rewards are deposited directly into the rewards contract. 
+
+Base:
+- Rewards are deposited directly into the rewards contract.
+- If the recipient is not a registered gauge, the rewards are sent to the recipient instead. 
+
+### Known Issues
+- Checks for gauge validity only apply to the superchain. If tokens are sent to an address on base that 
+is not a gauge, it will have to be bridged back to optimism before it can be used.
+- Due to messages being unordered, it is possible for gauges to be deposited into prior to successfully 
+being created on the leaf chain. This will result in lost rewards. In general, it is assumed that gauges 
+exist on both chains.
+- When bridging to base, the recipient must be checked carefully. If the recipient is a contract with no support to bridge tokens back, it could result in lost funds.  

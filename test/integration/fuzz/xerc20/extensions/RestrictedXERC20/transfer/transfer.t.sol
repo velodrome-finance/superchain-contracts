@@ -28,11 +28,11 @@ contract RestrictedXERC20IntegrationFuzzTest is RestrictedXERC20Test {
     {
         // It should whitelist the destination address
         // It should allow the transfer
-        vm.assume(_recipient != address(leafTokenBridge) && _recipient != address(0));
+        vm.assume(_recipient != address(leafRestrictedTokenBridge) && _recipient != address(0));
         vm.assume(_amount <= MAX_TOKENS);
-        deal({token: address(leafRestrictedRewardToken), to: address(leafTokenBridge), give: _amount});
+        deal({token: address(leafRestrictedRewardToken), to: address(leafRestrictedTokenBridge), give: _amount});
 
-        vm.startPrank({msgSender: address(leafTokenBridge)});
+        vm.startPrank({msgSender: address(leafRestrictedTokenBridge)});
         leafRestrictedRewardToken.transfer({to: _recipient, value: _amount});
 
         assertEq(leafRestrictedRewardToken.balanceOf(_recipient), _amount);
@@ -45,11 +45,11 @@ contract RestrictedXERC20IntegrationFuzzTest is RestrictedXERC20Test {
         whenTransferOccursOnNon_originChains(_chainId)
     {
         // It should allow the transfer
-        vm.assume(_sender != address(leafTokenBridge) && _sender != address(0));
+        vm.assume(_sender != address(leafRestrictedTokenBridge) && _sender != address(0));
         vm.assume(_amount <= MAX_TOKENS);
-        deal({token: address(leafRestrictedRewardToken), to: address(leafTokenBridge), give: _amount});
+        deal({token: address(leafRestrictedRewardToken), to: address(leafRestrictedTokenBridge), give: _amount});
 
-        vm.prank({msgSender: address(leafTokenBridge)});
+        vm.prank({msgSender: address(leafRestrictedTokenBridge)});
         leafRestrictedRewardToken.transfer({to: _sender, value: _amount});
 
         assertEq(leafRestrictedRewardToken.balanceOf(_sender), _amount);
@@ -67,7 +67,7 @@ contract RestrictedXERC20IntegrationFuzzTest is RestrictedXERC20Test {
         whenTransferOccursOnNon_originChains(_chainId)
     {
         // It should revert with {NotWhitelisted}
-        vm.assume(_sender != address(leafTokenBridge) && _sender != address(0));
+        vm.assume(_sender != address(leafRestrictedTokenBridge) && _sender != address(0));
         vm.assume(_amount <= MAX_TOKENS);
         deal({token: address(leafRestrictedRewardToken), to: _sender, give: _amount});
 

@@ -17,7 +17,7 @@ interface IRestrictedXERC20 is IXERC20 {
     /// @notice Chain Id of the chain containing the original token
     function UNRESTRICTED_CHAIN_ID() external view returns (uint256);
 
-    /// @notice Entropy for the token bridge
+    /// @notice Entropy for the token bridge attached to the token
     function TOKEN_BRIDGE_ENTROPY() external view returns (bytes11);
 
     /// @notice Address of token bridge associated with the token

@@ -69,12 +69,43 @@ contract RootTokenBridge is BaseTokenBridge, IRootTokenBridge {
     function sendToken(address _recipient, uint256 _amount, uint256 _chainid)
         external
         payable
+        virtual
         override(BaseTokenBridge, ITokenBridge)
     {
         if (_amount == 0) revert ZeroAmount();
         if (_recipient == address(0)) revert ZeroAddress();
         if (!_chainids.contains({value: _chainid})) revert NotRegistered();
 
+        _send({_amount: _amount, _recipient: _recipient, _chainid: _chainid});
+    }
+
+    /// @inheritdoc IHLHandler
+    function handle(uint32 _origin, bytes32 _sender, bytes calldata _message) external payable virtual override {
+        if (msg.sender != mailbox) revert NotMailbox();
+        if (_sender != TypeCasts.addressToBytes32(address(this))) revert NotBridge();
+        uint256 chainid = IRootHLMessageModule(module).chains({_domain: _origin});
+        if (chainid == 0) chainid = _origin;
+        if (!_chainids.contains({value: chainid})) revert NotRegistered();
+
+        (address recipient, uint256 amount) = _message.recipientAndAmount();
+
+        IXERC20(xerc20).mint({_user: address(this), _amount: amount});
+
+        IERC20(xerc20).safeIncreaseAllowance({spender: address(lockbox), value: amount});
+        lockbox.withdraw({_amount: amount});
+        erc20.safeTransfer({to: recipient, value: amount});
+
+        emit ReceivedMessage({_origin: _origin, _sender: _sender, _value: msg.value, _message: string(_message)});
+    }
+
+    /// @inheritdoc IRootTokenBridge
+    function setModule(address _module) external onlyOwner {
+        if (_module == address(0)) revert ZeroAddress();
+        module = _module;
+        emit ModuleSet({_sender: msg.sender, _module: _module});
+    }
+
+    function _send(uint256 _amount, address _recipient, uint256 _chainid) internal {
         uint32 domain = IRootHLMessageModule(module).domains({_chainid: _chainid});
         if (domain == 0) domain = uint32(_chainid);
 
@@ -114,31 +145,5 @@ contract RootTokenBridge is BaseTokenBridge, IRootTokenBridge {
             _message: string(message),
             _metadata: string(metadata)
         });
-    }
-
-    /// @inheritdoc IHLHandler
-    function handle(uint32 _origin, bytes32 _sender, bytes calldata _message) external payable virtual override {
-        if (msg.sender != mailbox) revert NotMailbox();
-        if (_sender != TypeCasts.addressToBytes32(address(this))) revert NotBridge();
-        uint256 chainid = IRootHLMessageModule(module).chains({_domain: _origin});
-        if (chainid == 0) chainid = _origin;
-        if (!_chainids.contains({value: chainid})) revert NotRegistered();
-
-        (address recipient, uint256 amount) = _message.recipientAndAmount();
-
-        IXERC20(xerc20).mint({_user: address(this), _amount: amount});
-
-        IERC20(xerc20).safeIncreaseAllowance({spender: address(lockbox), value: amount});
-        lockbox.withdraw({_amount: amount});
-        erc20.safeTransfer({to: recipient, value: amount});
-
-        emit ReceivedMessage({_origin: _origin, _sender: _sender, _value: msg.value, _message: string(_message)});
-    }
-
-    /// @inheritdoc IRootTokenBridge
-    function setModule(address _module) external onlyOwner {
-        if (_module == address(0)) revert ZeroAddress();
-        module = _module;
-        emit ModuleSet({_sender: msg.sender, _module: _module});
     }
 }

@@ -6,11 +6,6 @@ import "../RestrictedXERC20.t.sol";
 contract MintIntegrationConcreteTest is RestrictedXERC20Test {
     using SafeCast for uint256;
 
-    function setUp() public override {
-        super.setUp();
-        vm.selectFork(leafId);
-    }
-
     function test_WhenTheRequestedAmountIsHigherThanTheCurrentMintingLimitOfCaller() external {
         // It should revert with "RateLimited: rate limit hit"
         vm.prank(address(leafRestrictedTokenBridge));

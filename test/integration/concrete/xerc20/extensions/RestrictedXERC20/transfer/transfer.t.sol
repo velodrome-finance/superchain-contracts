@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "../RestrictedXERC20.t.sol";
 
-contract RestrictedXERC20IntegrationConcreteTest is RestrictedXERC20Test {
+contract TransferIntegrationConcreteTest is RestrictedXERC20Test {
     function test_WhenTransferOccursOnTheOriginChain() external {
         // It should allow transfer without restrictions
         uint256 _amount = TOKEN_1;
@@ -26,9 +26,9 @@ contract RestrictedXERC20IntegrationConcreteTest is RestrictedXERC20Test {
         // It should allow the transfer
         uint256 _amount = TOKEN_1;
         address _recipient = users.bob;
-        deal({token: address(leafRestrictedRewardToken), to: address(leafTokenBridge), give: _amount});
+        deal({token: address(leafRestrictedRewardToken), to: address(leafRestrictedTokenBridge), give: _amount});
 
-        vm.startPrank({msgSender: address(leafTokenBridge)});
+        vm.startPrank({msgSender: address(leafRestrictedTokenBridge)});
         leafRestrictedRewardToken.transfer({to: _recipient, value: _amount});
 
         assertEq(leafRestrictedRewardToken.balanceOf(_recipient), _amount);
@@ -40,9 +40,9 @@ contract RestrictedXERC20IntegrationConcreteTest is RestrictedXERC20Test {
         // It should allow the transfer
         uint256 _amount = TOKEN_1;
         address _sender = users.alice;
-        deal({token: address(leafRestrictedRewardToken), to: address(leafTokenBridge), give: _amount});
+        deal({token: address(leafRestrictedRewardToken), to: address(leafRestrictedTokenBridge), give: _amount});
 
-        vm.prank({msgSender: address(leafTokenBridge)});
+        vm.prank({msgSender: address(leafRestrictedTokenBridge)});
         leafRestrictedRewardToken.transfer({to: _sender, value: _amount});
 
         assertEq(leafRestrictedRewardToken.balanceOf(_sender), _amount);
@@ -70,9 +70,9 @@ contract RestrictedXERC20IntegrationConcreteTest is RestrictedXERC20Test {
         // Setup a basic transfer from token bridge on non-origin chain
         uint256 _amount = TOKEN_1;
         vm.chainId({newChainId: 1}); // non-origin chain
-        deal({token: address(leafRestrictedRewardToken), to: address(leafTokenBridge), give: _amount});
+        deal({token: address(leafRestrictedRewardToken), to: address(leafRestrictedTokenBridge), give: _amount});
 
-        vm.prank({msgSender: address(leafTokenBridge)});
+        vm.prank({msgSender: address(leafRestrictedTokenBridge)});
         leafRestrictedRewardToken.transfer({to: users.bob, value: _amount});
         vm.snapshotGasLastCall("RestrictedXERC20_transfer");
     }

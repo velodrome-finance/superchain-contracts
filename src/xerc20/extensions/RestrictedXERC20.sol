@@ -48,7 +48,7 @@ contract RestrictedXERC20 is XERC20, IRestrictedXERC20 {
     /// @inheritdoc IRestrictedXERC20
     uint256 public constant UNRESTRICTED_CHAIN_ID = 10;
     /// @inheritdoc IRestrictedXERC20
-    bytes11 public constant TOKEN_BRIDGE_ENTROPY = 0x0020000000000000000014;
+    bytes11 public constant TOKEN_BRIDGE_ENTROPY = 0x0000000000000000000052;
     /// @inheritdoc IRestrictedXERC20
     address public immutable tokenBridge;
 
@@ -59,7 +59,6 @@ contract RestrictedXERC20 is XERC20, IRestrictedXERC20 {
         XERC20(_name, _symbol, _owner, _lockbox)
     {
         tokenBridge = CreateXLibrary.computeCreate3Address({_entropy: TOKEN_BRIDGE_ENTROPY, _deployer: tx.origin});
-        // Not necessary to whitelist but done for consistency
         _whitelist.add(tokenBridge);
     }
 

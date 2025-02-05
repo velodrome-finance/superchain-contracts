@@ -309,12 +309,6 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
         vm.startPrank(users.alice);
         rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});
 
-        vm.startPrank(rootTokenBridge.owner());
-        rootTokenBridge.setHook({_hook: address(rootHook)});
-
-        vm.startPrank(users.alice);
-        rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});
-
         vm.expectEmit(address(rootTokenBridge));
         emit ITokenBridge.SentMessage({
             _destination: leafDomain,
@@ -324,7 +318,7 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
             _metadata: string(
                 StandardHookMetadata.formatMetadata({
                     _msgValue: ethAmount + leftoverEth,
-                    _gasLimit: rootTokenBridge.GAS_LIMIT() * 2, // custom hook returns twice the gas limit
+                    _gasLimit: rootTokenBridge.GAS_LIMIT(),
                     _refundAddress: users.alice,
                     _customMetadata: ""
                 })
@@ -377,6 +371,10 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
         vm.deal({account: users.alice, newBalance: ethAmount + leftoverEth});
         deal({token: address(rootRewardToken), to: users.alice, give: amount});
 
+        address hook = address(new MockCustomHook(users.owner, defaultCommands, defaultGasLimits));
+        vm.startPrank(rootTokenBridge.owner());
+        rootTokenBridge.setHook({_hook: address(hook)});
+
         vm.startPrank(users.alice);
         rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});
 
@@ -389,7 +387,7 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
             _metadata: string(
                 StandardHookMetadata.formatMetadata({
                     _msgValue: ethAmount + leftoverEth,
-                    _gasLimit: rootTokenBridge.GAS_LIMIT(),
+                    _gasLimit: rootTokenBridge.GAS_LIMIT() * 2, // custom hook returns twice the gas limit
                     _refundAddress: users.alice,
                     _customMetadata: ""
                 })

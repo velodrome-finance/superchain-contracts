@@ -1,4 +1,4 @@
-RestrictedXERC20IntegrationConcreteTest
+TransferIntegrationConcreteTest
 ├── When transfer occurs on the origin chain
 │   └── It should allow transfer without restrictions
 └── When transfer occurs on non-origin chains

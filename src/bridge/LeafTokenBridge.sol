@@ -49,14 +49,14 @@ contract LeafTokenBridge is BaseTokenBridge {
     {}
 
     /// @inheritdoc ITokenBridge
-    function sendToken(address _recipient, uint256 _amount, uint256 _chainid) external payable override {
+    function sendToken(address _recipient, uint256 _amount, uint256 _chainid) external payable virtual override {
         bytes memory message = abi.encodePacked(_recipient, _amount);
 
         _send({_amount: _amount, _recipient: _recipient, _chainid: _chainid, _message: message});
     }
 
     /// @inheritdoc IHLHandler
-    function handle(uint32 _origin, bytes32 _sender, bytes calldata _message) external payable override {
+    function handle(uint32 _origin, bytes32 _sender, bytes calldata _message) external payable virtual override {
         if (msg.sender != mailbox) revert NotMailbox();
         if (_sender != TypeCasts.addressToBytes32(address(this))) revert NotBridge();
         if (!_chainids.contains({value: _origin})) revert NotRegistered();

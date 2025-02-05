@@ -6,11 +6,6 @@ import "../RestrictedXERC20.t.sol";
 contract BurnIntegrationConcreteTest is RestrictedXERC20Test {
     using SafeCast for uint256;
 
-    function setUp() public override {
-        super.setUp();
-        vm.selectFork(leafId);
-    }
-
     function test_WhenTheRequestedAmountIsHigherThanTheCurrentBurningLimitOfCaller() external {
         // It should revert with "RateLimited: buffer cap overflow"
         uint112 bufferCap = leafRestrictedRewardToken.minBufferCap() + 1;

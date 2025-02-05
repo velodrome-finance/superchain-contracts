@@ -13,6 +13,7 @@ contract DeployLeafRestrictedXERC20 is DeployFixture {
         address owner;
         address mailbox;
         address ism;
+        address voter;
         string outputFilename;
     }
 
@@ -53,7 +54,8 @@ contract DeployLeafRestrictedXERC20 is DeployFixture {
                         _params.owner, // token bridge owner
                         address(leafRestrictedRewardToken), // token associated with bridge
                         _params.mailbox, // hyperlane mailbox
-                        _params.ism // hyperlane ism
+                        _params.ism, // hyperlane ism
+                        _params.voter // voter address
                     )
                 )
             })
