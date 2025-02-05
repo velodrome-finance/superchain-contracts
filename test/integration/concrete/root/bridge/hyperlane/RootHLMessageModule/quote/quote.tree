@@ -1,3 +1,14 @@
 QuoteIntegrationConcreteTest
-└── When the caller is anyone
-    └── It returns the quote
+├── When the command is a notify command
+│   ├── When the current timestamp is in the distribute window
+│   │   └── It returns 0
+│   └── When the current timestamp is not in the distribute window
+│       └── It returns the quote
+└── When the command is not a notify command
+    ├── When the command is an nft command
+    │   ├── When the caller is whitelisted
+    │   │   └── It returns 0
+    │   └── When the caller is not whitelisted
+    │       └── It returns the quote
+    └── When the command is not an nft command
+        └── It returns the quote

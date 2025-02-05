@@ -291,6 +291,9 @@ via different message vendors. Care must be taken in the upgrade process.
 - Supports the sending of messages cross chain via Hyperlane.
 - For token bridging transactions, the module is given permission to burn tokens on the root chain.
 - Supports registering a custom mailbox domain for a chain. Only the message bridge owner can set custom domains.
+- Supports transaction sponsoring for:
+    - Notify command during the first hour of the epoch.
+    - All transactions from whitelisted addresses. Only the message bridge owner can manage whitelisted addresses.
 
 #### Root Token Bridge
 - Supports the sending of tokens cross chain via Hyperlane.
@@ -299,6 +302,7 @@ via different message vendors. Care must be taken in the upgrade process.
 - Sending tokens from root chain receives the underlying erc20 token, wraps to xerc20 and sends it cross chain.
 - Receiving tokens from leaf chain receives the xerc20 token, unwraps to erc20 and sends it to the recipient.
 - Fees are paid for in native ETH.
+- Supports transaction sponsoring for whitelisted addresses. Only the owner can manage whitelisted addresses.
 - The token bridge may be sunset in the future in favor of alternate token bridging mechanisms.
 
 #### Root Escrow Token Bridge

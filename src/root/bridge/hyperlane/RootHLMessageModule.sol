@@ -5,6 +5,7 @@ import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 import {StandardHookMetadata} from "@hyperlane/core/contracts/hooks/libs/StandardHookMetadata.sol";
 import {IPostDispatchHook} from "@hyperlane/core/contracts/interfaces/hooks/IPostDispatchHook.sol";
+import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
 import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 
 import {
@@ -14,7 +15,7 @@ import {IHookGasEstimator} from "../../../interfaces/root/bridge/hyperlane/IHook
 import {IRootMessageBridge} from "../../../interfaces/root/bridge/IRootMessageBridge.sol";
 import {IVoter} from "../../../interfaces/external/IVoter.sol";
 import {IXERC20} from "../../../interfaces/xerc20/IXERC20.sol";
-
+import {Paymaster} from "./Paymaster.sol";
 import {GasRouter} from "./GasRouter.sol";
 
 import {VelodromeTimeLibrary} from "../../../libraries/VelodromeTimeLibrary.sol";
@@ -22,7 +23,8 @@ import {Commands} from "../../../libraries/Commands.sol";
 
 /// @title Root Hyperlane Message Module
 /// @notice Hyperlane module used to bridge arbitrary messages between chains
-contract RootHLMessageModule is IRootHLMessageModule, GasRouter {
+contract RootHLMessageModule is IRootHLMessageModule, Paymaster, GasRouter {
+    using EnumerableSet for EnumerableSet.AddressSet;
     using Commands for bytes;
 
     /// @inheritdoc IRootHLMessageModule
@@ -40,20 +42,34 @@ contract RootHLMessageModule is IRootHLMessageModule, GasRouter {
     /// @inheritdoc IRootHLMessageModule
     mapping(uint32 => uint256) public chains;
 
-    constructor(address _bridge, address _mailbox, uint256[] memory _commands, uint256[] memory _gasLimits)
-        GasRouter(Ownable(_bridge).owner(), _commands, _gasLimits)
-    {
+    constructor(
+        address _bridge,
+        address _mailbox,
+        address _paymasterVault,
+        uint256[] memory _commands,
+        uint256[] memory _gasLimits
+    ) Paymaster(_paymasterVault) GasRouter(Ownable(_bridge).owner(), _commands, _gasLimits) {
         bridge = _bridge;
         xerc20 = IRootMessageBridge(_bridge).xerc20();
         mailbox = _mailbox;
         voter = IRootMessageBridge(_bridge).voter();
     }
 
+    /// @dev Overrides Paymaster access control
+    modifier onlyWhitelistManager() override {
+        if (msg.sender != Ownable(bridge).owner()) revert NotBridgeOwner();
+        _;
+    }
+
     /// @inheritdoc IMessageSender
     function quote(uint256 _destinationDomain, bytes calldata _messageBody) external view returns (uint256) {
-        address _hook = hook;
         uint256 command = _messageBody.command();
-        bytes memory _metadata = _generateGasMetadata({_command: command, _hook: _hook});
+        /// @dev If sponsoring is required, no quote is returned
+        if (_requiresSponsoring({_command: command})) {
+            return 0;
+        }
+        address _hook = hook;
+        bytes memory _metadata = _generateGasMetadata({_command: command, _hook: _hook, _value: 0});
 
         return Mailbox(mailbox).quoteDispatch({
             destinationDomain: uint32(_destinationDomain),
@@ -85,7 +101,7 @@ contract RootHLMessageModule is IRootHLMessageModule, GasRouter {
 
         address _hook = hook;
         uint256 command = _message.command();
-        bytes memory _metadata = _generateGasMetadata({_command: command, _hook: _hook});
+        bytes memory _metadata = _generateGasMetadata({_command: command, _hook: _hook, _value: msg.value});
 
         if (command <= Commands.NOTIFY_WITHOUT_CLAIM) {
             uint256 amount = _message.amount();
@@ -98,7 +114,25 @@ contract RootHLMessageModule is IRootHLMessageModule, GasRouter {
             }
         }
 
-        Mailbox(mailbox).dispatch{value: msg.value}({
+        /// @dev If sponsoring is required, fetch quote & pull funds from vault
+        uint256 fee;
+        if (_requiresSponsoring({_command: command})) {
+            fee = Mailbox(mailbox).quoteDispatch({
+                destinationDomain: domain,
+                recipientAddress: TypeCasts.addressToBytes32(address(this)),
+                messageBody: _message,
+                metadata: _metadata,
+                hook: IPostDispatchHook(_hook)
+            });
+            if (fee > 0) {
+                _metadata = _generateGasMetadata({_command: command, _hook: _hook, _value: fee});
+                _sponsorTransaction({_fee: fee});
+            }
+        } else {
+            fee = msg.value;
+        }
+
+        Mailbox(mailbox).dispatch{value: fee}({
             destinationDomain: domain,
             recipientAddress: TypeCasts.addressToBytes32(address(this)),
             messageBody: _message,
@@ -109,7 +143,7 @@ contract RootHLMessageModule is IRootHLMessageModule, GasRouter {
         emit SentMessage({
             _destination: domain,
             _recipient: TypeCasts.addressToBytes32(address(this)),
-            _value: msg.value,
+            _value: fee,
             _message: string(_message),
             _metadata: string(_metadata)
         });
@@ -122,12 +156,23 @@ contract RootHLMessageModule is IRootHLMessageModule, GasRouter {
         emit HookSet({_newHook: _hook});
     }
 
-    function _generateGasMetadata(uint256 _command, address _hook) internal view returns (bytes memory) {
+    /// @dev Helper to check if x-chain transaction requires sponsoring
+    function _requiresSponsoring(uint256 _command) internal view returns (bool) {
+        /// @dev Sponsor transactions from whitelisted addresses or for the Notify command during distribute window
+        return (_command == Commands.NOTIFY && block.timestamp <= VelodromeTimeLibrary.epochVoteStart(block.timestamp))
+            || _whitelist.contains(tx.origin);
+    }
+
+    function _generateGasMetadata(uint256 _command, address _hook, uint256 _value)
+        internal
+        view
+        returns (bytes memory)
+    {
         /// @dev If custom hook is set, it should be used to estimate gas
         uint256 gasLimit =
             _hook == address(0) ? gasLimit[_command] : IHookGasEstimator(_hook).estimateGas({_command: _command});
         return StandardHookMetadata.formatMetadata({
-            _msgValue: msg.value,
+            _msgValue: _value,
             _gasLimit: gasLimit,
             _refundAddress: tx.origin,
             _customMetadata: ""

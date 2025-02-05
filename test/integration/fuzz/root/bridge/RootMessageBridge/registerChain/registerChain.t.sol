@@ -15,6 +15,7 @@ contract RegisterChainIntegrationFuzzTest is RootMessageBridgeTest {
         rootMessageModule = new RootHLMessageModule({
             _bridge: address(rootMessageBridge),
             _mailbox: address(rootMailbox),
+            _paymasterVault: address(rootModuleVault),
             _commands: defaultCommands,
             _gasLimits: defaultGasLimits
         });

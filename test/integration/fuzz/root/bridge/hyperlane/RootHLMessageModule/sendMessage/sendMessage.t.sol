@@ -31,9 +31,14 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         _;
     }
 
-    function testFuzz_WhenTheCommandIsDeposit(address _caller, uint256 _amount, uint256 _timestamp)
+    modifier whenTheCommandIsDeposit() {
+        _;
+    }
+
+    function testFuzz_WhenSenderIsNotWhitelisted(address _caller, uint256 _amount, uint256 _timestamp)
         external
         whenTheCallerIsBridge
+        whenTheCommandIsDeposit
     {
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
@@ -95,19 +100,104 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         assertEq(checkpointAmount, amount);
     }
 
-    function testFuzz_WhenTheCommandIsNotify(uint256 _amount) external whenTheCallerIsBridge {
+    function testFuzz_WhenSenderIsWhitelisted(address _caller, uint256 _amount, uint256 _timestamp)
+        external
+        whenTheCallerIsBridge
+        whenTheCommandIsDeposit
+    {
+        // It pays for dispatch using weth from paymaster
+        // It dispatches the message to the mailbox
+        // It emits the {SentMessage} event
+        // It calls receiveMessage on the recipient contract of the same address with the payload
+        vm.assume(_caller != address(0));
+        amount = bound(_amount, 1, MAX_TOKENS);
+        _timestamp = bound(
+            _timestamp,
+            VelodromeTimeLibrary.epochStart(block.timestamp),
+            VelodromeTimeLibrary.epochVoteEnd(block.timestamp)
+        );
+
+        vm.prank(rootMessageBridge.owner());
+        rootMessageModule.whitelistForSponsorship({_account: _caller, _state: true});
+
+        // Create Lock for Alice & Timeskip
+        vm.startPrank(users.alice);
+        deal(address(rootRewardToken), users.alice, amount);
+        rootRewardToken.approve(address(mockEscrow), amount);
+        tokenId = mockEscrow.createLock(amount, MAX_TIME);
+        vm.stopPrank();
+
+        vm.warp(_timestamp);
+
+        uint256 paymasterBalBefore = address(rootModuleVault).balance;
+
+        bytes memory message =
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint40(_timestamp));
+        bytes memory expectedMessage =
+            abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint40(_timestamp));
+
+        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: _caller});
+        vm.expectEmit(address(rootMessageModule));
+        emit IMessageSender.SentMessage({
+            _destination: leafDomain,
+            _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
+            _value: MESSAGE_FEE,
+            _message: string(expectedMessage),
+            _metadata: string(
+                StandardHookMetadata.formatMetadata({
+                    _msgValue: MESSAGE_FEE,
+                    _gasLimit: Commands.DEPOSIT.gasLimit(),
+                    _refundAddress: _caller,
+                    _customMetadata: ""
+                })
+            )
+        });
+        rootMessageModule.sendMessage({_chainid: leaf, _message: message});
+
+        /// @dev Transaction sponsored by Paymaster
+        assertEq(address(rootModuleVault).balance, paymasterBalBefore - MESSAGE_FEE);
+
+        vm.selectFork({forkId: leafId});
+        leafMailbox.processNextInboundMessage();
+
+        assertEq(leafFVR.totalSupply(), amount);
+        assertEq(leafFVR.balanceOf(tokenId), amount);
+        (uint256 checkpointTs, uint256 checkpointAmount) =
+            leafFVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
+        assertEq(checkpointTs, _timestamp);
+        assertEq(checkpointAmount, amount);
+        assertEq(leafIVR.totalSupply(), amount);
+        assertEq(leafIVR.balanceOf(tokenId), amount);
+        (checkpointTs, checkpointAmount) = leafIVR.checkpoints(tokenId, leafFVR.numCheckpoints(tokenId) - 1);
+        assertEq(checkpointTs, _timestamp);
+        assertEq(checkpointAmount, amount);
+    }
+
+    modifier whenTheCommandIsNotify() {
+        _;
+    }
+
+    function testFuzz_WhenTheCurrentTimestampIsNotInTheDistributeWindow(uint256 _amount, uint256 _timestamp)
+        external
+        whenTheCallerIsBridge
+        whenTheCommandIsNotify
+    {
         // It burns the decoded amount of tokens
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
         // It calls receiveMessage on the recipient contract of the same address with the payload
         _amount = bound(_amount, TOKEN_1, MAX_BUFFER_CAP / 2);
+        _timestamp = bound(
+            _timestamp,
+            VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1,
+            VelodromeTimeLibrary.epochNext(block.timestamp) - 1
+        );
 
-        uint256 rootTimestamp = block.timestamp;
-        vm.warp({newTimestamp: rootTimestamp});
         deal(address(rootXVelo), address(rootMessageModule), _amount);
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
         uint256 bufferCap = Math.max(_amount * 2, rootXVelo.minBufferCap() + 1);
         setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
+        vm.warp({newTimestamp: _timestamp});
 
         bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY), address(leafGauge), _amount);
         vm.expectEmit(address(rootMessageModule));
@@ -131,14 +221,74 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         assertEq(rootXVelo.balanceOf(address(rootMessageModule)), 0);
 
         vm.selectFork({forkId: leafId});
-        vm.warp({newTimestamp: rootTimestamp});
+        vm.warp({newTimestamp: _timestamp});
         leafMailbox.processNextInboundMessage();
 
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
         assertEq(leafGauge.rewardPerTokenStored(), 0);
-        assertEq(leafGauge.rewardRate(), _amount / WEEK);
-        assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), _amount / WEEK);
+        assertEq(leafGauge.rewardRate(), _amount / timeUntilNext);
+        assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), _amount / timeUntilNext);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
-        assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
+        assertEq(leafGauge.periodFinish(), block.timestamp + timeUntilNext);
+    }
+
+    function testFuzz_WhenTheCurrentTimestampIsInTheDistributeWindow(uint256 _amount, uint256 _timestamp)
+        external
+        whenTheCallerIsBridge
+        whenTheCommandIsNotify
+    {
+        // It pays for dispatch using weth from paymaster
+        // It burns the decoded amount of tokens
+        // It dispatches the message to the mailbox
+        // It emits the {SentMessage} event
+        // It calls receiveMessage on the recipient contract of the same address with the payload
+        _amount = bound(_amount, TOKEN_1, MAX_BUFFER_CAP / 2);
+        _timestamp = bound(
+            _timestamp,
+            VelodromeTimeLibrary.epochStart(block.timestamp),
+            VelodromeTimeLibrary.epochVoteStart(block.timestamp)
+        );
+
+        deal(address(rootXVelo), address(rootMessageModule), _amount);
+        uint256 bufferCap = Math.max(_amount * 2, rootXVelo.minBufferCap() + 1);
+        setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
+        vm.warp({newTimestamp: _timestamp});
+
+        uint256 paymasterBalBefore = address(rootModuleVault).balance;
+
+        bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY), address(leafGauge), _amount);
+        vm.expectEmit(address(rootMessageModule));
+        emit IMessageSender.SentMessage({
+            _destination: leafDomain,
+            _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
+            _value: MESSAGE_FEE,
+            _message: string(message),
+            _metadata: string(
+                StandardHookMetadata.formatMetadata({
+                    _msgValue: MESSAGE_FEE,
+                    _gasLimit: Commands.NOTIFY.gasLimit(),
+                    _refundAddress: users.alice,
+                    _customMetadata: ""
+                })
+            )
+        });
+        vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: users.alice});
+        rootMessageModule.sendMessage({_chainid: leaf, _message: message});
+
+        /// @dev Transaction sponsored by Paymaster
+        assertEq(address(rootModuleVault).balance, paymasterBalBefore - MESSAGE_FEE);
+        assertEq(rootXVelo.balanceOf(address(rootMessageModule)), 0);
+
+        vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: _timestamp});
+        leafMailbox.processNextInboundMessage();
+
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
+        assertEq(leafGauge.rewardPerTokenStored(), 0);
+        assertEq(leafGauge.rewardRate(), _amount / timeUntilNext);
+        assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), _amount / timeUntilNext);
+        assertEq(leafGauge.lastUpdateTime(), block.timestamp);
+        assertEq(leafGauge.periodFinish(), block.timestamp + timeUntilNext);
     }
 
     function testFuzz_WhenTheCommandIsNotifyWithoutClaim(uint256 _amount) external whenTheCallerIsBridge {
@@ -148,12 +298,13 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         // It calls receiveMessage on the recipient contract of the same address with the payload
         _amount = bound(_amount, TOKEN_1, MAX_BUFFER_CAP / 2);
 
-        uint256 rootTimestamp = block.timestamp;
-        vm.warp({newTimestamp: rootTimestamp});
         deal(address(rootXVelo), address(rootMessageModule), _amount);
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
         uint256 bufferCap = Math.max(_amount * 2, rootXVelo.minBufferCap() + 1);
         setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
+        /// @dev Skip distribute window to avoid sponsoring
+        uint256 rootTimestamp = VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1;
+        vm.warp({newTimestamp: rootTimestamp});
 
         bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY_WITHOUT_CLAIM), address(leafGauge), _amount);
         vm.expectEmit(address(rootMessageModule));
@@ -180,11 +331,12 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         vm.warp({newTimestamp: rootTimestamp});
         leafMailbox.processNextInboundMessage();
 
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(block.timestamp) - block.timestamp;
         assertEq(leafGauge.rewardPerTokenStored(), 0);
-        assertEq(leafGauge.rewardRate(), _amount / WEEK);
-        assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), _amount / WEEK);
+        assertEq(leafGauge.rewardRate(), _amount / timeUntilNext);
+        assertEq(leafGauge.rewardRateByEpoch(VelodromeTimeLibrary.epochStart(block.timestamp)), _amount / timeUntilNext);
         assertEq(leafGauge.lastUpdateTime(), block.timestamp);
-        assertEq(leafGauge.periodFinish(), block.timestamp + WEEK);
+        assertEq(leafGauge.periodFinish(), block.timestamp + timeUntilNext);
     }
 
     modifier whenTheCommandIsGetIncentives(uint256 _amount) {

@@ -7,7 +7,6 @@ contract SendTokenAndLockIntegrationFuzzTest is LeafEscrowTokenBridgeTest {
     using SafeCast for uint256;
 
     uint256 public amount;
-    address public recipient;
     uint256 public tokenId;
     uint256 public lockAmount = TOKEN_1 * 1000;
     uint256 public msgValue;
@@ -33,8 +32,7 @@ contract SendTokenAndLockIntegrationFuzzTest is LeafEscrowTokenBridgeTest {
     }
 
     modifier whenTheRecipientIsNotAddressZero(address _recipient) {
-        vm.assume(_recipient != address(0));
-        recipient = _recipient;
+        vm.assume(_recipient != address(0) && _recipient != address(mockEscrow) && _recipient != address(rootLockbox));
         _;
     }
 
@@ -62,7 +60,7 @@ contract SendTokenAndLockIntegrationFuzzTest is LeafEscrowTokenBridgeTest {
 
         vm.expectRevert(ITokenBridge.InsufficientBalance.selector);
         leafEscrowTokenBridge.sendTokenAndLock{value: msgValue}({
-            _recipient: recipient,
+            _recipient: _recipient,
             _amount: amount,
             _tokenId: tokenId
         });
@@ -108,7 +106,7 @@ contract SendTokenAndLockIntegrationFuzzTest is LeafEscrowTokenBridgeTest {
 
         vm.expectRevert("RateLimited: buffer cap overflow");
         leafEscrowTokenBridge.sendTokenAndLock{value: msgValue}({
-            _recipient: recipient,
+            _recipient: _recipient,
             _amount: amount,
             _tokenId: tokenId
         });
@@ -148,7 +146,7 @@ contract SendTokenAndLockIntegrationFuzzTest is LeafEscrowTokenBridgeTest {
             abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, address(leafGauge), _balance, amount)
         );
         leafEscrowTokenBridge.sendTokenAndLock{value: msgValue}({
-            _recipient: recipient,
+            _recipient: _recipient,
             _amount: amount,
             _tokenId: tokenId
         });
@@ -192,7 +190,7 @@ contract SendTokenAndLockIntegrationFuzzTest is LeafEscrowTokenBridgeTest {
             _destination: root,
             _recipient: TypeCasts.addressToBytes32(address(leafEscrowTokenBridge)),
             _value: msgValue,
-            _message: string(abi.encodePacked(recipient, amount, tokenId)),
+            _message: string(abi.encodePacked(_recipient, amount, tokenId)),
             _metadata: string(
                 StandardHookMetadata.formatMetadata({
                     _msgValue: msgValue,
@@ -203,7 +201,7 @@ contract SendTokenAndLockIntegrationFuzzTest is LeafEscrowTokenBridgeTest {
             )
         });
         leafEscrowTokenBridge.sendTokenAndLock{value: msgValue}({
-            _recipient: recipient,
+            _recipient: _recipient,
             _amount: amount,
             _tokenId: tokenId
         });
@@ -213,16 +211,18 @@ contract SendTokenAndLockIntegrationFuzzTest is LeafEscrowTokenBridgeTest {
         assertEq(address(leafEscrowTokenBridge).balance, 0);
 
         vm.selectFork({forkId: rootId});
+        uint256 balBefore = rootRewardToken.balanceOf(_recipient);
+
         vm.expectEmit(address(rootTokenBridge));
         emit IHLHandler.ReceivedMessage({
             _origin: leafDomain,
             _sender: TypeCasts.addressToBytes32(address(rootTokenBridge)),
             _value: 0,
-            _message: string(abi.encodePacked(recipient, amount, tokenId))
+            _message: string(abi.encodePacked(_recipient, amount, tokenId))
         });
         rootMailbox.processNextInboundMessage();
-        assertEq(rootXVelo.balanceOf(recipient), 0);
-        assertEq(rootRewardToken.balanceOf(recipient), 0);
+        assertEq(rootXVelo.balanceOf(_recipient), 0);
+        assertEq(rootRewardToken.balanceOf(_recipient), balBefore);
         assertEq(mockEscrow.balanceOfNFT(tokenId), lockAmount + amount);
     }
 

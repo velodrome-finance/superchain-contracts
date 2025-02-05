@@ -15,6 +15,7 @@ import {RootVotingRewardsFactory} from "src/root/rewards/RootVotingRewardsFactor
 
 import {RootTokenBridge} from "src/root/bridge/RootTokenBridge.sol";
 import {RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
+import {PaymasterVault} from "src/root/bridge/hyperlane/PaymasterVault.sol";
 import {EmergencyCouncil} from "src/root/emergencyCouncil/EmergencyCouncil.sol";
 import {RootHLMessageModule} from "src/root/bridge/hyperlane/RootHLMessageModule.sol";
 
@@ -36,8 +37,10 @@ contract OptimismDeployRootBaseTest is BaseFixture {
     XERC20Lockbox public rootLockbox;
 
     RootTokenBridge public rootTokenBridge;
+    PaymasterVault public rootTokenBridgeVault;
     RootMessageBridge public rootMessageBridge;
     RootHLMessageModule public rootMessageModule;
+    PaymasterVault public rootModuleVault;
 
     EmergencyCouncil public emergencyCouncil;
 
@@ -66,8 +69,10 @@ contract OptimismDeployRootBaseTest is BaseFixture {
         rootLockbox = deploy.rootLockbox();
 
         rootTokenBridge = deploy.rootTokenBridge();
+        rootTokenBridgeVault = deploy.rootTokenBridgeVault();
         rootMessageBridge = deploy.rootMessageBridge();
         rootMessageModule = deploy.rootMessageModule();
+        rootModuleVault = deploy.rootModuleVault();
 
         emergencyCouncil = deploy.emergencyCouncil();
 
@@ -84,8 +89,10 @@ contract OptimismDeployRootBaseTest is BaseFixture {
         assertNotEq(address(rootLockbox), address(0));
 
         assertNotEq(address(rootTokenBridge), address(0));
+        assertNotEq(address(rootTokenBridgeVault), address(0));
         assertNotEq(address(rootMessageBridge), address(0));
         assertNotEq(address(rootMessageModule), address(0));
+        assertNotEq(address(rootModuleVault), address(0));
 
         // assertNotEq(address(ism), address(0));
         assertNotEq(address(emergencyCouncil), address(0));
@@ -128,10 +135,14 @@ contract OptimismDeployRootBaseTest is BaseFixture {
         assertEq(rootMessageModule.gasLimit(Commands.KILL_GAUGE), Commands.KILL_GAUGE.gasLimit());
         assertEq(rootMessageModule.gasLimit(Commands.REVIVE_GAUGE), Commands.REVIVE_GAUGE.gasLimit());
 
+        assertEq(rootModuleVault.owner(), params.bridgeOwner);
+
         assertEq(rootTokenBridge.owner(), params.bridgeOwner);
         assertEq(rootTokenBridge.xerc20(), address(rootXVelo));
         assertEq(rootTokenBridge.mailbox(), address(params.mailbox));
         assertEq(address(rootTokenBridge.securityModule()), address(rootIsm));
+
+        assertEq(rootTokenBridgeVault.owner(), params.bridgeOwner);
 
         assertEq(rootVotingRewardsFactory.bridge(), address(rootMessageBridge));
 

@@ -1,0 +1,8 @@
+SponsorTransactionIntegrationConcreteTest
+├── When caller is not vault manager
+│   └── It should revert with {NotVaultManager}
+└── When caller is vault manager
+    ├── When transfer is not successful
+    │   └── It should revert with {ETHTransferFailed}
+    └── When transfer is successful
+        └── It should transfer the ETH amount to vault manager

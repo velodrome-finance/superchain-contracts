@@ -51,8 +51,8 @@ contract RootEscrowTokenBridge is RootTokenBridge, IRootEscrowTokenBridge {
     /// @inheritdoc IRootEscrowTokenBridge
     IVotingEscrow public immutable escrow;
 
-    constructor(address _owner, address _xerc20, address _module, address _ism)
-        RootTokenBridge(_owner, _xerc20, _module, _ism)
+    constructor(address _owner, address _xerc20, address _module, address _paymasterVault, address _ism)
+        RootTokenBridge(_owner, _xerc20, _module, _paymasterVault, _ism)
     {
         escrow = IVotingEscrow(IVoter(IRootHLMessageModule(_module).voter()).ve());
     }

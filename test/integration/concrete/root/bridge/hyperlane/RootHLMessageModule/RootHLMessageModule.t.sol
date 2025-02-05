@@ -10,9 +10,14 @@ abstract contract RootHLMessageModuleTest is BaseForkFixture {
         assertEq(rootMessageModule.xerc20(), address(rootXVelo));
         assertEq(rootMessageModule.mailbox(), address(rootMailbox));
         assertEq(rootMessageModule.voter(), address(mockVoter));
+        assertEq(rootMessageModule.paymasterVault(), address(rootModuleVault));
         assertEq(rootMessageModule.hook(), address(0));
         assertEq(rootMessageModule.domains(leaf), leafDomain);
         assertEq(rootMessageModule.chains(leafDomain), leaf);
+
+        address[] memory whitelist = rootMessageModule.whitelist();
+        assertEq(whitelist.length, 0);
+        assertEq(rootMessageModule.whitelistLength(), 0);
 
         assertEq(rootMessageModule.gasLimit({_command: Commands.DEPOSIT}), 281_000);
         assertEq(rootMessageModule.gasLimit({_command: Commands.WITHDRAW}), 75_000);

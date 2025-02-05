@@ -6,6 +6,7 @@ import "test/BaseFixture.sol";
 import {DeployRootBridgesBase} from "script/root/deployBridges/deployParameters/optimism/DeployRootBridgesBase.s.sol";
 
 import {RootHLMessageModule} from "src/root/bridge/hyperlane/RootHLMessageModule.sol";
+import {PaymasterVault} from "src/root/bridge/hyperlane/PaymasterVault.sol";
 import {RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
 import {RootTokenBridge} from "src/root/bridge/RootTokenBridge.sol";
 
@@ -20,8 +21,10 @@ contract DeployRootBridgesBaseTest is BaseFixture {
     // root superchain contracts
     XERC20 public rootXVelo;
     RootTokenBridge public rootTokenBridge;
+    PaymasterVault public rootTokenBridgeVault;
     RootMessageBridge public rootMessageBridge;
     RootHLMessageModule public rootMessageModule;
+    PaymasterVault public rootModuleVault;
 
     IInterchainSecurityModule public rootIsm;
 
@@ -42,8 +45,10 @@ contract DeployRootBridgesBaseTest is BaseFixture {
         rootXVelo = deploy.rootXVelo();
 
         rootTokenBridge = deploy.rootTokenBridge();
+        rootTokenBridgeVault = deploy.rootTokenBridgeVault();
         rootMessageBridge = deploy.rootMessageBridge();
         rootMessageModule = deploy.rootMessageModule();
+        rootModuleVault = deploy.rootModuleVault();
 
         rootIsm = deploy.ism();
 
@@ -55,8 +60,10 @@ contract DeployRootBridgesBaseTest is BaseFixture {
         assertNotEq(address(rootXVelo), address(0));
 
         assertNotEq(address(rootTokenBridge), address(0));
+        assertNotEq(address(rootTokenBridgeVault), address(0));
         assertNotEq(address(rootMessageBridge), address(0));
         assertNotEq(address(rootMessageModule), address(0));
+        assertNotEq(address(rootModuleVault), address(0));
 
         // assertNotEq(address(rootIsm), address(0));
 
@@ -76,12 +83,13 @@ contract DeployRootBridgesBaseTest is BaseFixture {
         assertEq(rootTokenBridge.hook(), address(0));
         assertEq(address(rootTokenBridge.securityModule()), address(rootIsm));
 
+        assertEq(rootTokenBridgeVault.owner(), params.bridgeOwner);
+
         assertEq(rootMessageModule.bridge(), address(rootMessageBridge));
         assertEq(rootMessageModule.xerc20(), address(rootXVelo));
         assertEq(rootMessageModule.mailbox(), params.mailbox);
         assertEq(rootMessageModule.voter(), rootMessageBridge.voter());
         assertEq(rootMessageModule.hook(), address(0));
-
         assertEq(rootMessageModule.owner(), params.bridgeOwner);
         assertEq(rootMessageModule.gasLimit(Commands.DEPOSIT), Commands.DEPOSIT.gasLimit());
         assertEq(rootMessageModule.gasLimit(Commands.WITHDRAW), Commands.WITHDRAW.gasLimit());
@@ -92,5 +100,7 @@ contract DeployRootBridgesBaseTest is BaseFixture {
         assertEq(rootMessageModule.gasLimit(Commands.NOTIFY_WITHOUT_CLAIM), Commands.NOTIFY_WITHOUT_CLAIM.gasLimit());
         assertEq(rootMessageModule.gasLimit(Commands.KILL_GAUGE), Commands.KILL_GAUGE.gasLimit());
         assertEq(rootMessageModule.gasLimit(Commands.REVIVE_GAUGE), Commands.REVIVE_GAUGE.gasLimit());
+
+        assertEq(rootModuleVault.owner(), params.bridgeOwner);
     }
 }

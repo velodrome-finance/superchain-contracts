@@ -8,7 +8,7 @@ abstract contract RootEscrowTokenBridgeTest is BaseForkFixture {
 
     function setUp() public virtual override {
         super.setUp();
-        rootEscrowTokenBridge = RootEscrowTokenBridge(address(rootTokenBridge));
+        rootEscrowTokenBridge = RootEscrowTokenBridge(payable(rootTokenBridge));
     }
 
     function test_InitialState() public view {
@@ -18,6 +18,7 @@ abstract contract RootEscrowTokenBridgeTest is BaseForkFixture {
         assertEq(rootEscrowTokenBridge.xerc20(), address(rootXVelo));
         assertEq(rootEscrowTokenBridge.mailbox(), address(rootMailbox));
         assertEq(rootEscrowTokenBridge.hook(), address(0));
+        assertEq(rootEscrowTokenBridge.paymasterVault(), address(rootTokenBridgeVault));
         assertEq(rootEscrowTokenBridge.module(), address(rootMessageModule));
         assertEq(address(rootEscrowTokenBridge.securityModule()), address(0));
         assertEq(address(rootEscrowTokenBridge).balance, 0);
@@ -25,5 +26,9 @@ abstract contract RootEscrowTokenBridgeTest is BaseForkFixture {
 
         uint256[] memory chainids = rootEscrowTokenBridge.chainids();
         assertEq(chainids.length, 0);
+
+        address[] memory whitelist = rootMessageModule.whitelist();
+        assertEq(whitelist.length, 0);
+        assertEq(rootMessageModule.whitelistLength(), 0);
     }
 }

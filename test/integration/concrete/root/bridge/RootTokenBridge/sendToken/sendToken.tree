@@ -19,35 +19,75 @@ SendTokenIntegrationConcreteTest
                     └── When the amount is less than or equal to the balance of caller
                         ├── When there is no domain set for the chain
                         │   ├── When there is no hook set
-                        │   │   ├── It pulls the caller's tokens
-                        │   │   ├── It wraps to xerc20
-                        │   │   ├── It burns the newly minted xerc20 tokens
-                        │   │   ├── It dispatches a message to the destination mailbox using default quote & chain as domain
-                        │   │   ├── It refunds any excess value
-                        │   │   ├── It emits a {SentMessage} event
-                        │   │   └── It mints the amount of tokens to the caller on the destination chain
+                        │   │   ├── When the caller is not whitelisted
+                        │   │   │   ├── It pulls the caller's tokens
+                        │   │   │   ├── It wraps to xerc20
+                        │   │   │   ├── It burns the newly minted xerc20 tokens
+                        │   │   │   ├── It dispatches a message to the destination mailbox using default quote & chain as domain
+                        │   │   │   ├── It refunds any excess value
+                        │   │   │   ├── It emits a {SentMessage} event
+                        │   │   │   └── It mints the amount of tokens to the caller on the destination chain
+                        │   │   └── When the caller is whitelisted
+                        │   │       ├── It pulls the caller's tokens
+                        │   │       ├── It wraps to xerc20
+                        │   │       ├── It burns the newly minted xerc20 tokens
+                        │   │       ├── It dispatches a message to the destination mailbox using default quote & chain as domain
+                        │   │       ├── It pays for dispatch using weth from paymaster
+                        │   │       ├── It refunds any msg value to caller
+                        │   │       ├── It emits a {SentMessage} event
+                        │   │       └── It mints the amount of tokens to the caller on the destination chain
                         │   └── When there is a custom hook set
-                        │       ├── It pulls the caller's tokens
-                        │       ├── It wraps to xerc20
-                        │       ├── It burns the newly minted xerc20 tokens
-                        │       ├── It dispatches a message to the destination mailbox using quote from hook & chain as domain
-                        │       ├── It refunds any excess value
-                        │       ├── It emits a {SentMessage} event
-                        │       └── It mints the amount of tokens to the caller on the destination chain
+                        │       ├── When the caller is not whitelisted_
+                        │       │   ├── It pulls the caller's tokens
+                        │       │   ├── It wraps to xerc20
+                        │       │   ├── It burns the newly minted xerc20 tokens
+                        │       │   ├── It dispatches a message to the destination mailbox using quote from hook & chain as domain
+                        │       │   ├── It refunds any excess value
+                        │       │   ├── It emits a {SentMessage} event
+                        │       │   └── It mints the amount of tokens to the caller on the destination chain
+                        │       └── When the caller is whitelisted_
+                        │           ├── It pulls the caller's tokens
+                        │           ├── It wraps to xerc20
+                        │           ├── It burns the newly minted xerc20 tokens
+                        │           ├── It dispatches a message to the destination mailbox using quote from hook & chain as domain
+                        │           ├── It pays for dispatch using weth from paymaster
+                        │           ├── It refunds any msg value to caller
+                        │           ├── It emits a {SentMessage} event
+                        │           └── It mints the amount of tokens to the caller on the destination chain
                         └── When there is a domain set for the chain
                             ├── When there is no hook set_
-                            │   ├── It pulls the caller's tokens
-                            │   ├── It wraps to xerc20
-                            │   ├── It burns the newly minted xerc20 tokens
-                            │   ├── It dispatches a message to the destination mailbox using default quote & the chain's domain
-                            │   ├── It refunds any excess value
-                            │   ├── It emits a {SentMessage} event
-                            │   └── It mints the amount of tokens to the caller on the destination chain
+                            │   ├── When the caller is not whitelisted__
+                            │   │   ├── It pulls the caller's tokens
+                            │   │   ├── It wraps to xerc20
+                            │   │   ├── It burns the newly minted xerc20 tokens
+                            │   │   ├── It dispatches a message to the destination mailbox using default quote & the chain's domain
+                            │   │   ├── It refunds any excess value
+                            │   │   ├── It emits a {SentMessage} event
+                            │   │   └── It mints the amount of tokens to the caller on the destination chain
+                            │   └── When the caller is whitelisted__
+                            │       ├── It pulls the caller's tokens
+                            │       ├── It wraps to xerc20
+                            │       ├── It burns the newly minted xerc20 tokens
+                            │       ├── It dispatches a message to the destination mailbox using default quote & the chain's domain
+                            │       ├── It pays for dispatch using weth from paymaster
+                            │       ├── It refunds any msg value to caller
+                            │       ├── It emits a {SentMessage} event
+                            │       └── It mints the amount of tokens to the caller on the destination chain
                             └── When there is a custom hook set_
-                                ├── It pulls the caller's tokens
-                                ├── It wraps to xerc20
-                                ├── It burns the newly minted xerc20 tokens
-                                ├── It dispatches a message to the destination mailbox using quote from hook & the chain's domain
-                                ├── It refunds any excess value
-                                ├── It emits a {SentMessage} event
-                                └── It mints the amount of tokens to the caller on the destination chain
+                                ├── When the caller is not whitelisted___
+                                │   ├── It pulls the caller's tokens
+                                │   ├── It wraps to xerc20
+                                │   ├── It burns the newly minted xerc20 tokens
+                                │   ├── It dispatches a message to the destination mailbox using quote from hook & the chain's domain
+                                │   ├── It refunds any excess value
+                                │   ├── It emits a {SentMessage} event
+                                │   └── It mints the amount of tokens to the caller on the destination chain
+                                └── When the caller is whitelisted___
+                                    ├── It pulls the caller's tokens
+                                    ├── It wraps to xerc20
+                                    ├── It burns the newly minted xerc20 tokens
+                                    ├── It dispatches a message to the destination mailbox using quote from hook & the chain's domain
+                                    ├── It pays for dispatch using weth from paymaster
+                                    ├── It refunds any msg value to caller
+                                    ├── It emits a {SentMessage} event
+                                    └── It mints the amount of tokens to the caller on the destination chain

@@ -22,7 +22,7 @@ abstract contract RootRestrictedTokenBridgeTest is BaseForkFixture {
         vm.selectFork(rootId);
     }
 
-    function test_InitialState() public {
+    function test_InitialState() public view {
         assertEq(address(rootRestrictedTokenBridge.lockbox()), address(rootRestrictedRewardLockbox));
         assertEq(address(rootRestrictedTokenBridge.erc20()), address(rootIncentiveToken));
         assertEq(rootRestrictedTokenBridge.module(), address(rootMessageModule));

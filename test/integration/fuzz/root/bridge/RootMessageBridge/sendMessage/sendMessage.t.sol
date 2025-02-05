@@ -401,6 +401,8 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
 
         uint256 bufferCap = Math.max(amount * 2, rootXVelo.minBufferCap() + 1);
         setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
+        /// @dev Skip distribute window to avoid sponsoring
+        vm.warp({newTimestamp: VelodromeTimeLibrary.epochVoteStart(leafStartTime) + 1});
 
         bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount);
 
@@ -412,6 +414,7 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
         assertEq(weth.balanceOf(users.alice), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: VelodromeTimeLibrary.epochVoteStart(leafStartTime) + 1});
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), 0);
 
@@ -457,6 +460,8 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
 
         uint256 bufferCap = Math.max(amount * 2, rootXVelo.minBufferCap() + 1);
         setLimits({_rootBufferCap: bufferCap, _leafBufferCap: bufferCap});
+        /// @dev Skip distribute window to avoid sponsoring
+        vm.warp({newTimestamp: VelodromeTimeLibrary.epochVoteStart(leafStartTime) + 1});
 
         bytes memory message = abi.encodePacked(uint8(command), address(leafGauge), amount);
 
@@ -467,6 +472,7 @@ contract SendMessageIntegrationFuzzTest is RootMessageBridgeTest {
         assertEq(weth.balanceOf(users.alice), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: VelodromeTimeLibrary.epochVoteStart(leafStartTime) + 1});
         assertEq(leafXVelo.balanceOf(address(leafMessageModule)), 0);
         assertEq(leafXVelo.balanceOf(address(leafGauge)), 0);
 

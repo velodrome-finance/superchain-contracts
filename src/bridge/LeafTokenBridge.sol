@@ -76,7 +76,7 @@ contract LeafTokenBridge is BaseTokenBridge {
         uint32 domain = uint32(_chainid);
 
         address _hook = hook;
-        bytes memory metadata = _generateGasMetadata({_hook: _hook});
+        bytes memory metadata = _generateGasMetadata({_hook: _hook, _value: msg.value});
         uint256 fee = Mailbox(mailbox).quoteDispatch({
             destinationDomain: domain,
             recipientAddress: TypeCasts.addressToBytes32(address(this)),

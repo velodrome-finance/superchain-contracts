@@ -147,7 +147,11 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
         _;
     }
 
-    function test_WhenThereIsNoHookSet()
+    modifier whenThereIsNoHookSet() {
+        _;
+    }
+
+    function test_WhenTheCallerIsNotWhitelisted()
         external
         whenTheRequestedAmountIsNotZero
         whenTheRecipientIsNotAddressZero
@@ -156,6 +160,7 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
         whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
         whenTheAmountIsLessThanOrEqualToTheBalanceOfCaller
         whenThereIsNoDomainSetForTheChain
+        whenThereIsNoHookSet
     {
         // It pulls the caller's tokens
         // It wraps to xerc20
@@ -212,7 +217,7 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
         assertEq(leafXVelo.balanceOf(recipient), amount);
     }
 
-    function test_WhenThereIsACustomHookSet()
+    function test_WhenTheCallerIsWhitelisted()
         external
         whenTheRequestedAmountIsNotZero
         whenTheRecipientIsNotAddressZero
@@ -221,6 +226,83 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
         whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
         whenTheAmountIsLessThanOrEqualToTheBalanceOfCaller
         whenThereIsNoDomainSetForTheChain
+        whenThereIsNoHookSet
+    {
+        // It pulls the caller's tokens
+        // It wraps to xerc20
+        // It burns the newly minted xerc20 tokens
+        // It dispatches a message to the destination mailbox using default quote & chain as domain
+        // It pays for dispatch using weth from paymaster
+        // It refunds any msg value to caller
+        // It emits a {SentMessage} event
+        // It mints the amount of tokens to the caller on the destination chain
+        uint256 ethAmount = MESSAGE_FEE;
+        vm.deal({account: users.alice, newBalance: ethAmount});
+        deal({token: address(rootRewardToken), to: users.alice, give: amount});
+
+        vm.startPrank(rootTokenBridge.owner());
+        rootTokenBridge.whitelistForSponsorship({_account: users.alice, _state: true});
+
+        vm.startPrank(users.alice);
+        rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});
+
+        uint256 paymasterBalBefore = address(rootTokenBridgeVault).balance;
+
+        vm.expectEmit(address(rootTokenBridge));
+        emit ITokenBridge.SentMessage({
+            _destination: leafDomain,
+            _recipient: TypeCasts.addressToBytes32(address(rootTokenBridge)),
+            _value: MESSAGE_FEE,
+            _message: string(abi.encodePacked(recipient, amount)),
+            _metadata: string(
+                StandardHookMetadata.formatMetadata({
+                    _msgValue: MESSAGE_FEE,
+                    _gasLimit: rootTokenBridge.GAS_LIMIT(),
+                    _refundAddress: users.alice,
+                    _customMetadata: ""
+                })
+            )
+        });
+        rootTokenBridge.sendToken{value: ethAmount}({_recipient: recipient, _amount: amount, _chainid: leaf});
+
+        /// @dev Transaction sponsored by Paymaster, msg value refunded to caller
+        assertEq(address(rootTokenBridgeVault).balance, paymasterBalBefore - MESSAGE_FEE);
+        assertEq(users.alice.balance, ethAmount);
+
+        assertEq(rootXVelo.balanceOf(users.alice), 0);
+        assertEq(rootXVelo.balanceOf(recipient), 0);
+        assertEq(rootRewardToken.balanceOf(users.alice), 0);
+        assertEq(rootRewardToken.balanceOf(recipient), 0);
+        assertEq(address(rootTokenBridge).balance, 0);
+
+        vm.selectFork({forkId: leafId});
+        vm.expectEmit(address(leafTokenBridge));
+        emit IHLHandler.ReceivedMessage({
+            _origin: rootDomain,
+            _sender: TypeCasts.addressToBytes32(address(leafTokenBridge)),
+            _value: 0,
+            _message: string(abi.encodePacked(recipient, amount))
+        });
+        leafMailbox.processNextInboundMessage();
+        assertEq(leafXVelo.balanceOf(recipient), amount);
+    }
+
+    modifier whenThereIsACustomHookSet() {
+        vm.startPrank(rootTokenBridge.owner());
+        rootTokenBridge.setHook({_hook: address(rootHook)});
+        _;
+    }
+
+    function test_WhenTheCallerIsNotWhitelisted_()
+        external
+        whenTheRequestedAmountIsNotZero
+        whenTheRecipientIsNotAddressZero
+        whenTheRequestedChainIsARegisteredChain
+        whenTheMsgValueIsGreaterThanOrEqualToQuotedFee
+        whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
+        whenTheAmountIsLessThanOrEqualToTheBalanceOfCaller
+        whenThereIsNoDomainSetForTheChain
+        whenThereIsACustomHookSet
     {
         // It pulls the caller's tokens
         // It wraps to xerc20
@@ -233,9 +315,6 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
         uint256 ethAmount = MESSAGE_FEE;
         vm.deal({account: users.alice, newBalance: ethAmount + leftoverEth});
         deal({token: address(rootRewardToken), to: users.alice, give: amount});
-
-        vm.startPrank(rootTokenBridge.owner());
-        rootTokenBridge.setHook({_hook: address(rootHook)});
 
         vm.startPrank(users.alice);
         rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});
@@ -280,11 +359,85 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
         assertEq(leafXVelo.balanceOf(recipient), amount);
     }
 
+    function test_WhenTheCallerIsWhitelisted_()
+        external
+        whenTheRequestedAmountIsNotZero
+        whenTheRecipientIsNotAddressZero
+        whenTheRequestedChainIsARegisteredChain
+        whenTheMsgValueIsGreaterThanOrEqualToQuotedFee
+        whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
+        whenTheAmountIsLessThanOrEqualToTheBalanceOfCaller
+        whenThereIsNoDomainSetForTheChain
+        whenThereIsACustomHookSet
+    {
+        // It pulls the caller's tokens
+        // It wraps to xerc20
+        // It burns the newly minted xerc20 tokens
+        // It dispatches a message to the destination mailbox using quote from hook & chain as domain
+        // It pays for dispatch using weth from paymaster
+        // It refunds any msg value to caller
+        // It emits a {SentMessage} event
+        // It mints the amount of tokens to the caller on the destination chain
+        uint256 ethAmount = MESSAGE_FEE;
+        vm.deal({account: users.alice, newBalance: ethAmount});
+        deal({token: address(rootRewardToken), to: users.alice, give: amount});
+
+        vm.startPrank(rootTokenBridge.owner());
+        rootTokenBridge.whitelistForSponsorship({_account: users.alice, _state: true});
+
+        vm.startPrank(users.alice);
+        rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});
+
+        uint256 paymasterBalBefore = address(rootTokenBridgeVault).balance;
+
+        vm.expectEmit(address(rootTokenBridge));
+        emit ITokenBridge.SentMessage({
+            _destination: leafDomain,
+            _recipient: TypeCasts.addressToBytes32(address(rootTokenBridge)),
+            _value: MESSAGE_FEE,
+            _message: string(abi.encodePacked(recipient, amount)),
+            _metadata: string(
+                StandardHookMetadata.formatMetadata({
+                    _msgValue: MESSAGE_FEE,
+                    _gasLimit: rootTokenBridge.GAS_LIMIT() * 2, // custom hook returns twice the gas limit
+                    _refundAddress: users.alice,
+                    _customMetadata: ""
+                })
+            )
+        });
+        rootTokenBridge.sendToken{value: ethAmount}({_recipient: recipient, _amount: amount, _chainid: leaf});
+
+        /// @dev Transaction sponsored by Paymaster, msg value refunded to caller
+        assertEq(address(rootTokenBridgeVault).balance, paymasterBalBefore - MESSAGE_FEE);
+        assertEq(users.alice.balance, ethAmount);
+
+        assertEq(rootXVelo.balanceOf(users.alice), 0);
+        assertEq(rootXVelo.balanceOf(recipient), 0);
+        assertEq(rootRewardToken.balanceOf(users.alice), 0);
+        assertEq(rootRewardToken.balanceOf(recipient), 0);
+        assertEq(address(rootTokenBridge).balance, 0);
+
+        vm.selectFork({forkId: leafId});
+        vm.expectEmit(address(leafTokenBridge));
+        emit IHLHandler.ReceivedMessage({
+            _origin: rootDomain,
+            _sender: TypeCasts.addressToBytes32(address(leafTokenBridge)),
+            _value: 0,
+            _message: string(abi.encodePacked(recipient, amount))
+        });
+        leafMailbox.processNextInboundMessage();
+        assertEq(leafXVelo.balanceOf(recipient), amount);
+    }
+
     modifier whenThereIsADomainSetForTheChain() {
         _;
     }
 
-    function test_WhenThereIsNoHookSet_()
+    modifier whenThereIsNoHookSet_() {
+        _;
+    }
+
+    function test_WhenTheCallerIsNotWhitelisted__()
         external
         whenTheRequestedAmountIsNotZero
         whenTheRecipientIsNotAddressZero
@@ -293,6 +446,7 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
         whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
         whenTheAmountIsLessThanOrEqualToTheBalanceOfCaller
         whenThereIsADomainSetForTheChain
+        whenThereIsNoHookSet_
     {
         // It pulls the caller's tokens
         // It wraps to xerc20
@@ -405,6 +559,218 @@ contract SendTokenIntegrationConcreteTest is RootTokenBridgeTest {
         assertEq(rootRewardToken.balanceOf(recipient), 0);
         assertEq(address(rootTokenBridge).balance, 0);
         assertEq(users.alice.balance, leftoverEth);
+
+        vm.selectFork({forkId: leafId});
+        vm.expectEmit(address(leafTokenBridge));
+        emit IHLHandler.ReceivedMessage({
+            _origin: rootDomain,
+            _sender: TypeCasts.addressToBytes32(address(leafTokenBridge)),
+            _value: 0,
+            _message: string(abi.encodePacked(recipient, amount))
+        });
+        leafMailbox.processNextInboundMessage();
+        assertEq(leafXVelo.balanceOf(recipient), amount);
+    }
+
+    function test_WhenTheCallerIsWhitelisted__()
+        external
+        whenTheRequestedAmountIsNotZero
+        whenTheRecipientIsNotAddressZero
+        whenTheRequestedChainIsARegisteredChain
+        whenTheMsgValueIsGreaterThanOrEqualToQuotedFee
+        whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
+        whenTheAmountIsLessThanOrEqualToTheBalanceOfCaller
+        whenThereIsADomainSetForTheChain
+        whenThereIsNoHookSet_
+    {
+        // It pulls the caller's tokens
+        // It wraps to xerc20
+        // It burns the newly minted xerc20 tokens
+        // It dispatches a message to the destination mailbox using default quote & the chain's domain
+        // It pays for dispatch using weth from paymaster
+        // It refunds any msg value to caller
+        // It emits a {SentMessage} event
+        // It mints the amount of tokens to the caller on the destination chain
+        uint256 ethAmount = MESSAGE_FEE;
+        vm.deal({account: users.alice, newBalance: ethAmount});
+        deal({token: address(rootRewardToken), to: users.alice, give: amount});
+
+        vm.startPrank(rootTokenBridge.owner());
+        rootTokenBridge.whitelistForSponsorship({_account: users.alice, _state: true});
+
+        vm.startPrank(users.alice);
+        rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});
+
+        uint256 paymasterBalBefore = address(rootTokenBridgeVault).balance;
+
+        vm.expectEmit(address(rootTokenBridge));
+        emit ITokenBridge.SentMessage({
+            _destination: leafDomain,
+            _recipient: TypeCasts.addressToBytes32(address(rootTokenBridge)),
+            _value: MESSAGE_FEE,
+            _message: string(abi.encodePacked(recipient, amount)),
+            _metadata: string(
+                StandardHookMetadata.formatMetadata({
+                    _msgValue: MESSAGE_FEE,
+                    _gasLimit: rootTokenBridge.GAS_LIMIT(),
+                    _refundAddress: users.alice,
+                    _customMetadata: ""
+                })
+            )
+        });
+        rootTokenBridge.sendToken{value: ethAmount}({_recipient: recipient, _amount: amount, _chainid: leaf});
+
+        /// @dev Transaction sponsored by Paymaster, msg value refunded to caller
+        assertEq(address(rootTokenBridgeVault).balance, paymasterBalBefore - MESSAGE_FEE);
+        assertEq(users.alice.balance, ethAmount);
+
+        assertEq(rootXVelo.balanceOf(users.alice), 0);
+        assertEq(rootXVelo.balanceOf(recipient), 0);
+        assertEq(rootRewardToken.balanceOf(users.alice), 0);
+        assertEq(rootRewardToken.balanceOf(recipient), 0);
+        assertEq(address(rootTokenBridge).balance, 0);
+
+        vm.selectFork({forkId: leafId});
+        vm.expectEmit(address(leafTokenBridge));
+        emit IHLHandler.ReceivedMessage({
+            _origin: rootDomain,
+            _sender: TypeCasts.addressToBytes32(address(leafTokenBridge)),
+            _value: 0,
+            _message: string(abi.encodePacked(recipient, amount))
+        });
+        leafMailbox.processNextInboundMessage();
+        assertEq(leafXVelo.balanceOf(recipient), amount);
+    }
+
+    modifier whenThereIsACustomHookSet_() {
+        vm.startPrank(rootTokenBridge.owner());
+        rootTokenBridge.setHook({_hook: address(rootHook)});
+        _;
+    }
+
+    function test_WhenTheCallerIsNotWhitelisted___()
+        external
+        whenTheRequestedAmountIsNotZero
+        whenTheRecipientIsNotAddressZero
+        whenTheRequestedChainIsARegisteredChain
+        whenTheMsgValueIsGreaterThanOrEqualToQuotedFee
+        whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
+        whenTheAmountIsLessThanOrEqualToTheBalanceOfCaller
+        whenThereIsADomainSetForTheChain
+        whenThereIsACustomHookSet_
+    {
+        // It pulls the caller's tokens
+        // It wraps to xerc20
+        // It burns the newly minted xerc20 tokens
+        // It dispatches a message to the destination mailbox using quote from hook & the chain's domain
+        // It refunds any excess value
+        // It emits a {SentMessage} event
+        // It mints the amount of tokens to the caller on the destination chain
+        uint256 leftoverEth = TOKEN_1;
+        uint256 ethAmount = MESSAGE_FEE;
+        vm.deal({account: users.alice, newBalance: ethAmount + leftoverEth});
+        deal({token: address(rootRewardToken), to: users.alice, give: amount});
+
+        vm.startPrank(users.alice);
+        rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});
+
+        vm.expectEmit(address(rootTokenBridge));
+        emit ITokenBridge.SentMessage({
+            _destination: leafDomain,
+            _recipient: TypeCasts.addressToBytes32(address(rootTokenBridge)),
+            _value: ethAmount,
+            _message: string(abi.encodePacked(recipient, amount)),
+            _metadata: string(
+                StandardHookMetadata.formatMetadata({
+                    _msgValue: ethAmount + leftoverEth,
+                    _gasLimit: rootTokenBridge.GAS_LIMIT() * 2, // custom hook returns twice the gas limit
+                    _refundAddress: users.alice,
+                    _customMetadata: ""
+                })
+            )
+        });
+        rootTokenBridge.sendToken{value: ethAmount + leftoverEth}({
+            _recipient: recipient,
+            _amount: amount,
+            _chainid: leaf
+        });
+
+        assertEq(rootXVelo.balanceOf(users.alice), 0);
+        assertEq(rootXVelo.balanceOf(recipient), 0);
+        assertEq(rootRewardToken.balanceOf(users.alice), 0);
+        assertEq(rootRewardToken.balanceOf(recipient), 0);
+        assertEq(address(rootTokenBridge).balance, 0);
+        assertEq(users.alice.balance, leftoverEth);
+
+        vm.selectFork({forkId: leafId});
+        vm.expectEmit(address(leafTokenBridge));
+        emit IHLHandler.ReceivedMessage({
+            _origin: rootDomain,
+            _sender: TypeCasts.addressToBytes32(address(leafTokenBridge)),
+            _value: 0,
+            _message: string(abi.encodePacked(recipient, amount))
+        });
+        leafMailbox.processNextInboundMessage();
+        assertEq(leafXVelo.balanceOf(recipient), amount);
+    }
+
+    function test_WhenTheCallerIsWhitelisted___()
+        external
+        whenTheRequestedAmountIsNotZero
+        whenTheRecipientIsNotAddressZero
+        whenTheRequestedChainIsARegisteredChain
+        whenTheMsgValueIsGreaterThanOrEqualToQuotedFee
+        whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
+        whenTheAmountIsLessThanOrEqualToTheBalanceOfCaller
+        whenThereIsADomainSetForTheChain
+        whenThereIsACustomHookSet_
+    {
+        // It pulls the caller's tokens
+        // It wraps to xerc20
+        // It burns the newly minted xerc20 tokens
+        // It dispatches a message to the destination mailbox using quote from hook & the chain's domain
+        // It pays for dispatch using weth from paymaster
+        // It refunds any msg value to caller
+        // It emits a {SentMessage} event
+        // It mints the amount of tokens to the caller on the destination chain
+        uint256 ethAmount = MESSAGE_FEE;
+        vm.deal({account: users.alice, newBalance: ethAmount});
+        deal({token: address(rootRewardToken), to: users.alice, give: amount});
+
+        vm.startPrank(rootTokenBridge.owner());
+        rootTokenBridge.whitelistForSponsorship({_account: users.alice, _state: true});
+
+        vm.startPrank(users.alice);
+        rootRewardToken.approve({spender: address(rootTokenBridge), value: amount});
+
+        uint256 paymasterBalBefore = address(rootTokenBridgeVault).balance;
+
+        vm.expectEmit(address(rootTokenBridge));
+        emit ITokenBridge.SentMessage({
+            _destination: leafDomain,
+            _recipient: TypeCasts.addressToBytes32(address(rootTokenBridge)),
+            _value: MESSAGE_FEE,
+            _message: string(abi.encodePacked(recipient, amount)),
+            _metadata: string(
+                StandardHookMetadata.formatMetadata({
+                    _msgValue: MESSAGE_FEE,
+                    _gasLimit: rootTokenBridge.GAS_LIMIT() * 2, // custom hook returns twice the gas limit
+                    _refundAddress: users.alice,
+                    _customMetadata: ""
+                })
+            )
+        });
+        rootTokenBridge.sendToken{value: ethAmount}({_recipient: recipient, _amount: amount, _chainid: leaf});
+
+        /// @dev Transaction sponsored by Paymaster, msg value refunded to caller
+        assertEq(address(rootTokenBridgeVault).balance, paymasterBalBefore - MESSAGE_FEE);
+        assertEq(users.alice.balance, ethAmount);
+
+        assertEq(rootXVelo.balanceOf(users.alice), 0);
+        assertEq(rootXVelo.balanceOf(recipient), 0);
+        assertEq(rootRewardToken.balanceOf(users.alice), 0);
+        assertEq(rootRewardToken.balanceOf(recipient), 0);
+        assertEq(address(rootTokenBridge).balance, 0);
 
         vm.selectFork({forkId: leafId});
         vm.expectEmit(address(leafTokenBridge));

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
 import {IERC20} from "@openzeppelin5/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
+import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
 import {IPostDispatchHook} from "@hyperlane/core/contracts/interfaces/hooks/IPostDispatchHook.sol";
 import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
@@ -14,6 +14,7 @@ import {IRootHLMessageModule} from "../../interfaces/root/bridge/hyperlane/IRoot
 import {IHLHandler} from "../../interfaces/bridge/hyperlane/IHLHandler.sol";
 import {IXERC20Lockbox} from "../../interfaces/xerc20/IXERC20Lockbox.sol";
 import {IXERC20} from "../../interfaces/xerc20/IXERC20.sol";
+import {Paymaster} from "./hyperlane/Paymaster.sol";
 
 import {Commands} from "../../libraries/Commands.sol";
 
@@ -44,7 +45,8 @@ import {Commands} from "../../libraries/Commands.sol";
 
 /// @title Velodrome Superchain Root Token Bridge
 /// @notice General Purpose Token Bridge
-contract RootTokenBridge is BaseTokenBridge, IRootTokenBridge {
+contract RootTokenBridge is BaseTokenBridge, IRootTokenBridge, Paymaster {
+    using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
     using SafeERC20 for IERC20;
     using Commands for bytes;
@@ -53,16 +55,22 @@ contract RootTokenBridge is BaseTokenBridge, IRootTokenBridge {
     IXERC20Lockbox public immutable lockbox;
     /// @inheritdoc IRootTokenBridge
     IERC20 public immutable erc20;
-
     /// @inheritdoc IRootTokenBridge
     address public module;
 
-    constructor(address _owner, address _xerc20, address _module, address _ism)
+    constructor(address _owner, address _xerc20, address _module, address _paymasterVault, address _ism)
         BaseTokenBridge(_owner, _xerc20, IRootHLMessageModule(_module).mailbox(), _ism)
+        Paymaster(_paymasterVault)
     {
         lockbox = IXERC20Lockbox(IXERC20(_xerc20).lockbox());
         erc20 = lockbox.ERC20();
         module = _module;
+    }
+
+    /// @dev Overrides Paymaster access control
+    modifier onlyWhitelistManager() override {
+        _checkOwner();
+        _;
     }
 
     /// @inheritdoc ITokenBridge
@@ -111,7 +119,7 @@ contract RootTokenBridge is BaseTokenBridge, IRootTokenBridge {
 
         address _hook = hook;
         bytes memory message = abi.encodePacked(_recipient, _amount);
-        bytes memory metadata = _generateGasMetadata({_hook: _hook});
+        bytes memory metadata = _generateGasMetadata({_hook: _hook, _value: msg.value});
         uint256 fee = Mailbox(mailbox).quoteDispatch({
             destinationDomain: domain,
             recipientAddress: TypeCasts.addressToBytes32(address(this)),
@@ -119,7 +127,17 @@ contract RootTokenBridge is BaseTokenBridge, IRootTokenBridge {
             metadata: metadata,
             hook: IPostDispatchHook(_hook)
         });
-        if (fee > msg.value) revert InsufficientBalance();
+        uint256 leftover;
+        if (_whitelist.contains({value: msg.sender})) {
+            if (fee > 0) {
+                metadata = _generateGasMetadata({_hook: _hook, _value: fee});
+                _sponsorTransaction({_fee: fee});
+            }
+            leftover = msg.value;
+        } else {
+            if (fee > msg.value) revert InsufficientBalance();
+            leftover = msg.value - fee;
+        }
 
         erc20.safeTransferFrom({from: msg.sender, to: address(this), value: _amount});
         erc20.safeIncreaseAllowance({spender: address(lockbox), value: _amount});
@@ -135,7 +153,6 @@ contract RootTokenBridge is BaseTokenBridge, IRootTokenBridge {
             hook: IPostDispatchHook(_hook)
         });
 
-        uint256 leftover = msg.value - fee;
         if (leftover > 0) payable(msg.sender).transfer(leftover);
 
         emit SentMessage({

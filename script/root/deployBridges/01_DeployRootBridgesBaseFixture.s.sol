@@ -6,6 +6,7 @@ import "../../DeployFixture.sol";
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
 
 import {RootHLMessageModule} from "src/root/bridge/hyperlane/RootHLMessageModule.sol";
+import {PaymasterVault} from "src/root/bridge/hyperlane/PaymasterVault.sol";
 import {RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
 import {RootEscrowTokenBridge} from "src/root/bridge/RootEscrowTokenBridge.sol";
 import {RootTokenBridge} from "src/root/bridge/RootTokenBridge.sol";
@@ -30,6 +31,8 @@ abstract contract DeployRootBridgesBaseFixture is DeployFixture {
     RootEscrowTokenBridge public rootTokenBridge;
     RootMessageBridge public rootMessageBridge;
     RootHLMessageModule public rootMessageModule;
+    PaymasterVault public rootTokenBridgeVault;
+    PaymasterVault public rootModuleVault;
 
     IInterchainSecurityModule public ism;
 
@@ -54,35 +57,48 @@ abstract contract DeployRootBridgesBaseFixture is DeployFixture {
     function deploy() internal virtual override {
         address _deployer = deployer;
 
+        rootMessageModule =
+            RootHLMessageModule(payable(HL_MESSAGE_BRIDGE_ENTROPY_V2.computeCreate3Address({_deployer: _deployer})));
+        rootModuleVault = new PaymasterVault({_owner: _params.bridgeOwner, _vaultManager: address(rootMessageModule)});
         rootMessageModule = RootHLMessageModule(
-            cx.deployCreate3({
-                salt: HL_MESSAGE_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
-                initCode: abi.encodePacked(
-                    type(RootHLMessageModule).creationCode,
-                    abi.encode(
-                        address(rootMessageBridge), // root message bridge
-                        _params.mailbox, // root mailbox
-                        defaultCommands, // commands for gas router
-                        defaultGasLimits // gas limits for gas router
+            payable(
+                cx.deployCreate3({
+                    salt: HL_MESSAGE_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
+                    initCode: abi.encodePacked(
+                        type(RootHLMessageModule).creationCode,
+                        abi.encode(
+                            address(rootMessageBridge), // root message bridge
+                            _params.mailbox, // root mailbox
+                            address(rootModuleVault), // module paymaster vault
+                            defaultCommands, // commands for gas router
+                            defaultGasLimits // gas limits for gas router
+                        )
                     )
-                )
-            })
+                })
+            )
         );
         checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY_V2, _output: address(rootMessageModule)});
 
+        rootTokenBridge =
+            RootEscrowTokenBridge(payable(TOKEN_BRIDGE_ENTROPY_V2.computeCreate3Address({_deployer: _deployer})));
+        rootTokenBridgeVault =
+            new PaymasterVault({_owner: _params.bridgeOwner, _vaultManager: address(rootTokenBridge)});
         rootTokenBridge = RootEscrowTokenBridge(
-            cx.deployCreate3({
-                salt: TOKEN_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
-                initCode: abi.encodePacked(
-                    type(RootEscrowTokenBridge).creationCode,
-                    abi.encode(
-                        _params.bridgeOwner, // bridge owner
-                        address(rootXVelo), // xerc20 address
-                        address(rootMessageModule), // message module
-                        address(ism) // security module
+            payable(
+                cx.deployCreate3({
+                    salt: TOKEN_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
+                    initCode: abi.encodePacked(
+                        type(RootEscrowTokenBridge).creationCode,
+                        abi.encode(
+                            _params.bridgeOwner, // bridge owner
+                            address(rootXVelo), // xerc20 address
+                            address(rootMessageModule), // message module
+                            address(rootTokenBridgeVault), // token bridge paymaster vault
+                            address(ism) // security module
+                        )
                     )
-                )
-            })
+                })
+            )
         );
         checkAddress({_entropy: TOKEN_BRIDGE_ENTROPY_V2, _output: address(rootTokenBridge)});
     }
@@ -93,7 +109,9 @@ abstract contract DeployRootBridgesBaseFixture is DeployFixture {
 
     function logParams() internal view override {
         console.log("rootTokenBridge: ", address(rootTokenBridge));
+        console.log("rootTokenBridgeVault: ", address(rootTokenBridgeVault));
         console.log("rootMessageModule: ", address(rootMessageModule));
+        console.log("rootModuleVault: ", address(rootModuleVault));
     }
 
     function logOutput() internal override {
@@ -102,6 +120,8 @@ abstract contract DeployRootBridgesBaseFixture is DeployFixture {
         string memory path = string(abi.encodePacked(root, "/deployment-addresses/", _params.outputFilename));
         /// @dev Update addresses in original deployment file
         vm.writeJson(vm.toString(address(rootTokenBridge)), path, ".rootTokenBridge");
+        vm.writeJson(vm.toString(address(rootTokenBridgeVault)), path, ".rootTokenBridgeVault");
         vm.writeJson(vm.toString(address(rootMessageModule)), path, ".rootMessageModule");
+        vm.writeJson(vm.toString(address(rootModuleVault)), path, ".rootModuleVault");
     }
 }

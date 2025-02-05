@@ -20,8 +20,8 @@ contract RootRestrictedTokenBridge is RootTokenBridge, IRootRestrictedTokenBridg
     /// @inheritdoc IRootRestrictedTokenBridge
     address public immutable voter;
 
-    constructor(address _owner, address _xerc20, address _module, address _ism)
-        RootTokenBridge(_owner, _xerc20, _module, _ism)
+    constructor(address _owner, address _xerc20, address _module, address _paymasterVault, address _ism)
+        RootTokenBridge(_owner, _xerc20, _module, _paymasterVault, _ism)
     {
         voter = IRootHLMessageModule(_module).voter();
     }

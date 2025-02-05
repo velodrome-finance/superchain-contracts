@@ -5,9 +5,11 @@
   "rootLockbox": "0x12B64dF29590b4F0934070faC96e82e580D60232",
   "rootMessageBridge": "0xF278761576f45472bdD721EACA19317cE159c011",
   "rootMessageModule": "0xF385603a12Be8b7B885222329c581FDD1C30071D",
+  "rootModuleVault": "",
   "rootPoolFactory": "0x31832f2a97Fd20664D76Cc421207669b55CE4BC0",
   "rootPoolImplementation": "0x10499d88Bd32AF443Fc936F67DE32bE1c8Bb374C",
   "rootTokenBridge": "0xA7287a56C01ac8Baaf8e7B662bDB41b10889C7A6",
+  "rootTokenBridgeVault": "",
   "rootVotingRewardsFactory": "0x7dc9fd82f91B36F416A89f5478375e4a79f4Fb2F",
   "rootXFactory": "0x73CaE4450f11f4A33a49C880CE3E8E56a9294B31",
   "rootXVelo": "0x7f9AdFbd38b669F03d1d11000Bc76b9AaEA28A81"

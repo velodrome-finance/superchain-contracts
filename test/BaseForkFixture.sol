@@ -60,7 +60,9 @@ import {
     IRootHLMessageModule,
     RootHLMessageModule
 } from "src/root/bridge/hyperlane/RootHLMessageModule.sol";
+import {IPaymaster} from "src/root/bridge/hyperlane/Paymaster.sol";
 import {IGasRouter} from "src/interfaces/root/bridge/hyperlane/IGasRouter.sol";
+import {IPaymasterVault, PaymasterVault} from "src/root/bridge/hyperlane/PaymasterVault.sol";
 
 import {IRootVotingRewardsFactory, RootVotingRewardsFactory} from "src/root/rewards/RootVotingRewardsFactory.sol";
 import {IRootIncentiveVotingReward, RootIncentiveVotingReward} from "src/root/rewards/RootIncentiveVotingReward.sol";
@@ -133,6 +135,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
     RootTokenBridge public rootTokenBridge;
     RootMessageBridge public rootMessageBridge;
     RootHLMessageModule public rootMessageModule;
+    PaymasterVault public rootTokenBridgeVault;
+    PaymasterVault public rootModuleVault;
 
     EmergencyCouncil public emergencyCouncil;
 
@@ -140,6 +144,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
     RestrictedXERC20Factory public rootRestrictedXFactory;
     RestrictedXERC20 public rootRestrictedRewardToken;
     RootRestrictedTokenBridge public rootRestrictedTokenBridge;
+    PaymasterVault public rootRestrictedTokenBridgeVault;
 
     // root-only contracts
     XERC20Lockbox public rootLockbox;
@@ -312,6 +317,8 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootTokenBridge = deployRoot.rootTokenBridge();
         rootMessageBridge = deployRoot.rootMessageBridge();
         rootMessageModule = deployRoot.rootMessageModule();
+        rootTokenBridgeVault = deployRoot.rootTokenBridgeVault();
+        rootModuleVault = deployRoot.rootModuleVault();
 
         emergencyCouncil = deployRoot.emergencyCouncil();
 
@@ -325,6 +332,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
             owner: users.owner,
             incentiveToken: address(rootIncentiveToken),
             module: address(rootMessageModule),
+            weth: address(weth),
             ism: address(rootIsm),
             outputFilename: "optimism-xop.json"
         });
@@ -337,6 +345,7 @@ abstract contract BaseForkFixture is Test, TestConstants {
         rootRestrictedRewardToken = deployRestrictedRoot.rootRestrictedRewardToken();
         rootRestrictedRewardLockbox = deployRestrictedRoot.rootRestrictedRewardLockbox();
         rootRestrictedTokenBridge = deployRestrictedRoot.rootRestrictedTokenBridge();
+        rootRestrictedTokenBridgeVault = deployRestrictedRoot.rootRestrictedTokenBridgeVault();
 
         vm.startPrank(mockVoter.emergencyCouncil());
         mockVoter.setEmergencyCouncil(address(emergencyCouncil));
@@ -363,14 +372,17 @@ abstract contract BaseForkFixture is Test, TestConstants {
         vm.label({account: address(rootXFactory), newLabel: "X Factory"});
         vm.label({account: address(rootXVelo), newLabel: "XVELO"});
         vm.label({account: address(rootTokenBridge), newLabel: "Token Bridge"});
+        vm.label({account: address(rootTokenBridgeVault), newLabel: "TokenBridge Vault"});
         vm.label({account: address(rootMessageBridge), newLabel: "Message Bridge"});
         vm.label({account: address(rootMessageModule), newLabel: "Message Module"});
+        vm.label({account: address(rootModuleVault), newLabel: "Module Vault"});
         vm.label({account: address(rootVotingRewardsFactory), newLabel: "Voting Rewards Factory"});
 
         vm.label({account: address(rootRestrictedXFactory), newLabel: "Root Restricted X Factory"});
         vm.label({account: address(rootRestrictedRewardToken), newLabel: "Root Restricted Reward Token"});
         vm.label({account: address(rootRestrictedRewardLockbox), newLabel: "Root Restricted Reward Lockbox"});
         vm.label({account: address(rootRestrictedTokenBridge), newLabel: "Root Restricted Token Bridge"});
+        vm.label({account: address(rootRestrictedTokenBridgeVault), newLabel: "Root Restricted Token Bridge Vault"});
 
         vm.label({account: address(emergencyCouncil), newLabel: "Emergency Council"});
     }
@@ -457,6 +469,10 @@ abstract contract BaseForkFixture is Test, TestConstants {
             data: abi.encode(bytes4(keccak256("quoteDispatch(uint32,bytes32,bytes,bytes,address)"))),
             returnData: abi.encode(MESSAGE_FEE)
         });
+
+        // fund paymaster vaults for transaction sponsoring
+        vm.deal(address(rootModuleVault), MESSAGE_FEE * 1_000);
+        vm.deal(address(rootTokenBridgeVault), MESSAGE_FEE * 1_000);
 
         // fund alice for gauge creation below
         deal({token: address(weth), to: users.alice, give: MESSAGE_FEE * 3});

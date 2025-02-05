@@ -14,6 +14,7 @@ abstract contract RootTokenBridgeTest is BaseForkFixture {
                 rootTokenBridge.owner(),
                 rootTokenBridge.xerc20(),
                 rootTokenBridge.module(),
+                rootTokenBridge.paymasterVault(),
                 rootTokenBridge.securityModule()
             ),
             address(rootTokenBridge)
