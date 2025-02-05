@@ -15,8 +15,6 @@ import {ChainRegistry} from "./ChainRegistry.sol";
 /// @notice Base Token Bridge contract to be extended in Root & Leaf implementations
 abstract contract BaseTokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterchainSecurityModule, ChainRegistry {
     /// @inheritdoc ITokenBridge
-    uint256 public constant GAS_LIMIT = 200_000;
-    /// @inheritdoc ITokenBridge
     address public immutable xerc20;
     /// @inheritdoc ITokenBridge
     address public immutable mailbox;
@@ -57,12 +55,16 @@ abstract contract BaseTokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterch
 
     function _generateGasMetadata(address _hook) internal view returns (bytes memory) {
         /// @dev If custom hook is set, it should be used to estimate gas
-        uint256 gasLimit = _hook == address(0) ? GAS_LIMIT : IHookGasEstimator(_hook).estimateSendTokenGas();
+        uint256 gasLimit = _hook == address(0) ? GAS_LIMIT() : IHookGasEstimator(_hook).estimateSendTokenGas();
         return StandardHookMetadata.formatMetadata({
             _msgValue: msg.value,
             _gasLimit: gasLimit,
             _refundAddress: msg.sender,
             _customMetadata: ""
         });
+    }
+
+    function GAS_LIMIT() public view virtual returns (uint256) {
+        return 200_000;
     }
 }
