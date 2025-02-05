@@ -8,6 +8,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
     using GasLimits for uint256;
 
     uint256 public tokenId = 1;
+    uint32 public expectedDomain;
     uint256 public amount = TOKEN_1 * 1000;
     uint256 public lockAmount = TOKEN_1 * 1000;
     uint256 public constant ethAmount = TOKEN_1;
@@ -17,6 +18,48 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         super.setUp();
 
         skipToNextEpoch(0); // warp to start of next epoch
+    }
+
+    /// @dev Helper function to deregister Leaf Chain's domain
+    function _deregisterLeafDomain() internal {
+        vm.startPrank(rootMessageBridge.owner());
+        rootMessageModule.setDomain({_chainid: leaf, _domain: 0});
+        // @dev if domain not linked to chain, domain should be equal to chainid
+        leafDomain = leaf;
+
+        assertEq(rootMessageModule.domains(leaf), 0);
+
+        rootMailbox.addRemoteMailbox({_domain: leaf, _mailbox: leafMailbox});
+        rootMailbox.setDomainForkId({_domain: leaf, _forkId: leafId});
+
+        vm.selectFork({forkId: leafId});
+
+        // Deploy mock mailbox with leaf chainid as domain
+        vm.startPrank(users.deployer);
+        MultichainMockMailbox leafMailboxDefaultChainid = new MultichainMockMailbox(leaf);
+        vm.stopPrank();
+
+        // Mock `mailbox.process()` to process messages using leaf chainid as domain
+        vm.mockFunction(
+            address(leafMailbox), address(leafMailboxDefaultChainid), abi.encodeWithSelector(Mailbox.process.selector)
+        );
+
+        vm.selectFork({forkId: rootId});
+    }
+
+    /// @dev Modifier used to run tests with no custom domain
+    modifier testDefaultDomain(bool _isCustomDomain) {
+        // If not testing custom domain, deregister `leafDomain`
+        if (!_isCustomDomain) {
+            uint256 timestamp = block.timestamp;
+            _deregisterLeafDomain();
+            /// @dev Avoid timestamp desync
+            vm.warp({newTimestamp: timestamp});
+        }
+
+        // If no custom domain is set, domain should be equal to chainid
+        expectedDomain = _isCustomDomain ? leafDomain : leaf;
+        _;
     }
 
     function testFuzz_WhenTheCallerIsNotBridge(address _caller) external {
@@ -35,11 +78,12 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         _;
     }
 
-    function testFuzz_WhenSenderIsNotWhitelisted(address _caller, uint256 _amount, uint256 _timestamp)
-        external
-        whenTheCallerIsBridge
-        whenTheCommandIsDeposit
-    {
+    function testFuzz_WhenSenderIsNotWhitelisted(
+        address _caller,
+        uint256 _amount,
+        uint256 _timestamp,
+        bool _isCustomDomain
+    ) external whenTheCallerIsBridge whenTheCommandIsDeposit testDefaultDomain(_isCustomDomain) {
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
         // It calls receiveMessage on the recipient contract of the same address with the payload
@@ -68,7 +112,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: _caller});
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
-            _destination: leafDomain,
+            _destination: expectedDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
             _message: string(expectedMessage),
@@ -100,11 +144,12 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         assertEq(checkpointAmount, amount);
     }
 
-    function testFuzz_WhenSenderIsWhitelisted(address _caller, uint256 _amount, uint256 _timestamp)
-        external
-        whenTheCallerIsBridge
-        whenTheCommandIsDeposit
-    {
+    function testFuzz_WhenSenderIsWhitelisted(
+        address _caller,
+        uint256 _amount,
+        uint256 _timestamp,
+        bool _isCustomDomain
+    ) external whenTheCallerIsBridge whenTheCommandIsDeposit testDefaultDomain(_isCustomDomain) {
         // It pays for dispatch using weth from paymaster
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
@@ -139,7 +184,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         vm.startPrank({msgSender: address(rootMessageBridge), txOrigin: _caller});
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
-            _destination: leafDomain,
+            _destination: expectedDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: MESSAGE_FEE,
             _message: string(expectedMessage),
@@ -177,11 +222,11 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         _;
     }
 
-    function testFuzz_WhenTheCurrentTimestampIsNotInTheDistributeWindow(uint256 _amount, uint256 _timestamp)
-        external
-        whenTheCallerIsBridge
-        whenTheCommandIsNotify
-    {
+    function testFuzz_WhenTheCurrentTimestampIsNotInTheDistributeWindow(
+        uint256 _amount,
+        uint256 _timestamp,
+        bool _isCustomDomain
+    ) external whenTheCallerIsBridge whenTheCommandIsNotify testDefaultDomain(_isCustomDomain) {
         // It burns the decoded amount of tokens
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
@@ -202,7 +247,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY), address(leafGauge), _amount);
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
-            _destination: leafDomain,
+            _destination: expectedDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
             _message: string(message),
@@ -232,11 +277,11 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         assertEq(leafGauge.periodFinish(), block.timestamp + timeUntilNext);
     }
 
-    function testFuzz_WhenTheCurrentTimestampIsInTheDistributeWindow(uint256 _amount, uint256 _timestamp)
-        external
-        whenTheCallerIsBridge
-        whenTheCommandIsNotify
-    {
+    function testFuzz_WhenTheCurrentTimestampIsInTheDistributeWindow(
+        uint256 _amount,
+        uint256 _timestamp,
+        bool _isCustomDomain
+    ) external whenTheCallerIsBridge whenTheCommandIsNotify testDefaultDomain(_isCustomDomain) {
         // It pays for dispatch using weth from paymaster
         // It burns the decoded amount of tokens
         // It dispatches the message to the mailbox
@@ -259,7 +304,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY), address(leafGauge), _amount);
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
-            _destination: leafDomain,
+            _destination: expectedDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: MESSAGE_FEE,
             _message: string(message),
@@ -291,7 +336,11 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         assertEq(leafGauge.periodFinish(), block.timestamp + timeUntilNext);
     }
 
-    function testFuzz_WhenTheCommandIsNotifyWithoutClaim(uint256 _amount) external whenTheCallerIsBridge {
+    function testFuzz_WhenTheCommandIsNotifyWithoutClaim(uint256 _amount, bool _isCustomDomain)
+        external
+        whenTheCallerIsBridge
+        testDefaultDomain(_isCustomDomain)
+    {
         // It burns the decoded amount of tokens
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
@@ -309,7 +358,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY_WITHOUT_CLAIM), address(leafGauge), _amount);
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
-            _destination: leafDomain,
+            _destination: expectedDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
             _message: string(message),
@@ -479,12 +528,13 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
-    function testFuzz_WhenLastVoteIsNotInCurrentEpoch(uint256 _amount, uint256 _timestamp)
+    function testFuzz_WhenLastVoteIsNotInCurrentEpoch(uint256 _amount, uint256 _timestamp, bool _isCustomDomain)
         external
         whenTheCallerIsBridge
         whenTheCommandIsGetIncentives(_amount)
         whenTimestampIsSmallerThanOrEqualToEpochVoteEnd
         whenTimestampIsGreaterThanEpochVoteStart(0)
+        testDefaultDomain(_isCustomDomain)
     {
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
@@ -506,7 +556,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
-            _destination: leafDomain,
+            _destination: expectedDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
             _message: string(message),
@@ -672,12 +722,13 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         rootMessageModule.sendMessage{value: ethAmount}({_chainid: leaf, _message: message});
     }
 
-    function testFuzz_WhenLastVoteIsNotInCurrentEpoch_(uint256 _amount, uint256 _timestamp)
+    function testFuzz_WhenLastVoteIsNotInCurrentEpoch_(uint256 _amount, uint256 _timestamp, bool _isCustomDomain)
         external
         whenTheCallerIsBridge
         whenTheCommandIsGetFees(_amount)
         whenTimestampIsSmallerThanOrEqualToEpochVoteEnd_
         whenTimestampIsGreaterThanEpochVoteStart_(_timestamp)
+        testDefaultDomain(_isCustomDomain)
     {
         // It dispatches the message to the mailbox
         // It emits the {SentMessage} event
@@ -698,7 +749,7 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
         vm.deal({account: address(rootMessageBridge), newBalance: ethAmount});
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
-            _destination: leafDomain,
+            _destination: expectedDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: ethAmount,
             _message: string(message),
