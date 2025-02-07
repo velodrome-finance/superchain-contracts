@@ -66,7 +66,6 @@ contract RootEscrowTokenBridge is RootTokenBridge, IRootEscrowTokenBridge {
         if (!_chainids.contains({value: chainid})) revert NotRegistered();
 
         uint256 length = _message.length;
-
         if (length == Commands.SEND_TOKEN_LENGTH) {
             (address recipient, uint256 amount) = _message.recipientAndAmount();
             IXERC20(xerc20).mint({_user: address(this), _amount: amount});

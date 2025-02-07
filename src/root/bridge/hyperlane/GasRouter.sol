@@ -5,8 +5,9 @@ import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 
 import {IGasRouter} from "../../../interfaces/root/bridge/hyperlane/IGasRouter.sol";
 
+/// @title Velodrome Superchain Gas Router
 /// @notice Gas Router for commands for x-chain transactions
-contract GasRouter is IGasRouter, Ownable {
+abstract contract GasRouter is IGasRouter, Ownable {
     /// @inheritdoc IGasRouter
     mapping(uint256 _command => uint256 _gas) public gasLimit;
 
@@ -25,11 +26,12 @@ contract GasRouter is IGasRouter, Ownable {
     }
 
     function _setGasLimits(uint256[] memory _commands, uint256[] memory _gasLimits) internal {
-        if (_commands.length != _gasLimits.length) {
+        uint256 length = _commands.length;
+        if (length != _gasLimits.length) {
             revert LengthMismatch();
         }
 
-        for (uint256 i = 0; i < _commands.length; i++) {
+        for (uint256 i = 0; i < length; i++) {
             _setGasLimit(_commands[i], _gasLimits[i]);
         }
     }

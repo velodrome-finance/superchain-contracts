@@ -18,6 +18,7 @@ interface IRootTokenBridge is ITokenBridge {
     function module() external view returns (address);
 
     /// @notice Sets the address of the module contract that is used to fetch domain information
+    /// @dev Only callable by the owner
     /// @param _module The address of the new module contract
     function setModule(address _module) external;
 }

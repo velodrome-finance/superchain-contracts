@@ -20,7 +20,7 @@ interface IGasRouter {
 
     /// @notice Sets the gas limits for the given commands
     /// @dev Only callable by the owner.
-    /// Will revert if the length of _commands and _gasLimits do not match
+    /// Will revert if the length of `_commands` and `_gasLimits` do not match
     /// @param _commands Commands to set gas limit for
     /// @param _gasLimits Gas limits for the commands
     function setGasLimits(uint256[] memory _commands, uint256[] memory _gasLimits) external;
