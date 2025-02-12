@@ -50,10 +50,10 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit, MintLimits, ISuperchain
     address public constant SUPERCHAIN_ERC20_BRIDGE = 0x4200000000000000000000000000000000000028;
 
     /// @notice maximum rate limit per second is 25k
-    uint128 public constant MAX_RATE_LIMIT_PER_SECOND = 25_000 * 1e18;
+    uint128 public constant MAX_RATE_LIMIT_PER_SECOND = 25_000 * 1e6;
 
     /// @notice minimum buffer cap
-    uint112 public constant MIN_BUFFER_CAP = 1_000 * 1e18;
+    uint112 public constant MIN_BUFFER_CAP = 1_000 * 1e6;
 
     /// @notice Constructs the initial config of the XERC20
     /// @param _name The name of the token
@@ -66,6 +66,10 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit, MintLimits, ISuperchain
         Ownable(_owner)
     {
         lockbox = _lockbox;
+    }
+
+    function decimals() public view virtual override returns (uint8) {
+        return 6;
     }
 
     modifier onlySuperchainERC20Bridge() {
