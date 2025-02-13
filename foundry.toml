@@ -22,6 +22,7 @@ mode = "${MODE_RPC_URL}"
 bob = "${BOB_RPC_URL}"
 metal = "${METAL_RPC_URL}"
 optimism = "${OPTIMISM_RPC_URL}"
+base = "${BASE_RPC_URL}"
 
 [etherscan]
 mode = { key = "${MODE_ETHERSCAN_API_KEY}", url = "${MODE_ETHERSCAN_VERIFIER_URL}" }

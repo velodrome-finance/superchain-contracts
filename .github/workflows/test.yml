@@ -53,4 +53,5 @@ jobs:
           BOB_RPC_URL: ${{ secrets.BOB_RPC_URL }}
           MODE_RPC_URL: ${{ secrets.MODE_RPC_URL }}
           FRAXTAL_RPC_URL: ${{ secrets.FRAXTAL_RPC_URL }}
+          BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
           PRIVATE_KEY_DEPLOY: ${{ secrets.PRIVATE_KEY_DEPLOY }}

@@ -12,7 +12,6 @@ contract SendMessageIntegrationFuzzTest is RootHLMessageModuleTest {
     uint256 public amount = TOKEN_1 * 1000;
     uint256 public lockAmount = TOKEN_1 * 1000;
     uint256 public constant ethAmount = TOKEN_1;
-    uint256 public constant MAX_TIME = 4 * 365 * DAY;
 
     function setUp() public override {
         super.setUp();

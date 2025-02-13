@@ -35,6 +35,8 @@ interface IVoter {
 
     function gaugeToBribe(address _gauge) external view returns (address);
 
+    function poolForGauge(address _gauge) external view returns (address);
+
     /// @dev Nft => Timestamp of last vote (ensures single vote per epoch)
     function lastVoted(uint256 tokenId) external view returns (uint256);
 

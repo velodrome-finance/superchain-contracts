@@ -128,4 +128,8 @@ contract MockVoter is IVoter {
     //         IRootGauge(_gauges[i]).getReward(msg.sender);
     //     }
     // }
+
+    function poolForGauge(address) external pure override returns (address) {
+        revert("Not implemented");
+    }
 }
