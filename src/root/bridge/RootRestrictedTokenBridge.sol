@@ -16,7 +16,7 @@ contract RootRestrictedTokenBridge is RootTokenBridge, IRootRestrictedTokenBridg
     using EnumerableSet for EnumerableSet.UintSet;
 
     /// @inheritdoc IRootRestrictedTokenBridge
-    uint32 public constant BASE_CHAIN_ID = 8453;
+    uint256 public constant BASE_CHAIN_ID = 8453;
     /// @inheritdoc IRootRestrictedTokenBridge
     address public immutable voter;
 

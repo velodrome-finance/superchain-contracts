@@ -23,7 +23,7 @@ contract LeafRestrictedTokenBridge is LeafTokenBridge, ILeafRestrictedTokenBridg
     using SafeERC20 for IERC20;
 
     /// @inheritdoc ILeafRestrictedTokenBridge
-    uint32 public constant BASE_CHAIN_ID = 8453;
+    uint256 public constant BASE_CHAIN_ID = 8453;
     /// @inheritdoc ILeafRestrictedTokenBridge
     address public immutable voter;
 

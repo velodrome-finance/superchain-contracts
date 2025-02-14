@@ -16,7 +16,7 @@ contract SendTokenBaseIntegrationConcreteTest is RootRestrictedTokenBridgeTest {
         // reset the domains for the base chainid
         vm.prank(users.owner);
         rootMessageModule.setDomain({_chainid: leaf, _domain: 0});
-        leaf = rootRestrictedTokenBridge.BASE_CHAIN_ID();
+        leaf = uint32(rootRestrictedTokenBridge.BASE_CHAIN_ID());
 
         vm.selectFork({forkId: leafId});
         _rewardsLength = leafIVR.rewardsListLength();

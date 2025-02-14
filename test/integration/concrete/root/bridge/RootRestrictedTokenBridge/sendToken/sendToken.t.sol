@@ -564,4 +564,34 @@ contract SendTokenIntegrationConcreteTest is RootRestrictedTokenBridgeTest {
         assertEq(whitelist[0], address(leafRestrictedTokenBridge));
         assertEq(whitelist[1], address(leafIVR));
     }
+
+    function testGas_sendToken()
+        external
+        whenTheRequestedAmountIsNotZero
+        whenTheRecipientIsNotAddressZero
+        whenTheRequestedChainIsARegisteredChain
+        whenTheRecipientIsARegisteredGauge
+        whenTheGaugeIsAlive
+        whenTheGaugesChainidMatchesDestinationChain
+        whenTheMsgValueIsGreaterThanOrEqualToQuotedFee
+        whenTheAmountIsLessThanOrEqualToTheCurrentBurningLimitOfCaller
+        whenTheAmountIsLessThanOrEqualToTheBalanceOfCaller
+        whenThereIsADomainSetForTheChain
+    {
+        uint256 leftoverEth = TOKEN_1;
+        uint256 ethAmount = MESSAGE_FEE;
+        _recipient = address(leafGauge);
+        vm.deal({account: users.alice, newBalance: ethAmount + leftoverEth});
+        deal({token: address(rootIncentiveToken), to: users.alice, give: _amount});
+
+        vm.startPrank(users.alice);
+        rootIncentiveToken.approve({spender: address(rootRestrictedTokenBridge), value: _amount});
+
+        rootRestrictedTokenBridge.sendToken{value: ethAmount + leftoverEth}({
+            _recipient: _recipient,
+            _amount: _amount,
+            _chainid: leaf
+        });
+        vm.snapshotGasLastCall("RootRestrictedTokenBridge_sendToken");
+    }
 }
