@@ -71,8 +71,12 @@ contract RootHLMessageModule is IRootHLMessageModule, Paymaster, GasRouter {
         address _hook = hook;
         bytes memory _metadata = _generateGasMetadata({_command: command, _hook: _hook, _value: 0});
 
+        /// @dev `_destinationDomain` refers to the chain id. The name was kept from a previous version
+        uint32 domain = domains[_destinationDomain];
+        if (domain == 0) domain = uint32(_destinationDomain);
+
         return Mailbox(mailbox).quoteDispatch({
-            destinationDomain: uint32(_destinationDomain),
+            destinationDomain: domain,
             recipientAddress: TypeCasts.addressToBytes32(address(this)),
             messageBody: _messageBody,
             metadata: _metadata,
