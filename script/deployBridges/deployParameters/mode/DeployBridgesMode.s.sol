@@ -6,7 +6,7 @@ import "../../01_DeployBridgesBaseFixture.s.sol";
 import {ModeLeafEscrowTokenBridge} from "src/bridge/extensions/ModeLeafEscrowTokenBridge.sol";
 import {ModeLeafHLMessageModule} from "src/bridge/extensions/hyperlane/ModeLeafHLMessageModule.sol";
 
-contract DeployBridgesBase is DeployBridgesBaseFixture {
+contract DeployBridgesMode is DeployBridgesBaseFixture {
     using CreateXLibrary for bytes11;
 
     struct ModeDeploymentParameters {

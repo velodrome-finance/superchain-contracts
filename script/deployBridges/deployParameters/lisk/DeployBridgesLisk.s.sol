@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {DeployBridgesBaseFixture} from "../../01_DeployBridgesBaseFixture.s.sol";
 
-contract DeployBridgesBase is DeployBridgesBaseFixture {
+contract DeployBridgesLisk is DeployBridgesBaseFixture {
     function setUp() public override {
         _params = DeployBridgesBaseFixture.DeploymentParameters({
             moduleOwner: 0xe915AEf46E1bd9b9eD2D9FE571AE9b5afbDE571b,

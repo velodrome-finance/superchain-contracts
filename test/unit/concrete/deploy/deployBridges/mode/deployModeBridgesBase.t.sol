@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "test/BaseFixture.sol";
 
-import {DeployBridgesBase} from "script/deployBridges/deployParameters/mode/DeployBridgesBase.s.sol";
+import {DeployBridgesMode} from "script/deployBridges/deployParameters/mode/DeployBridgesMode.s.sol";
 
 import {ModeFeeSharing} from "src/extensions/ModeFeeSharing.sol";
 
@@ -11,9 +11,9 @@ contract DeployModeBridgesBaseTest is BaseFixture {
     using stdStorage for StdStorage;
 
     string public addresses;
-    DeployBridgesBase public deploy;
-    DeployBridgesBase.DeploymentParameters public params;
-    DeployBridgesBase.ModeDeploymentParameters public modeParams;
+    DeployBridgesMode public deploy;
+    DeployBridgesMode.DeploymentParameters public params;
+    DeployBridgesMode.ModeDeploymentParameters public modeParams;
 
     // leaf superchain contracts
     XERC20 public leafXVelo;
@@ -26,7 +26,7 @@ contract DeployModeBridgesBaseTest is BaseFixture {
     function setUp() public override {
         vm.createSelectFork({urlOrAlias: "mode", blockNumber: 18690000});
 
-        deploy = new DeployBridgesBase();
+        deploy = new DeployBridgesMode();
         // this runs automatically when you run the script, but must be called manually in the test
         deploy.setUp();
 

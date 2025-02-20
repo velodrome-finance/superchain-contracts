@@ -3,14 +3,14 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "test/BaseFixture.sol";
 
-import {DeployBridgesBase} from "script/deployBridges/deployParameters/fraxtal/DeployBridgesBase.s.sol";
+import {DeployBridgesFraxtal} from "script/deployBridges/deployParameters/fraxtal/DeployBridgesFraxtal.s.sol";
 
 contract DeployBridgesBaseTest is BaseFixture {
     using stdStorage for StdStorage;
 
     string public addresses;
-    DeployBridgesBase public deploy;
-    DeployBridgesBase.DeploymentParameters public params;
+    DeployBridgesFraxtal public deploy;
+    DeployBridgesFraxtal.DeploymentParameters public params;
 
     // leaf superchain contracts
     XERC20 public leafXVelo;
@@ -21,7 +21,7 @@ contract DeployBridgesBaseTest is BaseFixture {
     function setUp() public override {
         vm.createSelectFork({urlOrAlias: "fraxtal", blockNumber: 15370000});
 
-        deploy = new DeployBridgesBase();
+        deploy = new DeployBridgesFraxtal();
         // this runs automatically when you run the script, but must be called manually in the test
         deploy.setUp();
 
