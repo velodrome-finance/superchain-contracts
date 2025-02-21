@@ -1,13 +1,5 @@
 #!/bin/bash
 
-# Load environment variables from .env file
-if [ -f .env ]; then
-    source .env
-else
-    echo "Error: .env file not found"
-    exit 1
-fi
-
 # Check if required arguments are provided
 if [ "$#" -lt 1 ]; then
     echo "Usage: $0 <chain-name> [verifier-type] [additional_args]"
@@ -21,9 +13,6 @@ CHAIN_NAME=$1
 VERIFIER_TYPE=${2:-""} # Use empty string if no second argument provided
 ADDITIONAL_ARGS=${3:-""} # Use empty string if no third argument provided
 
-# Convert chain name to uppercase for env var lookup
-CHAIN_UPPER=$(echo $CHAIN_NAME | tr '[:lower:]' '[:upper:]')
-
 # Path to the deployment script
 SCRIPT_PATH="script/deployParameters/${CHAIN_NAME}/DeployBase.s.sol:DeployBase"
 
@@ -36,22 +25,13 @@ if forge script ${SCRIPT_PATH} --slow --rpc-url ${CHAIN_NAME} -vvvv; then
         exit 0
     fi
     
-    # Get verifier URL from environment variables
-    eval VERIFIER_URL=\$${CHAIN_UPPER}_ETHERSCAN_VERIFIER_URL
-
     # Set verifier arguments based on verifier type
     if [ "$VERIFIER_TYPE" = "blockscout" ]; then
-        VERIFIER_ARG="--verifier blockscout --verifier-url ${VERIFIER_URL}"
+        VERIFIER_ARG="--verifier blockscout"
     elif [ "$VERIFIER_TYPE" = "etherscan" ]; then
-        VERIFIER_ARG="--verifier etherscan --verifier-url ${VERIFIER_URL}"
+        VERIFIER_ARG="--verifier etherscan"
     else
         echo "Error: Unsupported verifier type. Use 'blockscout' or 'etherscan'"
-        exit 1
-    fi
-
-    # Check if verifier URL is set
-    if [ -z "$VERIFIER_URL" ]; then
-        echo "Error: Verifier URL not found in environment variables. Please set ${CHAIN_UPPER}_ETHERSCAN_VERIFIER_URL"
         exit 1
     fi
 
