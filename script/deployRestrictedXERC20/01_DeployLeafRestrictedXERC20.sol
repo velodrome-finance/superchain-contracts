@@ -77,6 +77,7 @@ contract DeployLeafRestrictedXERC20 is DeployFixture {
         if (isTest) return;
         string memory root = vm.projectRoot();
         string memory path = string(abi.encodePacked(root, "/deployment-addresses/", _params.outputFilename));
+        // note this will overwrite the existing file
         vm.writeJson(vm.serializeAddress("", "leafRestrictedXFactory", address(leafRestrictedXFactory)), path);
         vm.writeJson(vm.serializeAddress("", "leafRestrictedRewardToken", address(leafRestrictedRewardToken)), path);
         vm.writeJson(vm.serializeAddress("", "leafRestrictedTokenBridge", address(leafRestrictedTokenBridge)), path);

@@ -93,8 +93,8 @@ import {TestDeployRestrictedXERC20Leaf} from "test/utils/TestDeployRestrictedXER
 
 import {DeployRootBaseFixture} from "script/root/01_DeployRootBaseFixture.s.sol";
 import {DeployBaseFixture} from "script/01_DeployBaseFixture.s.sol";
-import {DeployRootRestrictedXERC20} from "script/restrictedXERC20/01_DeployRootRestrictedXERC20.sol";
-import {DeployLeafRestrictedXERC20} from "script/restrictedXERC20/01_DeployLeafRestrictedXERC20.sol";
+import {DeployRootRestrictedXERC20} from "script/deployRestrictedXERC20/01_DeployRootRestrictedXERC20.sol";
+import {DeployLeafRestrictedXERC20} from "script/deployRestrictedXERC20/01_DeployLeafRestrictedXERC20.sol";
 
 abstract contract BaseForkFixture is Test, TestConstants {
     using stdStorage for StdStorage;
