@@ -30,6 +30,11 @@ contract MockCustomHook is GasRouter, IPostDispatchHook, IHookGasEstimator {
     }
 
     /// @inheritdoc IHookGasEstimator
+    function estimateSendTokenAndLockGas() external pure returns (uint256) {
+        return 800_000;
+    }
+
+    /// @inheritdoc IHookGasEstimator
     function estimateGas(uint256 _command) external view returns (uint256) {
         return gasLimit[_command] * 2;
     }

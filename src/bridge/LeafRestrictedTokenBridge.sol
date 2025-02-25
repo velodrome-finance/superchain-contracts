@@ -12,7 +12,7 @@ import {IReward} from "../interfaces/rewards/IReward.sol";
 import {IXERC20} from "../interfaces/xerc20/IXERC20.sol";
 import {IVoter} from "../interfaces/external/IVoter.sol";
 import {ILeafRestrictedTokenBridge} from "../interfaces/bridge/ILeafRestrictedTokenBridge.sol";
-import {LeafTokenBridge} from "./LeafTokenBridge.sol";
+import {LeafTokenBridge, BaseTokenBridge, ITokenBridge} from "./LeafTokenBridge.sol";
 import {Commands} from "../libraries/Commands.sol";
 
 /// @title Velodrome Superchain Leaf Restricted Token Bridge
@@ -54,5 +54,10 @@ contract LeafRestrictedTokenBridge is LeafTokenBridge, ILeafRestrictedTokenBridg
         }
 
         emit ReceivedMessage({_origin: _origin, _sender: _sender, _value: msg.value, _message: string(_message)});
+    }
+
+    /// @inheritdoc ITokenBridge
+    function GAS_LIMIT() public pure override(BaseTokenBridge, ITokenBridge) returns (uint256) {
+        return 190_000;
     }
 }

@@ -221,7 +221,7 @@ contract SendTokenIntegrationConcreteTest is LeafTokenBridgeTest {
             _metadata: string(
                 StandardHookMetadata.formatMetadata({
                     _msgValue: ethAmount + leftoverEth,
-                    _gasLimit: leafTokenBridge.GAS_LIMIT() * 2, // custom hook returns twice the gas limit
+                    _gasLimit: IHookGasEstimator(hook).estimateSendTokenGas(),
                     _refundAddress: users.alice,
                     _customMetadata: ""
                 })

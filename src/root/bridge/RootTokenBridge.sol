@@ -119,7 +119,7 @@ contract RootTokenBridge is BaseTokenBridge, IRootTokenBridge, Paymaster {
 
         address _hook = hook;
         bytes memory message = abi.encodePacked(_recipient, _amount);
-        bytes memory metadata = _generateGasMetadata({_hook: _hook, _value: msg.value});
+        bytes memory metadata = _generateGasMetadata({_hook: _hook, _value: msg.value, _message: message});
         uint256 fee = Mailbox(mailbox).quoteDispatch({
             destinationDomain: domain,
             recipientAddress: TypeCasts.addressToBytes32(address(this)),
@@ -130,7 +130,7 @@ contract RootTokenBridge is BaseTokenBridge, IRootTokenBridge, Paymaster {
         uint256 leftover;
         if (_whitelist.contains({value: msg.sender})) {
             if (fee > 0) {
-                metadata = _generateGasMetadata({_hook: _hook, _value: fee});
+                metadata = _generateGasMetadata({_hook: _hook, _value: fee, _message: message});
                 _sponsorTransaction({_fee: fee});
             }
             leftover = msg.value;

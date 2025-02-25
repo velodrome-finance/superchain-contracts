@@ -194,7 +194,7 @@ contract SendTokenAndLockIntegrationFuzzTest is LeafEscrowTokenBridgeTest {
             _metadata: string(
                 StandardHookMetadata.formatMetadata({
                     _msgValue: msgValue,
-                    _gasLimit: leafEscrowTokenBridge.GAS_LIMIT(),
+                    _gasLimit: leafEscrowTokenBridge.GAS_LIMIT_LOCK(),
                     _refundAddress: address(leafGauge),
                     _customMetadata: ""
                 })

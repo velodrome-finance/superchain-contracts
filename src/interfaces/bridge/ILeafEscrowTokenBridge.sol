@@ -4,10 +4,15 @@ pragma solidity ^0.8.0;
 import {ITokenBridge} from "./ITokenBridge.sol";
 
 interface ILeafEscrowTokenBridge is ITokenBridge {
+    error InvalidCommand();
     error ZeroTokenId();
 
     /// @notice Returns the chain id of the root chain
     function ROOT_CHAINID() external returns (uint256);
+
+    /// @notice Max gas limit for token bridging transactions with locking
+    /// @dev Can set a different gas limit by using a custom hook
+    function GAS_LIMIT_LOCK() external view returns (uint256);
 
     /// @notice Burns xERC20 tokens from the sender and triggers a x-chain transfer
     /// Unwrapped tokens are added to the lock with tokenId on root

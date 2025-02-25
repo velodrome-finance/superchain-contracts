@@ -81,7 +81,7 @@ import {CreateX} from "test/mocks/CreateX.sol";
 import {TestERC20} from "test/mocks/TestERC20.sol";
 import {Mailbox, MultichainMockMailbox} from "test/mocks/MultichainMockMailbox.sol";
 import {IVoter, MockVoter} from "test/mocks/MockVoter.sol";
-import {MockCustomHook} from "test/mocks/MockCustomHook.sol";
+import {MockCustomHook, IHookGasEstimator} from "test/mocks/MockCustomHook.sol";
 import {IVotingEscrow, MockVotingEscrow} from "test/mocks/MockVotingEscrow.sol";
 import {IFactoryRegistry, MockFactoryRegistry} from "test/mocks/MockFactoryRegistry.sol";
 import {TestConstants} from "test/utils/TestConstants.sol";

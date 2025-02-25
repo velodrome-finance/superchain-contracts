@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
 
-import {RootTokenBridge} from "./RootTokenBridge.sol";
+import {RootTokenBridge, BaseTokenBridge} from "./RootTokenBridge.sol";
 import {ITokenBridge} from "../../interfaces/bridge/ITokenBridge.sol";
 import {IVoter} from "../../interfaces/external/IVoter.sol";
 import {IRootGauge} from "../../interfaces/root/gauges/IRootGauge.sol";
@@ -44,5 +44,10 @@ contract RootRestrictedTokenBridge is RootTokenBridge, IRootRestrictedTokenBridg
         }
 
         _send({_amount: _amount, _recipient: _recipient, _chainid: _chainid});
+    }
+
+    /// @inheritdoc ITokenBridge
+    function GAS_LIMIT() public pure override(BaseTokenBridge, ITokenBridge) returns (uint256) {
+        return 272_000;
     }
 }

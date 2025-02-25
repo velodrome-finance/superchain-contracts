@@ -53,7 +53,12 @@ abstract contract BaseTokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterch
     /// @inheritdoc IHLHandler
     function handle(uint32 _origin, bytes32 _sender, bytes calldata _message) external payable virtual;
 
-    function _generateGasMetadata(address _hook, uint256 _value) internal view returns (bytes memory) {
+    function _generateGasMetadata(address _hook, uint256 _value, bytes memory _message)
+        internal
+        view
+        virtual
+        returns (bytes memory)
+    {
         /// @dev If custom hook is set, it should be used to estimate gas
         uint256 gasLimit = _hook == address(0) ? GAS_LIMIT() : IHookGasEstimator(_hook).estimateSendTokenGas();
         return StandardHookMetadata.formatMetadata({
@@ -64,7 +69,8 @@ abstract contract BaseTokenBridge is ITokenBridge, IHLHandler, ISpecifiesInterch
         });
     }
 
-    function GAS_LIMIT() public view virtual returns (uint256) {
+    /// @inheritdoc ITokenBridge
+    function GAS_LIMIT() public pure virtual returns (uint256) {
         return 200_000;
     }
 }

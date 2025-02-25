@@ -74,7 +74,7 @@ contract LeafTokenBridge is BaseTokenBridge {
         if (!_chainids.contains({value: _chainid})) revert NotRegistered();
 
         address _hook = hook;
-        bytes memory metadata = _generateGasMetadata({_hook: _hook, _value: msg.value});
+        bytes memory metadata = _generateGasMetadata({_hook: _hook, _value: msg.value, _message: _message});
 
         uint32 domain = uint32(_chainid);
         uint256 fee = Mailbox(mailbox).quoteDispatch({

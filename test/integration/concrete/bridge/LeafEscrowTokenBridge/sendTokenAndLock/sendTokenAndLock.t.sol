@@ -191,7 +191,7 @@ contract SendTokenAndLockIntegrationConcreteTest is LeafEscrowTokenBridgeTest {
             _metadata: string(
                 StandardHookMetadata.formatMetadata({
                     _msgValue: ethAmount + leftoverEth,
-                    _gasLimit: leafEscrowTokenBridge.GAS_LIMIT(),
+                    _gasLimit: leafEscrowTokenBridge.GAS_LIMIT_LOCK(),
                     _refundAddress: users.alice,
                     _customMetadata: ""
                 })
@@ -257,7 +257,7 @@ contract SendTokenAndLockIntegrationConcreteTest is LeafEscrowTokenBridgeTest {
             _metadata: string(
                 StandardHookMetadata.formatMetadata({
                     _msgValue: ethAmount + leftoverEth,
-                    _gasLimit: leafEscrowTokenBridge.GAS_LIMIT() * 2, // custom hook returns twice the gas limit
+                    _gasLimit: IHookGasEstimator(hook).estimateSendTokenAndLockGas(),
                     _refundAddress: users.alice,
                     _customMetadata: ""
                 })

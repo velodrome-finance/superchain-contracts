@@ -8,7 +8,7 @@ import {TypeCasts} from "@hyperlane/core/contracts/libs/TypeCasts.sol";
 
 import {IVotingEscrow} from "../../interfaces/external/IVotingEscrow.sol";
 import {IVoter} from "../../interfaces/external/IVoter.sol";
-import {RootTokenBridge} from "./RootTokenBridge.sol";
+import {RootTokenBridge, BaseTokenBridge, ITokenBridge} from "./RootTokenBridge.sol";
 import {IRootEscrowTokenBridge} from "../../interfaces/root/bridge/IRootEscrowTokenBridge.sol";
 import {IRootHLMessageModule} from "../../interfaces/root/bridge/hyperlane/IRootHLMessageModule.sol";
 import {IHLHandler} from "../../interfaces/bridge/hyperlane/IHLHandler.sol";
@@ -90,5 +90,10 @@ contract RootEscrowTokenBridge is RootTokenBridge, IRootEscrowTokenBridge {
         }
 
         emit ReceivedMessage({_origin: _origin, _sender: _sender, _value: msg.value, _message: string(_message)});
+    }
+
+    /// @inheritdoc ITokenBridge
+    function GAS_LIMIT() public pure override(BaseTokenBridge, ITokenBridge) returns (uint256) {
+        return 76_000;
     }
 }

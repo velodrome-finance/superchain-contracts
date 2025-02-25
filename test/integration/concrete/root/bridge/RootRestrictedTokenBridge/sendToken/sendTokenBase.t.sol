@@ -361,7 +361,7 @@ contract SendTokenBaseIntegrationConcreteTest is RootRestrictedTokenBridgeTest {
             _metadata: string(
                 StandardHookMetadata.formatMetadata({
                     _msgValue: ethAmount + leftoverEth,
-                    _gasLimit: rootRestrictedTokenBridge.GAS_LIMIT() * 2,
+                    _gasLimit: IHookGasEstimator(rootHook).estimateSendTokenGas(),
                     _refundAddress: users.alice,
                     _customMetadata: ""
                 })
@@ -441,7 +441,7 @@ contract SendTokenBaseIntegrationConcreteTest is RootRestrictedTokenBridgeTest {
             _metadata: string(
                 StandardHookMetadata.formatMetadata({
                     _msgValue: ethAmount + leftoverEth,
-                    _gasLimit: rootRestrictedTokenBridge.GAS_LIMIT() * 2,
+                    _gasLimit: IHookGasEstimator(rootHook).estimateSendTokenGas(),
                     _refundAddress: users.alice,
                     _customMetadata: ""
                 })
@@ -677,7 +677,7 @@ contract SendTokenBaseIntegrationConcreteTest is RootRestrictedTokenBridgeTest {
             _metadata: string(
                 StandardHookMetadata.formatMetadata({
                     _msgValue: ethAmount + leftoverEth,
-                    _gasLimit: rootRestrictedTokenBridge.GAS_LIMIT() * 2,
+                    _gasLimit: IHookGasEstimator(rootHook).estimateSendTokenGas(),
                     _refundAddress: users.alice,
                     _customMetadata: ""
                 })
@@ -757,7 +757,7 @@ contract SendTokenBaseIntegrationConcreteTest is RootRestrictedTokenBridgeTest {
             _metadata: string(
                 StandardHookMetadata.formatMetadata({
                     _msgValue: ethAmount + leftoverEth,
-                    _gasLimit: rootRestrictedTokenBridge.GAS_LIMIT() * 2,
+                    _gasLimit: IHookGasEstimator(rootHook).estimateSendTokenGas(),
                     _refundAddress: users.alice,
                     _customMetadata: ""
                 })
