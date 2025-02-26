@@ -4,6 +4,7 @@ pragma solidity >=0.8.19 <0.9.0;
 import "./DeployFixture.sol";
 
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
+import {Mailbox} from "@hyperlane/core/contracts/Mailbox.sol";
 
 import {VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
 import {LeafGaugeFactory} from "src/gauges/LeafGaugeFactory.sol";
@@ -240,6 +241,13 @@ abstract contract DeployBaseFixture is DeployFixture {
 
         console.log("ism: ", address(ism));
         console.log("leafRouter: ", address(leafRouter));
+
+        uint32 mailboxDomain = Mailbox(_params.mailbox).localDomain();
+        if (mailboxDomain != block.chainid) {
+            console.log("====================================================");
+            console.log("WARNING: Mailbox Domain should be set to %d.", mailboxDomain);
+            console.log("====================================================");
+        }
     }
 
     function logOutput() internal override {
