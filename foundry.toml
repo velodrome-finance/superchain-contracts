@@ -30,8 +30,9 @@ swell = "${SWELL_RPC_URL}"
 unichain = "${UNICHAIN_RPC_URL}"
 
 [etherscan]
-mode = { key = "NA", url = "${MODE_ETHERSCAN_VERIFIER_URL}" }
 optimism = { key = "${OPTIMISM_ETHERSCAN_API_KEY}", url = "${OPTIMISM_ETHERSCAN_VERIFIER_URL}"}
+base = { key = "${BASE_ETHERSCAN_API_KEY}", url = "${BASE_ETHERSCAN_VERIFIER_URL}"}
+mode = { key = "NA", url = "${MODE_ETHERSCAN_VERIFIER_URL}" }
 fraxtal = { key = "${FRAXTAL_ETHERSCAN_API_KEY}", url = "${FRAXTAL_ETHERSCAN_VERIFIER_URL}"}
 lisk = { key = "NA", url = "${LISK_ETHERSCAN_VERIFIER_URL}"}
 metal = { key = "NA", url = "${METAL_ETHERSCAN_VERIFIER_URL}"}

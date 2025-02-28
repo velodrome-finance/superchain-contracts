@@ -12,5 +12,10 @@
   "rootTokenBridgeVault": "0x479Bec910d4025b4aC440ec27aCf28eac522242B",
   "rootVotingRewardsFactory": "0x7dc9fd82f91B36F416A89f5478375e4a79f4Fb2F",
   "rootXFactory": "0x73CaE4450f11f4A33a49C880CE3E8E56a9294B31",
-  "rootXVelo": "0x7f9AdFbd38b669F03d1d11000Bc76b9AaEA28A81"
+  "rootXVelo": "0x7f9AdFbd38b669F03d1d11000Bc76b9AaEA28A81",
+  "rootRestrictedRewardLockbox": "0xb46cEA3e5839914bCb7622841D6E3dfC1BD92313",
+  "rootRestrictedRewardToken": "0xafcc6AE807187A31E84138F3860D4CE27973e01b",
+  "rootRestrictedTokenBridge": "0xac6A6080E002D2803959242C0FE10050C482D214",
+  "rootRestrictedTokenBridgeVault": "0xb9d32Bf44a71bC0a383Bd2061584e98A1e09C8d2",
+  "rootRestrictedXFactory": "0x00a3767687699C65878655B62E565453BDC75Fb1"
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19 <0.9.0;
 
-import "../DeployFixture.sol";
+import "../../DeployFixture.sol";
 import {RestrictedXERC20Factory} from "src/xerc20/extensions/RestrictedXERC20Factory.sol";
 import {RestrictedXERC20} from "src/xerc20/extensions/RestrictedXERC20.sol";
 import {XERC20Lockbox} from "src/xerc20/XERC20Lockbox.sol";
@@ -94,13 +94,11 @@ contract DeployRootRestrictedXERC20 is DeployFixture {
         if (isTest) return;
         string memory root = vm.projectRoot();
         string memory path = string(abi.encodePacked(root, "/deployment-addresses/", _params.outputFilename));
-        vm.writeJson(vm.serializeAddress("", "rootRestrictedXFactory", address(rootRestrictedXFactory)), path);
-        vm.writeJson(vm.serializeAddress("", "rootRestrictedRewardToken", address(rootRestrictedRewardToken)), path);
-        vm.writeJson(vm.serializeAddress("", "rootRestrictedRewardLockbox", address(rootRestrictedRewardLockbox)), path);
-        vm.writeJson(vm.serializeAddress("", "rootRestrictedTokenBridge", address(rootRestrictedTokenBridge)), path);
-        vm.writeJson(
-            vm.serializeAddress("", "rootRestrictedTokenBridgeVault", address(rootRestrictedTokenBridgeVault)), path
-        );
+        vm.writeJson(vm.toString(address(rootRestrictedXFactory)), path, ".rootRestrictedXFactory");
+        vm.writeJson(vm.toString(address(rootRestrictedRewardToken)), path, ".rootRestrictedRewardToken");
+        vm.writeJson(vm.toString(address(rootRestrictedRewardLockbox)), path, ".rootRestrictedRewardLockbox");
+        vm.writeJson(vm.toString(address(rootRestrictedTokenBridge)), path, ".rootRestrictedTokenBridge");
+        vm.writeJson(vm.toString(address(rootRestrictedTokenBridgeVault)), path, ".rootRestrictedTokenBridgeVault");
     }
 
     function setUp() public virtual override {}

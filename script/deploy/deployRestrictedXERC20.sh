@@ -50,10 +50,12 @@ capitalized_chain=$(capitalize "$chain")
 target_dir="script/deployRestrictedXERC20/deployParameters/${chain}"
 template_file="script/deployRestrictedXERC20/deployTemplate/template/DeployRestrictedXERC20Template.s.sol"
 target_file="$target_dir/DeployRestrictedXERC20${capitalized_chain}.s.sol"
-deploy_base_file="script/deployParameters/${chain}/DeployBase.s.sol"
+if [ "$chain" != "base" ]; then
+    deploy_base_file="script/deployParameters/${chain}/DeployBase.s.sol"
+fi
 
 # Check if DeployBase.s.sol exists for this chain
-if [ ! -f "$deploy_base_file" ]; then
+if [ "$chain" != "base" ] && [ ! -f "$deploy_base_file" ]; then
     echo "Error: $deploy_base_file not found"
     exit 1
 fi
@@ -92,11 +94,25 @@ if forge script ${SCRIPT_PATH} --slow --rpc-url ${chain} -vvvv; then
         exit 0
     fi
     
+    # Source the .env file to make environment variables available
+    if [ -f ".env" ]; then
+        source .env
+    fi
+    
+    # Get verifier URL from .env file
+    chain_upper=$(echo "$chain" | tr '[:lower:]' '[:upper:]')
+    verifier_var="${chain_upper}_ETHERSCAN_VERIFIER_URL"
+    VERIFIER_URL=${!verifier_var}
+    
     # Set verifier arguments based on verifier type
     if [ "$VERIFIER_TYPE" = "blockscout" ]; then
-        VERIFIER_ARG="--verifier blockscout"
+        VERIFIER_ARG="--verifier blockscout --verifier-url ${VERIFIER_URL}"
     elif [ "$VERIFIER_TYPE" = "etherscan" ]; then
-        VERIFIER_ARG="--verifier etherscan"
+        # Get API key for etherscan verification
+        api_key_var="${chain_upper}_ETHERSCAN_API_KEY"
+        API_KEY=${!api_key_var}
+        
+        VERIFIER_ARG="--verifier etherscan --verifier-url ${VERIFIER_URL} --verifier-api-key ${API_KEY}"
     else
         echo "Error: Unsupported verifier type. Use 'blockscout' or 'etherscan'"
         exit 1
@@ -104,8 +120,17 @@ if forge script ${SCRIPT_PATH} --slow --rpc-url ${chain} -vvvv; then
 
     echo "Simulation successful! Proceeding with actual deployment..."
     
-    # Run actual deployment with verification
-    forge script ${SCRIPT_PATH} --slow --rpc-url ${chain} --broadcast --verify ${VERIFIER_ARG} ${ADDITIONAL_ARGS} -vvvv
+    # Run actual deployment
+    if forge script ${SCRIPT_PATH} --slow --rpc-url ${chain} --broadcast ${ADDITIONAL_ARGS} -vvvv; then
+        echo "Waiting 5 seconds before verification..."
+        sleep 5
+        
+        # Run verification separately
+        forge script ${SCRIPT_PATH} --slow --rpc-url ${chain} --resume --verify ${VERIFIER_ARG} ${ADDITIONAL_ARGS} -vvvv
+    else
+        echo "Deployment failed! Exiting."
+        exit 1
+    fi
 else
     echo "Simulation failed! Please check the output above for errors."
     exit 1
