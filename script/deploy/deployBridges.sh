@@ -94,11 +94,26 @@ if forge script ${SCRIPT_PATH} --slow --rpc-url ${chain} -vvvv; then
         exit 0
     fi
     
+    # Source the .env file to make environment variables available
+    # Assume verifier parameters are always available
+    if [ -f ".env" ]; then
+        source .env
+    fi
+    
+    # Get verifier URL from .env file
+    chain_upper=$(echo "$chain" | tr '[:lower:]' '[:upper:]')
+    verifier_var="${chain_upper}_ETHERSCAN_VERIFIER_URL"
+    VERIFIER_URL=${!verifier_var}
+    
     # Set verifier arguments based on verifier type
     if [ "$VERIFIER_TYPE" = "blockscout" ]; then
-        VERIFIER_ARG="--verifier blockscout"
+        VERIFIER_ARG="--verifier blockscout --verifier-url ${VERIFIER_URL}"
     elif [ "$VERIFIER_TYPE" = "etherscan" ]; then
-        VERIFIER_ARG="--verifier etherscan"
+        # Get API key for etherscan verification
+        api_key_var="${chain_upper}_ETHERSCAN_API_KEY"
+        API_KEY=${!api_key_var}
+        
+        VERIFIER_ARG="--verifier etherscan --verifier-url ${VERIFIER_URL} --verifier-api-key ${API_KEY}"
     else
         echo "Error: Unsupported verifier type. Use 'blockscout' or 'etherscan'"
         exit 1
@@ -106,8 +121,17 @@ if forge script ${SCRIPT_PATH} --slow --rpc-url ${chain} -vvvv; then
 
     echo "Simulation successful! Proceeding with actual deployment..."
     
-    # Run actual deployment with verification
-    forge script ${SCRIPT_PATH} --slow --rpc-url ${chain} --broadcast --verify ${VERIFIER_ARG} ${ADDITIONAL_ARGS} -vvvv
+    # Run actual deployment
+    if forge script ${SCRIPT_PATH} --slow --rpc-url ${chain} --broadcast ${ADDITIONAL_ARGS} -vvvv; then
+        echo "Waiting 5 seconds before verification..."
+        sleep 5
+        
+        # Run verification separately
+        forge script ${SCRIPT_PATH} --slow --rpc-url ${chain} --resume --verify ${VERIFIER_ARG} ${ADDITIONAL_ARGS} -vvvv
+    else
+        echo "Deployment failed! Exiting."
+        exit 1
+    fi
 else
     echo "Simulation failed! Please check the output above for errors."
     exit 1
