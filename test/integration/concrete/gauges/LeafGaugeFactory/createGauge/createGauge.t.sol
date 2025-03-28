@@ -36,6 +36,6 @@ contract CreateGaugeIntegrationConcreteTest is LeafGaugeFactoryTest {
     function testGas_createGauge() external {
         vm.prank(address(leafVoter));
         leafGaugeFactory.createGauge({_pool: address(leafPool), _feesVotingReward: address(11), isPool: true});
-        snapLastCall("LeafGaugeFactory_createGauge");
+        vm.snapshotGasLastCall("LeafGaugeFactory_createGauge");
     }
 }

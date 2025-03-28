@@ -1,0 +1,13 @@
+WhitelistForSponsorshipIntegrationConcreteTest
+├── When the caller is not whitelist manager
+│   └── It should revert with {NotBridgeOwner}
+└── When the caller is whitelist manager
+    ├── When the account is the address zero
+    │   └── It should revert with {InvalidAddress}
+    └── When the account is not the address zero
+        ├── When state is true
+        │   ├── It should whitelist the account
+        │   └── It should emit a {WhitelistSet} event
+        └── When state is false
+            ├── It should unwhitelist the account
+            └── It should emit a {WhitelistSet} event

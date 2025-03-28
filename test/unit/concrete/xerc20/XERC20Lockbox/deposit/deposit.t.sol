@@ -31,6 +31,6 @@ contract DepositUnitConcreteTest is XERC20LockboxTest {
         rewardToken.approve(address(lockbox), amount);
 
         lockbox.deposit(amount);
-        snapLastCall("XERC20Lockbox_deposit");
+        vm.snapshotGasLastCall("XERC20Lockbox_deposit");
     }
 }

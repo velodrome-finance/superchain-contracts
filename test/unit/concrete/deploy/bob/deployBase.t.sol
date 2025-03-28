@@ -14,7 +14,7 @@ contract BobDeployBaseTest is BaseFixture {
     XERC20Factory public leafXFactory;
     XERC20 public leafXVelo;
     Router public leafRouter;
-    TokenBridge public leafTokenBridge;
+    LeafTokenBridge public leafTokenBridge;
     LeafMessageBridge public leafMessageBridge;
     LeafHLMessageModule public leafMessageModule;
 
@@ -121,6 +121,7 @@ contract BobDeployBaseTest is BaseFixture {
         assertEq(leafMessageBridge.voter(), address(leafVoter));
         assertEq(leafMessageBridge.module(), address(leafMessageModule));
 
+        assertEq(leafMessageModule.owner(), params.moduleOwner);
         assertEq(leafMessageModule.bridge(), address(leafMessageBridge));
         assertEq(leafMessageModule.xerc20(), address(leafXVelo));
         assertEq(leafMessageModule.voter(), address(leafVoter));

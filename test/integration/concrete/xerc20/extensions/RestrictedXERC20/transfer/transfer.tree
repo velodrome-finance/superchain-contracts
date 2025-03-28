@@ -1,0 +1,11 @@
+TransferIntegrationConcreteTest
+├── When transfer occurs on the origin chain
+│   └── It should allow transfer without restrictions
+└── When transfer occurs on non-origin chains
+    ├── When the sender is the token bridge
+    │   ├── It should whitelist the destination address
+    │   └── It should allow the transfer
+    ├── When the sender is already whitelisted
+    │   └── It should allow the transfer
+    └── When the sender is not whitelisted
+        └── It should revert with {NotWhitelisted}

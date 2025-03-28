@@ -388,6 +388,8 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
     modifier whenTheCommandIsNotify() {
         command = Commands.NOTIFY;
+        /// @dev Skip distribute window to avoid sponsoring
+        skip(1 hours + 1);
         _;
     }
 
@@ -435,6 +437,8 @@ contract SendMessageIntegrationConcreteTest is RootMessageBridgeTest {
 
     modifier whenTheCommandIsNotifyWithoutClaim() {
         command = Commands.NOTIFY_WITHOUT_CLAIM;
+        /// @dev Skip distribute window to avoid sponsoring
+        skip(1 hours + 1);
         _;
     }
 

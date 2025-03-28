@@ -98,6 +98,6 @@ contract CreateGaugeIntegrationConcreteTest is RootGaugeFactoryTest {
         (address rootFVR,) = rootVotingRewardsFactory.createRewards(address(0), new address[](0));
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootGaugeFactory.createGauge(address(0), address(rootPool), address(rootFVR), address(rootRewardToken), true);
-        snapLastCall("RootGaugeFactory_createGauge");
+        vm.snapshotGasLastCall("RootGaugeFactory_createGauge");
     }
 }

@@ -73,6 +73,6 @@ contract WithdrawIntegrationConcreteTest is RootFeesVotingRewardTest {
         vm.selectFork({forkId: rootId});
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootFVR._withdraw({_amount: amount, _tokenId: tokenId});
-        snapLastCall("RootFeesVotingReward_withdraw");
+        vm.snapshotGasLastCall("RootFeesVotingReward_withdraw");
     }
 }

@@ -90,6 +90,6 @@ contract SetRateLimitPerSecondCapUnitConcreteTest is XERC20Test {
         rps = rps / 2;
         vm.startPrank(users.owner);
         xVelo.setRateLimitPerSecond({_bridge: bridge, _newRateLimitPerSecond: rps});
-        snapLastCall("XERC20_setRateLimitPerSecond");
+        vm.snapshotGasLastCall("XERC20_setRateLimitPerSecond");
     }
 }

@@ -12,8 +12,13 @@ contract AddModuleIntegrationConcreteTest is RootMessageBridgeTest {
             _voter: address(mockVoter),
             _weth: address(weth)
         });
-        rootMessageModule =
-            new RootHLMessageModule({_bridge: address(rootMessageBridge), _mailbox: address(rootMailbox)});
+        rootMessageModule = new RootHLMessageModule({
+            _bridge: address(rootMessageBridge),
+            _mailbox: address(rootMailbox),
+            _paymasterVault: address(rootModuleVault),
+            _commands: defaultCommands,
+            _gasLimits: defaultGasLimits
+        });
     }
 
     function test_WhenTheCallerIsNotOwner() external {
@@ -50,6 +55,6 @@ contract AddModuleIntegrationConcreteTest is RootMessageBridgeTest {
 
     function testGas_addModule() external whenTheCallerIsOwner {
         rootMessageBridge.addModule({_module: address(rootMessageModule)});
-        snapLastCall("RootMessageBridge_addModule");
+        vm.snapshotGasLastCall("RootMessageBridge_addModule");
     }
 }

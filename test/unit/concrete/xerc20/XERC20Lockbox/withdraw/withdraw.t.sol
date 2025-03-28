@@ -38,6 +38,6 @@ contract WithdrawUnitConcreteTest is XERC20LockboxTest {
 
         xVelo.approve(address(lockbox), amount);
         lockbox.withdraw(amount);
-        snapLastCall("XERC20Lockbox_withdraw");
+        vm.snapshotGasLastCall("XERC20Lockbox_withdraw");
     }
 }

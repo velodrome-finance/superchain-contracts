@@ -12,8 +12,13 @@ contract DeregisterChainIntegrationConcreteTest is RootMessageBridgeTest {
             _voter: address(mockVoter),
             _weth: address(weth)
         });
-        rootMessageModule =
-            new RootHLMessageModule({_bridge: address(rootMessageBridge), _mailbox: address(rootMailbox)});
+        rootMessageModule = new RootHLMessageModule({
+            _bridge: address(rootMessageBridge),
+            _mailbox: address(rootMailbox),
+            _paymasterVault: address(rootModuleVault),
+            _commands: defaultCommands,
+            _gasLimits: defaultGasLimits
+        });
     }
 
     function test_WhenTheCallerIsNotTheOwner() external {
@@ -59,6 +64,6 @@ contract DeregisterChainIntegrationConcreteTest is RootMessageBridgeTest {
         rootMessageBridge.registerChain({_chainid: chainid, _module: address(rootMessageModule)});
 
         rootMessageBridge.deregisterChain({_chainid: chainid});
-        snapLastCall("RootMessageBridge_deregisterChain");
+        vm.snapshotGasLastCall("RootMessageBridge_deregisterChain");
     }
 }

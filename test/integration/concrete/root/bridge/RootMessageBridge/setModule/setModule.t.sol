@@ -12,8 +12,13 @@ contract SetModuleIntegrationConcreteTest is RootMessageBridgeTest {
             _voter: address(mockVoter),
             _weth: address(weth)
         });
-        rootMessageModule =
-            new RootHLMessageModule({_bridge: address(rootMessageBridge), _mailbox: address(rootMailbox)});
+        rootMessageModule = new RootHLMessageModule({
+            _bridge: address(rootMessageBridge),
+            _mailbox: address(rootMailbox),
+            _paymasterVault: address(rootModuleVault),
+            _commands: defaultCommands,
+            _gasLimits: defaultGasLimits
+        });
     }
 
     function test_WhenTheCallerIsNotOwner() external {
@@ -74,6 +79,6 @@ contract SetModuleIntegrationConcreteTest is RootMessageBridgeTest {
         rootMessageBridge.registerChain({_chainid: 1, _module: address(1)});
 
         rootMessageBridge.setModule({_chainid: 1, _module: address(rootMessageModule)});
-        snapLastCall("RootMessageBridge_setModule");
+        vm.snapshotGasLastCall("RootMessageBridge_setModule");
     }
 }

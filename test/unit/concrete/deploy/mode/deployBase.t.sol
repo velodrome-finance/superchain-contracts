@@ -17,7 +17,7 @@ contract ModeDeployBaseTest is BaseFixture {
     XERC20Factory public leafXFactory;
     XERC20 public leafXVelo;
     Router public leafRouter;
-    TokenBridge public leafTokenBridge;
+    LeafTokenBridge public leafTokenBridge;
     LeafMessageBridge public leafMessageBridge;
     LeafHLMessageModule public leafMessageModule;
 
@@ -128,6 +128,7 @@ contract ModeDeployBaseTest is BaseFixture {
         assertEq(ModeFeeSharing(address(leafMessageBridge)).sfs(), sfs);
         assertEq(ModeFeeSharing(address(leafMessageBridge)).tokenId(), 556);
 
+        assertEq(leafMessageModule.owner(), params.moduleOwner);
         assertEq(leafMessageModule.bridge(), address(leafMessageBridge));
         assertEq(leafMessageModule.xerc20(), address(leafXVelo));
         assertEq(leafMessageModule.voter(), address(leafVoter));

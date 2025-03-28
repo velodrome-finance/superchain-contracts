@@ -97,6 +97,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         vm.expectEmit(address(leafGauge));
         emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: maxAmount});
         leafMailbox.processNextInboundMessage();
@@ -146,11 +147,14 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootGauge.notifyRewardAmount({_amount: maxAmount});
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         leafMailbox.processNextInboundMessage();
 
-        skipTime(WEEK / 7 * 5);
+        leafStartTime += WEEK / 7 * 5;
+        vm.warp({newTimestamp: leafStartTime});
 
         vm.selectFork({forkId: rootId});
+        vm.warp({newTimestamp: leafStartTime});
         uint256 oldMinterBalance = rootRewardToken.balanceOf(address(minter));
 
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
@@ -165,6 +169,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         vm.expectEmit(address(leafGauge));
         emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: maxAmount});
         leafMailbox.processNextInboundMessage();
@@ -219,6 +224,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         vm.expectEmit(address(leafGauge));
         emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: amount});
         leafMailbox.processNextInboundMessage();
@@ -263,11 +269,14 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootGauge.notifyRewardAmount({_amount: amount});
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         leafMailbox.processNextInboundMessage();
 
-        skipTime(WEEK / 7 * 5);
+        leafStartTime += WEEK / 7 * 5;
+        vm.warp({newTimestamp: leafStartTime});
 
         vm.selectFork({forkId: rootId});
+        vm.warp({newTimestamp: leafStartTime});
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         vm.expectEmit(address(rootGauge));
         emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: amount});
@@ -278,6 +287,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         vm.expectEmit(address(leafGauge));
         emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: amount});
         leafMailbox.processNextInboundMessage();
@@ -344,6 +354,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         vm.expectEmit(address(leafGauge));
         emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: maxAmount});
         leafMailbox.processNextInboundMessage();
@@ -393,11 +404,14 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootGauge.notifyRewardAmount({_amount: maxAmount});
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         leafMailbox.processNextInboundMessage();
 
-        skipTime(WEEK / 7 * 5);
+        leafStartTime += WEEK / 7 * 5;
+        vm.warp({newTimestamp: leafStartTime});
 
         vm.selectFork({forkId: rootId});
+        vm.warp({newTimestamp: leafStartTime});
         uint256 oldMinterBalance = rootRewardToken.balanceOf(address(minter));
 
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
@@ -412,6 +426,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         vm.expectEmit(address(leafGauge));
         emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: maxAmount});
         leafMailbox.processNextInboundMessage();
@@ -466,6 +481,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         vm.expectEmit(address(leafGauge));
         emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: amount});
         leafMailbox.processNextInboundMessage();
@@ -510,11 +526,14 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootGauge.notifyRewardAmount({_amount: amount});
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         leafMailbox.processNextInboundMessage();
 
-        skipTime(WEEK / 7 * 5);
+        leafStartTime += WEEK / 7 * 5;
+        vm.warp({newTimestamp: leafStartTime});
 
         vm.selectFork({forkId: rootId});
+        vm.warp({newTimestamp: leafStartTime});
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         vm.expectEmit(address(rootGauge));
         emit IRootGauge.NotifyReward({_sender: address(mockVoter), _amount: amount});
@@ -525,6 +544,7 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
         assertEq(rootXVelo.balanceOf(address(rootGauge)), 0);
 
         vm.selectFork({forkId: leafId});
+        vm.warp({newTimestamp: leafStartTime});
         vm.expectEmit(address(leafGauge));
         emit ILeafGauge.NotifyReward({_sender: address(leafMessageModule), _amount: amount});
         leafMailbox.processNextInboundMessage();
@@ -559,6 +579,6 @@ contract NotifyRewardAmountIntegrationConcreteTest is RootGaugeTest {
 
         vm.prank({msgSender: address(mockVoter), txOrigin: users.alice});
         rootGauge.notifyRewardAmount({_amount: amount});
-        snapLastCall("RootGauge_notifyRewardAmount");
+        vm.snapshotGasLastCall("RootGauge_notifyRewardAmount");
     }
 }

@@ -34,6 +34,6 @@ contract SetEmissionAdminIntegrationConcreteTest is RootGaugeFactoryTest {
 
     function testGas_setEmissionAdmin() external whenCallerIsTheEmissionAdmin {
         rootGaugeFactory.setEmissionAdmin({_admin: users.alice});
-        snapLastCall("RootGaugeFactory_setEmissionAdmin");
+        vm.snapshotGasLastCall("RootGaugeFactory_setEmissionAdmin");
     }
 }

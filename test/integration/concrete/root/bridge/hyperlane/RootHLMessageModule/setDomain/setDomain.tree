@@ -1,0 +1,19 @@
+SetDomainIntegrationConcreteTest
+├── When the caller is not bridge owner
+│   └── It should revert with {NotBridgeOwner}
+└── When the caller is bridge owner
+    ├── When chainid is zero
+    │   └── It should revert with {InvalidChainID}
+    └── When chainid is greater than zero
+        ├── When domain is already assigned to a chainid
+        │   └── It should revert with {DomainAlreadyAssigned}
+        └── When domain is not assigned to a chainid
+            ├── When domain is zero
+            │   ├── It should remove the old chainid associated with the previous domain of chainid
+            │   ├── It should remove the domain for chainid
+            │   └── It emits a {DomainSet} event
+            └── When domain is greater than zero
+                ├── It should remove the old chainid associated with the previous domain of chainid
+                ├── It should set a new domain for chainid
+                ├── It should set a new chainid for domain
+                └── It emits a {DomainSet} event

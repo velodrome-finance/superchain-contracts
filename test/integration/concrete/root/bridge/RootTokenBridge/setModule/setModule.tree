@@ -1,0 +1,9 @@
+SetModuleIntegrationConcreteTest
+├── When caller is not owner
+│   └── It reverts with {OwnableUnauthorizedAccount}
+└── When caller is owner
+    └── When module is zero address
+    │   └── It reverts with {ZeroAddress}
+    └── When module is not zero address
+        ├── It sets new module
+        └── It emits {ModuleSet}

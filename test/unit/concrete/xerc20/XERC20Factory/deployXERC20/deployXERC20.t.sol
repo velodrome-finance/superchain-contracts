@@ -59,6 +59,6 @@ contract DeployXERC20UnitConcreteTest is XERC20FactoryTest {
     function testGas_deployXERC20() external givenXERC20NotYetDeployed {
         vm.chainId(31337);
         xFactory.deployXERC20();
-        snapLastCall("XERC20Factory_deployXERC20");
+        vm.snapshotGasLastCall("XERC20Factory_deployXERC20");
     }
 }

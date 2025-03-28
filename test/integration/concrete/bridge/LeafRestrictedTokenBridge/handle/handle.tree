@@ -1,0 +1,18 @@
+HandleIntegrationConcreteTest
+├── When the caller is not mailbox
+│   └── It should revert with {NotMailbox}
+└── When the caller is mailbox
+    ├── When the sender is not bridge
+    │   └── It should revert with {NotBridge}
+    └── When the sender is bridge
+        ├── When the origin chain is not a registered chain
+        │   └── It should revert with {NotRegistered}
+        └── When the origin chain is a registered chain
+            ├── When the recipient has an incentive reward contract
+            │   ├── It should mint tokens to the bridge
+            │   ├── It should approve the incentive reward contract
+            │   ├── It should notify the reward amount
+            │   └── It should emit {ReceivedMessage} event
+            └── When the recipient does not have an incentive reward contract
+                ├── It should mint tokens directly to the recipient
+                └── It should emit {ReceivedMessage} event

@@ -62,7 +62,7 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
             abi.encodePacked(uint8(Commands.DEPOSIT), address(leafGauge), amount, tokenId, uint40(block.timestamp));
 
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
-        snapLastCall("LeafHLMessageModule_handle_deposit");
+        vm.snapshotGasLastCall("LeafHLMessageModule_handle_deposit");
     }
 
     function testGas_Withdraw() public {
@@ -79,7 +79,7 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
 
         vm.startPrank(address(leafMailbox));
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
-        snapLastCall("LeafHLMessageModule_handle_withdraw");
+        vm.snapshotGasLastCall("LeafHLMessageModule_handle_withdraw");
     }
 
     function testGas_GetIncentives() public {
@@ -105,7 +105,7 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
 
         vm.startPrank(address(leafMailbox));
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
-        snapLastCall("LeafHLMessageModule_handle_getIncentives");
+        vm.snapshotGasLastCall("LeafHLMessageModule_handle_getIncentives");
     }
 
     function testGas_GetFees() public {
@@ -127,7 +127,7 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
 
         vm.startPrank(address(leafMailbox));
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
-        snapLastCall("LeafHLMessageModule_handle_getFees");
+        vm.snapshotGasLastCall("LeafHLMessageModule_handle_getFees");
     }
 
     function testGas_CreateGauge() public {
@@ -150,7 +150,7 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
             _poolParam
         );
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
-        snapLastCall("LeafHLMessageModule_handle_createGauge");
+        vm.snapshotGasLastCall("LeafHLMessageModule_handle_createGauge");
     }
 
     function testGas_NotifyRewardAmount() public {
@@ -158,7 +158,7 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
         bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY), address(leafGauge), amount);
 
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
-        snapLastCall("LeafHLMessageModule_handle_notifyRewardAmount");
+        vm.snapshotGasLastCall("LeafHLMessageModule_handle_notifyRewardAmount");
     }
 
     function testGas_NotifyRewardWithoutClaim() public {
@@ -166,14 +166,14 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
         bytes memory message = abi.encodePacked(uint8(Commands.NOTIFY_WITHOUT_CLAIM), address(leafGauge), amount);
 
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
-        snapLastCall("LeafHLMessageModule_handle_notifyRewardWithoutClaim");
+        vm.snapshotGasLastCall("LeafHLMessageModule_handle_notifyRewardWithoutClaim");
     }
 
     function testGas_KillGauge() public {
         bytes memory message = abi.encodePacked(uint8(Commands.KILL_GAUGE), address(leafGauge));
 
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
-        snapLastCall("LeafHLMessageModule_handle_killGauge");
+        vm.snapshotGasLastCall("LeafHLMessageModule_handle_killGauge");
     }
 
     function testGas_ReviveGauge() public {
@@ -185,6 +185,6 @@ contract HandleBenchmarksIntegrationConcreteTest is LeafHLMessageModuleTest {
 
         vm.startPrank(address(leafMailbox));
         leafMessageModule.handle({_origin: origin, _sender: sender, _message: message});
-        snapLastCall("LeafHLMessageModule_handle_reviveGauge");
+        vm.snapshotGasLastCall("LeafHLMessageModule_handle_reviveGauge");
     }
 }
