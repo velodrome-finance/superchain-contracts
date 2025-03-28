@@ -8,8 +8,19 @@ interface IRootHLMessageModule is IMessageSender {
     error SpecialVotingWindow();
     error DistributeWindow();
     error NotBridgeOwner();
+    error DomainAlreadyAssigned();
+    error InvalidChainID();
 
     event HookSet(address indexed _newHook);
+    event DomainSet(uint256 indexed _chainid, uint32 _domain);
+
+    /// @notice Returns the domain of the given chain id
+    /// @param _chainid The chain id to get the domain for
+    function domains(uint256 _chainid) external view returns (uint32);
+
+    /// @notice Returns the chain id of the given domain
+    /// @param _domain The domain to get the chain id for
+    function chains(uint32 _domain) external view returns (uint256);
 
     /// @notice Returns the address of the bridge contract that this module is associated with
     function bridge() external view returns (address);
@@ -31,4 +42,9 @@ interface IRootHLMessageModule is IMessageSender {
     /// @dev Can use default hook by setting to zero address
     /// @param _hook The address of the new hook contract
     function setHook(address _hook) external;
+
+    /// @notice Sets the domain of the given chain id
+    /// @param _domain The domain to set
+    /// @param _chainid The chain id to set the domain for
+    function setDomain(uint256 _chainid, uint32 _domain) external;
 }

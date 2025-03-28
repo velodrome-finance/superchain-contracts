@@ -12,8 +12,13 @@ contract RegisterChainIntegrationConcreteTest is RootMessageBridgeTest {
             _voter: address(mockVoter),
             _weth: address(weth)
         });
-        rootMessageModule =
-            new RootHLMessageModule({_bridge: address(rootMessageBridge), _mailbox: address(rootMailbox)});
+        rootMessageModule = new RootHLMessageModule({
+            _bridge: address(rootMessageBridge),
+            _mailbox: address(rootMailbox),
+            _paymasterVault: address(rootModuleVault),
+            _commands: defaultCommands,
+            _gasLimits: defaultGasLimits
+        });
     }
 
     function test_WhenTheCallerIsNotOwner() external {
@@ -88,6 +93,6 @@ contract RegisterChainIntegrationConcreteTest is RootMessageBridgeTest {
         whenTheModuleIsAddedToTheRegistry
     {
         rootMessageBridge.registerChain({_chainid: leaf, _module: address(rootMessageModule)});
-        snapLastCall("RootMessageBridge_registerChain");
+        vm.snapshotGasLastCall("RootMessageBridge_registerChain");
     }
 }

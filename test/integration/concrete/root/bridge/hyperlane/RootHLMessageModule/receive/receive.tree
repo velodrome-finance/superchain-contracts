@@ -1,0 +1,5 @@
+ReceiveIntegrationConcreteTest
+├── When the caller is not vault
+│   └── It reverts with {NotPaymasterVault}
+└── When the caller is vault
+    └── It receives ETH

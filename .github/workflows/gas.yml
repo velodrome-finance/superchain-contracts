@@ -39,7 +39,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: v1.0.0
   
       - name: Install deps
         run: forge install
@@ -52,4 +52,5 @@ jobs:
           OPTIMISM_RPC_URL: ${{ secrets.OPTIMISM_RPC_URL }}
           BOB_RPC_URL: ${{ secrets.BOB_RPC_URL }}
           MODE_RPC_URL: ${{ secrets.MODE_RPC_URL }}
+          FRAXTAL_RPC_URL: ${{ secrets.FRAXTAL_RPC_URL }}
           PRIVATE_KEY_DEPLOY: ${{ secrets.PRIVATE_KEY_DEPLOY }}

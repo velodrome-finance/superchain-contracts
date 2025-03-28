@@ -108,6 +108,6 @@ contract CreatePoolIntegrationConcreteTest is RootPoolFactoryTest {
         whenToken0IsNotTheZeroAddress
     {
         rootPoolFactory.createPool({chainid: _chainid, tokenA: address(tokenA), tokenB: address(tokenB), stable: true});
-        snapLastCall("RootPoolFactory_createPool");
+        vm.snapshotGasLastCall("RootPoolFactory_createPool");
     }
 }

@@ -95,6 +95,6 @@ contract DepositIntegrationConcreteTest is RootFeesVotingRewardTest {
         uint256 tokenId = 1;
 
         rootFVR._deposit({_amount: amount, _tokenId: tokenId});
-        snapLastCall("RootFeesVotingReward_deposit");
+        vm.snapshotGasLastCall("RootFeesVotingReward_deposit");
     }
 }

@@ -18,7 +18,7 @@ import {XERC20} from "src/xerc20/XERC20.sol";
 
 import {LeafHLMessageModule} from "src/bridge/hyperlane/LeafHLMessageModule.sol";
 import {LeafMessageBridge} from "src/bridge/LeafMessageBridge.sol";
-import {TokenBridge} from "src/bridge/TokenBridge.sol";
+import {LeafEscrowTokenBridge} from "src/bridge/LeafEscrowTokenBridge.sol";
 import {LeafVoter} from "src/voter/LeafVoter.sol";
 
 abstract contract DeployBaseFixture is DeployFixture {
@@ -40,7 +40,7 @@ abstract contract DeployBaseFixture is DeployFixture {
     XERC20Factory public leafXFactory;
     XERC20 public leafXVelo;
     Router public leafRouter;
-    TokenBridge public leafTokenBridge;
+    LeafEscrowTokenBridge public leafTokenBridge;
     LeafMessageBridge public leafMessageBridge;
     LeafHLMessageModule public leafMessageModule;
 
@@ -140,7 +140,7 @@ abstract contract DeployBaseFixture is DeployFixture {
         leafXVelo = XERC20(leafXFactory.deployXERC20());
 
         leafMessageModule = LeafHLMessageModule(
-            CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _deployer: _deployer})
+            CreateXLibrary.computeCreate3Address({_entropy: HL_MESSAGE_BRIDGE_ENTROPY_V2, _deployer: _deployer})
         );
         leafMessageBridge = LeafMessageBridge(
             cx.deployCreate3({
@@ -160,7 +160,7 @@ abstract contract DeployBaseFixture is DeployFixture {
 
         leafMessageModule = LeafHLMessageModule(
             cx.deployCreate3({
-                salt: HL_MESSAGE_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
+                salt: HL_MESSAGE_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
                     type(LeafHLMessageModule).creationCode,
                     abi.encode(
@@ -172,13 +172,13 @@ abstract contract DeployBaseFixture is DeployFixture {
                 )
             })
         );
-        checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY, _output: address(leafMessageModule)});
+        checkAddress({_entropy: HL_MESSAGE_BRIDGE_ENTROPY_V2, _output: address(leafMessageModule)});
 
-        leafTokenBridge = TokenBridge(
+        leafTokenBridge = LeafEscrowTokenBridge(
             cx.deployCreate3({
-                salt: TOKEN_BRIDGE_ENTROPY.calculateSalt({_deployer: _deployer}),
+                salt: TOKEN_BRIDGE_ENTROPY_V2.calculateSalt({_deployer: _deployer}),
                 initCode: abi.encodePacked(
-                    type(TokenBridge).creationCode,
+                    type(LeafEscrowTokenBridge).creationCode,
                     abi.encode(
                         _params.bridgeOwner, // bridge owner
                         address(leafXVelo), // xerc20 address
@@ -188,7 +188,7 @@ abstract contract DeployBaseFixture is DeployFixture {
                 )
             })
         );
-        checkAddress({_entropy: TOKEN_BRIDGE_ENTROPY, _output: address(leafTokenBridge)});
+        checkAddress({_entropy: TOKEN_BRIDGE_ENTROPY_V2, _output: address(leafTokenBridge)});
 
         leafGaugeFactory = LeafGaugeFactory(
             cx.deployCreate3({

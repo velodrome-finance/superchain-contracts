@@ -4,11 +4,6 @@ pragma solidity >=0.8.19 <0.9.0;
 import "test/BaseE2EForkFixture.sol";
 
 contract GaugeFlowE2EConcreteTest is BaseE2EForkFixture {
-    uint256 constant MAX_TIME = 4 * 365 * 86400;
-    uint256 constant PRECISION = 10 ** 18;
-
-    uint256 public aliceLock;
-    uint256 public bobLock;
     Pool public v2Pool;
     ILeafGauge public v2Gauge;
     IERC20 public v2Token0;
@@ -603,39 +598,6 @@ contract GaugeFlowE2EConcreteTest is BaseE2EForkFixture {
         vm.stopPrank();
     }
 
-    function checkVotingRewards(
-        uint256 _tokenId,
-        address _tokenA,
-        address _tokenB,
-        uint256 _expectedBalanceA,
-        uint256 _expectedBalanceB
-    ) internal {
-        vm.selectFork({forkId: rootId});
-        // Skip distribute window
-        vm.warp({newTimestamp: VelodromeTimeLibrary.epochVoteStart(block.timestamp) + 1});
-        uint256 rootTimestamp = block.timestamp;
-
-        address owner = mockEscrow.ownerOf(_tokenId);
-        address[] memory tokens = new address[](2);
-        tokens[0] = _tokenA;
-        tokens[1] = _tokenB;
-        _depositGas({_user: owner, _amount: MESSAGE_FEE * 2});
-        vm.startPrank({msgSender: owner, txOrigin: owner});
-        rootIVR.getReward(_tokenId, tokens);
-        rootFVR.getReward(_tokenId, tokens);
-        vm.stopPrank();
-
-        // Process both Claims on Leaf Chain
-        vm.selectFork({forkId: leafId});
-        vm.warp({newTimestamp: rootTimestamp});
-        leafMailbox.processNextInboundMessage();
-        leafMailbox.processNextInboundMessage();
-
-        // Fees and Incentives are lagged by 1 week
-        assertApproxEqAbs(IERC20(_tokenA).balanceOf(owner), _expectedBalanceA, 1e6);
-        assertApproxEqAbs(IERC20(_tokenB).balanceOf(owner), _expectedBalanceB, 1e6);
-    }
-
     function checkV2VotingRewards(
         uint256 _tokenId,
         address _tokenA,
@@ -681,13 +643,6 @@ contract GaugeFlowE2EConcreteTest is BaseE2EForkFixture {
 
         rewardsLastEpoch = IReward(_fvr).tokenRewardsPerEpoch(_tokenB, epochStart - WEEK);
         expectedBalanceB = expectedBalanceB + rewardsLastEpoch * balance / IReward(_fvr).totalSupply();
-    }
-
-    /// @dev Helper function to seed User with WETH to pay for gas in x-chain transactions
-    function _depositGas(address _user, uint256 _amount) internal {
-        deal({token: address(weth), to: _user, give: _amount});
-        vm.prank(_user);
-        weth.approve({spender: address(rootMessageBridge), value: _amount});
     }
 
     /// @dev Helper function to stake existing liquidity into Gauge

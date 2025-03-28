@@ -4,7 +4,6 @@ pragma solidity >=0.8.19 <0.9.0;
 import {VmSafe} from "forge-std/src/Vm.sol";
 import "forge-std/src/Test.sol";
 import "forge-std/src/console.sol";
-import {GasSnapshot} from "forge-gas-snapshot/GasSnapshot.sol";
 import {IERC20Metadata, IERC20} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin5/contracts/token/ERC20/utils/SafeERC20.sol";
 import {SafeCast} from "@openzeppelin5/contracts/utils/math/SafeCast.sol";
@@ -17,7 +16,7 @@ import {IPoolFactory, PoolFactory} from "src/pools/PoolFactory.sol";
 import {IFeeModule, ICustomFeeModule, CustomFeeModule} from "src/fees/CustomFeeModule.sol";
 import {IRouter, Router} from "src/Router.sol";
 import {IInterchainSecurityModule} from "@hyperlane/core/contracts/interfaces/IInterchainSecurityModule.sol";
-import {ITokenBridge, TokenBridge} from "src/bridge/TokenBridge.sol";
+import {ITokenBridge, LeafTokenBridge} from "src/bridge/LeafTokenBridge.sol";
 import {ICrosschainERC20, ISuperchainERC20, IXERC20, XERC20} from "src/xerc20/XERC20.sol";
 import {IXERC20Lockbox, XERC20Lockbox} from "src/xerc20/XERC20Lockbox.sol";
 import {IXERC20Factory, XERC20Factory} from "src/xerc20/XERC20Factory.sol";
@@ -31,6 +30,8 @@ import {ILeafVoter, LeafVoter} from "src/voter/LeafVoter.sol";
 import {IVotingRewardsFactory, VotingRewardsFactory} from "src/rewards/VotingRewardsFactory.sol";
 import {CreateXLibrary} from "src/libraries/CreateXLibrary.sol";
 import {MintLimits} from "src/xerc20/MintLimits.sol";
+import {Commands} from "src/libraries/Commands.sol";
+import {GasLimits} from "src/libraries/GasLimits.sol";
 
 import {Users} from "test/utils/Users.sol";
 import {TestConstants} from "test/utils/TestConstants.sol";
@@ -38,7 +39,7 @@ import {MockWETH} from "test/mocks/MockWETH.sol";
 import {TestERC20} from "test/mocks/TestERC20.sol";
 import {CreateX} from "test/mocks/CreateX.sol";
 
-abstract contract BaseFixture is Test, TestConstants, GasSnapshot {
+abstract contract BaseFixture is Test, TestConstants {
     using SafeERC20 for TestERC20;
 
     /// superchain contracts
@@ -49,7 +50,7 @@ abstract contract BaseFixture is Test, TestConstants, GasSnapshot {
 
     // leaf superchain contracts
     Router public router;
-    TokenBridge public tokenBridge;
+    LeafTokenBridge public tokenBridge;
     LeafMessageBridge public messageBridge;
     LeafHLMessageModule public messageModule;
 

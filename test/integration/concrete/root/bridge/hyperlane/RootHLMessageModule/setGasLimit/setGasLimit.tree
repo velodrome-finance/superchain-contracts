@@ -1,0 +1,6 @@
+SetGasLimitIntegrationConcreteTest
+├── When the caller is not owner
+│   └── It reverts with {OwnableUnauthorizedAccount}
+└── When the caller is owner
+    ├── It should set the gas limit for the given command
+    └── It should emit a {GasLimitSet} event

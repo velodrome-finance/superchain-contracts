@@ -277,6 +277,6 @@ contract GetRewardIntegrationConcreteTest is RootFeesVotingRewardTest {
 
         vm.prank({msgSender: users.bob, txOrigin: users.bob});
         rootFVR.getReward({_tokenId: tokenId, _tokens: tokens});
-        snapLastCall("RootFeesVotingReward_getReward");
+        vm.snapshotGasLastCall("RootFeesVotingReward_getReward");
     }
 }

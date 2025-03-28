@@ -15,7 +15,7 @@ import {RootPool} from "src/root/pools/RootPool.sol";
 import {EmergencyCouncil} from "src/root/emergencyCouncil/EmergencyCouncil.sol";
 import {RootHLMessageModule} from "src/root/bridge/hyperlane/RootHLMessageModule.sol";
 import {RootMessageBridge} from "src/root/bridge/RootMessageBridge.sol";
-import {TokenBridge} from "src/bridge/TokenBridge.sol";
+import {RootTokenBridge} from "src/root/bridge/RootTokenBridge.sol";
 
 import {ModePoolFactory} from "src/pools/extensions/ModePoolFactory.sol";
 import {ModePool} from "src/pools/extensions/ModePool.sol";
@@ -32,7 +32,7 @@ contract CreateXDeployTest is BaseFixture {
         XERC20Factory xerc20Factory;
         XERC20 xVelo;
         XERC20Lockbox lockbox;
-        TokenBridge tokenBridge;
+        RootTokenBridge tokenBridge;
         RootMessageBridge messageBridge;
         RootHLMessageModule messageModule;
         EmergencyCouncil emergencyCouncil;
@@ -47,7 +47,7 @@ contract CreateXDeployTest is BaseFixture {
         XERC20Factory xerc20Factory;
         XERC20 xVelo;
         LeafVoter voter;
-        TokenBridge tokenBridge;
+        LeafTokenBridge tokenBridge;
         LeafMessageBridge messageBridge;
         LeafHLMessageModule messageModule;
         ModeRouter router;

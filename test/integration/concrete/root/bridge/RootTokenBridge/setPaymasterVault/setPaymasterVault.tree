@@ -1,0 +1,9 @@
+SetPaymasterVaultIntegrationConcreteTest
+├── When the caller is not owner
+│   └── It should revert with {OwnableUnauthorizedAccount}
+└── When the caller is owner
+    ├── When the vault is the address zero
+    │   └── It should revert with {InvalidAddress}
+    └── When the vault is not the address zero
+        ├── It should set the new paymaster vault
+        └── It should emit a {PaymasterVaultSet} event

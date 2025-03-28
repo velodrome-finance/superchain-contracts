@@ -34,6 +34,6 @@ contract SetNotifyAdminIntegrationConcreteTest is RootGaugeFactoryTest {
 
     function testGas_setNotifyAdmin() external whenCallerIsTheNotifyAdmin {
         rootGaugeFactory.setNotifyAdmin({_admin: users.alice});
-        snapLastCall("RootGaugeFactory_setNotifyAdmin");
+        vm.snapshotGasLastCall("RootGaugeFactory_setNotifyAdmin");
     }
 }

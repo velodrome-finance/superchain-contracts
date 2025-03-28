@@ -27,4 +27,11 @@ interface IVotingEscrow is IERC721 {
     function setManagedState(uint256 _mTokenId, bool _state) external;
 
     function deactivated(uint256 _mTokenId) external view returns (bool);
+
+    /// @notice Deposit `_value` tokens for `_tokenId` and add to the lock
+    /// @dev Anyone (even a smart contract) can deposit for someone else, but
+    ///      cannot extend their locktime and deposit for a brand new user
+    /// @param _tokenId lock NFT
+    /// @param _value Amount to add to user's lock
+    function depositFor(uint256 _tokenId, uint256 _value) external;
 }

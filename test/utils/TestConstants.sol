@@ -14,6 +14,9 @@ abstract contract TestConstants is Constants {
     uint256 public constant MAX_BPS = 10_000;
     uint112 public constant MAX_BUFFER_CAP = type(uint112).max;
 
+    uint256 constant MAX_TIME = 4 * 365 * 86400;
+    uint256 constant PRECISION = 10 ** 18;
+
     uint256 public constant DAY = 1 days;
     uint256 public constant WEEK = VelodromeTimeLibrary.WEEK;
 

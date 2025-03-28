@@ -1,3 +1,17 @@
 QuoteIntegrationConcreteTest
-└── When the caller is anyone
-    └── It returns the quote
+├── When the command is notify
+│   ├── When the current timestamp is in the distribute window
+│   │   └── It returns 0
+│   └── When the current timestamp is not in the distribute window
+│       ├── When there is no domain set for the chain
+│       │   └── It returns the quote for the chainid
+│       └── When there is a domain set for the chain
+│           └── It returns the quote for the custom domain
+└── When the command is not notify
+    ├── When the caller is whitelisted
+    │   └── It returns 0
+    └── When the caller is not whitelisted
+        ├── When there is no domain set for the chain_
+        │   └── It returns the quote for the chainid
+        └── When there is a domain set for the chain_
+            └── It returns the quote for the custom domain

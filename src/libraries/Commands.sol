@@ -29,8 +29,9 @@ library Commands {
     // Offset for Deposit/Withdraw
     uint256 private constant TOKEN_ID_OFFSET = ADDRESS_OFFSET + 20 + 32;
     uint256 private constant TIMESTAMP_OFFSET = TOKEN_ID_OFFSET + 32;
-    // Offset for Send Token amount
+    // Offset for Send Token
     uint256 private constant AMOUNT_OFFSET = COMMAND_OFFSET + 20;
+    uint256 private constant TOKEN_ID_WITHOUT_COMMAND_OFFSET = AMOUNT_OFFSET + 32;
 
     /// @notice Returns the command encoded in the message
     /// @dev Assumes message is encoded as (command, ...)
@@ -68,16 +69,6 @@ library Commands {
             uint256(bytes32(_message[SECOND_OFFSET:SECOND_OFFSET + 32])),
             uint256(bytes32(_message[TOKEN_ID_OFFSET:TIMESTAMP_OFFSET])),
             uint256(uint40(bytes5(_message[TIMESTAMP_OFFSET:TIMESTAMP_OFFSET + 5])))
-        );
-    }
-
-    /// @notice Returns the recipient and amount encoded in the message
-    /// @dev Assumes no command is encoded and message is encoded as (address, amount)
-    /// @param _message The message to be decoded
-    function recipientAndAmount(bytes calldata _message) internal pure returns (address, uint256) {
-        return (
-            address(bytes20(_message[COMMAND_OFFSET:COMMAND_OFFSET + 20])),
-            uint256(bytes32(_message[AMOUNT_OFFSET:AMOUNT_OFFSET + 32]))
         );
     }
 
@@ -124,5 +115,33 @@ library Commands {
             _tokens[i] =
                 address(uint160(uint256(bytes32(_message[TOKENS_OFFSET + (i * 32):TOKENS_OFFSET + ((i + 1) * 32)]))));
         }
+    }
+
+    // Token Bridge
+
+    // Send Token - (address, uint256)
+    uint256 public constant SEND_TOKEN_LENGTH = 52;
+    // Send Token and Lock - (address, uint256, uint256)
+    uint256 public constant SEND_TOKEN_AND_LOCK_LENGTH = 84;
+
+    /// @notice Returns the recipient and amount encoded in the message
+    /// @dev Assumes no command is encoded and message is encoded as (address, amount)
+    /// @param _message The message to be decoded
+    function recipientAndAmount(bytes calldata _message) internal pure returns (address, uint256) {
+        return (
+            address(bytes20(_message[COMMAND_OFFSET:COMMAND_OFFSET + 20])),
+            uint256(bytes32(_message[AMOUNT_OFFSET:AMOUNT_OFFSET + 32]))
+        );
+    }
+
+    /// @notice Returns the recipient, amount and tokenId encoded in the message
+    /// @dev Assumes no command is encoded and message is encoded as (address, amount, tokenId)
+    /// @param _message The message to be decoded
+    function sendTokenAndLockParams(bytes calldata _message) internal pure returns (address, uint256, uint256) {
+        return (
+            address(bytes20(_message[COMMAND_OFFSET:COMMAND_OFFSET + 20])),
+            uint256(bytes32(_message[AMOUNT_OFFSET:AMOUNT_OFFSET + 32])),
+            uint256(bytes32(_message[TOKEN_ID_WITHOUT_COMMAND_OFFSET:TOKEN_ID_WITHOUT_COMMAND_OFFSET + 32]))
+        );
     }
 }

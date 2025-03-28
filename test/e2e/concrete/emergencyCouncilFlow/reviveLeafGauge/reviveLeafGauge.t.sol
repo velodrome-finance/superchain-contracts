@@ -50,7 +50,7 @@ contract ReviveLeafGaugeE2ETest is EmergencyCouncilE2ETest {
         emit IVoter.GaugeRevived({gauge: gauge});
         vm.expectEmit(address(rootMessageModule));
         emit IMessageSender.SentMessage({
-            _destination: leaf,
+            _destination: leafDomain,
             _recipient: TypeCasts.addressToBytes32(address(rootMessageModule)),
             _value: MESSAGE_FEE,
             _message: string(message),

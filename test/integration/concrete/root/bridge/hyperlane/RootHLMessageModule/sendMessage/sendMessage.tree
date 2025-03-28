@@ -3,14 +3,27 @@ SendMessageIntegrationConcreteTest
 │   └── It reverts with {NotBridge}
 └── When the caller is bridge
     ├── When the command is deposit
-    │   ├── It dispatches the message to the mailbox
-    │   ├── It emits the {SentMessage} event
-    │   └── It calls receiveMessage on the recipient contract of the same address with the payload
+    │   ├── When sender is not whitelisted
+    │   │   ├── It dispatches the message to the mailbox
+    │   │   ├── It emits the {SentMessage} event
+    │   │   └── It calls receiveMessage on the recipient contract of the same address with the payload
+    │   └── When sender is whitelisted
+    │       ├── It pays for dispatch using weth from paymaster
+    │       ├── It dispatches the message to the mailbox
+    │       ├── It emits the {SentMessage} event
+    │       └── It calls receiveMessage on the recipient contract of the same address with the payload
     ├── When the command is notify
-    │   ├── It burns the decoded amount of tokens
-    │   ├── It dispatches the message to the mailbox
-    │   ├── It emits the {SentMessage} event
-    │   └── It calls receiveMessage on the recipient contract of the same address with the payload
+    │   ├── When the current timestamp is not in the distribute window
+    │   │   ├── It burns the decoded amount of tokens
+    │   │   ├── It dispatches the message to the mailbox
+    │   │   ├── It emits the {SentMessage} event
+    │   │   └── It calls receiveMessage on the recipient contract of the same address with the payload
+    │   └── When the current timestamp is in the distribute window
+    │       ├── It pays for dispatch using weth from paymaster
+    │       ├── It burns the decoded amount of tokens
+    │       ├── It dispatches the message to the mailbox
+    │       ├── It emits the {SentMessage} event
+    │       └── It calls receiveMessage on the recipient contract of the same address with the payload
     ├── When the command is notify without claim
     │   ├── It burns the decoded amount of tokens
     │   ├── It dispatches the message to the mailbox
