@@ -28,6 +28,7 @@ ink = "${INK_RPC_URL}"
 soneium = "${SONEIUM_RPC_URL}"
 swell = "${SWELL_RPC_URL}"
 unichain = "${UNICHAIN_RPC_URL}"
+celo = "${CELO_RPC_URL}"
 
 [etherscan]
 optimism = { key = "${OPTIMISM_ETHERSCAN_API_KEY}", url = "${OPTIMISM_ETHERSCAN_VERIFIER_URL}"}
@@ -41,3 +42,4 @@ ink = { key = "NA", url = "${INK_ETHERSCAN_VERIFIER_URL}"}
 soneium = { key = "NA", url = "${SONEIUM_ETHERSCAN_VERIFIER_URL}"}
 swell = { key = "NA", url = "${SWELL_ETHERSCAN_VERIFIER_URL}"}
 unichain = { key = "NA", url = "${UNICHAIN_ETHERSCAN_VERIFIER_URL}"}
+celo = { key = "${CELO_ETHERSCAN_API_KEY}", url = "${CELO_ETHERSCAN_VERIFIER_URL}"}

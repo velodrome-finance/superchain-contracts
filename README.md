@@ -99,6 +99,7 @@ Velodrome has a live bug bounty hosted on ([Immunefi](https://immunefi.com/bount
 | Soneium  | [Addresses](https://github.com/velodrome-finance/superchain-contracts/blob/main/deployment-addresses/soneium.json)           | [v1.0](https://github.com/velodrome-finance/superchain-contracts/commit/a739cdd788673d5fb08736e456fd8ec15d262dc7)      | 
 | Swell    | [Addresses](https://github.com/velodrome-finance/superchain-contracts/blob/main/deployment-addresses/swell.json)           | [v1.0](https://github.com/velodrome-finance/superchain-contracts/commit/a739cdd788673d5fb08736e456fd8ec15d262dc7)      | 
 | Unichain | [Addresses](https://github.com/velodrome-finance/superchain-contracts/blob/main/deployment-addresses/unichain.json)           | [v1.0](https://github.com/velodrome-finance/superchain-contracts/commit/a739cdd788673d5fb08736e456fd8ec15d262dc7)      | 
+| Celo     | [Addresses](https://github.com/velodrome-finance/superchain-contracts/blob/main/deployment-addresses/celo.json)           | [v1.1](https://github.com/velodrome-finance/superchain-contracts/commit/b0e98b33519ca3ee17e64147eb81162ec4c67479)      | 
 
 Optimism contains the root deployment contracts, and these factory addresses are 
 used by all leaf chains.
